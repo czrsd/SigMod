@@ -1,4 +1,4 @@
-import { config as loadConfig } from 'typescript-eslint';
+import { config as loadConfig } from 'dotenv';
 loadConfig();
 import express, { Application } from 'express';
 import logger from './utils/logger';

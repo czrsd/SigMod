@@ -1,11 +1,12 @@
 import WebSocket from 'ws';
 import { Request } from 'express';
-// @ts-ignore
 import CircularJSON from 'circular-json';
 import { wsHandler } from './setup';
 import { v4 as uuidv4 } from 'uuid';
 import AccountModel from '../models/AccountModel';
 import logger from '../utils/logger';
+import { google_user } from '../types';
+import { modAccount } from '../types';
 
 class Socket {
     ws: WebSocket;
@@ -15,8 +16,8 @@ class Socket {
     server: string | null;
     tag: string | null;
     nick: string | null;
-    user: any; // @TODO replace any type with user
-    modUser: any; // @TODO replace any type with mod user type
+    user: google_user | null;
+    modUser: modAccount | null;
     position: {
         x: number | null;
         y: number | null;

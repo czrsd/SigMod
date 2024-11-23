@@ -1,12 +1,13 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 
-type Session = Document & {
+export type ISession = Document & {
+    _id: string;
     sessionId: mongoose.Types.ObjectId;
     userId: string;
     valid: boolean;
 };
 
-const sessionSchema = new Schema<Session>({
+const sessionSchema = new Schema<ISession>({
     sessionId: {
         type: Schema.Types.ObjectId,
         required: true,
@@ -17,7 +18,7 @@ const sessionSchema = new Schema<Session>({
     valid: { type: Boolean, default: true },
 });
 
-const Session: Model<Session> = mongoose.model<Session>(
+const Session: Model<ISession> = mongoose.model<ISession>(
     'Session',
     sessionSchema
 );

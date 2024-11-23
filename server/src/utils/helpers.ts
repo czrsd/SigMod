@@ -1,3 +1,8 @@
+import fs from 'fs';
+
+export const readFile = (path: string) =>
+    fs.readFileSync(path, { encoding: 'utf8' }).trim();
+
 export const noXSS = (text: string | any) => {
     const xssChars = /&|<|>|"|'/g;
     return text.replace(xssChars, (match: string) => {

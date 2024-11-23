@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import useragent from 'express-useragent';
 import rateLimit from 'express-rate-limit';
+import setupRoutes from './routes';
 
 const SetupMiddleware = (app: Application) => {
     app.use(
@@ -42,6 +43,8 @@ const SetupMiddleware = (app: Application) => {
             message: 'Too many requests, please try again later.',
         })
     );
+
+    setupRoutes(app);
 };
 
 export default SetupMiddleware;

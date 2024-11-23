@@ -1,5 +1,17 @@
 import { config as loadConfig } from 'dotenv';
-loadConfig();
+import { expand as expandConfig } from 'dotenv-expand';
+
+const commonConfig = loadConfig();
+expandConfig(commonConfig);
+
+if (process.env.NODE_ENV === 'production') {
+    const prodConfig = loadConfig({ path: '.env.production' });
+    expandConfig(prodConfig);
+} else {
+    const devConfig = loadConfig({ path: '.env.development' });
+    expandConfig(devConfig);
+}
+
 import express, { Application } from 'express';
 import logger from './utils/logger';
 import { wsServer } from './socket/setup';

@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-interface IAccount extends Document {
+export type IAccount = Document & {
+    _id: string;
     username: string;
     password?: string;
     imageURL: string;
@@ -11,7 +12,7 @@ interface IAccount extends Document {
     lastOnline: Date;
     visible: boolean;
     create_time: Date;
-}
+};
 
 const modAccountSchema: Schema<IAccount> = new mongoose.Schema({
     username: { type: String, required: true },

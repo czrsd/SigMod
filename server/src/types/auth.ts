@@ -40,3 +40,9 @@ export type google_user = {
     cards: any;
     boost: number;
 };
+
+export type RegisterData = {
+    username: string;
+    password: string;
+    confirmedPassword: string;
+};

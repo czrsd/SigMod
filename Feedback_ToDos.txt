@@ -1,0 +1,9 @@
+- add fonts to name + mass
+- be able to make bigger shadows around the name + mass
+- make lb 2/3 the size (customizable)
+- get rid of all the useless info top left except score and fps/ms
+- be able the change border color on the map not just your cell
+- it wont let me upload an image for the map upload (add minimap design on the map itself and add the "letter#" for each sector plus lines sepperating each sector)
+
+- Fix "fixed line" keybind
+- Fix chat overlap

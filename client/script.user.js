@@ -169,7 +169,7 @@
   });
 
   // for development
-  let isDev = false;
+  let isDev = true;
   let port = 3001;
 
   // global sigmod
@@ -10889,7 +10889,7 @@
       const canvas = document.querySelector("#canvas");
       const darkThemeOption = byId("darkTheme");
 
-      if (!canvas || !darkThemeOption) return false;
+      if (!canvas || !darkThemeOption.value) return false;
 
       return true;
     },

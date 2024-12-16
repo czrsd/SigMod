@@ -74,6 +74,7 @@
       },
     },
     game: {
+      font: "Ubuntu",
       borderColor: null,
       foodColor: null,
       cellColor: null,
@@ -1223,6 +1224,9 @@
       modChatMessages: isDev
         ? `http://localhost:${port}/messages`
         : `https://mod.czrsd.com/messages`,
+      fonts: isDev
+        ? `http://localhost:${port}/fonts`
+        : "https://mod.czrsd.com/fonts",
     };
 
     this.load();
@@ -3578,7 +3582,7 @@
     },
 
     async game() {
-      const { fillRect, fillText, strokeText, moveTo, arc, drawImage } =
+      const { fillRect, fillText, strokeText, arc, drawImage } =
         CanvasRenderingContext2D.prototype;
 
       const showPosition = byId("showPosition");
@@ -3750,6 +3754,11 @@
       CanvasRenderingContext2D.prototype.fillText = function (text, x, y) {
         if (!this.canvas.id === "canvas") return;
 
+        const currentFontSizeMatch = this.font.match(/^(\d+)px/);
+        const fontSize = currentFontSizeMatch ? currentFontSizeMatch[0] : "";
+
+        this.font = `${fontSize} ${modSettings.game.font || "Ubuntu"}`;
+
         if (
           text === mods.nick &&
           !modSettings.game.name.gradient.enabled &&
@@ -3859,6 +3868,11 @@
       CanvasRenderingContext2D.prototype.strokeText = function (text, x, y) {
         if (!this.canvas.id === "canvas") return;
 
+        const currentFontSizeMatch = this.font.match(/^(\d+)px/);
+        const fontSize = currentFontSizeMatch ? currentFontSizeMatch[0] : "";
+
+        this.font = `${fontSize} ${modSettings.game.font || "Ubuntu"}`;
+
         if (text.length > 18 && modSettings.game.shortenNames) {
           arguments[0] = text.slice(0, 18) + "...";
         }
@@ -3878,7 +3892,6 @@
         if (this.canvas.id !== "canvas")
           return drawImage.call(this, image, ...args);
 
-        // Handle Virus Image Replacement
         if (
           image.src &&
           (image.src.endsWith("2.png") || image.src.endsWith("2-min.png")) &&
@@ -3887,7 +3900,6 @@
           if (mods.virusImageLoaded) {
             return drawImage.call(this, mods.virusImage, ...args);
           } else {
-            // Load and set virus image if not already loaded
             loadVirusImage(modSettings.game.virusImage).then(() => {
               drawImage.call(this, mods.virusImage, ...args);
             });
@@ -3895,7 +3907,6 @@
           }
         }
 
-        // Handle Skin Image Replacement
         if (
           image instanceof HTMLImageElement &&
           modSettings.game.skins.original &&
@@ -3904,7 +3915,6 @@
           if (mods.skinImageLoaded) {
             return drawImage.call(this, mods.skinImage, ...args);
           } else {
-            // Load and set skin image if not already loaded
             loadSkinImage(
               modSettings.game.skins.original,
               modSettings.game.skins.replacement,
@@ -4293,7 +4303,7 @@
       }
     },
 
-    menu() {
+    async menu() {
       const mod_menu = document.createElement("div");
       mod_menu.classList.add("mod_menu");
       mod_menu.style.display = "none";
@@ -4633,12 +4643,9 @@
                                     </div>
                                     <div class="modColItems_2">
 										<span style="font-style: italic;">~ Game Settings</span>
-										<div class="justify-sb w-100 p-10">
+										<div class="justify-sb w-100 accent_row p-10 rounded">
 											<span class="text">Font</span>
-											<div class="modCheckbox">
-											  <input id="mod-showNames" type="checkbox" ${JSON.parse(localStorage.getItem("settings"))?.showNames ? "checked" : ""} />
-											  <label class="cbx" for="mod-showNames"></label>
-											</div>
+											<div id="font-select-container"></div>
 										</div>
 										<div class="justify-sb w-100 p-10">
 											<span class="text">Names</span>
@@ -4943,22 +4950,36 @@
         }, 300);
       });
 
-      function virusImgVal() {
-        if (
-          modSettings.virusImage === "/assets/images/viruses/2.png" ||
-          modSettings.virusImage === ""
-        )
-          return "";
-        return modSettings.virusImage;
-      }
+      const fontSelectContainer = document.querySelector(
+        "#font-select-container",
+      );
 
-      function skinImgVal() {
-        if (
-          modSettings.game.skins.replacement === "" ||
-          modSettings.game.skins.replacement === null
-        )
-          return "";
-        return modSettings.game.skins.replacement;
+      const fonts = await this.getGoogleFonts();
+      const selectElement = this.render_sm_select(
+        "Select Font",
+        fonts,
+        {
+          width: "200px",
+        },
+        modSettings.game.font,
+      );
+      fontSelectContainer.replaceWith(selectElement);
+
+      selectElement.addEventListener("change", (e) => {
+        const link = document.createElement("link");
+        link.href = `https://fonts.googleapis.com/css2?family=${e.detail}&display=swap`;
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
+
+        modSettings.game.font = e.detail;
+        updateStorage();
+      });
+
+      if (modSettings.game.font !== "Ubuntu") {
+        const link = document.createElement("link");
+        link.href = `https://fonts.googleapis.com/css2?family=${modSettings.game.font}&display=swap`;
+        link.rel = "stylesheet";
+        document.head.appendChild(link);
       }
 
       const playTimerToggle = byId("playTimerToggle");
@@ -5006,6 +5027,110 @@
           location.reload();
         }
       });
+    },
+
+    render_sm_select(label, items, style = {}, defaultValue) {
+      const createElement = (tag, styles, text = "") => {
+        const el = document.createElement(tag);
+        el.textContent = text;
+        Object.assign(el.style, styles);
+        return el;
+      };
+
+      const defaultcontainerStyles = {
+        position: "relative",
+        display: "inline-block",
+      };
+
+      const container = createElement("div", {
+        ...defaultcontainerStyles,
+        ...style,
+      });
+
+      const selectButton = document.createElement("div");
+      selectButton.style.cssText =
+        "background: rgba(0, 0, 0, 0.4); color: #fff; border: 1px solid #A2A2A2; border-radius: 5px; padding: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;";
+
+      selectButton.innerHTML = `
+        <span>${label}</span>
+        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#000000" width="20">
+          <path fill="#fafafa" d="M13.098 8H6.902c-.751 0-1.172.754-.708 1.268L9.292 12.7c.36.399 1.055.399 1.416 0l3.098-3.433C14.27 8.754 13.849 8 13.098 8Z"></path>
+        </svg>
+      `;
+
+      if (defaultValue && items.includes(defaultValue)) {
+        selectButton.innerHTML = `<span>${defaultValue}</span> ${selectButton.innerHTML.split("</svg>")[1]}`;
+      }
+
+      container.appendChild(selectButton);
+
+      const dropdown = createElement("div", {
+        display: "none",
+        position: "absolute",
+        background: "#111",
+        color: "#fafafa",
+        borderRadius: "0 0 10px 10px",
+        padding: "5px 0",
+        zIndex: "999999",
+        maxHeight: "200px",
+        overflowY: "auto",
+      });
+
+      const searchBox = createElement("input", {
+        width: "100%",
+        padding: "5px",
+        marginBottom: "5px",
+        background: "#222",
+        border: "none",
+        color: "#fff",
+      });
+      searchBox.placeholder = "Search...";
+
+      dropdown.append(searchBox);
+
+      items.forEach((item) => {
+        const option = createElement(
+          "div",
+          { padding: "5px", cursor: "pointer" },
+          item,
+        );
+        option.onclick = () => {
+          selectButton.innerHTML = `
+            <span>${item}</span>
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#000000" width="20">
+              <path fill="#fafafa" d="M13.098 8H6.902c-.751 0-1.172.754-.708 1.268L9.292 12.7c.36.399 1.055.399 1.416 0l3.098-3.433C14.27 8.754 13.849 8 13.098 8Z"></path>
+            </svg>`;
+          dropdown.style.display = "none";
+          container.dispatchEvent(new CustomEvent("change", { detail: item }));
+        };
+        option.onmouseover = (e) => (e.target.style.background = "#555");
+        option.onmouseout = (e) => (e.target.style.background = "transparent");
+        dropdown.append(option);
+      });
+
+      container.append(dropdown);
+
+      selectButton.onclick = () => {
+        dropdown.style.display =
+          dropdown.style.display === "none" ? "block" : "none";
+      };
+
+      document.onclick = (e) => {
+        if (!container.contains(e.target)) dropdown.style.display = "none";
+      };
+
+      searchBox.addEventListener("input", () => {
+        const filter = searchBox.value.toLowerCase();
+        Array.from(dropdown.children)
+          .slice(1)
+          .forEach((item) => {
+            item.style.display = item.textContent.toLowerCase().includes(filter)
+              ? "block"
+              : "none";
+          });
+      });
+
+      return container;
     },
 
     setProfile(user) {
@@ -6368,6 +6493,12 @@
           msgParent.remove();
         }
       });
+    },
+
+    async getGoogleFonts() {
+      const fontFamilies = await (await fetch(this.appRoutes.fonts)).json();
+
+      return fontFamilies;
     },
 
     async getEmojis() {

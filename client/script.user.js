@@ -4634,6 +4634,13 @@
                                     <div class="modColItems_2">
 										<span style="font-style: italic;">~ Game Settings</span>
 										<div class="justify-sb w-100 p-10">
+											<span class="text">Font</span>
+											<div class="modCheckbox">
+											  <input id="mod-showNames" type="checkbox" ${JSON.parse(localStorage.getItem("settings"))?.showNames ? "checked" : ""} />
+											  <label class="cbx" for="mod-showNames"></label>
+											</div>
+										</div>
+										<div class="justify-sb w-100 p-10">
 											<span class="text">Names</span>
 											<div class="modCheckbox">
 											  <input id="mod-showNames" type="checkbox" ${JSON.parse(localStorage.getItem("settings"))?.showNames ? "checked" : ""} />
@@ -6158,15 +6165,6 @@
         }
       });
 
-      byId("openEmojiMenu").addEventListener("click", () => {
-        if (emojisContainer.classList.contains("hidden_full")) {
-          emojisContainer.classList.remove("hidden_full");
-          chatSettingsContainer.classList.add("hidden_full");
-        } else {
-          emojisContainer.classList.add("hidden_full");
-        }
-      });
-
       const scrollUpButton = byId("scroll-down-btn");
       let focused = false;
       let typed = false;
@@ -6374,7 +6372,7 @@
 
     async getEmojis() {
       const response = await fetch(
-        "https://app.czrsd.com/static/emojis-output.json",
+        "https://czrsd.com/static/sigmod/emojis.json",
       );
       const emojis = await response.json();
 
@@ -6382,17 +6380,11 @@
     },
 
     emojiMenu() {
-      const emojisContainer = document.createElement("div");
-      emojisContainer.classList.add(
-        "chatAddedContainer",
-        "emojisContainer",
-        "hidden_full",
-      );
-      emojisContainer.innerHTML = `<input type="text" class="chatInput" id="searchEmoji" style="background-color: #050505; border-radius: .5rem; flex-grow: 0;" placeholder="Search..." /><div id="categories" class="scroll"></div>`;
-
-      const categoriesContainer = emojisContainer.querySelector("#categories");
-
       const updateEmojis = (searchTerm = "") => {
+        const emojisContainer = document.querySelector(".emojisContainer");
+        const categoriesContainer =
+          emojisContainer.querySelector("#categories");
+
         categoriesContainer.innerHTML = "";
         window.emojis.forEach((emojiData) => {
           const { emoji, description, category, tags } = emojiData;
@@ -6428,6 +6420,14 @@
         });
       };
 
+      const emojisContainer = document.createElement("div");
+      emojisContainer.classList.add(
+        "chatAddedContainer",
+        "emojisContainer",
+        "hidden_full",
+      );
+      emojisContainer.innerHTML = `<input type="text" class="chatInput" id="searchEmoji" style="background-color: #050505; border-radius: .5rem; flex-grow: 0;" placeholder="Search..." /><div id="categories" class="scroll"></div>`;
+
       const chatInput = emojisContainer.querySelector("#searchEmoji");
       chatInput.addEventListener("input", (event) => {
         const searchTerm = event.target.value.toLowerCase();
@@ -6436,9 +6436,24 @@
 
       document.body.append(emojisContainer);
 
-      this.getEmojis().then((emojis) => {
-        window.emojis = emojis;
-        updateEmojis();
+      const chatSettingsContainer = document.querySelector(
+        ".chatSettingsContainer",
+      );
+
+      byId("openEmojiMenu").addEventListener("click", () => {
+        if (!window.emojis) {
+          this.getEmojis().then((emojis) => {
+            window.emojis = emojis;
+            updateEmojis();
+          });
+        }
+
+        if (emojisContainer.classList.contains("hidden_full")) {
+          emojisContainer.classList.remove("hidden_full");
+          chatSettingsContainer.classList.add("hidden_full");
+        } else {
+          emojisContainer.classList.add("hidden_full");
+        }
       });
     },
 

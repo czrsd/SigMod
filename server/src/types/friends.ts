@@ -8,16 +8,17 @@ export enum Role {
 }
 
 export type modAccount = {
-    _id: ObjectId;
+    _id?: ObjectId | string;
     username: string;
-    password: string;
+    password?: string;
     imageURL: string;
-    role: Role;
-    bio: string;
-    badges: string[];
+    role: string | Role;
+    bio?: string;
+    badges?: string[];
     online: boolean;
     visible: boolean;
-    create_time: string;
+    create_time: Date;
+    save(): any;
 };
 
 export type modSettings = {

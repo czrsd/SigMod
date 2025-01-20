@@ -3,13 +3,13 @@ import { ObjectId } from 'mongodb';
 export type JWTPayload_accessToken = {
     userId: string;
     valid: boolean;
-    sessionId: string;
     iat: number;
     exp: number;
 };
 
 export type JWTPayload_refreshToken = {
-    sessionId: string;
+    userId: string;
+    jti: string;
     iat: number;
     exp: number;
 };

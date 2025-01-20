@@ -177,7 +177,7 @@ class AccountController {
     async login(req: Request, res: Response) {
         passport.authenticate(
             'local',
-            (err: any, user: JWTPayload_accessToken, info: any) => {
+            (err: any, user: JWTPayload_accessToken) => {
                 if (err || !user) {
                     return res.status(400).json({
                         success: false,

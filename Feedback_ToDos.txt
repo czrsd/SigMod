@@ -1,11 +1,12 @@
-- add fonts to name + mass
-- get rid of all the useless info top left except score and fps/ms
-- be able the change border color on the map not just your cell
-- it wont let me upload an image for the map upload (add minimap design on the map itself and add the "letter#" for each sector plus lines sepperating each sector)
+Done:
+- Fonts
 
-- Fix "fixed line" keybind
-- Fix chat overlap
-- Update friend_names more often for sigfixes
-- Fix text outlines & shadows setting
-- The play timer and mouse tracker overlap, and only appear if you refresh the page after enabling, and don't disappear after disabling
-- Fix Map image
+To do (from highest to lowest priority):
+
+- Fix chat overlap (SigFixes)
+- Fix linesplits
+- When closing the chat, return to the last message when opening it
+- Be able to change border color on the map, not just the cell's border color
+- Update friend_names more frequently for sigfixes
+- Fix for text outlines and shadows
+- Play timer and mouse tracker overlap and only appear when you refresh the page after activating, and don't disappear after deactivating

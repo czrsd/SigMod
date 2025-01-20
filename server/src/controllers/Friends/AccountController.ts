@@ -213,7 +213,6 @@ class AccountController {
 
     async auth(req: Request, res: Response) {
         const user = req.user;
-        console.log(user);
         const fullUser = await AccountModel.findOne({
             _id: user?.userId,
         }).select('-password');

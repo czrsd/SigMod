@@ -12,7 +12,6 @@ class Socket {
     ws: WebSocket;
     req: Request;
     sid: string;
-    version: number;
     server: string | null;
     tag: string | null;
     nick: string | null;
@@ -28,7 +27,6 @@ class Socket {
         this.ws = ws;
         this.req = req;
         this.sid = uuidv4();
-        this.version = 1.7;
         this.user = null;
         this.modUser = null;
 
@@ -78,7 +76,7 @@ class Socket {
     init(): void {
         this.ws.on('message', async (message: WebSocket.Data) => {
             // await onMessage(message as Buffer, this);
-            logger.info('New WebSocket message: ', message);
+            // logger.info('New WebSocket message: ', message);
         });
         this.ws.on('error', (e: any) => this.onError(e));
         this.ws.on('close', () => this.onClose());

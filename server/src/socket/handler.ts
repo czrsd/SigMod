@@ -6,6 +6,7 @@ class WebSocketHandler {
     public tournamentLobbies: any[];
     public modLink: string;
     public tournamentOverlay: boolean;
+    public version: string = '4.0.0';
 
     constructor() {
         this.sockets = new Map();

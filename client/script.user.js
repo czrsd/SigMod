@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         SigMod Client (Macros)
+// @name         SigMod Client (Macros) [NEW]
 // @version      10.0.9
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
@@ -155,7 +155,7 @@
 
   window.fetch = new Proxy(originalFetch, {
     async apply(target, thisArg, argumentsList) {
-      const [url, options] = argumentsList;
+      const [url] = argumentsList;
       const response = await target.apply(thisArg, argumentsList);
 
       if (typeof url === "string") {
@@ -170,7 +170,7 @@
   });
 
   // for development
-  let isDev = true;
+  let isDev = false;
   let port = 3001;
 
   // global sigmod
@@ -580,7 +580,6 @@
       ws.sendPacket = this.sendPacket.bind(this);
 
       window.sendPlay = this.sendPlay.bind(this);
-      window.sendFakeCaptcha = this.sendFakeCaptcha.bind(this);
       window.sendChat = this.sendChat.bind(this);
       window.sendMouseMove = this.sendMouseMove.bind(this);
 
@@ -640,17 +639,6 @@
       const writer = new Writer(true);
       writer.setUint8(this.C[0x00]);
       writer.setStringUTF8(playData);
-      this.sendPacket(writer);
-    }
-
-    sendFakeCaptcha(playData) {
-      const writer = new Writer(true);
-      writer.setUint8(this.C[0xdc]);
-      writer.setStringUTF8(
-        JSON.stringify({
-          recaptchaV3Token: "123",
-        }),
-      );
       this.sendPacket(writer);
     }
 
@@ -1134,7 +1122,6 @@
 
     this.skins = [];
 
-    this.mapImageLoaded = false;
     this.virusImageLoaded = false;
     this.skinImageLoaded = false;
 
@@ -3588,26 +3575,6 @@
       const showPosition = byId("showPosition");
       if (showPosition && !showPosition.checked) showPosition.click();
 
-      const reset = (type) => {
-        const white = "#ffffff";
-        switch (type) {
-          case "skin":
-            modSettings.game.skins.original = null;
-            modSettings.game.skins.replacement = null;
-            if (confirm("Please refresh the page to make it work. Reload?")) {
-              location.reload();
-            }
-            break;
-          case "virus":
-            modSettings.virusImage = "/assets/images/viruses/2.png";
-            if (confirm("Please refresh the page to make it work. Reload?")) {
-              location.reload();
-            }
-            break;
-        }
-        updateStorage();
-      };
-
       const loadStorage = () => {
         if (modSettings.virusImage) {
           loadVirusImage(modSettings.virusImage);
@@ -3662,7 +3629,6 @@
             const patternCtx = patternCanvas.getContext("2d");
             patternCtx.drawImage(img, 0, 0);
 
-            // Check for transparency
             const imageData = patternCtx.getImageData(
               0,
               0,
@@ -3686,7 +3652,6 @@
       }
 
       function clearPattern(ctx) {
-        // Prevent recursive calls
         isUpdatingPattern = true;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillStyle = modSettings.game.map.color || "#111111";
@@ -4048,7 +4013,6 @@
           const imageUrlInput = byId("image-url");
           const preview = byId(modal.previewId);
 
-          // Load initial value
           let initialUrl = "";
           if (modal.additional && type === "skin") {
             const [originalPath, replacementPath] = modal.storagePath;
@@ -8809,8 +8773,6 @@
         const preview = byId("tournaments_preview");
         if (preview) preview.remove();
 
-        window.sendFakeCaptcha();
-
         this.hideOverlays();
 
         this.showCountdownOverlay(data);
@@ -10693,17 +10655,20 @@
       // max values
       const statValues = {
         timeplayed: [
-          100_000, 150_000, 200_000, 250_000, 300_000, 400_000, 800_000,
-          1_000_000,
+          10_000, 50_000, 100_000, 150_000, 200_000, 250_000, 300_000, 400_000,
+          800_000, 1_000_000,
         ],
-        highestmass: [50_000, 100_000, 500_000, 700_000, 1_000_000, 5_000_000],
+        highestmass: [
+          50_000, 100_000, 500_000, 700_000, 1_000_000, 5_000_000, 10_000_000,
+        ],
         totaldeaths: [
-          1_000, 2_000, 3_000, 4_000, 5_000, 8_000, 10_000, 30_000, 50_000,
-          100_000,
+          100, 500, 1_000, 2_000, 3_000, 4_000, 5_000, 8_000, 10_000, 30_000,
+          50_000, 100_000,
         ],
         totalmass: [
-          500_000, 1_000_000, 2_000_000, 3_000_000, 5_000_000, 10_000_000,
-          50_000_000, 100_000_000, 500_000_000, 1_000_000_000,
+          100_000, 500_000, 1_000_000, 2_000_000, 3_000_000, 5_000_000,
+          10_000_000, 50_000_000, 100_000_000, 500_000_000, 1_000_000_000,
+          2_000_000_000, 5_000_000_000,
         ],
       };
 
@@ -10711,7 +10676,7 @@
         for (let value of values) {
           if (stat < value) return value;
         }
-        return values[values.length - 1]; // Return the highest value if stat exceeds all specified values
+        return values[values.length - 1];
       };
 
       const emojiLabels = ["⏲", "🏆", "💀", "🔢"];
@@ -11026,22 +10991,9 @@
       }
     },
 
-    /*
-     * verify that the page is the game so it doesn't load the mod on other pages
-     * +
-     * load mod once client settings have been initialized
-     */
-    verify() {
-      const canvas = document.querySelector("#canvas");
-      const darkThemeOption = byId("darkTheme");
-
-      if (!canvas || !darkThemeOption.value) return false;
-
-      return true;
-    },
-
     load() {
-      // Load game faster
+      // Load game faster; I don't think it's needed anymore because of the Sigmally update so it
+      // connects to the server as soon as you hit play, but let's play it safe
       function randomPos() {
         let eventOptions = {
           clientX: Math.floor(Math.random() * window.innerWidth),
@@ -11058,17 +11010,25 @@
       let moveInterval = setInterval(randomPos);
       setTimeout(() => clearInterval(moveInterval), 600);
 
-      while (!this.verify()) return;
+      // if Sigfixes is used, wait 500ms after the WebSocket is ready to ensure Sigfix has enough time to initialize
+      // This delay is necessary because no other method has been reliable and this is the simplest solution
+      // If Sigfixes is not used, it will just check if the WebSocket is ready
+      const loadMod = async () => {
+        const sigfixReady =
+          window.sigfix && typeof window.sigfix.net === "object";
 
-      // load mod when game websocket is ready
-      let loaded = false;
-      let intervalId = setInterval(() => {
-        if (!window.WebSocket) return;
-        loaded = true;
-        clearInterval(intervalId);
+        if (sigfixReady) await wait(300);
 
-        // load mod
         this.createMenu();
+      };
+
+      const intervalId = setInterval(() => {
+        const gameWsReady = window.gameSettings?.ws;
+
+        if (!gameWsReady) return;
+
+        clearInterval(intervalId);
+        loadMod();
       }, 400);
     },
 

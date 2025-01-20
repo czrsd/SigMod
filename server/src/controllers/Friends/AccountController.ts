@@ -5,12 +5,16 @@ import {
     validateUsername,
 } from '../../utils/validation';
 import bcrypt from 'bcryptjs';
-import { signJWT } from '../../utils/JWT';
-import { createSession } from '../../utils/sessions';
+import {
+    generateAccessToken,
+    generateRefreshToken,
+} from '../../utils/jwtUtils';
 import UserSettingsModel from '../../models/UserSettingsModel';
 import AccountModel, { IAccount } from '../../models/AccountModel';
 import { noXSS } from '../../utils/helpers';
-import { RegisterData } from '../../types';
+import { JWTPayload_accessToken, RegisterData } from '../../types';
+import { wsHandler } from '../../socket/setup';
+import passport from 'passport';
 
 class AccountController {
     async register(req: Request, res: Response): Promise<Response> {
@@ -137,30 +141,8 @@ class AccountController {
 
             await defaultSettings.save();
 
-            const session = await createSession(insertedUser._id);
-
-            if (!session) {
-                return res.status(400).json({
-                    success: false,
-                    errors: [
-                        {
-                            fieldName: 'Unknown Error',
-                            message:
-                                'An unknown error has occurred. Please try again.',
-                        },
-                    ],
-                });
-            }
-
-            const accessToken = signJWT(
-                { userId: insertedUser._id, sessionId: session.sessionId },
-                '5m'
-            );
-
-            const refreshToken = signJWT(
-                { sessionId: session.sessionId },
-                '1y'
-            );
+            const accessToken = generateAccessToken(insertedUser._id);
+            const refreshToken = generateRefreshToken(insertedUser._id);
 
             res.cookie('mod_accessToken', accessToken, {
                 maxAge: 300000, // 5 minutes
@@ -190,6 +172,81 @@ class AccountController {
                     'An error occurred while registering. Please try again later.',
             });
         }
+    }
+
+    async login(req: Request, res: Response) {
+        passport.authenticate(
+            'local',
+            (err: any, user: JWTPayload_accessToken, info: any) => {
+                if (err || !user) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Invalid credentials.',
+                    });
+                }
+
+                const accessToken = generateAccessToken(user.userId);
+                const refreshToken = generateRefreshToken(user.userId);
+
+                res.cookie('mod_accessToken', accessToken, {
+                    maxAge: 300000, // 5 minutes
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'none',
+                });
+
+                res.cookie('mod_refreshToken', refreshToken, {
+                    maxAge: 3.154e10, // 1 year
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'none',
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: 'Logged in successfully.',
+                    user,
+                });
+            }
+        )(req, res);
+    }
+
+    async auth(req: Request, res: Response) {
+        const user = req.user;
+        console.log(user);
+        const fullUser = await AccountModel.findOne({
+            _id: user?.userId,
+        }).select('-password');
+
+        if (!fullUser) {
+            return res
+                .status(401)
+                .json({ success: false, message: 'User not found.' });
+        }
+
+        const userSettings = await UserSettingsModel.findOne({
+            target: user?.userId,
+        });
+
+        if (!userSettings) {
+            return res.status(400).json({
+                success: false,
+                message: 'User settings not found.',
+            });
+        }
+
+        if (userSettings.static_status === 'online') {
+            await AccountModel.updateOne(
+                { _id: user?.userId },
+                { $set: { online: true, lastOnline: null } }
+            );
+        }
+
+        return res.status(200).json({
+            success: true,
+            user: fullUser,
+            settings: userSettings,
+        });
     }
 }
 

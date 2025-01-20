@@ -9,6 +9,8 @@ router.post(
     AccountController.register as unknown as RequestHandler
 );
 
+router.post('/login', AccountController.login as unknown as RequestHandler);
+
 router.get(
     '/auth',
     requireUser as unknown as RequestHandler,

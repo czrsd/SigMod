@@ -170,7 +170,7 @@
   });
 
   // for development
-  let isDev = false;
+  let isDev = true;
   let port = 3001;
 
   // global sigmod
@@ -918,9 +918,6 @@
         case "private-message":
           mods.updatePrivateChat(message.content);
           break;
-        case "mod-chat-message":
-          mods.updateModChat(message.content);
-          break;
         case "update-available":
           this.handleUpdateAvailable(message.content);
           break;
@@ -1074,7 +1071,6 @@
     this.profile = {};
     this.friends_settings = window.sigmod.friends_settings = {};
     this.friend_names = window.sigmod.friend_names = new Set();
-    this.modChatMessages = [];
 
     this.splitKey = {
       keyCode: 32,
@@ -1208,9 +1204,6 @@
         isDev
           ? `http://localhost:${port}/announcement/${id}`
           : `https://mod.czrsd.com/announcement/${id}`,
-      modChatMessages: isDev
-        ? `http://localhost:${port}/messages`
-        : `https://mod.czrsd.com/messages`,
       fonts: isDev
         ? `http://localhost:${port}/fonts`
         : "https://mod.czrsd.com/fonts",
@@ -5818,91 +5811,91 @@
           {
             name: "Shapes",
             background: "https://i.ibb.co/h8TmVyM/BG-2.png",
-            preview: "https://app.czrsd.com/static/themes/BG-2.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-2.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Blue",
             background: "https://i.ibb.co/9yQBfWj/BG-3.png",
-            preview: "https://app.czrsd.com/static/themes/BG-3.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-3.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Blue - 2",
             background: "https://i.ibb.co/7RJvNCX/BG-4.png",
-            preview: "https://app.czrsd.com/static/themes/BG-4.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-4.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Purple",
             background: "https://i.ibb.co/vxY15Tv/BG-5.png",
-            preview: "https://app.czrsd.com/static/themes/BG-5.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-5.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Orange Blue",
             background: "https://i.ibb.co/99nfFBN/BG-6.png",
-            preview: "https://app.czrsd.com/static/themes/BG-6.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-6.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Gradient",
             background: "https://i.ibb.co/hWMLwLS/BG-7.png",
-            preview: "https://app.czrsd.com/static/themes/BG-7.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-7.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Sky",
             background: "https://i.ibb.co/P4XqDFw/BG-9.png",
-            preview: "https://app.czrsd.com/static/themes/BG-9.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-9.jpg",
             text: "#000000",
           },
           {
             name: "Sunset",
             background: "https://i.ibb.co/0BVbYHC/BG-10.png",
-            preview: "https://app.czrsd.com/static/themes/BG-10.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/BG-10.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Galaxy",
             background: "https://i.ibb.co/MsssDKP/Galaxy.png",
-            preview: "https://app.czrsd.com/static/themes/Galaxy.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/Galaxy.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Planet",
             background: "https://i.ibb.co/KLqWM32/Planet.png",
-            preview: "https://app.czrsd.com/static/themes/Planet.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/Planet.jpg",
             text: "#FFFFFF",
           },
           {
             name: "colorful",
             background: "https://i.ibb.co/VqtB3TX/colorful.png",
-            preview: "https://app.czrsd.com/static/themes/colorful.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/colorful.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Sunset - 2",
             background: "https://i.ibb.co/TLp2nvv/Sunset.png",
-            preview: "https://app.czrsd.com/static/themes/Sunset.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/Sunset.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Epic",
             background: "https://i.ibb.co/kcv4tvn/Epic.png",
-            preview: "https://app.czrsd.com/static/themes/Epic.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/Epic.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Galaxy - 2",
             background: "https://i.ibb.co/smRs6V0/galaxy.png",
-            preview: "https://app.czrsd.com/static/themes/galaxy2.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/galaxy2.jpg",
             text: "#FFFFFF",
           },
           {
             name: "Cloudy",
             background: "https://i.ibb.co/MCW7Bcd/cloudy.png",
-            preview: "https://app.czrsd.com/static/themes/cloudy.jpg",
+            preview: "https://czrsd.com/static/sigmod/themes/cloudy.jpg",
             text: "#000000",
           },
         ],
@@ -9380,21 +9373,17 @@
       // add new content
       friendsMenu.innerHTML = `
                 <div class="friends_header">
-                    <button class="modButton-black" id="modchat_btn" style="width: 40px; min-width: 40px;">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="22"><path fill="#ffffff" d="M208 352c114.9 0 208-78.8 208-176S322.9 0 208 0S0 78.8 0 176c0 38.6 14.7 74.3 39.6 103.4c-3.5 9.4-8.7 17.7-14.2 24.7c-4.8 6.2-9.7 11-13.3 14.3c-1.8 1.6-3.3 2.9-4.3 3.7c-.5 .4-.9 .7-1.1 .8l-.2 .2 0 0 0 0C1 327.2-1.4 334.4 .8 340.9S9.1 352 16 352c21.8 0 43.8-5.6 62.1-12.5c9.2-3.5 17.8-7.4 25.3-11.4C134.1 343.3 169.8 352 208 352zM448 176c0 112.3-99.1 196.9-216.5 207C255.8 457.4 336.4 512 432 512c38.2 0 73.9-8.7 104.7-23.9c7.5 4 16 7.9 25.2 11.4c18.3 6.9 40.3 12.5 62.1 12.5c6.9 0 13.1-4.5 15.2-11.1c2.1-6.6-.2-13.8-5.8-17.9l0 0 0 0-.2-.2c-.2-.2-.6-.4-1.1-.8c-1-.8-2.5-2-4.3-3.7c-3.6-3.3-8.5-8.1-13.3-14.3c-5.5-7-10.7-15.4-14.2-24.7c24.9-29 39.6-64.7 39.6-103.4c0-92.8-84.9-168.9-192.6-175.5c.4 5.1 .6 10.3 .6 15.5z"/></svg>
-					</button>
                     <button class="modButton-black" id="friends_btn">Friends</button>
                     <button class="modButton-black" id="allusers_btn">All users</button>
                     <button class="modButton-black" id="requests_btn">Requests</button>
                     <button class="modButton-black" id="friends_settings_btn" style="width: 80px;">
-                        <img src="https://app.czrsd.com/static/settings.svg" width="22" />
+                        <img src="https://czrsd.com/static/sigmod/icons/settings.svg" width="22" />
                     </button>
                 </div>
                 <div class="friends_body scroll"></div>
             `;
 
       const elements = [
-        "#modchat_btn",
         "#friends_btn",
         "#allusers_btn",
         "#requests_btn",
@@ -9409,9 +9398,6 @@
           );
           button.classList.add("mod_selected");
           switch (button.id) {
-            case "modchat_btn":
-              that.openModChat();
-              break;
             case "friends_btn":
               that.openFriendsTab();
               break;
@@ -9508,154 +9494,6 @@
 
         byId("closeProfileEditor").addEventListener("click", hide);
       }
-    },
-
-    async getModChatMessages(offset = 0) {
-      const DEFAULT_AMOUNT = 15;
-      const res = await fetch(this.appRoutes.modChatMessages, {
-        credentials: "include",
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        this.modChatMessages.push(...data.messages);
-        return data.messages;
-      } else {
-        return [];
-      }
-    },
-
-    async openModChat() {
-      const friendsBody = document.querySelector(".friends_body");
-      const myId = this.profile._id;
-
-      const rawMessages =
-        this.modChatMessages.length === 0
-          ? await this.getModChatMessages()
-          : this.modChatMessages;
-      this.modChatMessages = rawMessages;
-      renderMessages(this.modChatMessages, friendsBody);
-
-      const text = byId("mod-message-text");
-      const send = byId("send-mod-message");
-      send.addEventListener("click", sendMessage);
-      text.addEventListener("keydown", (e) => {
-        e.stopPropagation();
-        if (e.key.toLowerCase() === "enter") {
-          sendMessage();
-        }
-      });
-
-      const messagesDiv = document.querySelector(".global-chat-content");
-
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-      function sendMessage() {
-        const msg = text.value;
-        if (msg.length === 0) return;
-        client.send({
-          type: "mod-chat-message",
-          content: msg,
-        });
-        text.value = "";
-      }
-
-      /**
-       * @param {Array} messages
-       * @param {HTMLElement} container
-       * @param {boolean} [scrollToBottom=true]
-       */
-      function renderMessages(messages, container, scrollToBottom = true) {
-        if (!messages || messages.length === 0) {
-          container.innerHTML = `
-						<div class="friends-chat-body w-100" style="height: calc(100% - 6px);">
-							<div class="friends-chat-messages global-chat-content scroll">
-								<center>No messages for today! Be the first one to write one.</center>
-							</div>
-							<div class="messenger-wrapper">
-								<div class="container">
-									<input type="text" class="form-control" placeholder="Enter a message..." id="mod-message-text" />
-									<button class="modButton-black" id="send-mod-message">Send</button>
-								</div>
-							</div>
-						</div>
-					`;
-          return;
-        }
-
-        const messageHTML = messages
-          .map((message) => {
-            const myMessage = message.user._id === myId;
-
-            const imageURL =
-              message.user.imageURL ||
-              "https://app.czrsd.com/static/sigmod_profile.png";
-            const username = message.user.username || "Unknown User";
-            const content = message.content || "";
-            const timestamp = message.timestamp
-              ? prettyTime.am_pm(message.timestamp)
-              : "";
-
-            return `
-							<div class="f-column ${myMessage ? "message-right" : ""}" data-message-id="${message._id}">
-								<div class="friends-message">
-									<div class="centerY g-5" ${myMessage ? 'style="flex-direction: row-reverse;"' : ""}>
-										<img src="${imageURL}" width="18" onerror="this.onerror=null; this.src='https://app.czrsd.com/static/sigmod_profile.png';" style="border-radius: 50%;" />
-										<span style="color: #a9a9a9">${username}</span>
-									</div>
-									<span ${myMessage ? 'style="text-align: end;"' : ""}>${content}</span>
-								</div>
-								<span class="message-date" ${myMessage ? 'style="text-align: end;"' : ""}>${timestamp}</span>
-							</div>
-						`;
-          })
-          .join("");
-
-        container.innerHTML = `
-					<div class="friends-chat-body w-100" style="height: calc(100% - 6px);">
-						<div class="friends-chat-messages global-chat-content scroll">
-							${messageHTML.length > 0 ? messageHTML : "<center>Couldn't get messages... Please try again later!</center>"}
-						</div>
-						<div class="messenger-wrapper">
-							<div class="container">
-								<input type="text" class="form-control" placeholder="Enter a message..." id="mod-message-text" />
-								<button class="modButton-black" id="send-mod-message">Send</button>
-							</div>
-						</div>
-					</div>
-				`;
-
-        if (scrollToBottom) {
-          const messagesDiv = container.querySelector(".global-chat-content");
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-      }
-    },
-
-    updateModChat(data) {
-      const { _id: messageId, timestamp, content, user } = data;
-      const { _id: userId, username, imageURL } = user;
-
-      let chatDiv = document.querySelector(".global-chat-content");
-      if (!chatDiv) {
-        return;
-      }
-
-      const myMessage = userId === this.profile._id;
-
-      chatDiv.innerHTML += `
-				<div class="f-column ${myMessage ? "message-right" : ""}">
-					<div class="friends-message">
-						<div class="centerY g-5" ${myMessage ? 'style="flex-direction: row-reverse;"' : ""}>
-							<img src="${imageURL}" width="18" onerror="this.onerror=null; this.src='https://app.czrsd.com/static/sigmod_profile.png';" style="border-radius: 50%;" />
-							<span style="color: #a9a9a9">${username}</span>
-						</div>
-						<span ${myMessage ? 'style="text-align: end;"' : ""}>${content}</span>
-					</div>
-					<span class="message-date" ${myMessage ? 'style="text-align: end;"' : ""}>${prettyTime.am_pm(timestamp)}</span>
-				</div>
-            `;
-      chatDiv.scrollTop = chatDiv.scrollHeight;
     },
 
     async openFriendsTab() {

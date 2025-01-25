@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
 import AccountModel from '../../../models/AccountModel';
 import logger from '../../../utils/logger';
+import UserSettingsModel from '../../../models/UserSettingsModel';
+import RequestModel from '../../../models/RequestModel';
+import FriendModel from '../../../models/FriendModel';
 
 class PublicUserController {
+    // POST
     async getAllUsers(req: Request, res: Response) {
         const { amount, offset } = req.body;
 
@@ -66,13 +70,14 @@ class PublicUserController {
             });
         } catch (e) {
             logger.error('Error fetching users: ', e);
-            return res.status(500).json({
+            return res.status(400).json({
                 success: false,
                 message: 'An error occurred while fetching users.',
             });
         }
     }
 
+    // GET
     async profile(req: Request, res: Response) {
         const { userId } = req.params;
 
@@ -99,12 +104,139 @@ class PublicUserController {
             });
         } catch (e) {
             logger.error('Error fetching profile: ', e);
-            return res.status(500).json({
+            return res.status(400).json({
                 success: false,
                 message: 'An error occurred while fetching the profile.',
             });
         }
     }
+
+    // POST
+    async friendRequest(req: Request, res: Response) {
+        const { req_id } = req.body;
+        const userId = req.user?.userId;
+
+        if (!req_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID for request is required.',
+            });
+        }
+
+        if (userId === req_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'You cannot send a friend request to yourself.',
+            });
+        }
+
+        try {
+            // check if the targeted user exists
+            const userExists = await AccountModel.find({ _id: req_id });
+            if (!userExists) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'User does not exist.',
+                });
+            }
+
+            // check if targeted user accepts friend requests
+            const targetUserSettings = await UserSettingsModel.findOne({
+                target: req_id,
+            });
+            if (
+                !targetUserSettings ||
+                targetUserSettings.accept_requests == false
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "User doesn't accept friend requests.",
+                });
+            }
+
+            // check if user has already sent a request to the target
+            const existingRequest = await RequestModel.findOne({
+                req_id,
+                target_id: userId,
+            });
+
+            if (existingRequest) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This request has already been opened.',
+                });
+            }
+
+            // check if user and target are already friends
+            const isFriend = await FriendModel.exists({
+                user_id: userId,
+                friend_id: req_id,
+            });
+            if (isFriend) {
+                return res.json({
+                    success: false,
+                    message: 'You are already friends!',
+                });
+            }
+
+            // open the request
+            await RequestModel.create({ req_id, target_id: userId });
+
+            res.json({
+                success: true,
+                message: 'Friend request sent!',
+            });
+        } catch (e) {
+            logger.error('Error sending friend request: ', e);
+            return res.status(400).json({
+                success: false,
+                message: 'An error occurred while sending friend request.',
+            });
+        }
+    }
+
+    // GET
+    async searchUser(req: Request, res: Response) {
+        const query = req.query.q;
+
+        if (!query || typeof query !== 'string') {
+            return res.status(400).json({
+                success: false,
+                message: 'No search query provided or invalid type.',
+            });
+        } else if (query.length > 40) {
+            return res.status(400).json({
+                success: false,
+                message: 'Search query too long.',
+            });
+        }
+
+        const regex = new RegExp(`^${query}`, 'i');
+
+        try {
+            const users = await AccountModel.find({ username: regex })
+                .select('id username role imageURL bio badges online')
+                .sort({ role: 1, username: 1 });
+
+            if (!users.length) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No user found with the given username or id.',
+                });
+            }
+
+            res.json({
+                success: true,
+                users,
+            });
+        } catch (e) {
+            logger.error('Error searching user: ', e);
+            return res.status(400).json({
+                success: false,
+                message: 'An error occurred while searching user.',
+            });
+        }
+    }
 }
 
-export default PublicUserController;
+export default new PublicUserController();

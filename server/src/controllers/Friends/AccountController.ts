@@ -213,6 +213,13 @@ class AccountController {
 
     async auth(req: Request, res: Response) {
         const user = req.user;
+
+        if (!user?.userId) {
+            return res
+                .status(401)
+                .json({ success: false, message: 'User not found.' });
+        }
+
         const fullUser = await AccountModel.findOne({
             _id: user?.userId,
         }).select('-password');

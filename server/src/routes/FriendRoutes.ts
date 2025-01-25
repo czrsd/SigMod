@@ -2,6 +2,7 @@ import { RequestHandler, Router } from 'express';
 import AccountController from '../controllers/Friends/AccountController';
 import UserController from '../controllers/Friends/public/UserController';
 import { requireUser } from '../middleware/requireUser';
+import ProfileController from '../controllers/Friends/private/ProfileController';
 
 const router = Router();
 
@@ -16,8 +17,14 @@ const routes = {
     profile: '/profile', // GET
     request: '/request', // POST
     search: '/search', // GET
+    // 'private' - me - profile requests
+    friends: '/me/friends', // GET
+    chatHistory: '/me/chat', // GET
 };
 
+/*************************************/
+/************PUBLIC ROUTES************/
+/*************************************/
 router.post(
     routes.register,
     AccountController.register as unknown as RequestHandler
@@ -51,6 +58,22 @@ router.get(
     routes.search,
     requireUser as unknown as RequestHandler,
     UserController.searchUser as unknown as RequestHandler
+);
+
+/*************************************/
+/***********PRIVATE ROUTES************/
+/*************************************/
+
+router.get(
+    routes.friends,
+    requireUser as unknown as RequestHandler,
+    ProfileController.getFriends as unknown as RequestHandler
+);
+
+router.get(
+    `${routes.chatHistory}/:id`,
+    requireUser as unknown as RequestHandler,
+    ProfileController.getChatHistory as unknown as RequestHandler
 );
 
 export default router;

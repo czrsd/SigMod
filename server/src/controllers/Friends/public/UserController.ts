@@ -72,6 +72,39 @@ class PublicUserController {
             });
         }
     }
+
+    async profile(req: Request, res: Response) {
+        const { userId } = req.params;
+
+        if (!userId || userId === 'undefined') {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is required.',
+            });
+        }
+
+        try {
+            const reqUser = await AccountModel.findOne({ _id: userId });
+
+            if (!reqUser) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found.',
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                user: reqUser,
+            });
+        } catch (e) {
+            logger.error('Error fetching profile: ', e);
+            return res.status(500).json({
+                success: false,
+                message: 'An error occurred while fetching the profile.',
+            });
+        }
+    }
 }
 
 export default PublicUserController;

@@ -1,4 +1,5 @@
 import socket from './socket';
+import { modAccount } from '../types';
 
 class WebSocketHandler {
     // replace any types later
@@ -28,6 +29,21 @@ class WebSocketHandler {
         });
 
         return serverSockets;
+    }
+
+    onlineFriends(ids: string[]): socket[] {
+        const onlineFriendSockets: socket[] = [];
+
+        ids.forEach((userId) => {
+            const socket = Array.from(this.sockets.values()).find(
+                (socket) => socket.modUser && socket.modUser._id === userId
+            );
+            if (socket) {
+                onlineFriendSockets.push(socket);
+            }
+        });
+
+        return onlineFriendSockets;
     }
 }
 

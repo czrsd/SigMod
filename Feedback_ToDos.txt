@@ -1,6 +1,7 @@
 Done:
 - Fonts
 - Fixed Emojis
+- Fixed icons in friends tab
 
 To do (from highest to lowest priority):
 

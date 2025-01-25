@@ -1,5 +1,6 @@
 Done:
 - Fonts
+- Fixed Emojis
 
 To do (from highest to lowest priority):
 

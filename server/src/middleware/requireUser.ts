@@ -46,12 +46,11 @@ export const requireUser = async (
     }
 
     try {
-        const decodedAccessToken = jwt.verify(
+        req.user = jwt.verify(
             accessToken,
             process.env.JWT_PRIVATE_KEY || ''
         ) as JWTPayload_accessToken;
 
-        req.user = decodedAccessToken;
         return next();
     } catch (err) {
         return res.status(401).json({ message: 'Unauthorized' });

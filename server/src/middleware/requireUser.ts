@@ -8,7 +8,7 @@ export const requireUser = async (
     req: Request,
     res: Response,
     next: NextFunction
-) => {
+): Promise<Response | void> => {
     let accessToken = req.cookies.mod_accessToken;
 
     if (!accessToken) {

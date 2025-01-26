@@ -12,7 +12,7 @@ import {
 import UserSettingsModel from '../../models/UserSettingsModel';
 import AccountModel, { IAccount } from '../../models/AccountModel';
 import { noXSS } from '../../utils/helpers';
-import { JWTPayload_accessToken, RegisterData } from '../../types';
+import { modAccount, RegisterData } from '../../types';
 import { wsHandler } from '../../socket/setup';
 import passport from 'passport';
 import logger from '../../utils/logger';
@@ -176,40 +176,79 @@ class AccountController {
     }
 
     async login(req: Request, res: Response) {
-        passport.authenticate(
-            'local',
-            (err: any, user: JWTPayload_accessToken) => {
-                if (err || !user) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Invalid credentials.',
+        try {
+            passport.authenticate(
+                'local',
+                async (
+                    err: any,
+                    user: {
+                        user: modAccount;
+                        accessToken: string;
+                        refreshToken: string;
+                    }
+                ) => {
+                    if (err || !user) {
+                        return res.status(400).json({
+                            success: false,
+                            message: 'Invalid credentials.',
+                        });
+                    }
+
+                    const accessToken = generateAccessToken(
+                        user.user._id?.toString() as string
+                    );
+                    const refreshToken = generateRefreshToken(
+                        user.user._id?.toString() as string
+                    );
+
+                    res.cookie('mod_accessToken', accessToken, {
+                        maxAge: 300000, // 5 minutes
+                        httpOnly: true,
+                        secure: true,
+                        sameSite: 'none',
+                    });
+
+                    res.cookie('mod_refreshToken', refreshToken, {
+                        maxAge: 3.154e10, // 1 year
+                        httpOnly: true,
+                        secure: true,
+                        sameSite: 'none',
+                    });
+
+                    const userSettings = await UserSettingsModel.findOne({
+                        target: user.user._id?.toString(),
+                    });
+
+                    if (!userSettings) {
+                        return res.status(400).json({
+                            success: false,
+                            message: 'User settings not found.',
+                        });
+                    }
+
+                    if (userSettings.static_status === 'online') {
+                        await AccountModel.updateOne(
+                            { _id: user.user._id?.toString() },
+                            { $set: { online: true, lastOnline: null } }
+                        );
+                    }
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Logged in successfully.',
+                        user: user.user,
+                        settings: userSettings,
                     });
                 }
-
-                const accessToken = generateAccessToken(user.userId);
-                const refreshToken = generateRefreshToken(user.userId);
-
-                res.cookie('mod_accessToken', accessToken, {
-                    maxAge: 300000, // 5 minutes
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: 'none',
-                });
-
-                res.cookie('mod_refreshToken', refreshToken, {
-                    maxAge: 3.154e10, // 1 year
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: 'none',
-                });
-
-                return res.status(200).json({
-                    success: true,
-                    message: 'Logged in successfully.',
-                    user,
-                });
-            }
-        )(req, res);
+            )(req, res);
+        } catch (e) {
+            logger.error('An error occurred while logging in: ', e);
+            return res.status(400).json({
+                success: false,
+                message:
+                    'An error occurred while logging in. Please try again.',
+            });
+        }
     }
 
     async auth(req: Request, res: Response) {

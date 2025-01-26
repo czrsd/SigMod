@@ -22,6 +22,7 @@ const routes = {
     edit: '/me/edit',
     friends: '/me/friends', // GET
     requests: '/me/requests', // GET
+    handleRequests: '/me/handle', // POST
     chatHistory: '/me/chat', // GET
 };
 
@@ -67,19 +68,21 @@ router.post(
     requireUser as RequestHandler,
     ProfileController.updateProfile as RequestHandler
 );
-
 router.get(
     routes.friends,
     requireUser as RequestHandler,
     ProfileController.getFriends as RequestHandler
 );
-
 router.get(
     routes.requests,
     requireUser as RequestHandler,
     ProfileController.getRequests as RequestHandler
 );
-
+router.post(
+    routes.handleRequests,
+    requireUser as RequestHandler,
+    ProfileController.handleRequests as RequestHandler
+);
 router.get(
     `${routes.chatHistory}/:id`,
     requireUser as RequestHandler,

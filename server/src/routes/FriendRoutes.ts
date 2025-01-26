@@ -19,6 +19,7 @@ const routes = {
     request: '/request', // POST
     search: '/search', // GET
     // 'private' - me - profile requests
+    edit: '/me/edit',
     friends: '/me/friends', // GET
     requests: '/me/requests', // GET
     chatHistory: '/me/chat', // GET
@@ -76,6 +77,12 @@ router.get(
 /*************************************/
 /***********PRIVATE ROUTES************/
 /*************************************/
+
+router.post(
+    routes.edit,
+    requireUser as unknown as RequestHandler,
+    ProfileController.updateProfile as unknown as RequestHandler
+);
 
 router.get(
     routes.friends,

@@ -5,6 +5,8 @@ import logger from '../../../utils/logger';
 import FriendModel from '../../../models/FriendModel';
 import { wsHandler } from '../../../socket/setup';
 import RequestModel from '../../../models/RequestModel';
+import { noXSS } from '../../../utils/helpers';
+import { validateUsername } from '../../../utils/validation';
 
 class ProfileController {
     // GET
@@ -138,6 +140,103 @@ class ProfileController {
             return res.status(400).json({
                 success: false,
                 message: 'An error occurred while fetching chat history.',
+            });
+        }
+    }
+
+    // POST
+    async updateProfile(req: Request, res: Response) {
+        const { changes, data } = req.body;
+
+        try {
+            const user = await AccountModel.findOne({ _id: req.user?.userId });
+
+            if (!user) {
+                return res.status(200).json({
+                    success: false,
+                    message: 'User not found.',
+                });
+            }
+
+            for (const change of changes) {
+                switch (change) {
+                    case 'username': {
+                        const existingUser = await AccountModel.findOne({
+                            username: data.username,
+                        });
+
+                        if (existingUser) {
+                            return res.status(400).json({
+                                success: false,
+                                message: 'Username is already taken.',
+                            });
+                        }
+
+                        const validUsername = validateUsername(data.username);
+                        // type is string if the username is not a valid one
+                        if (typeof validUsername === 'string') {
+                            return res.status(200).json({
+                                success: false,
+                                message: validUsername,
+                            });
+                        }
+
+                        const username = noXSS(data.username);
+
+                        await AccountModel.updateOne(
+                            {
+                                _id: user._id,
+                            },
+                            {
+                                $set: { username },
+                            }
+                        );
+
+                        break;
+                    }
+                    case 'bio': {
+                        const bio = noXSS(data.bio);
+                        if (
+                            user.role === 'Member' &&
+                            (bio.includes('http') ||
+                                bio.includes('.com') ||
+                                bio.includes('.gg'))
+                        ) {
+                            return res.status(200).json({
+                                success: false,
+                                message: 'Bio contains a link.',
+                            });
+                        }
+
+                        if (bio.length > 250) {
+                            return res.status(200).json({
+                                success: false,
+                                message: 'Bio is too long.',
+                            });
+                        }
+
+                        await AccountModel.updateOne(
+                            { _id: user._id },
+                            { $set: { bio } }
+                        );
+
+                        break;
+                    }
+                }
+
+                const updatedUser = await AccountModel.findOne({
+                    _id: user._id,
+                }).select('-password');
+
+                return res.status(200).json({
+                    success: true,
+                    user: updatedUser,
+                });
+            }
+        } catch (e) {
+            return res.status(200).json({
+                success: false,
+                message: 'An error occurred while updating profile.',
             });
         }
     }

@@ -15,6 +15,7 @@ import { noXSS } from '../../utils/helpers';
 import { JWTPayload_accessToken, RegisterData } from '../../types';
 import { wsHandler } from '../../socket/setup';
 import passport from 'passport';
+import logger from '../../utils/logger';
 
 class AccountController {
     async register(req: Request, res: Response): Promise<Response> {
@@ -253,6 +254,50 @@ class AccountController {
             user: fullUser,
             settings: userSettings,
         });
+    }
+
+    async logout(req: Request, res: Response) {
+        // clear token cookies
+        res.cookie('mod_accessToken', '', {
+            maxAge: 0,
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+        });
+
+        res.cookie('mod_refreshToken', '', {
+            maxAge: 0,
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+        });
+
+        try {
+            // set offline status
+            await AccountModel.updateOne(
+                {
+                    _id: req.user?.userId,
+                },
+                {
+                    $set: { online: false, lastOnline: new Date() },
+                }
+            );
+
+            // remove user object from req
+            req.user = undefined;
+
+            return res.status(200).json({
+                success: true,
+                message: 'You have been logged out successfully.',
+            });
+        } catch (e) {
+            logger.error('Error logging out user:', e);
+            return res.status(400).send({
+                success: false,
+                message:
+                    'An error occurred while logging out. Please try again later.',
+            });
+        }
     }
 }
 

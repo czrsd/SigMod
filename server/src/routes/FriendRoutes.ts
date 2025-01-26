@@ -12,6 +12,7 @@ const routes = {
     register: '/register', // POST
     login: '/login', // POST
     auth: '/auth', // GET
+    logout: '/logout', // GET
     // 'public' user request
     allUsers: '/users', // POST
     profile: '/profile', // GET
@@ -24,8 +25,9 @@ const routes = {
 };
 
 /*************************************/
-/************PUBLIC ROUTES************/
+/*************AUTH ROUTES*************/
 /*************************************/
+
 router.post(
     routes.register,
     AccountController.register as unknown as RequestHandler
@@ -38,6 +40,16 @@ router.get(
     requireUser as unknown as RequestHandler,
     AccountController.auth as unknown as RequestHandler
 );
+
+router.get(
+    routes.logout,
+    requireUser as unknown as RequestHandler,
+    AccountController.logout as unknown as RequestHandler
+);
+
+/*************************************/
+/************PUBLIC ROUTES************/
+/*************************************/
 
 router.post(
     routes.allUsers,

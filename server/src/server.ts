@@ -1,6 +1,7 @@
 import { config as loadConfig } from 'dotenv';
 import { expand as expandConfig } from 'dotenv-expand';
 import logger from './utils/logger';
+import setupExitHandlers from './utils/exitHandler';
 
 const loadEnvironment = () => {
     const envFile =
@@ -20,12 +21,13 @@ const loadEnvironment = () => {
 };
 
 loadEnvironment();
+setupExitHandlers();
 
-import './config/passport';
 import express, { Application } from 'express';
-import { wsServer } from './socket/setup';
-import setupMiddleware from './app';
+import './config/passport';
 import connectDB from './db/connection';
+import setupMiddleware from './app';
+import { wsServer } from './socket/setup';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;

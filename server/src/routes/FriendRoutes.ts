@@ -25,81 +25,65 @@ const routes = {
     chatHistory: '/me/chat', // GET
 };
 
-/*************************************/
-/*************AUTH ROUTES*************/
-/*************************************/
-
-router.post(
-    routes.register,
-    AccountController.register as unknown as RequestHandler
-);
-
-router.post(routes.login, AccountController.login as unknown as RequestHandler);
-
+// AUTH ROUTES
+router.post(routes.register, AccountController.register as RequestHandler);
+router.post(routes.login, AccountController.login as RequestHandler);
 router.get(
     routes.auth,
-    requireUser as unknown as RequestHandler,
-    AccountController.auth as unknown as RequestHandler
+    requireUser as RequestHandler,
+    AccountController.auth as RequestHandler
 );
-
 router.get(
     routes.logout,
-    requireUser as unknown as RequestHandler,
-    AccountController.logout as unknown as RequestHandler
+    requireUser as RequestHandler,
+    AccountController.logout as RequestHandler
 );
 
-/*************************************/
-/************PUBLIC ROUTES************/
-/*************************************/
-
+// PUBLIC ROUTES
 router.post(
     routes.allUsers,
-    requireUser as unknown as RequestHandler,
-    UserController.getAllUsers as unknown as RequestHandler
+    requireUser as RequestHandler,
+    UserController.getAllUsers as RequestHandler
 );
-
 router.get(
     `${routes.profile}/:userId`,
-    requireUser as unknown as RequestHandler,
-    UserController.profile as unknown as RequestHandler
+    requireUser as RequestHandler,
+    UserController.profile as RequestHandler
 );
 router.post(
     routes.request,
-    requireUser as unknown as RequestHandler,
-    UserController.friendRequest as unknown as RequestHandler
+    requireUser as RequestHandler,
+    UserController.friendRequest as RequestHandler
 );
 router.get(
     routes.search,
-    requireUser as unknown as RequestHandler,
-    UserController.searchUser as unknown as RequestHandler
+    requireUser as RequestHandler,
+    UserController.searchUser as RequestHandler
 );
 
-/*************************************/
-/***********PRIVATE ROUTES************/
-/*************************************/
-
+// PRIVATE ROUTES
 router.post(
     routes.edit,
-    requireUser as unknown as RequestHandler,
-    ProfileController.updateProfile as unknown as RequestHandler
+    requireUser as RequestHandler,
+    ProfileController.updateProfile as RequestHandler
 );
 
 router.get(
     routes.friends,
-    requireUser as unknown as RequestHandler,
-    ProfileController.getFriends as unknown as RequestHandler
+    requireUser as RequestHandler,
+    ProfileController.getFriends as RequestHandler
 );
 
 router.get(
     routes.requests,
-    requireUser as unknown as RequestHandler,
-    ProfileController.getRequests as unknown as RequestHandler
+    requireUser as RequestHandler,
+    ProfileController.getRequests as RequestHandler
 );
 
 router.get(
     `${routes.chatHistory}/:id`,
-    requireUser as unknown as RequestHandler,
-    ProfileController.getChatHistory as unknown as RequestHandler
+    requireUser as RequestHandler,
+    ProfileController.getChatHistory as RequestHandler
 );
 
 export default router;

@@ -9,58 +9,39 @@ import { noXSS } from '../../../utils/helpers';
 import { validateUsername } from '../../../utils/validation';
 
 class ProfileController {
+    constructor() {
+        this.getFriends = this.getFriends.bind(this);
+        this.getRequests = this.getRequests.bind(this);
+        this.getChatHistory = this.getChatHistory.bind(this);
+        this.updateProfile = this.updateProfile.bind(this);
+    }
+
     // GET
     async getFriends(req: Request, res: Response) {
         const userId = req.user?.userId;
 
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is missing.',
+            });
+        }
+
         try {
             const friendDocs = await FriendModel.find({ user_id: userId });
-            const friendIds: string[] = friendDocs.map((doc) =>
-                doc.friend_id.toString()
-            );
+            const friendIds = friendDocs.map((doc) => doc.friend_id.toString());
 
-            const friends = await Promise.all(
-                friendIds.map(async (friendId) => {
-                    const profile = await AccountModel.findOne({
-                        _id: friendId,
-                    });
-                    if (!profile) {
-                        throw new Error('User not found.');
-                    }
-                    return profile;
-                })
-            );
-
+            const friends = await this.fetchProfiles(friendIds);
             const onlineFriends = wsHandler
                 .onlineFriends(friendIds)
                 .filter((friend) => friend.modUser?._id);
 
-            for (const onlineFriend of onlineFriends) {
-                const i = friends.findIndex(
-                    (friend) =>
-                        friend._id.toString() === onlineFriend.modUser!._id
-                );
+            this.mergeOnlineStatus(friends, onlineFriends);
 
-                if (i === -1) continue;
-
-                const { password, ...modifiedFriend } = {
-                    ...friends[i].toObject(),
-                    server: onlineFriend.server,
-                    tag: onlineFriend.tag,
-                    nick: onlineFriend.nick,
-                };
-
-                friends[i] =
-                    modifiedFriend as unknown as (typeof friends)[number];
-            }
-
-            return res.json({
-                success: true,
-                friends,
-            });
+            return res.json({ success: true, friends });
         } catch (e) {
             logger.error('An error occurred while fetching friends: ', e);
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: 'An error occurred while fetching friends.',
             });
@@ -71,31 +52,32 @@ class ProfileController {
     async getRequests(req: Request, res: Response) {
         const userId = req.user?.userId;
 
+        if (!userId) {
+            return res
+                .status(400)
+                .json({ success: false, message: 'User ID is missing.' });
+        }
+
         try {
             const requestIds = await RequestModel.find({ req_id: userId });
 
-            const requests = [];
+            const requests = await Promise.all(
+                requestIds.map(async (request) => {
+                    const profile = await AccountModel.findOne({
+                        _id: request.target_id,
+                    }).select('-password');
+                    return profile ?? null;
+                })
+            );
 
-            for (const request of requestIds) {
-                const profile = await AccountModel.findOne({
-                    _id: request.target_id,
-                });
-                delete profile?.password;
-
-                if (!profile) continue;
-
-                requests.push(profile);
-            }
-
-            return res.status(200).json({
-                success: true,
-                body: requests,
-            });
+            return res
+                .status(200)
+                .json({ success: true, body: requests.filter(Boolean) });
         } catch (e) {
             logger.error('An error occurred while fetching requests: ', e);
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
-                message: 'Ann error occurred while fetching requests.',
+                message: 'An error occurred while fetching requests.',
             });
         }
     }
@@ -114,11 +96,10 @@ class ProfileController {
         const userId = req.user?.userId;
 
         try {
-            const myProfile = await AccountModel.findOne({ _id: userId });
-            const targetProfile = await AccountModel.findOne(
-                { _id: targetId },
-                { $set: '-password' }
-            );
+            const [myProfile, targetProfile] = await Promise.all([
+                AccountModel.findOne({ _id: userId }),
+                AccountModel.findOne({ _id: targetId }).select('-password'),
+            ]);
 
             if (!targetProfile || !myProfile) {
                 return res.status(404).json({
@@ -126,6 +107,7 @@ class ProfileController {
                     message: 'User not found.',
                 });
             }
+
             const chatHistory = await ChatModel.find({
                 sender_id: { $in: [myProfile._id, targetProfile._id] },
             });
@@ -137,7 +119,7 @@ class ProfileController {
             });
         } catch (e) {
             logger.error('Error fetching chat history: ', e);
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: 'An error occurred while fetching chat history.',
             });
@@ -148,97 +130,126 @@ class ProfileController {
     async updateProfile(req: Request, res: Response) {
         const { changes, data } = req.body;
 
+        if (!changes || !data) {
+            return res
+                .status(400)
+                .json({ success: false, message: 'Invalid request body.' });
+        }
+
+        const user = await AccountModel.findOne({ _id: req.user?.userId });
+
+        if (!user) {
+            return res
+                .status(404)
+                .json({ success: false, message: 'User not found.' });
+        }
+
         try {
-            const user = await AccountModel.findOne({ _id: req.user?.userId });
+            const updateTasks = changes.map((change: string) =>
+                this.handleProfileChange(change, user, data, res)
+            );
+            await Promise.all(updateTasks);
 
-            if (!user) {
-                return res.status(200).json({
-                    success: false,
-                    message: 'User not found.',
-                });
-            }
-
-            for (const change of changes) {
-                switch (change) {
-                    case 'username': {
-                        const existingUser = await AccountModel.findOne({
-                            username: data.username,
-                        });
-
-                        if (existingUser) {
-                            return res.status(400).json({
-                                success: false,
-                                message: 'Username is already taken.',
-                            });
-                        }
-
-                        const validUsername = validateUsername(data.username);
-                        // type is string if the username is not a valid one
-                        if (typeof validUsername === 'string') {
-                            return res.status(200).json({
-                                success: false,
-                                message: validUsername,
-                            });
-                        }
-
-                        const username = noXSS(data.username);
-
-                        await AccountModel.updateOne(
-                            {
-                                _id: user._id,
-                            },
-                            {
-                                $set: { username },
-                            }
-                        );
-
-                        break;
-                    }
-                    case 'bio': {
-                        const bio = noXSS(data.bio);
-                        if (
-                            user.role === 'Member' &&
-                            (bio.includes('http') ||
-                                bio.includes('.com') ||
-                                bio.includes('.gg'))
-                        ) {
-                            return res.status(200).json({
-                                success: false,
-                                message: 'Bio contains a link.',
-                            });
-                        }
-
-                        if (bio.length > 250) {
-                            return res.status(200).json({
-                                success: false,
-                                message: 'Bio is too long.',
-                            });
-                        }
-
-                        await AccountModel.updateOne(
-                            { _id: user._id },
-                            { $set: { bio } }
-                        );
-
-                        break;
-                    }
-                }
-
-                const updatedUser = await AccountModel.findOne({
-                    _id: user._id,
-                }).select('-password');
-
-                return res.status(200).json({
-                    success: true,
-                    user: updatedUser,
-                });
-            }
+            const updatedUser = await AccountModel.findOne({
+                _id: user._id,
+            }).select('-password');
+            return res.status(200).json({ success: true, user: updatedUser });
         } catch (e) {
-            return res.status(200).json({
+            logger.error('Error updating profile: ', e);
+            return res.status(500).json({
                 success: false,
                 message: 'An error occurred while updating profile.',
             });
         }
+    }
+
+    // helper methods
+    private async fetchProfiles(friendIds: string[]) {
+        return Promise.all(
+            friendIds.map(async (friendId) => {
+                const profile = await AccountModel.findOne({ _id: friendId });
+                if (!profile) throw new Error('User not found.');
+                return profile;
+            })
+        );
+    }
+
+    private mergeOnlineStatus(friends: any[], onlineFriends: any[]) {
+        for (const onlineFriend of onlineFriends) {
+            const friendIndex = friends.findIndex(
+                (friend) => friend._id.toString() === onlineFriend.modUser!._id
+            );
+            if (friendIndex === -1) continue;
+
+            const { password, ...modifiedFriend } = {
+                ...friends[friendIndex].toObject(),
+                server: onlineFriend.server,
+                tag: onlineFriend.tag,
+                nick: onlineFriend.nick,
+            };
+
+            friends[friendIndex] = modifiedFriend as any;
+        }
+    }
+
+    private async handleProfileChange(
+        change: string,
+        user: any,
+        data: any,
+        res: Response
+    ) {
+        switch (change) {
+            case 'username':
+                return this.updateUsername(user, data.username, res);
+            case 'bio':
+                return this.updateBio(user, data.bio, res);
+            default:
+                return Promise.resolve();
+        }
+    }
+
+    private async updateUsername(user: any, username: string, res: Response) {
+        const existingUser = await AccountModel.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username is already taken.',
+            });
+        }
+
+        const validUsername = validateUsername(username);
+        if (typeof validUsername === 'string') {
+            return res
+                .status(400)
+                .json({ success: false, message: validUsername });
+        }
+
+        const sanitizedUsername = noXSS(username);
+        await AccountModel.updateOne(
+            { _id: user._id },
+            { $set: { username: sanitizedUsername } }
+        );
+    }
+
+    private async updateBio(user: any, bio: string, res: Response) {
+        const sanitizedBio = noXSS(bio);
+
+        if (user.role === 'Member' && /http|\.com|\.gg/.test(sanitizedBio)) {
+            return res
+                .status(400)
+                .json({ success: false, message: 'Bio contains a link.' });
+        }
+
+        if (sanitizedBio.length > 250) {
+            return res
+                .status(400)
+                .json({ success: false, message: 'Bio is too long.' });
+        }
+
+        await AccountModel.updateOne(
+            { _id: user._id },
+            { $set: { bio: sanitizedBio } }
+        );
     }
 }
 

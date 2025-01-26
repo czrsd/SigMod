@@ -7,7 +7,7 @@ import FriendModel from '../../../models/FriendModel';
 
 class PublicUserController {
     // POST
-    async getAllUsers(req: Request, res: Response) {
+    async getAllUsers(req: Request, res: Response): Promise<Response | void> {
         const { amount, offset } = req.body;
 
         if (!amount || amount < 1 || amount > 100) {
@@ -78,7 +78,7 @@ class PublicUserController {
     }
 
     // GET
-    async profile(req: Request, res: Response) {
+    async profile(req: Request, res: Response): Promise<Response | void> {
         const { userId } = req.params;
 
         if (!userId || userId === 'undefined') {
@@ -112,7 +112,7 @@ class PublicUserController {
     }
 
     // POST
-    async friendRequest(req: Request, res: Response) {
+    async friendRequest(req: Request, res: Response): Promise<Response | void> {
         const { req_id } = req.body;
         const userId = req.user?.userId;
 
@@ -196,7 +196,7 @@ class PublicUserController {
     }
 
     // GET
-    async searchUser(req: Request, res: Response) {
+    async searchUser(req: Request, res: Response): Promise<Response | void> {
         const query = req.query.q;
 
         if (!query || typeof query !== 'string') {

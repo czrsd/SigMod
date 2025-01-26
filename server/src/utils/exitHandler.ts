@@ -1,4 +1,5 @@
 import AccountModel from '../models/AccountModel';
+import logger from './logger';
 
 const cleanup = async (): Promise<void> => {
     await AccountModel.updateMany(
@@ -6,12 +7,12 @@ const cleanup = async (): Promise<void> => {
         { online: false, lastOnline: new Date() }
     );
 
-    console.log('Cleanup performed successfully.');
+    logger.info('Cleanup performed successfully.');
 };
 
 const setupExitHandlers = () => {
     process.on('exit', async (code) => {
-        console.log(`Process is exiting with code: ${code}`);
+        logger.info(`Process is exiting with code: ${code}`);
         await cleanup();
     });
 

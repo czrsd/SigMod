@@ -175,7 +175,7 @@ class AccountController {
         }
     }
 
-    async login(req: Request, res: Response) {
+    async login(req: Request, res: Response): Promise<Response | void> {
         try {
             passport.authenticate(
                 'local',
@@ -251,7 +251,7 @@ class AccountController {
         }
     }
 
-    async auth(req: Request, res: Response) {
+    async auth(req: Request, res: Response): Promise<Response | void> {
         const user = req.user;
 
         if (!user?.userId) {
@@ -295,7 +295,7 @@ class AccountController {
         });
     }
 
-    async logout(req: Request, res: Response) {
+    async logout(req: Request, res: Response): Promise<Response | void> {
         // clear token cookies
         res.cookie('mod_accessToken', '', {
             maxAge: 0,

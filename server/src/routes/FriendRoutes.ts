@@ -3,6 +3,7 @@ import AccountController from '../controllers/Friends/AccountController';
 import UserController from '../controllers/Friends/public/UserController';
 import { requireUser } from '../middleware/requireUser';
 import ProfileController from '../controllers/Friends/private/ProfileController';
+import ProfileImageController from '../controllers/Friends/private/ProfileImageController';
 
 const router = Router();
 
@@ -24,6 +25,8 @@ const routes = {
     requests: '/me/requests', // GET
     handleRequests: '/me/handle', // POST
     chatHistory: '/me/chat', // GET
+    uploadImage: '/me/upload', // POST
+    removeImage: '/me/remove', // POST
 };
 
 // AUTH ROUTES
@@ -87,6 +90,18 @@ router.get(
     `${routes.chatHistory}/:id`,
     requireUser as RequestHandler,
     ProfileController.getChatHistory as RequestHandler
+);
+// Profile image
+router.post(
+    routes.uploadImage,
+    requireUser as RequestHandler,
+    ProfileImageController.upload.single('image') as RequestHandler,
+    ProfileImageController.uploadImage as RequestHandler
+);
+router.post(
+    routes.removeImage,
+    requireUser as RequestHandler,
+    ProfileImageController.removeProfileImage as RequestHandler
 );
 
 export default router;

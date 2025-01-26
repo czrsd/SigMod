@@ -1,5 +1,3 @@
-// import { JWTPayload_accessToken as UserPayload } from './auth';
-
 declare global {
     namespace Express {
         interface Request {

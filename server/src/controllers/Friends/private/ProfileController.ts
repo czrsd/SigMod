@@ -14,37 +14,37 @@ class ProfileController {
         this.getRequests = this.getRequests.bind(this);
         this.getChatHistory = this.getChatHistory.bind(this);
         this.updateProfile = this.updateProfile.bind(this);
-    }
-
-    private sendErrorResponse(
-        res: Response,
-        message: string,
-        statusCode = 500
-    ) {
-        return res.status(statusCode).json({ success: false, message });
+        this.handleRequests = this.handleRequests.bind(this);
     }
 
     // GET Friends
     async getFriends(req: Request, res: Response): Promise<Response | void> {
         const userId = req.user?.userId;
         if (!userId)
-            return this.sendErrorResponse(res, 'User ID is missing.', 200);
+            return res
+                .status(200)
+                .json({ success: false, message: 'User ID is missing.' });
 
         try {
             const friendDocs = await FriendModel.find({ user_id: userId });
+
             const friendIds = friendDocs.map((doc) => doc.friend_id.toString());
+
             const friends = await this.fetchProfiles(friendIds);
+
             const onlineFriends = wsHandler
                 .onlineFriends(friendIds)
                 .filter((friend) => friend.modUser?._id);
+
             this.mergeOnlineStatus(friends, onlineFriends);
+
             return res.json({ success: true, friends });
         } catch (e) {
             logger.error('An error occurred while fetching friends: ', e);
-            return this.sendErrorResponse(
-                res,
-                'An error occurred while fetching friends.'
-            );
+            return res.status(200).json({
+                success: false,
+                message: 'An error occurred while fetching friends.',
+            });
         }
     }
 
@@ -52,24 +52,28 @@ class ProfileController {
     async getRequests(req: Request, res: Response): Promise<Response | void> {
         const userId = req.user?.userId;
         if (!userId)
-            return this.sendErrorResponse(res, 'User ID is missing.', 200);
+            return res
+                .status(200)
+                .json({ success: false, message: 'User ID is missing.' });
 
         try {
             const requestIds = await RequestModel.find({ req_id: userId });
+
             const requests = await Promise.all(
                 requestIds.map((request) =>
                     this.fetchProfile(request.target_id.toString())
                 )
             );
+
             return res
                 .status(200)
                 .json({ success: true, body: requests.filter(Boolean) });
         } catch (e) {
             logger.error('An error occurred while fetching requests: ', e);
-            return this.sendErrorResponse(
-                res,
-                'An error occurred while fetching requests.'
-            );
+            return res.status(200).json({
+                success: false,
+                message: 'An error occurred while fetching requests.',
+            });
         }
     }
 
@@ -80,7 +84,9 @@ class ProfileController {
     ): Promise<Response | void> {
         const { id: targetId } = req.params;
         if (!targetId)
-            return this.sendErrorResponse(res, 'No target provided.', 200);
+            return res
+                .status(200)
+                .json({ success: false, message: 'No target provided.' });
 
         const userId = req.user?.userId;
 
@@ -89,12 +95,16 @@ class ProfileController {
                 AccountModel.findById(userId),
                 AccountModel.findById(targetId).select('-password'),
             ]);
+
             if (!myProfile || !targetProfile)
-                return this.sendErrorResponse(res, 'User not found.', 200);
+                return res
+                    .status(200)
+                    .json({ success: false, message: 'User not found.' });
 
             const chatHistory = await ChatModel.find({
                 sender_id: { $in: [myProfile._id, targetProfile._id] },
             });
+
             return res.status(200).json({
                 success: true,
                 history: chatHistory,
@@ -102,10 +112,10 @@ class ProfileController {
             });
         } catch (e) {
             logger.error('Error fetching chat history: ', e);
-            return this.sendErrorResponse(
-                res,
-                'An error occurred while fetching chat history.'
-            );
+            return res.status(200).json({
+                success: false,
+                message: 'An error occurred while fetching chat history.',
+            });
         }
     }
 
@@ -113,47 +123,57 @@ class ProfileController {
     async updateProfile(req: Request, res: Response): Promise<Response | void> {
         const { changes, data } = req.body;
         if (!changes || !data)
-            return this.sendErrorResponse(res, 'Invalid request body.', 200);
+            return res
+                .status(200)
+                .json({ success: false, message: 'Invalid request body.' });
 
         const user = await AccountModel.findById(req.user?.userId);
-        if (!user) return this.sendErrorResponse(res, 'User not found.', 200);
+
+        if (!user)
+            return res
+                .status(200)
+                .json({ success: false, message: 'User not found.' });
 
         try {
             const updateTasks = changes.map((change: string) =>
                 this.handleProfileChange(change, user, data, res)
             );
+
             await Promise.all(updateTasks);
+
             const updatedUser = await AccountModel.findById(user._id).select(
                 '-password'
             );
+
             return res.status(200).json({ success: true, user: updatedUser });
         } catch (e) {
             logger.error('Error updating profile: ', e);
-            return this.sendErrorResponse(
-                res,
-                'An error occurred while updating profile.'
-            );
+            return res.status(200).json({
+                success: false,
+                message: 'An error occurred while updating profile.',
+            });
         }
     }
 
-    // handle friend request actions
+    // POST handle friend request actions
     async handleRequests(
         req: Request,
         res: Response
     ): Promise<Response | void> {
         const { type, userId: reqId } = req.body;
         const userId = req.user?.userId;
+
         if (!type || !reqId || !userId)
-            return this.sendErrorResponse(
-                res,
-                'No type or userId provided.',
-                400
-            );
+            return res.status(200).json({
+                success: false,
+                message: 'No type or userId provided.',
+            });
 
         try {
             if (type === 'remove-friend') {
                 await this.removeFriend(userId, reqId);
-                return res.json({
+
+                return res.status(200).json({
                     success: true,
                     message: 'Friend has been removed.',
                 });
@@ -161,21 +181,22 @@ class ProfileController {
 
             if (type.includes('request')) {
                 await this.handleFriendRequest(type, userId, reqId);
-                return res.json({ success: true });
+
+                return res.status(200).json({ success: true });
             }
         } catch (e) {
             logger.error(
                 'An error occurred while handling friend request: ',
                 e
             );
-            return this.sendErrorResponse(
-                res,
-                'An error occurred while handling the friend request.'
-            );
+            return res.status(200).json({
+                success: false,
+                message: 'An error occurred while handling the friend request.',
+            });
         }
     }
 
-    // Helper methods
+    // helper methods
     private async fetchProfiles(friendIds: string[]) {
         return Promise.all(
             friendIds.map((friendId) => this.fetchProfile(friendId))
@@ -215,7 +236,7 @@ class ProfileController {
     private async updateUsername(user: any, username: string, res: Response) {
         const existingUser = await AccountModel.findOne({ username });
         if (existingUser)
-            return res.status(400).json({
+            return res.status(200).json({
                 success: false,
                 message: 'Username is already taken.',
             });
@@ -223,7 +244,7 @@ class ProfileController {
         const validUsername = validateUsername(username);
         if (typeof validUsername === 'string')
             return res
-                .status(400)
+                .status(200)
                 .json({ success: false, message: validUsername });
 
         const sanitizedUsername = noXSS(username);
@@ -237,11 +258,11 @@ class ProfileController {
         const sanitizedBio = noXSS(bio);
         if (user.role === 'Member' && /http|\.com|\.gg/.test(sanitizedBio))
             return res
-                .status(400)
+                .status(200)
                 .json({ success: false, message: 'Bio contains a link.' });
         if (sanitizedBio.length > 250)
             return res
-                .status(400)
+                .status(200)
                 .json({ success: false, message: 'Bio is too long.' });
 
         await AccountModel.updateOne(

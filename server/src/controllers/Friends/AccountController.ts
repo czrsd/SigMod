@@ -18,7 +18,7 @@ import passport from 'passport';
 import logger from '../../utils/logger';
 
 class AccountController {
-    async register(req: Request, res: Response): Promise<Response> {
+    async register(req: Request, res: Response): Promise<Response | void> {
         try {
             const data: RegisterData = req.body;
             if (!data || Object.entries(data).length === 0) {

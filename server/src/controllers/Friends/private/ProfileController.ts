@@ -4,6 +4,7 @@ import ChatModel from '../../../models/ChatModel';
 import logger from '../../../utils/logger';
 import FriendModel from '../../../models/FriendModel';
 import { wsHandler } from '../../../socket/setup';
+import RequestModel from '../../../models/RequestModel';
 
 class ProfileController {
     // GET
@@ -60,6 +61,39 @@ class ProfileController {
             return res.status(400).json({
                 success: false,
                 message: 'An error occurred while fetching friends.',
+            });
+        }
+    }
+
+    // GET
+    async getRequests(req: Request, res: Response) {
+        const userId = req.user?.userId;
+
+        try {
+            const requestIds = await RequestModel.find({ req_id: userId });
+
+            const requests = [];
+
+            for (const request of requestIds) {
+                const profile = await AccountModel.findOne({
+                    _id: request.target_id,
+                });
+                delete profile?.password;
+
+                if (!profile) continue;
+
+                requests.push(profile);
+            }
+
+            return res.status(200).json({
+                success: true,
+                body: requests,
+            });
+        } catch (e) {
+            logger.error('An error occurred while fetching requests: ', e);
+            return res.status(400).json({
+                success: false,
+                message: 'Ann error occurred while fetching requests.',
             });
         }
     }

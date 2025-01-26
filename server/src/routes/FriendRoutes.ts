@@ -19,6 +19,7 @@ const routes = {
     search: '/search', // GET
     // 'private' - me - profile requests
     friends: '/me/friends', // GET
+    requests: '/me/requests', // GET
     chatHistory: '/me/chat', // GET
 };
 
@@ -68,6 +69,12 @@ router.get(
     routes.friends,
     requireUser as unknown as RequestHandler,
     ProfileController.getFriends as unknown as RequestHandler
+);
+
+router.get(
+    routes.requests,
+    requireUser as unknown as RequestHandler,
+    ProfileController.getRequests as unknown as RequestHandler
 );
 
 router.get(

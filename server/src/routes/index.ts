@@ -15,5 +15,5 @@ export default (app: Application) => {
     app.use(DiscordRoutes);
     app.use(FriendRoutes);
 
-    app.use(`/profiles`, express.static(path.join(process.cwd(), 'profiles')));
+    app.use('/profiles', express.static(path.join(process.cwd(), 'profiles')));
 };

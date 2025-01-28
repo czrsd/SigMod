@@ -38,6 +38,7 @@ class ProfileImageController {
         this.uploadImage = this.uploadImage.bind(this);
     }
 
+    // POST upload profile image
     async uploadImage(req: Request, res: Response): Promise<Response | void> {
         if (!req.file) {
             return res
@@ -105,6 +106,7 @@ class ProfileImageController {
         return null;
     };
 
+    // GET remove profile image
     async removeProfileImage(
         req: Request,
         res: Response

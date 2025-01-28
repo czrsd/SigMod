@@ -21,12 +21,13 @@ const routes = {
     search: '/search', // GET
     // 'private' - me - profile requests
     edit: '/me/edit',
+    updateSettings: '/me/update-settings', // POST
     friends: '/me/friends', // GET
     requests: '/me/requests', // GET
     handleRequests: '/me/handle', // POST
     chatHistory: '/me/chat', // GET
     uploadImage: '/me/upload', // POST
-    removeImage: '/me/remove', // POST
+    removeImage: '/me/remove', // GET
 };
 
 // AUTH ROUTES
@@ -71,6 +72,11 @@ router.post(
     requireUser as RequestHandler,
     ProfileController.updateProfile as RequestHandler
 );
+router.post(
+    routes.updateSettings,
+    requireUser as RequestHandler,
+    ProfileController.updateSettings as RequestHandler
+);
 router.get(
     routes.friends,
     requireUser as RequestHandler,
@@ -98,7 +104,7 @@ router.post(
     ProfileImageController.upload.single('image') as RequestHandler,
     ProfileImageController.uploadImage as RequestHandler
 );
-router.post(
+router.get(
     routes.removeImage,
     requireUser as RequestHandler,
     ProfileImageController.removeProfileImage as RequestHandler

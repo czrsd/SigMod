@@ -7,6 +7,7 @@ import { wsHandler } from '../../../socket/setup';
 import RequestModel from '../../../models/RequestModel';
 import { noXSS } from '../../../utils/helpers';
 import { validateUsername } from '../../../utils/validation';
+import UserSettingsModel from '../../../models/UserSettingsModel';
 
 class ProfileController {
     constructor() {
@@ -193,6 +194,83 @@ class ProfileController {
                 success: false,
                 message: 'An error occurred while handling the friend request.',
             });
+        }
+    }
+
+    // POST update settings
+    async updateSettings(
+        req: Request,
+        res: Response
+    ): Promise<Response | void> {
+        const { type, data } = req.body;
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            return res
+                .status(400)
+                .json({ success: false, message: 'User ID is missing.' });
+        }
+
+        const updateActions: Record<string, () => Promise<void>> = {
+            static_status: async () => {
+                if (data === 'online' || data === 'offline') {
+                    await AccountModel.updateOne(
+                        { _id: userId },
+                        {
+                            $set: {
+                                online: data === 'online',
+                                lastOnline:
+                                    data === 'offline' ? new Date() : null,
+                            },
+                        }
+                    );
+                }
+            },
+            highlight_friends: async () => {
+                if (typeof data === 'boolean') {
+                    await UserSettingsModel.updateOne(
+                        { target: userId },
+                        { $set: { highlight_friends: data } }
+                    );
+                }
+            },
+            highlight_color: async () => {
+                if (/^#[0-9A-F]{6}[0-9a-f]{0,2}$/i.test(data)) {
+                    await UserSettingsModel.updateOne(
+                        { target: userId },
+                        { $set: { highlight_color: data } }
+                    );
+                }
+            },
+            visible: async () => {
+                if (typeof data === 'boolean') {
+                    await AccountModel.updateOne(
+                        { _id: userId },
+                        { $set: { visible: data } }
+                    );
+                }
+            },
+        };
+
+        try {
+            if (updateActions[type]) {
+                await updateActions[type]();
+                return res.status(200).json({ success: true });
+            }
+            return res
+                .status(400)
+                .json({
+                    success: false,
+                    message: 'Invalid request type provided.',
+                });
+        } catch (e) {
+            logger.error('Error updating settings: ', e);
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message: 'An error occurred while updating settings.',
+                });
         }
     }
 

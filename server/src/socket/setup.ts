@@ -1,6 +1,6 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { Request } from 'express';
-import wsHandler from './handler';
+import wsHandler from './SocketController';
 import Socket from './socket';
 
 const wss = new WebSocketServer({ noServer: true });

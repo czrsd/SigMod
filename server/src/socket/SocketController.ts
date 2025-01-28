@@ -1,7 +1,7 @@
 import socket from './socket';
 import { modAccount } from '../types';
 
-class WebSocketHandler {
+class SocketController {
     // replace any types later
     public sockets: Map<string, socket>;
     public tournamentLobbies: any[];
@@ -47,4 +47,4 @@ class WebSocketHandler {
     }
 }
 
-export default new WebSocketHandler();
+export default new SocketController();

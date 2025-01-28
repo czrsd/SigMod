@@ -14,7 +14,7 @@ const SetupMiddleware = (app: Application) => {
                 'https://one.sigmally.com',
                 'https://tournament.czrsd.com',
                 'http://localhost:5173',
-                'http://localhost:3003',
+                'http://localhost:3001',
             ],
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
             credentials: true,
@@ -27,10 +27,12 @@ const SetupMiddleware = (app: Application) => {
     app.use(cookieParser());
     app.use(
         helmet({
+            crossOriginResourcePolicy: false,
             contentSecurityPolicy: {
                 directives: {
                     defaultSrc: ["'self'"],
                     scriptSrc: ["'self'", "'unsafe-inline'"],
+                    imgSrc: ["'self'"],
                 },
             },
         })

@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { readFile } from '../utils/helpers';
 import { wsHandler } from '../socket/setup';
-import { google_user } from '../types';
 import socket from '../socket/core/socket';
 
 class TournamentController {
@@ -36,7 +35,7 @@ class TournamentController {
 
     async startTournament(req: Request, res: Response): Promise<void> {
         try {
-            const { key, data } = req.body;
+            const { key /* data */ } = req.body;
             if (
                 !key ||
                 key !== readFile(process.env.TOURNAMENT_KEY_PATH || '')

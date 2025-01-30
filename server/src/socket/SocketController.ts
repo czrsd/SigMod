@@ -31,6 +31,33 @@ class SocketController {
         return serverSockets;
     }
 
+    sendToTag(data: any, tag: string) {
+        this.sockets.forEach((socket) => {
+            if (socket.tag === tag) socket.send(data);
+        });
+    }
+
+    getSocketsByTag(tag: string): socket[] {
+        const matchingSockets: socket[] = [];
+
+        this.sockets.forEach((socket) => {
+            if (socket.tag === tag) matchingSockets.push(socket);
+        });
+
+        return matchingSockets;
+    }
+
+    sendToUser(userId: string, data: any) {
+        this.sockets.forEach((socket) => {
+            console.log('Searching for: ', userId.toString());
+            if (socket.modUser?._id?.toString() == userId) {
+                socket.send(data);
+                console.log('Found user and sent message.');
+                return;
+            }
+        });
+    }
+
     onlineFriends(ids: string[]): socket[] {
         const onlineFriendSockets: socket[] = [];
 

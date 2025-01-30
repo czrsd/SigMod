@@ -11,34 +11,26 @@ class Socket {
     ws: WebSocket;
     req: Request;
     sid: string;
-    server: string | null;
-    tag: string | null;
-    nick: string | null;
-    user: google_user | null;
-    modUser: modAccount | null;
+    server: string | null = null;
+    tag: string | null = null;
+    nick: string | null = null;
+    user: google_user | null = null;
+    modUser: modAccount | null = null;
     position: {
         x: number | null;
         y: number | null;
     };
-    tournamentId: null | string;
+    tournamentId: null | string = null;
 
     constructor(ws: WebSocket, req: Request) {
         this.ws = ws;
         this.req = req;
         this.sid = uuidv4();
-        this.user = null;
-        this.modUser = null;
-
-        this.server = null;
-        this.tag = null;
-        this.nick = null;
 
         this.position = {
             x: null,
             y: null,
         };
-
-        this.tournamentId = null;
     }
 
     public send(data: { type: string; content: any }): void {

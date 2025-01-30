@@ -1,12 +1,11 @@
 import WebSocket from 'ws';
 import { Request } from 'express';
 import CircularJSON from 'circular-json';
-import { wsHandler } from './setup';
+import { wsHandler } from '../setup';
 import { v4 as uuidv4 } from 'uuid';
-import AccountModel from '../models/AccountModel';
-import logger from '../utils/logger';
-import { google_user } from '../types';
-import { modAccount } from '../types';
+import AccountModel from '../../models/AccountModel';
+import logger from '../../utils/logger';
+import { google_user, modAccount } from '../../types';
 
 class Socket {
     ws: WebSocket;

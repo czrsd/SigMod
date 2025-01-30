@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { readFile } from '../utils/helpers';
 import { wsHandler } from '../socket/setup';
 import { google_user } from '../types';
-import socket from '../socket/socket';
+import socket from '../socket/core/socket';
 
 class TournamentController {
     // returns online users (authorized and unauthorized) connected to the tournament server

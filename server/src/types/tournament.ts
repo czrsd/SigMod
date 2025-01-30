@@ -1,4 +1,4 @@
-import socket from '../socket/socket';
+import socket from '../socket/core/socket';
 
 export type tournamentSetupData = {
     name: string;

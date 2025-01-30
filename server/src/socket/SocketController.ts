@@ -1,4 +1,4 @@
-import socket from './socket';
+import socket from './core/socket';
 import { modAccount } from '../types';
 
 class SocketController {

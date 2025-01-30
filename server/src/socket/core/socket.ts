@@ -5,7 +5,8 @@ import { wsHandler } from '../setup';
 import { v4 as uuidv4 } from 'uuid';
 import AccountModel from '../../models/AccountModel';
 import logger from '../../utils/logger';
-import { google_user, modAccount } from '../../types';
+import { google_user, modAccount, socketMessageData } from '../../types';
+import messageHandler from './messageHandler';
 
 class Socket {
     ws: WebSocket;
@@ -33,7 +34,7 @@ class Socket {
         };
     }
 
-    public send(data: { type: string; content: any }): void {
+    public send(data: socketMessageData): void {
         if (!data) return;
         const json = CircularJSON.stringify(data);
         const encoder = new TextEncoder();
@@ -65,9 +66,8 @@ class Socket {
     }
 
     init(): void {
-        this.ws.on('message', async (message: WebSocket.Data) => {
-            // await onMessage(message as Buffer, this);
-            // logger.info('New WebSocket message: ', message);
+        this.ws.on('message', async (message: ArrayBuffer) => {
+            await messageHandler(message, this);
         });
         this.ws.on('error', (e: any) => this.onError(e));
         this.ws.on('close', () => this.onClose());

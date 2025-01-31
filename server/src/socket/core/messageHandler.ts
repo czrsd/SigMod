@@ -25,7 +25,7 @@ const onMessage = async (raw: ArrayBuffer, socket: socket) => {
             case 'version':
                 checkVersion(content, socket);
                 break;
-            case 'server-change':
+            case 'server-changed':
                 onServerChange(content, socket);
                 break;
             case 'update-tag':

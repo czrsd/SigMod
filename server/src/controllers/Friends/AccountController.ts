@@ -254,6 +254,8 @@ class AccountController {
     async auth(req: Request, res: Response): Promise<Response | void> {
         const user = req.user;
 
+        const { sid } = req.query;
+
         if (!user?.userId) {
             return res
                 .status(401)
@@ -286,6 +288,19 @@ class AccountController {
                 { _id: user?.userId },
                 { $set: { online: true, lastOnline: null } }
             );
+        }
+
+        if (sid && typeof sid === 'string') {
+            const socket = wsHandler.sockets.get(sid);
+
+            if (!socket) {
+                return res.status(200).json({
+                    success: false,
+                    message: 'Socket not found.',
+                });
+            }
+
+            socket.modUser = fullUser;
         }
 
         return res.status(200).json({

@@ -1,7 +1,7 @@
 import socket from './socket';
 import { noXSS } from '../../utils/helpers';
 import { wsHandler } from '../setup';
-import { google_user, minimapData, modAccount } from '../../types';
+import { google_user, minimapData } from '../../types';
 import logger from '../../utils/logger';
 import ChatModel from '../../models/ChatModel';
 
@@ -39,6 +39,11 @@ const updateTag = (tag: string, socket: socket) => {
 
 const updateMinimap = (data: minimapData, socket: socket) => {
     if (!socket.tag || socket.tag.length > 3) return;
+
+    socket.position = {
+        x: data.x,
+        y: data.y,
+    };
 
     const sockets = wsHandler.getSocketsByTag(socket.tag);
 

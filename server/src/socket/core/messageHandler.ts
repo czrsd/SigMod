@@ -6,19 +6,26 @@ import {
     onGoogleAuth,
     onPartyChatMessage,
     onServerChange,
+    updateMinimap,
     updateNick,
     updateTag,
 } from './socketUtils';
 import { socketMessageData } from '../../types';
 
-const onMessage = async (raw: ArrayBuffer, socket: socket) => {
+const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
     const bin: Uint8Array = new Uint8Array(raw);
     const jsonString: string = new TextDecoder().decode(bin);
 
     try {
         const data = CircularJSON.parse(jsonString);
 
-        if (!data || !data.type) throw new Error('Invalid message.');
+        if (!data || !data.type) {
+            socket.send({
+                type: 'error',
+                content: { message: 'Invalid message.' },
+            });
+            return;
+        }
 
         const { type, content }: socketMessageData = data;
 
@@ -47,14 +54,24 @@ const onMessage = async (raw: ArrayBuffer, socket: socket) => {
             case 'user':
                 onGoogleAuth(content, socket);
                 break;
+            case 'position':
+                updateMinimap(content, socket);
+                break;
             default:
-                throw new Error(`Unknown message type: ${type}.`);
+                socket.send({
+                    type: 'error',
+                    content: { message: `Unknown message type: ${type}.` },
+                });
+                return;
         }
-    } catch (e: any) {
+    } catch (e) {
+        const errorMessage =
+            e instanceof Error ? e.message : 'An unknown error occurred';
+
         socket.send({
             type: 'error',
             content: {
-                message: e.message || 'An error occurred.',
+                message: errorMessage,
             },
         });
     }

@@ -1,7 +1,7 @@
 import socket from './socket';
 import { noXSS } from '../../utils/helpers';
 import { wsHandler } from '../setup';
-import { minimapData, modAccount } from '../../types';
+import { google_user, minimapData, modAccount } from '../../types';
 import logger from '../../utils/logger';
 import ChatModel from '../../models/ChatModel';
 
@@ -143,6 +143,14 @@ const sendToUser = (
     });
 };
 
+const onGoogleAuth = (userData: google_user, socket: socket) => {
+    if (!userData || !userData._id) return;
+
+    socket.user = userData;
+
+    // adding more for tournaments soon
+};
+
 export {
     checkVersion,
     updateNick,
@@ -151,4 +159,5 @@ export {
     updateMinimap,
     onPartyChatMessage,
     handlePrivateMessage,
+    onGoogleAuth,
 };

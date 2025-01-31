@@ -3,6 +3,7 @@ import CircularJSON from 'circular-json';
 import {
     checkVersion,
     handlePrivateMessage,
+    onGoogleAuth,
     onPartyChatMessage,
     onServerChange,
     updateNick,
@@ -42,6 +43,9 @@ const onMessage = async (raw: ArrayBuffer, socket: socket) => {
                 break;
             case 'private-message':
                 await handlePrivateMessage(content, socket);
+                break;
+            case 'user':
+                onGoogleAuth(content, socket);
                 break;
             default:
                 throw new Error(`Unknown message type: ${type}.`);

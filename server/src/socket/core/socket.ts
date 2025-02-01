@@ -7,6 +7,7 @@ import AccountModel from '../../models/AccountModel';
 import logger from '../../utils/logger';
 import { google_user, modAccount, socketMessageData } from '../../types';
 import messageHandler from './messageHandler';
+import TournamentController from './tournaments/TournamentController';
 
 class Socket {
     ws: WebSocket;
@@ -56,11 +57,12 @@ class Socket {
             );
         }
 
-        /*
-        if (this.user && tournamentSystem.getLobbyByEmail(this.user.email)) {
-            tournamentSystem.disconnectPlayer(this);
+        if (
+            this.user &&
+            TournamentController.getLobbyByEmail(this.user.email)
+        ) {
+            TournamentController.disconnectPlayer(this);
         }
-         */
 
         wsHandler.sockets.delete(this.sid);
     }

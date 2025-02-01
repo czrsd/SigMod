@@ -11,6 +11,7 @@ import {
     updateTag,
 } from './socketUtils';
 import { socketMessageData } from '../../types';
+import TournamentController from './tournaments/TournamentController';
 
 const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
     const bin: Uint8Array = new Uint8Array(raw);
@@ -56,6 +57,13 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
                 break;
             case 'position':
                 updateMinimap(content, socket);
+                break;
+            // Tournaments
+            case 'ready':
+                await TournamentController.playerReady(socket);
+                break;
+            case 'result':
+                await TournamentController.handleResult(content, socket);
                 break;
             default:
                 socket.send({

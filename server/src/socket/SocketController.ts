@@ -18,6 +18,13 @@ class SocketController {
             'https://update.greasyfork.org/scripts/454648/SigMod%20Client%20%28Macros%29.user.js';
     }
 
+    getByUserId(id: string): socket | void {
+        for (const [_, socket] of this.sockets) {
+            if (socket.user?._id === id) return socket;
+        }
+        return void 0;
+    }
+
     getServerSockets(server: string) {
         const allSockets = Array.from(this.sockets.values());
         const serverSockets: socket[] = [];

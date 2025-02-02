@@ -267,14 +267,6 @@
 
     // --------- Colors --------- //
 
-    // hex color code to rgba values
-    function hexToRgba(hex, alpha) {
-        const r = parseInt(hex.substring(1, 3), 16);
-        const g = parseInt(hex.substring(3, 5), 16);
-        const b = parseInt(hex.substring(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-
     // rgba values to hex color code
     function RgbaToHex(code) {
         const rgbaValues = code.match(/\d+/g);
@@ -308,9 +300,7 @@
         const selectedOption = options.filter(
             (option) => option.value === gameMode.value,
         )[0];
-        const serverName = selectedOption.textContent.split(' ')[0];
-
-        return serverName;
+        return selectedOption.textContent.split(' ')[0];
     }
 
     function keypress(key, keycode) {
@@ -699,7 +689,7 @@
         }
 
         performHandshake(reader) {
-            const ver = reader.getStringUTF8(false);
+            reader.getStringUTF8(false);
             this.C.set(new Uint8Array(reader.raw(256)));
 
             for (const i in this.C) {
@@ -1091,7 +1081,6 @@
 
     let playerPosition = { x: null, y: null };
     let lastGetScore = 0;
-    let lastPos = {};
     let lastPosTime = 0;
     let dead = false;
     let dead2 = false;
@@ -3776,11 +3765,7 @@
 
                         mods.cellSize = score;
 
-                        if (score < 5500) {
-                            mods.aboveRespawnLimit = false;
-                        } else {
-                            mods.aboveRespawnLimit = true;
-                        }
+                        mods.aboveRespawnLimit = score >= 5500;
 
                         lastGetScore = Date.now();
                     }
@@ -3790,7 +3775,7 @@
                     this.fillStyle = 'transparent';
 
                     const [, xValue, yValue] = /X: (.*), Y: (.*)/.exec(text) || [];
-                    if (xValue == undefined) return;
+                    if (!xValue) return;
 
                     const position = { x: parseFloat(xValue), y: parseFloat(yValue) };
 
@@ -4030,7 +4015,6 @@
 
                     const modal = modals[type];
                     const imageUrlInput = byId('image-url');
-                    const preview = byId(modal.previewId);
 
                     let initialUrl = '';
                     if (modal.additional && type === 'skin') {
@@ -4048,10 +4032,10 @@
                         updatePreview(e.target.value);
                     });
 
-                    byId(modal.applyId).addEventListener('click', (e) =>
+                    byId(modal.applyId).addEventListener('click', () =>
                         applyChanges(type),
                     );
-                    byId(modal.resetId).addEventListener('click', (e) =>
+                    byId(modal.resetId).addEventListener('click', () =>
                         resetChanges(type),
                     );
 
@@ -4294,7 +4278,7 @@
             mod_menu.innerHTML = `
                 <div class="mod_menu_wrapper">
                     <div class="mod_menu_header">
-                        <img src="${headerAnim}" draggable="false" class="header_img" style="object-size: contain" />
+                        <img alt="Header image" src="${headerAnim}" draggable="false" class="header_img" />
                         <button type="button" class="modButton" id="closeBtn">
                             <svg width="18" height="20" viewBox="0 0 16 16" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M1.6001 14.4L14.4001 1.59998M14.4001 14.4L1.6001 1.59998" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -4304,23 +4288,23 @@
                     <div class="mod_menu_inner">
                         <div class="mod_menu_navbar">
                             <button class="mod_nav_btn mod_selected" id="tab_home_btn">
-                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/home%20(1).png" />
+                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/home%20(1).png" alt="Home Icon" />
                                 Home
                             </button>
                             <button class="mod_nav_btn" id="tab_macros_btn">
-                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/keyboard%20(1).png" />
+                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/keyboard%20(1).png" alt="Keyboard Icon" />
                                 Macros
                             </button>
                             <button class="mod_nav_btn" id="tab_game_btn">
-                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/games.png" />
+                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/games.png" alt="Game Icon" />
                                 Game
                             </button>
                             <button class="mod_nav_btn" id="tab_name_btn">
-                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/836ca0f4c25fc6de2e429ee3583be5f860884a0c/images/icons/name.svg" />
+                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/836ca0f4c25fc6de2e429ee3583be5f860884a0c/images/icons/name.svg" alt="Name Icon" />
                                 Name
                             </button>
                             <button class="mod_nav_btn" id="tab_themes_btn">
-                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/theme.png" />
+                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/theme.png" alt="Themes Icon" />
                                 Themes
                             </button>
                             <button class="mod_nav_btn" id="tab_gallery_btn">
@@ -4329,11 +4313,11 @@
                             </button>
 
                             <button class="mod_nav_btn" id="tab_friends_btn">
-                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/friends%20(1).png" />
+                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/friends%20(1).png" alt="Friends Icon" />
                                 Friends
                             </button>
                             <button class="mod_nav_btn mt-auto" id="tab_info_btn">
-                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/info.png" />
+                                <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/icons/info.png" alt="Info Icon" />
                                 Info
                             </button>
                         </div>
@@ -4368,7 +4352,7 @@
                                         <div class="home-card">
                                             <div class="justify-sb">
                                                 <div class="flex" style="align-items: center; gap: 5px;">
-                                                    <img src="https://sigmally.com/assets/images/agario-profile.png" width="50" height="50" id="my-profile-img" style="border-radius: 50%;" draggable="false" />
+                                                    <img src="https://sigmally.com/assets/images/agario-profile.png" alt="Agar-io profile" width="50" height="50" id="my-profile-img" style="border-radius: 50%;" draggable="false" />
                                                     <span id="my-profile-name">Guest</span>
                                                 </div>
                                                 <span id="my-profile-role">Guest</span>
@@ -4460,7 +4444,7 @@
                                                 <div class="stats-line justify-sb">
                                                     <span class="centerXY g-5">
                                                         Mouse Button 2
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" viewBox="0 0 356.57 356.57" transform="matrix(-1, 0, 0, 1, 0, 0)"><path d="M181.563,0C120.762,0,59.215,30.525,59.215,88.873V237.5c0,65.658,53.412,119.071,119.071,119.071 c65.658,0,119.07-53.413,119.07-119.071V88.873C297.356,27.809,237.336,0,181.563,0z M274.945,237.5 c0,53.303-43.362,96.657-96.659,96.657c-53.299,0-96.657-43.354-96.657-96.657v-69.513c20.014,6.055,57.685,15.215,102.221,15.215 c28.515,0,59.831-3.809,91.095-14.567V237.5z M274.945,144.794c-81.683,31.233-168.353,7.716-193.316-0.364V88.873 c0-43.168,51.489-66.46,99.934-66.46c46.481,0,93.382,20.547,93.382,66.46V144.794z M190.893,48.389v81.248 c0,6.187-5.023,11.208-11.206,11.208c-6.185,0-11.207-5.021-11.207-11.208V48.389c0-6.186,5.021-11.207,11.207-11.207 C185.869,37.182,190.893,42.203,190.893,48.389z M154.938,40.068V143.73c-15.879,2.802-62.566-10.271-62.566-10.271 C80.233,41.004,154.938,40.068,154.938,40.068z"></path></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" viewBox="0 0 356.57 356.57"><path d="M181.563,0C120.762,0,59.215,30.525,59.215,88.873V237.5c0,65.658,53.412,119.071,119.071,119.071 c65.658,0,119.07-53.413,119.07-119.071V88.873C297.356,27.809,237.336,0,181.563,0z M274.945,237.5 c0,53.303-43.362,96.657-96.659,96.657c-53.299,0-96.657-43.354-96.657-96.657v-69.513c20.014,6.055,57.685,15.215,102.221,15.215 c28.515,0,59.831-3.809,91.095-14.567V237.5z M274.945,144.794c-81.683,31.233-168.353,7.716-193.316-0.364V88.873 c0-43.168,51.489-66.46,99.934-66.46c46.481,0,93.382,20.547,93.382,66.46V144.794z M190.893,48.389v81.248 c0,6.187-5.023,11.208-11.206,11.208c-6.185,0-11.207-5.021-11.207-11.208V48.389c0-6.186,5.021-11.207,11.207-11.207 C185.869,37.182,190.893,42.203,190.893,48.389z M154.938,40.068V143.73c-15.879,2.802-62.566-10.271-62.566-10.271 C80.233,41.004,154.938,40.068,154.938,40.068z"></path></svg>
                                                     </span>
                                                     <select class="form-control" style="padding: 2px; text-align: left; width: 100px" id="m2_macroSelect">
                                                         <option value="none">None</option>
@@ -4783,8 +4767,8 @@
 								</div>
                             </div>
                             <div class="mod_tab scroll centerXY" id="mod_friends" style="display: none">
-                                <center class="f-big" style="margin-top: 10px;">Connect and discover new friends with SigMod.</center>
-                                <center style="margin-top: 10px; font-size: 12px;">Do you have problems with your account? Create a support ticket in our <a href="https://discord.gg/RjxeZ2eRGg" target="_blank">Discord server</a>.</center>
+                                <div class="centerXY f-big" style="margin-top: 10px;">Connect and discover new friends with SigMod.</div>
+                                <div class="centerXY">Do you have problems with your account? Create a support ticket in our <a href="https://discord.gg/RjxeZ2eRGg" target="_blank">Discord server</a>.</div>
 
                                 <div class="centerXY f-column g-5" style="height: 300px; width: 165px;">
                                     <button class="modButton-black" id="createAccount">
@@ -4799,7 +4783,7 @@
                             </div>
                             <div class="mod_tab scroll f-column g-5 text-center" id="mod_info" style="display: none">
                                 <div class="brand_wrapper">
-                                    <img src="https://czrsd.com/static/sigmod/info_bg_2.jpeg" class="brand_img" />
+                                    <img src="https://czrsd.com/static/sigmod/info_bg_2.jpeg" alt="Info background" class="brand_img" />
                                     <span>SigMod V${version} by Cursed</span>
                                 </div>
                                 <span>Thanks to</span>
@@ -4867,9 +4851,9 @@
             this.getSettings();
             this.smallMods();
 
-            mod_menu.addEventListener('click', (e) => {
+            mod_menu.addEventListener('click', (event) => {
                 const wrapper = document.querySelector('.mod_menu_wrapper');
-                if (event.target.closest('.mod_menu_wrapper')) return;
+                if (wrapper) return;
 
                 mod_menu.style.opacity = 0;
                 setTimeout(() => {
@@ -5397,7 +5381,7 @@
                         ).value;
 
                         let img;
-                        if (imageLinkInput == '') {
+                        if (imageLinkInput === '') {
                             img = 'https://i.ibb.co/k6hn4v0/Galaxy-Example.png';
                         } else {
                             img = imageLinkInput;
@@ -5540,7 +5524,7 @@
                     const bgColorInput = byId('theme-editor-bgcolorinput').value;
                     const textColorInput = byId('theme-editor-colorinput').value;
 
-                    if (name == '') return;
+                    if (name === '') return;
 
                     const theme = {
                         name: name,
@@ -5596,12 +5580,12 @@
                     const gAngle = byId('g_angle').value;
                     const gradientType = byId('gradient-type').value;
 
-                    if (name == '') return;
+                    if (name === '') return;
 
                     let gradient_radial_linear = () => {
-                        if (gradientType == 'linear') {
+                        if (gradientType === 'linear') {
                             return `${gradientType}-gradient(${gAngle}deg, ${gColor1}, ${gColor2})`;
-                        } else if (gradientType == 'radial') {
+                        } else if (gradientType === 'radial') {
                             return `${gradientType}-gradient(circle, ${gColor1}, ${gColor2})`;
                         }
                     };
@@ -5656,7 +5640,7 @@
                     const imageLink = byId('theme-editor-imagelink').value;
                     const textColorImageInput = byId('theme-editor-textcolorImage').value;
 
-                    if (name == '' || imageLink == '') return;
+                    if (name === '' || imageLink === '') return;
 
                     const theme = {
                         name: name,
@@ -5728,7 +5712,6 @@
                 '#clans_and_settings > Button:nth-of-type(2) > svg',
             );
             const openSVGPath = openSVG.querySelector('path');
-            const newPath = openSVG.setAttribute('fill', '#fff');
             openSVG.setAttribute('width', '36');
             openSVG.setAttribute('height', '36');
 
@@ -6203,7 +6186,7 @@
 
             send.addEventListener('click', () => {
                 let val = text.value;
-                if (val == '') return;
+                if (val === '') return;
 
                 if (modSettings.chat.showClientChat) {
                     // party chat message
@@ -6229,7 +6212,6 @@
                             } else {
                                 // if adding the current word exceeds the length limit
                                 parts.push(currentPart);
-                                // push the current part to the parts array
                                 currentPart = word;
                             }
                         });
@@ -6297,21 +6279,21 @@
                 }
             });
 
-            text.addEventListener('input', (e) => {
+            text.addEventListener('input', () => {
                 typed = text.value.length > 1;
             });
 
-            text.addEventListener('blur', (e) => {
+            text.addEventListener('blur', () => {
                 focused = false;
             });
 
-            text.addEventListener('keydown', (e) => {
+            text.addEventListener('keydown', () => {
                 const key = e.key.toLowerCase();
-                if (key == 'w') {
+                if (key === 'w') {
                     e.stopPropagation();
                 }
 
-                if (key == ' ') {
+                if (key === ' ') {
                     e.stopPropagation();
                 }
             });
@@ -6491,9 +6473,7 @@
             const response = await fetch(
                 'https://czrsd.com/static/sigmod/emojis.json',
             );
-            const emojis = await response.json();
-
-            return emojis;
+            return await response.json();
         },
 
         emojiMenu() {
@@ -6595,7 +6575,7 @@
                             <div class="csRowName">
                                 <span>Location</span>
                                 <span class="infoIcon">
-                                    <svg fill="#ffffff" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 416.979 416.979" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M356.004,61.156c-81.37-81.47-213.377-81.551-294.848-0.182c-81.47,81.371-81.552,213.379-0.181,294.85 c81.369,81.47,213.378,81.551,294.849,0.181C437.293,274.636,437.375,142.626,356.004,61.156z M237.6,340.786 c0,3.217-2.607,5.822-5.822,5.822h-46.576c-3.215,0-5.822-2.605-5.822-5.822V167.885c0-3.217,2.607-5.822,5.822-5.822h46.576 c3.215,0,5.822,2.604,5.822,5.822V340.786z M208.49,137.901c-18.618,0-33.766-15.146-33.766-33.765 c0-18.617,15.147-33.766,33.766-33.766c18.619,0,33.766,15.148,33.766,33.766C242.256,122.755,227.107,137.901,208.49,137.901z"></path> </g> </g></svg>
+                                    <svg fill="#ffffff" id="Capa_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.979 416.979" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M356.004,61.156c-81.37-81.47-213.377-81.551-294.848-0.182c-81.47,81.371-81.552,213.379-0.181,294.85 c81.369,81.47,213.378,81.551,294.849,0.181C437.293,274.636,437.375,142.626,356.004,61.156z M237.6,340.786 c0,3.217-2.607,5.822-5.822,5.822h-46.576c-3.215,0-5.822-2.605-5.822-5.822V167.885c0-3.217,2.607-5.822,5.822-5.822h46.576 c3.215,0,5.822,2.604,5.822,5.822V340.786z M208.49,137.901c-18.618,0-33.766-15.146-33.766-33.765 c0-18.617,15.147-33.766,33.766-33.766c18.619,0,33.766,15.148,33.766,33.766C242.256,122.755,227.107,137.901,208.49,137.901z"></path> </g> </g></svg>
                                 </span>
                             </div>
                             <input type="text" name="location" id="modinput9" class="keybinding" value="${modSettings.macros.keys.location || ''}" placeholder="..." maxlength="1" onfocus="this.select()">
@@ -6884,11 +6864,7 @@
             const auto = byId('autoClaimCoins');
             auto.addEventListener('change', () => {
                 const checked = auto.checked;
-                if (checked) {
-                    modSettings.settings.autoClaimCoins = true;
-                } else {
-                    modSettings.settings.autoClaimCoins = false;
-                }
+                modSettings.settings.autoClaimCoins = !!checked;
                 updateStorage();
             });
             if (modSettings.settings.autoClaimCoins) {

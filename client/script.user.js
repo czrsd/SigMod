@@ -4802,6 +4802,7 @@
                                     <img src="https://czrsd.com/static/sigmod/info_bg_2.jpeg" class="brand_img" />
                                     <span>SigMod V${version} by Cursed</span>
                                 </div>
+                                <span>Thanks to</span>
                                 <ul class="brand_credits">
 									<li>Jb</li>
 									<li>Black</li>
@@ -4811,6 +4812,7 @@
 									<li>Xaris</li>
 									<li>Benzofury</li>
 								</ul>
+                                <p>for contributing to the mod’s evolution into what it is today.</p>
 
 								<div class="sigmod-community">
 									<div class="community-header">
@@ -9233,7 +9235,6 @@
             const left = (window.innerWidth - w) / 2;
             const top = (window.innerHeight - h) / 2;
 
-            // Function to handle received messages
             function receiveMessage(event) {
                 if (event.data.type === 'profileData') {
                     const data = event.data.data;
@@ -9274,7 +9275,8 @@
                 const accountData = {
                     username,
                     password,
-                    ...(confirmedPassword && { confirmedPassword }) /*, token*/,
+                    ...(confirmedPassword && { confirmedPassword }),
+                    user: window.gameSettings.user,
                 };
 
                 try {

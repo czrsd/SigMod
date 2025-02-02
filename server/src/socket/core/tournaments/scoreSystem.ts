@@ -56,7 +56,7 @@ class ScoreSystem {
                 TournamentController.deleteLobby(lobby);
             }
 
-            setTimeout(TournamentController.restartServer, 2000);
+            setTimeout(() => TournamentController.restartServer(), 2000);
         }
     }
 

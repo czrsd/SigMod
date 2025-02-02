@@ -27,7 +27,7 @@ class LastOneStandingSystem {
                 content: lobby,
             });
 
-            setTimeout(TournamentController.restartServer, 2000);
+            setTimeout(() => TournamentController.restartServer(), 2000);
         }
 
         await TournamentController.sendLOSEndWebhook(lobby);

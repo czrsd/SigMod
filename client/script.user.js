@@ -602,13 +602,6 @@
                         window.gameSettings.isPlaying = true;
                     }
 
-                    if (this.R[r] === 220) {
-                        client.send({
-                            type: 'captcha',
-                            content: null,
-                        });
-                    }
-
                     if (!window.sigfix && freezepos && this.R[r] === 16) {
                         return;
                     }
@@ -9265,34 +9258,10 @@
                 }, 1000);
             });
 
-            // cfts is not allowed by the rules of greasyfork, so I had to remove it.
-
-            /*
-            const {turnstile} = window;
-            let token = null;
-            const captchaElement = "#sigmod-captcha";
-
-            turnstile.render(captchaElement, {
-                sitekey: CFTS_SITE_KEY,
-                callback: (t) => {
-                    token = t;
-                },
-                'expired-callback': () => {
-                    turnstile.reset(captchaElement);
-                    token = null;
-                }
-            });
-            */
-
             // LOGIN / REGISTER:
             const button = byId(btnId);
 
             button.addEventListener('click', async () => {
-                /*
-                if (!token) {
-                    turnstile.reset(captchaElement);
-                }
-                */
                 const path = isLogin ? 'login' : 'register';
                 const username = byId('mod_username').value;
                 const password = byId('mod_pass').value;

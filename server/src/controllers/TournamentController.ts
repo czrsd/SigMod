@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { readFile } from '../utils/helpers';
 import { wsHandler } from '../socket/setup';
 import socket from '../socket/core/socket';
+import TournamentSystem from '../socket/core/tournaments/TournamentController';
 
 class TournamentController {
     // returns online users (authorized and unauthorized) connected to the tournament server
@@ -35,7 +36,7 @@ class TournamentController {
 
     async startTournament(req: Request, res: Response): Promise<void> {
         try {
-            const { key /* data */ } = req.body;
+            const { key, data } = req.body;
             if (
                 !key ||
                 key !== readFile(process.env.TOURNAMENT_KEY_PATH || '')
@@ -47,8 +48,7 @@ class TournamentController {
                 return;
             }
 
-            // @TODO Implement Tournament system
-            // system.setupTournament(data);
+            await TournamentSystem.setupTournament(data);
 
             res.status(200).json({ success: true });
         } catch (error) {

@@ -8,6 +8,7 @@ import logger from '../../utils/logger';
 import { google_user, modAccount, socketMessageData } from '../../types';
 import messageHandler from './messageHandler';
 import TournamentController from './tournaments/TournamentController';
+import ActivityModel from '../../models/ActivityModel';
 
 class Socket {
     ws: WebSocket;
@@ -23,6 +24,7 @@ class Socket {
         y: number | null;
     };
     tournamentId: null | string = null;
+    connectedTimestamp: number;
 
     constructor(ws: WebSocket, req: Request) {
         this.ws = ws;
@@ -33,6 +35,8 @@ class Socket {
             x: null,
             y: null,
         };
+
+        this.connectedTimestamp = Date.now();
     }
 
     public send(data: socketMessageData): void {
@@ -62,6 +66,17 @@ class Socket {
             TournamentController.getLobbyByEmail(this.user.email)
         ) {
             TournamentController.disconnectPlayer(this);
+        }
+
+        const connectedDuration = Date.now() - this.connectedTimestamp;
+        if (connectedDuration >= 60000) {
+            const activity = new ActivityModel({
+                userId: this.user?._id,
+                connected: this.connectedTimestamp,
+                disconnected: Date.now(),
+            });
+
+            await activity.save();
         }
 
         wsHandler.sockets.delete(this.sid);

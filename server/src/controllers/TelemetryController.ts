@@ -6,11 +6,9 @@ import logger from '../utils/logger';
 /*
  * SigMod collects user data for the purpose of hosting giveaways and providing Sigmally-related services (e.g., Coins, Subscriptions).
  * Your email is required for these activities and may also be needed for other specific situations.
- * You can disable data collection in the settings of SigMod at any time.
  * Your data will NOT be shared with any third parties and will ALWAYS remain private.
  *
  * If you wish to request the removal of your collected data, please reach out to me via Discord: czrsd.
- * @TODO Add page for removal
  */
 
 class TelemetryController {

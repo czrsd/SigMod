@@ -47,6 +47,26 @@ class TournamentController {
             password: password || '',
             ended: false,
         };
+
+        participantIds.blue &&
+            this.addParticipants(participantIds.blue, tournamentLobby, 'blue');
+        participantIds.red &&
+            this.addParticipants(participantIds.red, tournamentLobby, 'red');
+
+        if (
+            totalUsers >
+            tournamentLobby.participants.blue.length +
+                tournamentLobby.participants.red.length
+        ) {
+            throw new Error('Users are missing. Canceling tournament.');
+        }
+
+        this.lobbies.push(tournamentLobby);
+
+        this.sendToLobby(tournamentId, {
+            type: 'tournament-preview',
+            content: tournamentLobby,
+        });
     }
 
     private addParticipants(
@@ -96,7 +116,7 @@ class TournamentController {
         });
     }
 
-    async handleResult(socket: socket, data: any) {
+    async handleResult(data: any, socket: socket) {
         const lobby = this.getLobbyByEmail(socket.user?.email);
 
         if (!lobby) return;
@@ -185,6 +205,9 @@ class TournamentController {
     waitForEnd(lobby: tournamentLobby) {
         try {
             const time = parseTimeToMilliseconds(lobby.time);
+
+            console.log(time);
+            console.log(lobby.mode, tournamentMode.score);
 
             if (lobby.mode === tournamentMode.score) {
                 setTimeout(() => {
@@ -350,11 +373,11 @@ class TournamentController {
     }
 
     public async restartServer() {
-        const tournamentKey = this.getTournamentKey();
+        const tournamentKey = await this.getTournamentKey();
         const url =
             process.env.NODE_ENV === 'development'
-                ? `http://localhost:3003/restart/${tournamentKey}`
-                : `https://tournament.czrsd.com/restart/${tournamentKey}`;
+                ? `http://localhost:3003/restart`
+                : `https://tournament.czrsd.com/restart`;
 
         await axios.post(url, {
             key: tournamentKey,
@@ -368,7 +391,7 @@ class TournamentController {
     }
 
     private async getPassword() {
-        const tournamentKey = this.getTournamentKey();
+        const tournamentKey = await this.getTournamentKey();
         const url =
             process.env.NODE_ENV === 'development'
                 ? `http://localhost:3003/data/${tournamentKey}`

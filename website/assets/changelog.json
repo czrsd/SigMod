@@ -1,0 +1,82 @@
+{
+  "changes": [
+    {
+      "version": "10",
+      "date": "2024-08-08",
+      "categories": {
+        "New Features": [
+          "Introduced new color pickers with a reset option in the color picker menu",
+          "Added new statistics visualization",
+          "Integrated global chat for the friends tab with spam filter; future updates anticipated",
+          "Introduced Announcements feature",
+          "Added mouse tracker functionality",
+          "Implemented badge display on own mod profile",
+          "Introduced macro speed slider for customizable macro execution speed",
+          "Implemented Gallery Tab with screenshot saving functionality via keypress",
+          "Enhanced chat features: added text color options and adjustable transparency for background and text"
+        ],
+        "Improvements": [
+          "Completed a comprehensive rework of the menu",
+          "Updated mod title",
+          "Added maximum message count limit for chat to prevent overflow",
+          "Added fixed line feature",
+          "Improved skin and virus replacement mechanisms",
+          "Disallowed simultaneous multiple line splits to avoid processing issues",
+          "Removed FPS-related features and moved them to the game tab",
+          "Replaced 'WebSocket.prototype.send' with 'SigWsHandler' for handling the Sigmally WebSocket"
+        ],
+        "Bug Fixes": [
+          "Resolved issues with stop movement in both vertical and horizontal directions",
+          "Modified chat functionality to split words instead of characters",
+          "Removed deprecated feedback message feature",
+          "Fixed issues with shortened names handling",
+          "Fixed global variables: friends_settings and friends_names"
+        ]
+      }
+    },
+    {
+      "version": "10.0.1",
+      "date": "2024-08-08",
+      "categories": {
+        "Bug Fixes": ["Fixed one split for mouse macros."]
+      }
+    },
+    {
+      "version": "10.0.2",
+      "date": "2024-08-09",
+      "categories": {
+        "Bug Fixes": [
+          "Chat issue fixed. This fixed the respawn key & sending chat messages."
+        ]
+      }
+    },
+    {
+      "version": "10.0.3",
+      "date": "2024-08-09",
+      "categories": {
+        "Improvements": ["Themes are now applied to every game modal."],
+        "Bug Fixes": [
+          "Fixed linesplits (horizontal, vertical, fixed).",
+          "Mouse Macros have been fixed.",
+          "Fixed Map, outline/border, food and cell color pickers."
+        ]
+      }
+    },
+    {
+      "version": "10.0.4",
+      "date": "2024-08-09",
+      "categories": {
+        "Bug Fixes": ["Fixed hiding food when using SigFixes."]
+      }
+    },
+    {
+      "version": "10.0.5",
+      "date": "2024-08-09",
+      "categories": {
+        "Bug Fixes": [
+          "Fixed real-time updates with SigFixes for color pickers. Transparency for the color pickers will not work when using SigFixes."
+        ]
+      }
+    }
+  ]
+}

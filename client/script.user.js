@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         SigMod Client (Macros) [NEW]
+// @name         SigMod Client (Macros)
 // @version      10.1.0
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed

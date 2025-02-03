@@ -1,17 +1,13 @@
 import socket from './core/socket';
-import { modAccount } from '../types';
 
 class SocketController {
-    // replace any types later
     public sockets: Map<string, socket>;
-    public tournamentLobbies: any[];
     public modLink: string;
     public tournamentOverlay: boolean;
     public version: string = '4.0.0';
 
     constructor() {
         this.sockets = new Map();
-        this.tournamentLobbies = [];
         this.tournamentOverlay = false;
 
         this.modLink =

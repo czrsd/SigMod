@@ -170,7 +170,7 @@
     });
 
     // for development
-    let isDev = true;
+    let isDev = false;
     let port = 3001;
 
     // global sigmod

@@ -1086,7 +1086,6 @@
     let dead2 = false;
 
     function mod() {
-        this.Username = 'Guest';
         this.nick = null;
         this.profile = {};
         this.friends_settings = window.sigmod.friends_settings = {};
@@ -4323,7 +4322,7 @@
                         </div>
                         <div class="mod_menu_content">
                             <div class="mod_tab" id="mod_home">
-                                <span class="text-center f-big" id="welcomeUser">Welcome ${this.Username}, to the SigMod Client!</span>
+                                <span class="text-center f-big" id="welcomeUser">Welcome ${this.nick || 'Guest'}, to the SigMod Client!</span>
                                 <div class="home-card-row">
 									<!-- CARD.1 -->
 									<div class="home-card-wrapper">
@@ -4852,8 +4851,7 @@
             this.smallMods();
 
             mod_menu.addEventListener('click', (event) => {
-                const wrapper = document.querySelector('.mod_menu_wrapper');
-                if (wrapper) return;
+                if (event.target.closest('.mod_menu_wrapper')) return;
 
                 mod_menu.style.opacity = 0;
                 setTimeout(() => {
@@ -8072,7 +8070,6 @@
                         transaction.onerror = (event) => reject(event.target.error);
                     });
 
-                    // Add the new image to the gallery with lazy loading
                     this.addImageToGallery({ timestamp, dataURL });
                 } catch (error) {
                     console.error('Transaction error:', error);
@@ -8085,11 +8082,9 @@
 
             if (!galleryElement) return;
 
-            // Placeholder image URL
             const placeholderURL =
                 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
-            // Create the new image element
             const imageHTML = `
 				<div class="image-container">
 					<img class="gallery-image lazy" data-src="${image.dataURL}" src="${placeholderURL}" data-image-id="${image.timestamp}" />
@@ -8103,10 +8098,8 @@
 				</div>
 			`;
 
-            // Insert the new image at the beginning of the gallery
             galleryElement.insertAdjacentHTML('afterbegin', imageHTML);
 
-            // Use Intersection Observer to load images
             const lazyImages = document.querySelectorAll('.lazy');
             const imageObserver = new IntersectionObserver((entries, observer) => {
                 entries.forEach((entry) => {
@@ -8123,7 +8116,6 @@
                 imageObserver.observe(image);
             });
 
-            // Attach event listeners to the new elements
             this.attachEventListeners([image]);
         },
         async updateGallery() {
@@ -8367,8 +8359,9 @@
         },
 
         respawnGame() {
-            if (this.aboveRespawnLimit) {
-                window.gameSettings.ws.close();
+            const { sigfix } = window;
+            if (this.aboveRespawnLimit || (sigfix && sigfix.world.score(sigfix.world.selected) >= 5500)) {
+                sigfix ? sigfix.net.connections.get(sigfix.world.selected).ws.close() : window.gameSettings.ws.close();
                 this.isRespawned = true;
             } else {
                 this.fastRespawn();
@@ -8376,19 +8369,6 @@
         },
 
         fastRespawn() {
-            const { sigfix } = window;
-            if (sigfix) {
-                let cellSize = 0;
-                sigfix.world.mine.forEach((id) => {
-                    const cell = sigfix.world.cells.get(id);
-                    if (!cell || cell.deadAt !== undefined) return;
-
-                    cellSize += (cell.nr * cell.nr) / 100;
-                });
-
-                if (cellSize >= 5500) return;
-            }
-
             // leave the world with chat command
             window.sendChat(this.respawnCommand);
             const p = byId('play-btn');
@@ -10394,7 +10374,6 @@
 
             previewContainer.innerHTML = previews;
 
-            // Add event listeners to each announcement
             const announcementElements =
                 document.querySelectorAll('.mod-announcement');
             announcementElements.forEach((element) => {

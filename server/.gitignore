@@ -3,6 +3,8 @@ logs
 dist
 profiles
 
+process.json
+
 .env
 .env.development
 .env.production

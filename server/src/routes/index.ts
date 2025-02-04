@@ -6,6 +6,7 @@ import FontRoutes from './FontRoutes';
 import DiscordRoutes from './DiscordRoutes';
 import FriendRoutes from './FriendRoutes';
 import path from 'path';
+import genericRoutes from './GenericRoutes';
 
 export default (app: Application) => {
     app.use(telemetryRoutes);
@@ -14,11 +15,15 @@ export default (app: Application) => {
     app.use(FontRoutes);
     app.use(DiscordRoutes);
     app.use(FriendRoutes);
+    app.use(genericRoutes);
 
     app.use('/profiles', express.static(path.join(process.cwd(), 'profiles')));
 
     const websitePath = process.env.WEBSITE_PATH;
-    if (!websitePath) return;
+    if (!websitePath) {
+        console.log('Website path is not defined!');
+        return;
+    }
 
     app.use(express.static(path.join(websitePath)));
 

@@ -7,6 +7,8 @@ import rateLimit from 'express-rate-limit';
 import setupRoutes from './routes';
 
 const SetupMiddleware = (app: Application) => {
+    app.set('trust proxy', 1);
+
     app.use(
         cors({
             origin: [

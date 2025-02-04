@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.0
+// @version      10.1.1
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -8360,6 +8360,12 @@
 
         respawnGame() {
             const { sigfix } = window;
+
+            if (sigfix.net.connections.get(sigfix.world.selected).ws.url.includes('localhost')) {
+                this.fastRespawn();
+                return;
+            }
+
             if (this.aboveRespawnLimit || (sigfix && sigfix.world.score(sigfix.world.selected) >= 5500)) {
                 sigfix ? sigfix.net.connections.get(sigfix.world.selected).ws.close() : window.gameSettings.ws.close();
                 this.isRespawned = true;

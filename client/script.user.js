@@ -563,16 +563,6 @@
                 client = new modClient();
             }
 
-            // if respawned with more than 5.5k mass: slow respawn
-            // click play button once websocket connection is opened
-            ws.addEventListener('open', () => {
-                if (mods.isRespawned) {
-                    mods.isRespawned = false;
-
-                    byId('play-btn').click();
-                }
-            });
-
             ws.addEventListener('close', () => this.handleWebSocketClose());
             ws.sendPacket = this.sendPacket.bind(this);
 
@@ -1116,7 +1106,6 @@
 
         this.mouseX = 0;
         this.mouseY = 0;
-        this.screenSide = null;
 
         this.renderedMessages = 0;
         this.maxChatMessages = 200;
@@ -1125,7 +1114,6 @@
 
         this.respawnCommand = '/leaveworld';
         this.aboveRespawnLimit = false;
-        this.isRespawned = false;
         this.cellSize = 0;
         this.miniMapData = [];
         this.border = {};
@@ -4239,7 +4227,7 @@
 
             window.gameSettings.user = user;
 
-            if (client.ws) {
+            if (client && client.ws) {
                 client.send({
                     type: 'user',
                     content: user,
@@ -6955,27 +6943,12 @@
             document.addEventListener('mousemove', (e) => {
                 this.mouseX = e.clientX + window.pageXOffset;
                 this.mouseY = e.clientY + window.pageYOffset;
-                this.screenSide =
-                    this.mouseX < window.innerWidth / 2 ? 'left' : 'right';
 
                 const mouseTracker = document.querySelector('.mouseTracker');
                 if (!mouseTracker) return;
 
                 mouseTracker.innerText = `X: ${this.mouseX}; Y: ${this.mouseY}`;
             });
-
-            if (window.sigfix) {
-                const scoreElement = document.querySelector(
-                    'div[style="position: fixed; top: 10px; left: 10px; width: 400px; height: fit-content; user-select: none; z-index: 2; transform-origin: left top;"] > div',
-                );
-
-                setInterval(() => {
-                    if (scoreElement.innerHTML === '' || !window.gameSettings.isPlaying)
-                        return;
-                    const score = parseInt(scoreElement.innerHTML.split(': ')[1]);
-                    // TODO: fix for tournaments
-                }, 1000);
-            }
         },
 
         removeStorage(storage) {
@@ -8358,10 +8331,8 @@
                 return;
             }
 
-            if (this.aboveRespawnLimit || (sigfix && sigfix.world.score(sigfix.world.selected) >= 5500)) {
-                sigfix ? sigfix.net.connections.get(sigfix.world.selected).ws.close() : window.gameSettings.ws.close();
-                this.isRespawned = true;
-            } else {
+            // respawns above 5.5k mass will be blocked
+            if (!this.aboveRespawnLimit || !(sigfix && sigfix.world.score(sigfix.world.selected) >= 5500)) {
                 this.fastRespawn();
             }
         },

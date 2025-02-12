@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.2
+// @version      10.1.3
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -559,7 +559,10 @@
         setupWebSocket(ws) {
             window.gameSettings.ws = ws;
 
-            if (!client) {
+            // if 'save' is in localstorage, it indicates that you are logged in to Google; if that is the case, it
+            // will load the client after the authorization to load the modClient correctly.
+            // This loads the client instantly if you're not logged in to Google
+            if (!localStorage.getItem('save') && !client) {
                 client = new modClient();
             }
 
@@ -740,8 +743,6 @@
             mods.border.centerY = (mods.border.top + mods.border.bottom) / 2;
         }
     }
-
-    new SigWsHandler();
 
     class SigFixHandler {
         constructor() {
@@ -4226,6 +4227,10 @@
             fetchedUser++;
 
             window.gameSettings.user = user;
+
+            if (!client) {
+                client = new modClient();
+            }
 
             if (client && client.ws) {
                 client.send({
@@ -8515,8 +8520,8 @@
         },
 
         /*
-     * @param {boolean} status
-     */
+         * @param {boolean} status
+         */
         toggleOverlay(status) {
             if (status && menuClosed()) location.reload();
 
@@ -9552,11 +9557,11 @@
             const messagesHTML = history
                 .map(
                     (message) => `
-                <div class="friends-message ${message.sender_id === this.profile._id ? 'message-right' : ''}">
-                    <span>${message.content}</span>
-                    <span class="message-date">${prettyTime.am_pm(message.timestamp)}</span>
-                </div>
-            `,
+                        <div class="friends-message ${message.sender_id === this.profile._id ? 'message-right' : ''}">
+                            <span>${message.content}</span>
+                            <span class="message-date">${prettyTime.am_pm(message.timestamp)}</span>
+                        </div>
+                    `,
                 )
                 .join('');
 
@@ -9642,11 +9647,11 @@
 
             const messages = chatDiv.querySelector('.friends-chat-messages');
             messages.innerHTML += `
-        <div class="friends-message ${sender_id === this.profile._id ? 'message-right' : ''}">
-            <span>${message}</span>
-            <span class="message-date">${prettyTime.am_pm(timestamp)}</span>
-        </div>
-      `;
+               <div class="friends-message ${sender_id === this.profile._id ? 'message-right' : ''}">
+                   <span>${message}</span>
+                   <span class="message-date">${prettyTime.am_pm(timestamp)}</span>
+               </div>
+            `;
             messages.scrollTop = messages.scrollHeight;
         },
 
@@ -9722,7 +9727,6 @@
                 usersContainer.insertAdjacentHTML('beforeend', userHTML);
 
                 if (user._id == this.profile._id) return;
-                // Add event listener to view user profile
                 const newUserProfile = usersContainer.querySelector(
                     `[data-user-profile="${user._id}"]`,
                 );
@@ -9732,7 +9736,6 @@
                     }
                 });
 
-                // Add event listener to request button
                 const addButton = newUserProfile.querySelector('.add-button');
                 if (!addButton) return;
                 addButton.addEventListener('click', handleAddButtonClick);
@@ -9786,7 +9789,6 @@
                     });
             };
 
-            // Set to store displayed user IDs
             const displayedUserIDs = new Set();
 
             const fetchNewUsers = async () => {
@@ -9838,7 +9840,6 @@
 
                         usersContainer.insertAdjacentHTML('beforeend', newUserHTML);
 
-                        // Add event listener to view user profile
                         const newUserProfile = usersContainer.querySelector(
                             `[data-user-profile="${user._id}"]`,
                         );
@@ -9848,7 +9849,6 @@
                             }
                         });
 
-                        // Add event listener to request button
                         const addButton = newUserProfile.querySelector('.add-button');
                         if (!addButton) return;
                         addButton.addEventListener('click', handleAddButtonClick);
@@ -10608,11 +10608,11 @@
                     pickerElement.insertAdjacentHTML(
                         'beforeend',
                         `
-					<div class="colorpicker-additional">
-						<span>Reset Color</span>
-						<button class="resetButton" id="reset-${selector}"></button>
-					</div>
-				`,
+                            <div class="colorpicker-additional">
+                                <span>Reset Color</span>
+                                <button class="resetButton" id="reset-${selector}"></button>
+                            </div>
+                        `,
                     );
 
                     colorPickerInstance.on('change', (e) => {
@@ -10737,6 +10737,8 @@
             // only initialize sigmod on the main page
             if (!document.querySelector('.body__inner'))
                 return;
+
+            new SigWsHandler();
 
             try {
                 this.loadLibraries();

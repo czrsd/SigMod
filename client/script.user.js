@@ -1110,7 +1110,7 @@
         this.renderedMessages = 0;
         this.maxChatMessages = 200;
         this.mutedUsers = [];
-        this.blackListCharacters = ['﷽', '𒐫', '𒈟'];
+        this.blackListCharacters = ['%EF%B7%BD', '%F0%92%90%AB', '%F0%92%88%9F'].map(decodeURIComponent);
 
         this.respawnCommand = '/leaveworld';
         this.aboveRespawnLimit = false;
@@ -6273,7 +6273,7 @@
                 focused = false;
             });
 
-            text.addEventListener('keydown', () => {
+            text.addEventListener('keydown', (e) => {
                 const key = e.key.toLowerCase();
                 if (key === 'w') {
                     e.stopPropagation();
@@ -6939,7 +6939,6 @@
                 ot.apply(this, arguments);
             };
 
-            // Updating the mouse position & the side of the mouse position on the screen
             document.addEventListener('mousemove', (e) => {
                 this.mouseX = e.clientX + window.pageXOffset;
                 this.mouseY = e.clientY + window.pageYOffset;
@@ -9487,7 +9486,7 @@
                             </button>
                             <div class="vr2"></div>
                             <button class="modButton centerXY" id="chat-${user._id}" style="padding: 7px;">
-                                <svg fill="#ffffff" width="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 458 458"stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M428,41.534H30c-16.569,0-30,13.431-30,30v252c0,16.568,13.432,30,30,30h132.1l43.942,52.243 c5.7,6.777,14.103,10.69,22.959,10.69c8.856,0,17.258-3.912,22.959-10.69l43.942-52.243H428c16.568,0,30-13.432,30-30v-252 C458,54.965,444.568,41.534,428,41.534z M323.916,281.534H82.854c-8.284,0-15-6.716-15-15s6.716-15,15-15h241.062 c8.284,0,15,6.716,15,15S332.2,281.534,323.916,281.534z M67.854,198.755c0-8.284,6.716-15,15-15h185.103c8.284,0,15,6.716,15,15 s-6.716,15-15,15H82.854C74.57,213.755,67.854,207.039,67.854,198.755z M375.146,145.974H82.854c-8.284,0-15-6.716-15-15 s6.716-15,15-15h292.291c8.284,0,15,6.716,15,15C390.146,139.258,383.43,145.974,375.146,145.974z"></path> </g> </g> </g></svg>
+                                <svg fill="#ffffff" width="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 458 458" stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M428,41.534H30c-16.569,0-30,13.431-30,30v252c0,16.568,13.432,30,30,30h132.1l43.942,52.243 c5.7,6.777,14.103,10.69,22.959,10.69c8.856,0,17.258-3.912,22.959-10.69l43.942-52.243H428c16.568,0,30-13.432,30-30v-252 C458,54.965,444.568,41.534,428,41.534z M323.916,281.534H82.854c-8.284,0-15-6.716-15-15s6.716-15,15-15h241.062 c8.284,0,15,6.716,15,15S332.2,281.534,323.916,281.534z M67.854,198.755c0-8.284,6.716-15,15-15h185.103c8.284,0,15,6.716,15,15 s-6.716,15-15,15H82.854C74.57,213.755,67.854,207.039,67.854,198.755z M375.146,145.974H82.854c-8.284,0-15-6.716-15-15 s6.716-15,15-15h292.291c8.284,0,15,6.716,15,15C390.146,139.258,383.43,145.974,375.146,145.974z"></path> </g> </g> </g></svg>
                             </button>
                         </div>
                       </div>

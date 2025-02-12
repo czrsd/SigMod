@@ -6285,7 +6285,6 @@
             });
 
             // switch to compact chat
-
             const chatElements = [
                 '.modChat',
                 '.emojisContainer',
@@ -6330,111 +6329,85 @@
         updateChat(data) {
             if (this.blackListCharacters.includes(data.message)) return;
 
-            let that = this;
-            let time = '';
-            if (data.time !== null) {
-                time = prettyTime.am_pm(data.time);
-            }
+            const chatContainer = byId('mod-messages');
+            const isScrolledToBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 1;
+            const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - 200 <= chatContainer.clientHeight;
 
-            let { name, message } = data;
+            let { name, message, time = '' } = data;
             name = noXSS(name);
             message = noXSS(message);
-            const color = this.friend_names.has(name)
-                ? this.friends_settings.highlight_color
-                : data.color || '#ffffff';
-            const glow =
-                this.friend_names.has(name) && this.friends_settings.highlight_friends
-                    ? `text-shadow: 0 1px 3px ${color}`
-                    : '';
+            time = data.time !== null ? prettyTime.am_pm(data.time) : '';
+
+            const color = this.friend_names.has(name) ? this.friends_settings.highlight_color : data.color || '#ffffff';
+            const glow = this.friend_names.has(name) && this.friends_settings.highlight_friends ? `text-shadow: 0 1px 3px ${color}` : '';
             const id = rdmString(12);
 
             const chatMessage = document.createElement('div');
             chatMessage.classList.add('message');
-
             chatMessage.innerHTML = `
                 <div class="centerXY" style="gap: 3px;">
-					<div class="flex">
-						<span style="color: ${color};${glow}" class="message_name" id="${id}">${name}</span>
-						<span>&#58;</span>
-					</div>
-					<span class="chatMessage-text">${message}</span>
+                    <div class="flex">
+                        <span style="color: ${color};${glow}" class="message_name" id="${id}">${name}</span>
+                        <span>&#58;</span>
+                    </div>
+                    <span class="chatMessage-text">${message}</span>
                 </div>
                 <span class="time">${time}</span>
             `;
 
-            const chatContainer = byId('mod-messages');
-            const isScrolledToBottom =
-                chatContainer.scrollHeight - chatContainer.scrollTop <=
-                chatContainer.clientHeight + 1;
-            const isNearBottom =
-                chatContainer.scrollHeight - chatContainer.scrollTop - 200 <=
-                chatContainer.clientHeight;
-
             chatContainer.append(chatMessage);
+            if (isScrolledToBottom || isNearBottom) chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            if (isScrolledToBottom || isNearBottom) {
-                if (!this.scrolling) {
-                    this.scrolling = true;
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    this.scrolling = false;
-                }
-            }
-
-            if (name == this.nick) return;
+            if (name === this.nick) return;
 
             const nameEl = byId(id);
-            nameEl.addEventListener('mousedown', (e) => {
-                if (that.onContext) return;
-                if (e.button === 2) {
-                    // Create a custom context menu
-                    const contextMenu = document.createElement('div');
-                    contextMenu.classList.add('chat-context');
-                    contextMenu.innerHTML = `
-                        <span>${name}</span>
-                        <button id="muteButton">Mute</button>
-                    `;
-
-                    const contextMenuTop = e.clientY - 80;
-                    const contextMenuLeft = e.clientX;
-
-                    // Set the position of the context menu
-                    contextMenu.style.top = `${contextMenuTop}px`;
-                    contextMenu.style.left = `${contextMenuLeft}px`;
-
-                    document.body.appendChild(contextMenu);
-                    that.onContext = true;
-
-                    const muteButton = byId('muteButton');
-                    muteButton.addEventListener('click', () => {
-                        let message =
-                            name === 'Spectator'
-                                ? `Are you sure you want to mute all spectators until you refresh the page?`
-                                : `Are you sure you want to mute '${name}' until you refresh the page?`;
-                        if (confirm(message)) {
-                            this.muteUser(name);
-                            contextMenu.remove();
-                        }
-                    });
-
-                    document.addEventListener('click', (event) => {
-                        if (!contextMenu.contains(event.target)) {
-                            that.onContext = false;
-                            contextMenu.remove();
-                        }
-                    });
-                }
-            });
-
+            nameEl.addEventListener('mousedown', (e) => this.handleContextMenu(e, name));
             nameEl.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
             });
 
-            this.renderedMessages++;
-            if (this.renderedMessages > this.maxChatMessages) {
+            if (++this.renderedMessages > this.maxChatMessages) {
                 chatContainer.removeChild(chatContainer.firstChild);
                 this.renderedMessages--;
             }
+        },
+
+        handleContextMenu(e, name) {
+            if (this.onContext || e.button !== 2) return;
+
+            const contextMenu = document.createElement('div');
+            contextMenu.classList.add('chat-context');
+            contextMenu.innerHTML = `
+                <span>${name}</span>
+                <button id="muteButton">Mute</button>
+            `;
+
+            Object.assign(contextMenu.style, {
+                top: `${e.clientY - 80}px`,
+                left: `${e.clientX}px`
+            });
+
+            document.body.appendChild(contextMenu);
+            this.onContext = true;
+
+            byId('muteButton').addEventListener('click', () => {
+                const confirmMsg = name === 'Spectator'
+                    ? 'Are you sure you want to mute all spectators until you refresh the page?'
+                    : `Are you sure you want to mute '${name}' until you refresh the page?`;
+
+                if (confirm(confirmMsg)) {
+                    this.muteUser(name);
+                    contextMenu.remove();
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!contextMenu.contains(event.target)) {
+                    this.onContext = false;
+                    contextMenu.remove();
+                }
+            });
         },
 
         muteUser(name) {

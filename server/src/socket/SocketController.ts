@@ -1,3 +1,4 @@
+import { alert, socketMessageData } from '../types';
 import socket from './core/socket';
 
 class SocketController {
@@ -5,6 +6,7 @@ class SocketController {
     public modLink: string;
     public tournamentOverlay: boolean;
     public version: string = '4.0.0';
+    public alert: alert;
 
     constructor() {
         this.sockets = new Map();
@@ -12,6 +14,18 @@ class SocketController {
 
         this.modLink =
             'https://update.greasyfork.org/scripts/454648/SigMod%20Client%20%28Macros%29.user.js';
+
+        this.alert = {
+            title: 'Scrim',
+            description:
+                'We are hosting a scrim in the tournament server! You can win 50k Gold!',
+            enabled: false,
+            password: null, // hide password if there are no active scrims
+        };
+    }
+
+    sendToAll(data: socketMessageData) {
+        this.sockets.forEach((socket) => socket.send(data));
     }
 
     getByUserId(id: string): socket | void {

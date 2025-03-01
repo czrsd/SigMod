@@ -1,9 +1,12 @@
 import socket from './socket';
-import { noXSS } from '../../utils/helpers';
+import { formatDate, noXSS, sanitizeNick } from '../../utils/helpers';
 import { wsHandler } from '../setup';
 import { google_user, minimapData } from '../../types';
 import logger from '../../utils/logger';
 import ChatModel from '../../models/ChatModel';
+import { db } from '../../db/connection';
+import { ObjectId } from 'mongodb';
+import useragent from 'express-useragent';
 
 const checkVersion = (version: string, socket: socket) => {
     if (version === wsHandler.version) return;
@@ -40,9 +43,11 @@ const updateTag = (tag: string, socket: socket) => {
 const updateMinimap = (data: minimapData, socket: socket) => {
     if (!socket.tag || socket.tag.length > 3) return;
 
+    const { x, y } = data;
+
     socket.position = {
-        x: data.x,
-        y: data.y,
+        x,
+        y,
     };
 
     const sockets = wsHandler.getSocketsByTag(socket.tag);
@@ -52,7 +57,12 @@ const updateMinimap = (data: minimapData, socket: socket) => {
     wsHandler.sendToTag(
         {
             type: 'minimap-data',
-            content: data,
+            content: {
+                x: x,
+                y: y,
+                nick: socket.nick,
+                sid: socket.sid,
+            },
         },
         socket.tag
     );
@@ -148,12 +158,76 @@ const sendToUser = (
     });
 };
 
-const onGoogleAuth = (userData: google_user, socket: socket) => {
-    if (!userData || !userData._id) return;
+interface extended_user extends google_user {
+    _id: ObjectId;
+    nick: string;
+    ip: string;
+    userAgent: {
+        browser: string;
+        platform: string;
+        version: string;
+        source: string;
+    };
+}
 
-    socket.user = userData;
+const onGoogleAuth = async (user: extended_user, socket: socket) => {
+    if (!user || !user._id) return;
 
-    // adding more for tournaments soon
+    socket.user = user as google_user;
+
+    try {
+        const ip =
+            socket.req.headers['x-forwarded-for'] ||
+            socket.req.socket.remoteAddress;
+
+        const userAgentString = Array.isArray(socket.req.headers['user-agent'])
+            ? socket.req.headers['user-agent'][0]
+            : socket.req.headers['user-agent'];
+        const agent = useragent.parse(userAgentString);
+
+        const { browser, platform, version, source } = agent;
+
+        if (
+            !user ||
+            typeof user !== 'object' ||
+            !user._id ||
+            !user.email ||
+            !agent ||
+            typeof ip !== 'string'
+        ) {
+            console.log('Something went wrong.');
+            return;
+        }
+
+        user._id = new ObjectId(user._id);
+        user.nick = sanitizeNick(user.nick || 'Unnamed');
+        user.ip = ip;
+        user.userAgent = {
+            browser: browser || '',
+            platform: platform || '',
+            version: version || '',
+            source: source || '',
+        };
+
+        logger.info(
+            `[User manager] User authorized: ${user.fullName || 'Unnamed'} on ${formatDate(new Date())}`
+        );
+
+        const usersCollection = db.collection('users');
+        const userDoc = await usersCollection.findOne({ _id: user._id });
+
+        if (!userDoc) {
+            await usersCollection.insertOne(user);
+        } else {
+            const updates: Record<string, any> = { ...user, ip };
+            await usersCollection.updateOne(
+                { _id: user._id },
+                { $set: updates }
+            );
+        }
+    } catch (e) {
+        logger.error(e);
+    }
 };
 
 export {

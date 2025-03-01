@@ -6,7 +6,6 @@ const getPlayers = async () => {
         'https://eu0.sigmally.com/server/serversstats',
         'https://ca0.sigmally.com/server/serversstats',
         'https://ca1.sigmally.com/server/serversstats',
-        'https://ca2.sigmally.com/server/serversstats',
     ];
 
     for (const url of urls) {

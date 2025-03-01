@@ -3,6 +3,9 @@ import { readFile } from '../utils/helpers';
 import { wsHandler } from '../socket/setup';
 import socket from '../socket/core/socket';
 import TournamentSystem from '../socket/core/tournaments/TournamentController';
+import { google_user } from '../types';
+import { db } from '../db/connection';
+import logger from '../utils/logger';
 
 class TournamentController {
     // returns online users (authorized and unauthorized) connected to the tournament server
@@ -91,6 +94,62 @@ class TournamentController {
             res.status(200).json({ success: true });
         } catch (error) {
             console.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
+    async getUsers(req: Request, res: Response): Promise<void> {
+        const { key, nicknames } = req.body;
+        try {
+            if (
+                !key ||
+                key !== readFile(process.env.TOURNAMENT_KEY_PATH || '')
+            ) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Unauthorized.',
+                });
+                return;
+            }
+            const users = new Map<string, google_user | null>();
+
+            for (let i = 0; i < nicknames.length; i++) {
+                const nick = nicknames[i];
+                const socket = Array.from(wsHandler.sockets.values()).find(
+                    (s) => s.nick === nick
+                );
+
+                if (socket && socket.user) {
+                    users.set(nick, socket.user);
+                } else {
+                    const user = (await db.collection('users').findOne(
+                        { nick },
+                        {
+                            projection: {
+                                userAgent: 0,
+                                ip: 0,
+                                token: 0,
+                                sigma: 0,
+                                skins: 0,
+                            },
+                        }
+                    )) as google_user;
+
+                    if (!user) {
+                        users.set(nick, null);
+                        continue;
+                    }
+
+                    users.set(nick, user);
+                }
+            }
+
+            res.status(200).json({
+                success: true,
+                users: Object.fromEntries(users),
+            });
+        } catch (error) {
+            logger.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
     }

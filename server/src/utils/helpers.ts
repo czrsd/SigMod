@@ -4,7 +4,7 @@ export const readFile = (path: string) =>
     fs.readFileSync(path, { encoding: 'utf8' }).trim();
 
 export const noXSS = (text: string | any) => {
-    const xssChars = /&|<|>|"|'/g;
+    const xssChars = /[&<>"']/g;
     return text.replace(xssChars, (match: string) => {
         switch (match) {
             case '&':
@@ -23,39 +23,6 @@ export const noXSS = (text: string | any) => {
     });
 };
 
-export function parseTxt(val: string): string {
-    const match = /^(?:\{([^}]*)\})?([^]*)/.exec(val);
-    return match ? match[2].trim() : '';
-}
-
-function getRandomInt(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export function generateProductKey() {
-    let tokens: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-        chars: number = 4,
-        segments: number = 4,
-        keyString: string = '';
-
-    for (let i = 0; i < segments; i++) {
-        let segment = '';
-
-        for (let j = 0; j < chars; j++) {
-            let k = getRandomInt(0, 35);
-            segment += tokens[k];
-        }
-
-        keyString += segment;
-
-        if (i < segments - 1) {
-            keyString += '-';
-        }
-    }
-
-    return keyString;
-}
-
 export function formatDate(date: Date): string {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -70,10 +37,7 @@ export function formatDate(date: Date): string {
 export function sanitizeNick(input: string): string {
     try {
         const withoutEmoji = input.replace(/[\u{1F600}-\u{1F6FF}]/gu, '');
-        const normalizedText = withoutEmoji
-            .normalize('NFKD')
-            .replace(/[^\w\s]/g, '');
-        return normalizedText;
+        return withoutEmoji.normalize('NFKD').replace(/[^\w\s]/g, '');
     } catch (error) {
         return 'Unnamed';
     }
@@ -100,7 +64,5 @@ export function getRemainingTime(string: string) {
         0
     );
 
-    const remainingTime = targetDate.getTime() - now.getTime() - 3600000;
-
-    return remainingTime;
+    return targetDate.getTime() - now.getTime() - 3600000;
 }

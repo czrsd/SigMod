@@ -1,55 +1,89 @@
 # Sigmally Mod | SigMod Client
 
-A mod for sigmally.com by Cursed.
+A mod for **Sigmally.com** by **Cursed**.
 
-> **Disclaimer: This script is for an [Agar.io private server](https://one.sigmally.com) and not for Agar.io.**
+> **⚠️ Disclaimer:** This script is for an [Agar.io private server](https://one.sigmally.com) and **not** for Agar.io.
 
-- - -
+---  
 
-## Description
+## 🎮 What is SigMod?
 
-SigMod is the top mod for Sigmally, making the game even more fun! We’ve worked hard on every detail to make sure you have a great time. Each feature is added to make your gameplay smoother, more exciting and more personalized.
+SigMod is the **#1 mod** for **Sigmally**, making the game more fun and customizable! Every feature is designed to improve your gameplay with smooth performance, powerful tools and a fully customizable experience.
 
-## Installation
+---  
 
-1. Install **Tampermonkey** to be able to install the mod. [Get it here](https://tampermonkey.net).
-2. Install SigMod through Greasyfork to keep it updated. [Install here](https://greasyfork.org/scripts/454648).
+## 🛠 Installation Guide
 
-On Greasyfork, simply click on the **Install this script** button and on the **Install** button in the tab that opens in Tampermonkey.
+### 1️⃣ Install a Userscript Manager
+To use SigMod, you need a **userscript manager**:
+- **Tampermonkey** (Recommended) – [Get it here](https://tampermonkey.net)
+- **ViolentMonkey** (Alternative) – [Get it here](https://violentmonkey.github.io)
 
-That's all; you now have SigMod!
+### 2️⃣ Install SigMod
+Install the script via **Greasyfork** for automatic updates. [Install here](https://greasyfork.org/scripts/454648).
+- Click **Install this script** on Greasyfork.
+- In the Tampermonkey tab that opens, click **Install**.
 
-## Usage
+### ⚠️ Important: Enable Developer Mode
+Tampermonkey requires **Developer Mode** to work correctly. Enable it as follows:
 
-After installing the script, you will see the mod menu by clicking the gear or by pressing the V key. In the mod menu you can change hotkeys and much more.  
-![](https://czrsd.com/static/sigmod/advertising/sigmod_menu.png) You can check out all the tabs to see what the mod provides you.
+#### 🔹 Chrome / Edge / Opera
+- Click the **puzzle icon** in your browser’s top bar → **Manage extensions** → Enable **Developer Mode**.
+- OR open the extensions page and enable it manually:
+    - **Chrome:** `chrome://extensions`
+    - **Edge:** `edge://extensions` (Left navigation bar)
+    - **Opera:** `opera://extensions`
 
-- - -
+#### 🔹 Firefox
+- Open: `mozilla://extensions`
+- Enable **Developer Mode** in settings.
 
-## Features
+---  
 
-SigMod comes with plenty of features. The main features are:
+## 🎯 How to Use SigMod
 
-*   Mod Menu
-*   Mod Client with Tag system (Minimap, Party chat)
-*   Macros / Mouse Macros
-*   Game Settings: Change colors, images and more
-*   Freeze Player - Linesplit
-*   Auto respawn
-*   Custom skin and virus
-*   Name options
-*   Themes for menu
-*   Friends feature
+Once installed, you can open the **mod menu** by:  
+- **Clicking the gear icon** OR  
+- **Pressing the "V" key**
 
-- - -
+In the mod menu, you can **change hotkeys, adjust settings, and explore all features**.
 
-## Links
+**Preview:**  
+![](https://czrsd.com/static/sigmod/advertising/sigmod_menu.png)
 
-*   [Join Sigmally Modz Discord Server](https://discord.gg/QyUhvUC8AD)
-*   [Subscribe Cursed on YouTube](https://www.youtube.com/@sigmallyCursed?sub_confirmation=1)
+---  
 
-- - -
+## 🔥 Features
 
-if you need help you can join my [Discord server](https://discord.gg/QyUhvUC8AD) and create a ticket in the support channel.
+✅ **Mod Menu** – Full customization  
+✅ **Mod Client** – Minimap, Party chat and more  
+✅ **Mouse Macros** – Faster and easier actions  
+✅ **Game Settings** – Change colors, images, fonts and more  
+✅ **Freeze Player / Linesplit**  
+✅ **Auto Respawn**    
+✅ **Instant Respawn**    
+✅ **Custom Skins & Viruses**    
+✅ **Name Options**    
+✅ **Themes** – Customize the UI  
+✅ **Friends Feature** – Connect with players  
+✅ **Auto Claim Daily Coins**
 
-### Do you have problems installing this mod? ➜ [Watch the Tutorial](https://www.youtube.com/watch?v=wKBcCjKSgG4&t=261)
+---  
+
+## ⚡ Sigmally Fixes
+
+Sigmally Fixes is another userscript designed to 10X your FPS and allows you to multibox using one-tab. It’s fully **compatible with SigMod** and offers even more customization by using its own optimized renderer.
+
+📥 **[Install on Greasyfork](https://greasyfork.org/scripts/483587-sigmally-fixes-v2)**  
+📂 **[View on GitHub](https://github.com/8y8x/sigmally-fixes)**
+
+---
+
+## 🌍 Connect with the Community
+
+🔹 [Join the Sigmally Modz Discord Server](https://discord.gg/QyUhvUC8AD)  
+🔹 [Subscribe to Cursed on YouTube](https://www.youtube.com/@sigmallyCursed?sub_confirmation=1)
+
+📌 **Need help?** Join the **[Discord server](https://discord.gg/QyUhvUC8AD)** and create a ticket in the support channel.
+
+### ❓ Having trouble installing? ➜ [Watch the Tutorial](https://www.youtube.com/watch?v=wKBcCjKSgG4&t=261)

@@ -13,6 +13,7 @@ import socket from '../socket';
 import { wsHandler } from '../../setup';
 import { parseTimeToMilliseconds } from '../../../utils/helpers';
 import scoreSystem from './scoreSystem';
+import logger from '../../../utils/logger';
 
 class TournamentController {
     lobbies: tournamentLobby[] = [];
@@ -166,6 +167,15 @@ class TournamentController {
 
     async startSession(lobby: tournamentLobby) {
         try {
+            if (lobby.currentRound !== 0) {
+                this.sendToLobby(lobby.id, {
+                    type: 'tournament-session',
+                    content: 'console.log("something went wrong")',
+                });
+                logger.info('invalid lobby', lobby);
+                return;
+            }
+
             lobby.currentRound++;
             lobby.ready = [];
 

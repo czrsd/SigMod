@@ -95,6 +95,13 @@ class Socket {
             content: this.sid,
         });
 
+        if (wsHandler.alert.enabled) {
+            this.send({
+                type: 'alert',
+                content: wsHandler.alert,
+            });
+        }
+
         logger.info(`[WS Manager] WebSocket initialized. SID: ${this.sid}`);
     }
 }

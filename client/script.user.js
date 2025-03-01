@@ -14,7 +14,7 @@
 (function () {
     'use strict';
     const version = 10;
-    const serverVersion = '4.0.1';
+    const serverVersion = '4.0.2';
     const storageVersion = 1.0;
     const storageName = 'SigModClient-settings';
     const headerAnim = 'https://czrsd.com/static/sigmod/sigmodclient.gif';
@@ -3751,7 +3751,7 @@
                 endAngle,
                 anticlockwise
             ) {
-                if (this.canvas.id !== 'canvas') return;
+                if (this.canvas.id !== 'canvas') return arc.apply(this, arguments);
 
                 if (radius >= 86 && modSettings.game.cellColor) {
                     this.fillStyle = modSettings.game.cellColor;
@@ -3771,7 +3771,7 @@
                 x,
                 y
             ) {
-                if (this.canvas.id !== 'canvas') return;
+                if (this.canvas.id !== 'canvas') return fillText.apply(this, arguments);
 
                 const currentFontSizeMatch = this.font.match(/^(\d+)px/);
                 const fontSize = currentFontSizeMatch
@@ -3894,7 +3894,7 @@
                 x,
                 y
             ) {
-                if (this.canvas.id !== 'canvas') return;
+                if (this.canvas.id !== 'canvas') return strokeText.apply(this, arguments);
 
                 const currentFontSizeMatch = this.font.match(/^(\d+)px/);
                 const fontSize = currentFontSizeMatch

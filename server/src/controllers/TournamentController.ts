@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { readFile } from '../utils/helpers';
+import { getFutureTimestamp, readFile } from '../utils/helpers';
 import { wsHandler } from '../socket/setup';
 import socket from '../socket/core/socket';
 import TournamentSystem from '../socket/core/tournaments/TournamentController';
@@ -86,8 +86,12 @@ class TournamentController {
             const sockets = wsHandler.getServerSockets('Tourney');
             sockets.forEach((socket) =>
                 socket.send({
-                    type: 'tournament-overlay',
-                    content: status,
+                    type: 'tournament-data',
+                    content: {
+                        overlay: wsHandler.tournamentOverlay,
+                        details: wsHandler.tournamentDetails,
+                        timer: wsHandler.tournamentTimer,
+                    },
                 })
             );
 
@@ -150,6 +154,74 @@ class TournamentController {
             });
         } catch (error) {
             logger.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
+    getTournamentData(req: Request, res: Response): void {
+        try {
+            const { key } = req.params;
+            if (
+                !key ||
+                key !== readFile(process.env.TOURNAMENT_KEY_PATH || '')
+            ) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Unauthorized.',
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    details: wsHandler.tournamentDetails,
+                    timer: wsHandler.tournamentTimer,
+                },
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
+    updateTournamentData(req: Request, res: Response): void {
+        try {
+            const { key, details, timer } = req.body;
+            const tournamentKey = readFile(
+                process.env.TOURNAMENT_KEY_PATH || ''
+            );
+
+            if (!key || key !== tournamentKey) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Unauthorized.',
+                });
+                return;
+            }
+
+            const futureTimer = timer && getFutureTimestamp(timer);
+            wsHandler.tournamentTimer = futureTimer;
+
+            if (!details) {
+                wsHandler.tournamentDetails = null;
+                wsHandler.sendToServer('Tourney', {
+                    type: 'tournament-data',
+                    content: { details: null, timer: futureTimer },
+                });
+                res.status(200).json({ success: true });
+                return;
+            }
+
+            wsHandler.tournamentDetails = details;
+            wsHandler.sendToServer('Tourney', {
+                type: 'tournament-data',
+                content: { details, timer: futureTimer },
+            });
+
+            res.status(200).json({ success: true });
+        } catch (error) {
+            console.error(error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
     }

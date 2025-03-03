@@ -64,7 +64,8 @@ const updateMinimap = (data: minimapData, socket: socket) => {
                 sid: socket.sid,
             },
         },
-        socket.tag
+        socket.tag,
+        socket.sid // exclude own socket
     );
 };
 
@@ -195,7 +196,7 @@ const onGoogleAuth = async (user: extended_user, socket: socket) => {
             !agent ||
             typeof ip !== 'string'
         ) {
-            console.log('Something went wrong.');
+            logger.info('Something went wrong.');
             return;
         }
 

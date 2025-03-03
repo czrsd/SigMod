@@ -7,6 +7,8 @@ class SocketController {
     public tournamentOverlay: boolean;
     public version: string = '4.0.0';
     public alert: alert;
+    public tournamentDetails: string | null = null;
+    public tournamentTimer: number | null = null;
 
     constructor() {
         this.sockets = new Map();
@@ -48,8 +50,18 @@ class SocketController {
         return serverSockets;
     }
 
-    sendToTag(data: any, tag: string) {
+    sendToServer(server: string, data: socketMessageData) {
         this.sockets.forEach((socket) => {
+            if (socket.server === server) {
+                socket.send(data);
+            }
+        });
+    }
+
+    sendToTag(data: socketMessageData, tag: string, excludeSid?: string) {
+        this.sockets.forEach((socket) => {
+            if (excludeSid && socket.sid === excludeSid) return;
+
             if (socket.tag === tag) socket.send(data);
         });
     }
@@ -66,10 +78,8 @@ class SocketController {
 
     sendToUser(userId: string, data: any) {
         this.sockets.forEach((socket) => {
-            console.log('Searching for: ', userId.toString());
             if (socket.modUser?._id?.toString() == userId) {
                 socket.send(data);
-                console.log('Found user and sent message.');
                 return;
             }
         });

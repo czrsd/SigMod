@@ -66,3 +66,26 @@ export function getRemainingTime(string: string) {
 
     return targetDate.getTime() - now.getTime() - 3600000;
 }
+
+export function getFutureTimestamp(timeString: string): number {
+    const timeUnits: Record<string, number> = {
+        s: 1,
+        m: 60,
+        h: 3600,
+        d: 86400,
+    };
+    let totalSeconds = 0;
+
+    const matches = timeString.match(/(\d+)([smhd])/g);
+    if (!matches) throw new Error('Invalid time format');
+
+    for (const match of matches) {
+        const parts = match.match(/(\d+)([smhd])/);
+        if (!parts) throw new Error('Invalid time segment');
+        const value = parseInt(parts[1], 10);
+        const unit = parts[2];
+        totalSeconds += value * (timeUnits[unit] || 0);
+    }
+
+    return Date.now() + totalSeconds * 1000;
+}

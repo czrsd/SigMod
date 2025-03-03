@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.4
+// @version      10.1.6
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -14,7 +14,7 @@
 (function () {
     'use strict';
     const version = 10;
-    const serverVersion = '4.0.2';
+    const serverVersion = '4.0.3';
     const storageVersion = 1.0;
     const storageName = 'SigModClient-settings';
     const headerAnim = 'https://czrsd.com/static/sigmod/sigmodclient.gif';
@@ -381,6 +381,21 @@
                 return seconds <= 1 ? '1s>' : `${seconds}s ago`;
             }
         },
+        getTimeLeft(timestamp) {
+            let totalSeconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
+            const timeUnits = [['d', 86400], ['h', 3600], ['m', 60], ['s', 1]];
+            let result = '';
+
+            for (const [unit, seconds] of timeUnits) {
+                if (totalSeconds >= seconds) {
+                    const value = Math.floor(totalSeconds / seconds);
+                    totalSeconds %= seconds;
+                    result += `${value}${unit}`;
+                }
+            }
+
+            return result || '0s';
+        }
     };
 
     // EU server
@@ -738,7 +753,10 @@
 
     class SigFixHandler {
         constructor() {
+            this.lastHadCells = false;
+
             this.checkInterval = null;
+            this.updatePosInterval = null;
             this.init();
         }
 
@@ -764,9 +782,62 @@
                 return originalMove.apply(this, args);
             };
         }
+        updatePlayerPos() {
+            let myName = '';
+            let ownN = 0;
+            let ownX = 0;
+            let ownY = 0;
+            let hadCells = this.lastHadCells ?? true;
+
+            const ownedCells = window.sigfix.world.views.get(window.sigfix.world.selected)?.owned || [];
+
+            ownedCells.forEach(id => {
+                const cell = window.sigfix.world.cells.get(id)?.merged;
+                if (!cell) return;
+
+                myName = cell.name || 'An unnamed cell';
+                ++ownN;
+                ownX += cell.nx;
+                ownY += cell.ny;
+            });
+
+            if (ownN > 0) {
+                ownX /= ownN;
+                ownY /= ownN;
+
+                playerPosition.x = ownX;
+                playerPosition.y = ownY;
+
+                if (client?.ws?.readyState === 1 && modSettings.settings.tag) {
+                    client.send({
+                        type: 'position',
+                        content: {
+                            x: playerPosition.x,
+                            y: playerPosition.y,
+                        },
+                    });
+                }
+
+                this.lastHadCells = true;
+            } else if (hadCells) {
+                if (client?.ws?.readyState === 1 && modSettings.settings.tag) {
+                    client.send({
+                        type: 'position',
+                        content: {
+                            x: null,
+                            y: null,
+                        },
+                    });
+                }
+                this.lastHadCells = false;
+            }
+        }
 
         init() {
             const checkSigFix = () => {
+                if (window.sigfix) {
+                    this.updatePosInterval = setInterval(this.updatePlayerPos, 300);
+                }
                 if (window.sigfix?.net) {
                     this.overrideMoveFunction();
                     clearInterval(this.checkInterval);
@@ -923,8 +994,8 @@
                 case 'round-ready':
                     mods.tournamentReady(message.content);
                     break;
-                case 'tournament-overlay':
-                    mods.toggleOverlay(message.content);
+                case 'tournament-data':
+                    mods.handleTournamentData(message.content);
                     break;
                 case 'error':
                     mods.modAlert(message.content.message, 'danger');
@@ -3812,7 +3883,7 @@
                     this.fillStyle = gradient;
                 }
 
-                if (text.startsWith('Score') && !window.sigifx) {
+                if (!window.sigifx && text.startsWith('Score')) {
                     if (Date.now() - lastGetScore >= 250) {
                         const score = parseInt(text.split(': ')[1]);
 
@@ -3824,7 +3895,7 @@
                     }
                 }
 
-                if (text.startsWith('X:')) {
+                if (!window.sigfix && text.startsWith('X:')) {
                     this.fillStyle = 'transparent';
 
                     const [, xValue, yValue] =
@@ -3844,7 +3915,7 @@
 
                         // send position every 300 milliseconds
                         if (Date.now() - lastPosTime >= 300) {
-                            if (client?.ws?.readyState === 1) {
+                            if (modSettings.settings.tag && client?.ws?.readyState === 1) {
                                 client.send({
                                     type: 'position',
                                     content: {
@@ -3859,10 +3930,12 @@
                         dead2 = true;
                         playerPosition.x = null;
                         playerPosition.y = null;
-                        client.send({
-                            type: 'position',
-                            content: [null, null, null, client.id],
-                        });
+                        if (modSettings.settings.tag && client?.ws?.readyState === 1) {
+                            client.send({
+                                type: 'position',
+                                content: { x: null, y: null },
+                            });
+                        }
                     }
                 }
 
@@ -8130,9 +8203,9 @@
                 if (
                     activeVLine &&
                     (key === ' ' ||
-                        key === modSettings.macros.keys.splits.doubleSplit ||
-                        key === modSettings.macros.keys.splits.tripleSplit ||
-                        key === modSettings.macros.keys.splits.quadSplit)
+                        key === modSettings.macros.keys.splits.double ||
+                        key === modSettings.macros.keys.splits.triple ||
+                        key === modSettings.macros.keys.splits.quad)
                 ) {
                     vLine();
                 }
@@ -9066,31 +9139,96 @@
             byId('shop-popup').hide();
         },
 
-        /*
-         * @param {boolean} status
-         */
-        toggleOverlay(status) {
+        handleTournamentData(data) {
+            const { overlay: status, details, timer } = data;
+
             if (status && menuClosed()) location.reload();
 
-            if (status) {
-                const overlay = document.createElement('div');
-                overlay.setAttribute('id', 'tournament-overlay');
-                overlay.classList.add('mod_overlay');
-                overlay.innerHTML = `
-                    <div class="tournament-overlay-info">
-                        <img src="https://czrsd.com/static/sigmod/tournaments/Sigmally_Tournaments.png" width="650" draggable="false" />
-                        <span>The tournament is currently being prepared. Please remain patient.</span>
-                        <span>В настоящее время турнир находится в стадии подготовки. Пожалуйста, сохраняйте терпение.</span>
-                        <span>El torneo se está preparando actualmente. Le rogamos que sea paciente.</span>
-                        <span>O torneio está sendo preparado no momento. Por favor, seja paciente.</span>
-                        <span>Turnuva şu anda hazırlanmaktadır. Lütfen sabırlı olun.</span>
-                    </div>
-				`;
+            this.toggleTournamentOverlay(status);
+            this.updateTournamentDetails(details);
+            this.updateTournamentTimer(timer);
+        },
 
-                document.body.appendChild(overlay);
+        toggleTournamentOverlay(status) {
+            const overlayId = 'tournament-overlay';
+            const existingOverlay = document.getElementById(overlayId);
+
+            if (status) {
+                if (!existingOverlay) {
+                    const overlay = document.createElement('div');
+                    overlay.id = overlayId;
+                    overlay.classList.add('mod_overlay');
+                    overlay.innerHTML = `
+                        <div class="tournament-overlay-info">
+                            <img src="https://czrsd.com/static/sigmod/tournaments/Sigmally_Tournaments.png" width="650" draggable="false" />
+                            <span>The tournament is currently being prepared. Please remain patient.</span>
+                            <span>В настоящее время турнир находится в стадии подготовки. Пожалуйста, сохраняйте терпение.</span>
+                            <span>El torneo se está preparando actualmente. Le rogamos que sea paciente.</span>
+                            <span>O torneio está sendo preparado no momento. Por favor, seja paciente.</span>
+                            <span>Turnuva şu anda hazırlanmaktadır. Lütfen sabırlı olun.</span>
+                        </div>
+                    `;
+                    document.body.appendChild(overlay);
+                }
             } else {
-                const overlay = byId('tournament-overlay');
-                if (overlay) overlay.remove();
+                existingOverlay?.remove();
+            }
+        },
+
+        updateTournamentDetails(details) {
+            const minimapContainer = document.querySelector('.minimapContainer');
+            if (!minimapContainer) return;
+
+            document.getElementById('tournament-info')?.remove();
+
+            if (details) {
+                const detailsElement = document.createElement('span');
+                detailsElement.id = 'tournament-info';
+                detailsElement.style = `
+                    color: #ffffff;
+                    pointer-events: auto;
+                    text-align: end;
+                    margin-bottom: 8px;
+                    margin-right: 10px;
+                `;
+                detailsElement.innerHTML = details;
+
+                minimapContainer.prepend(detailsElement);
+            }
+        },
+
+        updateTournamentTimer(timer) {
+            const minimapContainer = document.querySelector('.minimapContainer');
+            if (!minimapContainer) return;
+
+            document.getElementById('tournament-timer')?.remove();
+
+            if (timer) {
+                const timerElement = document.createElement('span');
+                timerElement.id = 'tournament-timer';
+                timerElement.style = 'color: #ffffff; margin-right: 10px;';
+                minimapContainer.prepend(timerElement);
+
+                const updateTimer = () => {
+                    const timeLeft = timer - Date.now();
+
+                    // show big red timer for the last 10 seconds
+                    if (timeLeft < 11 * 1000) {
+                        timerElement.style.fontSize = '16px';
+                        timerElement.style.color = '#ff0000';
+                    }
+
+                    if (timeLeft <= 0) {
+                        timerElement.remove();
+                        clearInterval(timerInterval);
+                        return;
+                    }
+
+                    timerElement.textContent = `${prettyTime.getTimeLeft(timer)} left`;
+                };
+
+                updateTimer();
+                const timerInterval = setInterval(updateTimer, 1000);
             }
         },
 

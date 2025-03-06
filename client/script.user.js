@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.6
+// @version      10.1.7
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -398,55 +398,24 @@
         }
     };
 
-    // EU server
-    const coordinates = {};
-    const gridSize = 4500;
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-            const label = String.fromCharCode(65 + i) + (j + 1);
+    const getCoordinates = (border, gridCount = 5) => {
+        const { left, top, width, height } = border;
+        const gridSize = width / gridCount;
+        const coordinates = {};
 
-            const minX = -11000 + i * gridSize;
-            const minY = -11000 + j * gridSize;
-            const maxX = -6500 + i * gridSize;
-            const maxY = -6500 + j * gridSize;
+        for (let i = 0; i < gridCount; i++) {
+            for (let j = 0; j < gridCount; j++) {
+                const label = String.fromCharCode(65 + i) + (j + 1);
 
-            coordinates[label] = {
-                min: {
-                    x: minX,
-                    y: minY,
-                },
-                max: {
-                    x: maxX,
-                    y: maxY,
-                },
-            };
+                coordinates[label] = {
+                    min: { x: left + i * gridSize, y: top + j * gridSize },
+                    max: { x: left + (i + 1) * gridSize, y: top + (j + 1) * gridSize },
+                };
+            }
         }
-    }
 
-    // US1; US2 servers
-    const coordinates2 = {};
-    const gridSize2 = 7000;
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-            const label = String.fromCharCode(65 + i) + (j + 1);
-
-            const minX = -17022 + i * gridSize2;
-            const minY = -17022 + j * gridSize2;
-            const maxX = -10000 + i * gridSize2;
-            const maxY = -10000 + j * gridSize2;
-
-            coordinates2[label] = {
-                min: {
-                    x: minX,
-                    y: minY,
-                },
-                max: {
-                    x: maxX,
-                    y: maxY,
-                },
-            };
-        }
-    }
+        return coordinates;
+    };
 
     class Reader {
         constructor(view, offset, littleEndian) {
@@ -713,9 +682,9 @@
             const mod = !!(flags & 0x20);
 
             name = this.formatName(name, server, admin, mod);
-            if (mods.mutedUsers.includes(name)) {
-                return;
-            }
+            if (mods.mutedUsers.includes(name)) return;
+
+            if (mods.spamMessage(name, message)) return;
 
             if (!modSettings.chat.showClientChat) {
                 mods.updateChat({
@@ -1219,11 +1188,10 @@
         this.renderedMessages = 0;
         this.maxChatMessages = 200;
         this.mutedUsers = [];
-        this.blackListCharacters = [
-            '%EF%B7%BD',
-            '%F0%92%90%AB',
-            '%F0%92%88%9F',
-        ].map(decodeURIComponent);
+        this.blockedChatData = {
+            names: [],
+            messages: []
+        };
 
         this.respawnCommand = '/leaveworld';
         this.aboveRespawnLimit = false;
@@ -1244,7 +1212,7 @@
         this.routes = {
             discord: {
                 auth: isDev
-                    ? `https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fdiscord%2Fcallback&scope=identify`
+                    ? 'https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fdiscord%2Fcallback&scope=identify'
                     : 'https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=https%3A%2F%2Fmod.czrsd.com%2Fdiscord%2Fcallback&scope=identify',
             },
         };
@@ -1318,9 +1286,10 @@
             fonts: isDev
                 ? `http://localhost:${port}/fonts`
                 : 'https://mod.czrsd.com/fonts',
+            blockedChatData: 'https://mod.czrsd.com/spam.json',
         };
 
-        this.createMenu();
+        this.init();
     }
 
     Mod.prototype = {
@@ -5113,6 +5082,7 @@
 
             this.getSettings();
             this.smallMods();
+            this.setInputActions();
 
             mod_menu.addEventListener('click', (event) => {
                 if (event.target.closest('.mod_menu_wrapper')) return;
@@ -5241,6 +5211,35 @@
                 document.head.appendChild(link);
             }
 
+            const macroSettings = () => {
+                const allSettingNames =
+                    document.querySelectorAll('.setting-card-name');
+
+                for (const settingName of Object.values(allSettingNames)) {
+                    settingName.addEventListener('click', (event) => {
+                        const settingCardWrappers = document.querySelectorAll(
+                            '.setting-card-wrapper'
+                        );
+                        const currentWrapper = Object.values(
+                            settingCardWrappers
+                        ).filter(
+                            (wrapper) =>
+                                wrapper.querySelector('.setting-card-name')
+                                    .textContent === settingName.textContent
+                        )[0];
+                        const settingParameters = currentWrapper.querySelector(
+                            '.setting-parameters'
+                        );
+
+                        settingParameters.style.display =
+                            settingParameters.style.display === 'none'
+                                ? 'block'
+                                : 'none';
+                    });
+                }
+            };
+            macroSettings();
+
             const playTimerToggle = byId('playTimerToggle');
             playTimerToggle.addEventListener('change', () => {
                 modSettings.playTimer = playTimerToggle.checked;
@@ -5262,6 +5261,7 @@
                 updateStorage();
             });
 
+            // Reset settings - Mod
             const resetModSettings = byId('resetModSettings');
             resetModSettings.addEventListener('click', () => {
                 if (
@@ -5274,6 +5274,7 @@
                 }
             });
 
+            // Reset settings - Game
             const resetGameSettings = byId('resetGameSettings');
             resetGameSettings.addEventListener('click', () => {
                 if (
@@ -5285,6 +5286,17 @@
                     this.removeStorage('settings');
                     location.reload();
                 }
+            });
+
+            // EventListeners for auth buttons
+            const createAccountBtn = byId('createAccount');
+            const loginBtn = byId('login');
+
+            createAccountBtn.addEventListener('click', () => {
+                this.createSignInWrapper(false);
+            });
+            loginBtn.addEventListener('click', () => {
+                this.createSignInWrapper(true);
             });
         },
 
@@ -6616,6 +6628,7 @@
 
             this.chatSettings();
             this.emojiMenu();
+            this.getBlockedChatData();
 
             const chatSettingsContainer = document.querySelector(
                 '.chatSettingsContainer'
@@ -6713,9 +6726,14 @@
             if (modSettings.chat.compact) compactMode();
         },
 
-        updateChat(data) {
-            if (this.blackListCharacters.includes(data.message)) return;
+        spamMessage(name, message) {
+            return (
+                this.blockedChatData.names.some(n => name.toLowerCase().includes(n.toLowerCase())) ||
+                this.blockedChatData.messages.some(m => message.toLowerCase().includes(m.toLowerCase()))
+            );
+        },
 
+        updateChat(data) {
             const chatContainer = byId('mod-messages');
             const isScrolledToBottom =
                 chatContainer.scrollHeight - chatContainer.scrollTop <=
@@ -7180,34 +7198,6 @@
                 setTimeout(() => {
                     modChat.style.display = 'none';
                 }, 300);
-            }
-        },
-
-        macroSettings() {
-            const allSettingNames =
-                document.querySelectorAll('.setting-card-name');
-
-            for (const settingName of Object.values(allSettingNames)) {
-                settingName.addEventListener('click', (event) => {
-                    const settingCardWrappers = document.querySelectorAll(
-                        '.setting-card-wrapper'
-                    );
-                    const currentWrapper = Object.values(
-                        settingCardWrappers
-                    ).filter(
-                        (wrapper) =>
-                            wrapper.querySelector('.setting-card-name')
-                                .textContent === settingName.textContent
-                    )[0];
-                    const settingParameters = currentWrapper.querySelector(
-                        '.setting-parameters'
-                    );
-
-                    settingParameters.style.display =
-                        settingParameters.style.display === 'none'
-                            ? 'block'
-                            : 'none';
-                });
             }
         },
 
@@ -8127,15 +8117,12 @@
                 if (!playerPosition.x || !playerPosition.y) return;
 
                 const gamemode = byId('gamemode');
-                const coordinatesToCheck =
-                    gamemode.value === 'eu0.sigmally.com/ws/'
-                        ? coordinates
-                        : coordinates2;
 
                 let field = '';
+                const coordinates = getCoordinates(mods.border);
 
-                for (const label in coordinatesToCheck) {
-                    const { min, max } = coordinatesToCheck[label];
+                for (const label in coordinates) {
+                    const { min, max } = coordinates[label];
 
                     if (
                         playerPosition.x >= min.x &&
@@ -8842,7 +8829,7 @@
         },
 
         mainMenu() {
-            let menucontent = document.querySelector('.menu-center-content');
+            const menucontent = document.querySelector('.menu-center-content');
             menucontent.style.margin = 'auto';
 
             const discordlinks = document.createElement('div');
@@ -9723,18 +9710,6 @@
             setTimeout(() => {
                 alertWrapper.remove();
             }, 2000);
-        },
-
-        async account() {
-            const createAccountBtn = byId('createAccount');
-            const loginBtn = byId('login');
-
-            createAccountBtn.addEventListener('click', () => {
-                this.createSignInWrapper(false);
-            });
-            loginBtn.addEventListener('click', () => {
-                this.createSignInWrapper(true);
-            });
         },
 
         createSignInWrapper(isLogin) {
@@ -11586,6 +11561,25 @@
             );
         },
 
+        async getBlockedChatData() {
+            try {
+                const res = await fetch(`${this.appRoutes.blockedChatData}?v=${Math.floor(Math.random() * 9e5)}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const resData = await res.json();
+                const { names, messages } = resData;
+
+                this.blockedChatData = {
+                    names,
+                    messages
+                }
+            } catch(e) {
+                console.error('Couldn\'t fetch blocked chat data.');
+            }
+        },
+
         async loadLibraries() {
             const loadScript = (src) =>
                 new Promise((resolve, reject) => {
@@ -11623,39 +11617,57 @@
             }
         },
 
-        createMenu() {
+        isRateLimited() {
             if (document.body.children[0]?.id === 'cf-wrapper') {
                 console.log('User is rate limited.');
-                return;
+                return true;
             }
-            // only initialize sigmod on the main page
-            if (!document.querySelector('.body__inner')) return;
+            return false;
+        },
 
-            new SigWsHandler();
+        setupUI() {
+            this.menu();
+            this.initStats();
+            this.announcements();
+            this.mainMenu();
+            this.saveNames();
+            this.tagsystem();
+            this.createMinimap();
+            this.themes();
+        },
 
+        setupGame() {
+            this.game();
+            this.macros();
+        },
+
+        setupNetworking() {
+            this.clientPing();
+            this.chat();
+            this.handleNick();
+        },
+
+        initModules() {
             try {
                 this.loadLibraries();
-                this.menu();
-                this.credits();
-                this.chat();
-                this.macros();
-                this.tagsystem();
-                this.handleNick();
-                this.clientPing();
-                this.themes();
-                this.createMinimap();
-                this.saveNames();
-                this.setInputActions();
-                this.game();
-                this.mainMenu();
-                this.macroSettings();
-                this.initStats();
-                this.account();
-                this.announcements();
+                this.setupUI();
+                this.setupGame();
+                this.setupNetworking();
             } catch (e) {
                 console.error('An error occurred while loading SigMod: ', e);
             }
         },
+
+        init() {
+            if (this.isRateLimited()) return;
+            if (!document.querySelector('.body__inner')) return;
+
+            this.credits();
+
+            new SigWsHandler();
+
+            this.initModules();
+        }
     };
 
     mods = new Mod();

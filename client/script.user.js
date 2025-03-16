@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.7
+// @version      10.1.9
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -94,6 +94,8 @@
             inputBorderRadius: null,
             menuBorderRadius: null,
             inputBorder: '1px',
+            hideDiscordBtns: false,
+            hideLangs: false,
         },
         settings: {
             tag: null,
@@ -104,9 +106,9 @@
             autoClaimCoins: false,
             showChallenges: false,
             deathScreenPos: 'center',
+            removeShopPopup: false,
         },
         chat: {
-            limit: 100,
             bgColor: '#00000040',
             textColor: '#ffffff',
             compact: false,
@@ -670,33 +672,29 @@
 
         handleChatMessage(reader) {
             const flags = reader.getUint8();
-            const color = bytesToHex(
-                reader.getUint8(),
-                reader.getUint8(),
-                reader.getUint8()
-            );
+            const [r, g, b] = [reader.getUint8(), reader.getUint8(), reader.getUint8()];
+            const color = bytesToHex(r, g, b);
             let name = reader.getStringUTF8();
             const message = reader.getStringUTF8();
-            const server = !!(flags & 0x80);
-            const admin = !!(flags & 0x40);
-            const mod = !!(flags & 0x20);
+
+            const server = Boolean(flags & 0x80);
+            const admin = Boolean(flags & 0x40);
+            const mod = Boolean(flags & 0x20);
 
             name = this.formatName(name, server, admin, mod);
-            if (mods.mutedUsers.includes(name)) return;
 
-            if (mods.spamMessage(name, message)) return;
+            if (mods.mutedUsers.includes(name) || mods.spamMessage(name, message) || modSettings.chat.showClientChat)
+                return;
 
-            if (!modSettings.chat.showClientChat) {
-                mods.updateChat({
-                    server,
-                    admin,
-                    mod,
-                    color: modSettings.chat.showNameColors ? color : '#fafafa',
-                    name,
-                    message,
-                    time: modSettings.chat.showTime ? Date.now() : null,
-                });
-            }
+            mods.updateChat({
+                server,
+                admin,
+                mod,
+                color: modSettings.chat.showNameColors ? color : '#fafafa',
+                name,
+                message,
+                time: modSettings.chat.showTime ? Date.now() : null,
+            });
         }
 
         formatName(name, server, admin, mod) {
@@ -1076,6 +1074,9 @@
     let moveInterval = setInterval(randomPos);
     setTimeout(() => clearInterval(moveInterval), 600);
 
+    // Disable chat before game settings actually load
+    localStorage.setItem('settings', JSON.stringify({ ...JSON.parse(localStorage.getItem('settings')), showChat: false }));
+
     function addSettings() {
         const gameSettings = document.querySelector('.checkbox-grid');
         if (!gameSettings) return;
@@ -1088,12 +1089,8 @@
             <label>Skins</label>
             <input type="checkbox" id="autoRespawn">
             <label>Auto Respawn</label>
-            <input type="checkbox" id="removeShopPopup">
-            <label>Remove shop popup</label>
             <input type="checkbox" id="autoClaimCoins">
             <label>Auto claim coins</label>
-            <input type="checkbox" id="showChallenges">
-            <label>Challenges deathscreen</label>
             <input type="checkbox" id="showPosition">
             <label>Position</label>
         `;
@@ -1676,6 +1673,7 @@
          #dclinkdiv {
              display: flex;
              flex-direction: row;
+             margin-top: 10px;
         }
          .dclinks {
              width: calc(50% - 5px);
@@ -3609,7 +3607,7 @@
             padding: 10px;
         }
         .rounded {
-            border-radius: 10px;
+            border-radius: 6px;
         }
         .text-center {
             text-align: center;
@@ -4374,6 +4372,13 @@
         handleGoogleAuth(user) {
             fetchedUser++;
             window.gameSettings.user = user;
+
+            const chatSendInput = document.querySelector('#chatSendInput');
+            if (chatSendInput) {
+                chatSendInput.placeholder = 'message...';
+                chatSendInput.disabled = false;
+            }
+
             if (!client) client = new modClient();
 
             const waitForInit = () =>
@@ -4961,17 +4966,51 @@
 								<div class="modColItems_2" style="margin-top: 5px;">
 									<div class="justify-sb w-100 p-10">
 										<span>Input border radius</span>
-										<input type="range" class="modSlider" style="width: 40%;" id="theme-inputBorderRadius" max="20" step="2" />
+										<div class="centerXY g-10" style="width: 40%">
+                                            <button id="reset_input_radius" class="resetButton"></button>
+                                            <input type="range" class="modSlider" id="theme-inputBorderRadius" max="20" step="2" />
+                                        </div>
 									</div>
-									<div class="justify-sb w-100 p-10">
+									<div class="justify-sb w-100 p-10 accent_row rounded">
 										<span>Menu border radius</span>
-										<input type="range" class="modSlider" style="width: 40%;" id="theme-menuBorderRadius" max="50" step="2" />
+                                        <div class="centerXY g-10" style="width: 40%">
+                                            <button id="reset_menu_radius" class="resetButton"></button>
+                                            <input type="range" class="modSlider"id="theme-menuBorderRadius" max="50" step="2" />
+                                        </div>
 									</div>
 									<div class="justify-sb w-100 p-10">
 										<span>Input border</span>
 										<div class="modCheckbox">
 										  <input id="theme-inputBorder" type="checkbox" />
 										  <label class="cbx" for="theme-inputBorder"></label>
+										</div>
+									</div>
+									<div class="justify-sb w-100 p-10 accent_row rounded">
+										<span>Challenges on deathscreen</span>
+										<div class="modCheckbox">
+										  <input id="showChallenges" type="checkbox" />
+										  <label class="cbx" for="showChallenges"></label>
+										</div>
+									</div>
+									<div class="justify-sb w-100 p-10">
+										<span>Remove shop popup</span>
+										<div class="modCheckbox">
+										  <input id="removeShopPopup" type="checkbox" />
+										  <label class="cbx" for="removeShopPopup"></label>
+										</div>
+									</div>
+									<div class="justify-sb w-100 p-10 accent_row rounded">
+										<span>Hide Discord Buttons</span>
+										<div class="modCheckbox">
+										  <input id="hideDiscordBtns" type="checkbox" />
+										  <label class="cbx" for="hideDiscordBtns"></label>
+										</div>
+									</div>
+									<div class="justify-sb w-100 p-10">
+										<span>Hide Language Buttons</span>
+										<div class="modCheckbox">
+										  <input id="hideLangs" type="checkbox" />
+										  <label class="cbx" for="hideLangs"></label>
 										</div>
 									</div>
 								</div>
@@ -5450,7 +5489,6 @@
 
             inputs.forEach((checkbox, index) => {
                 if (
-                    checkbox.id === 'showChat' ||
                     checkbox.id === 'showMinimap' ||
                     checkbox.id === 'darkTheme'
                 )
@@ -5459,6 +5497,7 @@
                 modrow.classList.add('justify-sb', 'p-2');
 
                 if (
+                    checkbox.id === 'showChat' ||
                     checkbox.id === 'showPosition' ||
                     checkbox.id === 'showNames' ||
                     checkbox.id === 'showSkins'
@@ -5591,8 +5630,6 @@
                             <button class="btn btn-success" id="saveGradientTheme">Save</button>
                         </div>
                     </div>
-
-
 
                     <div id="theme_editor_image" class="theme-editor-tab" style="display: none">
                         <div class="centerXY">
@@ -6435,31 +6472,93 @@
                     'borderWidth'
                 )
             );
+
+            const reset_input_radius = document.getElementById('reset_input_radius');
+            const reset_menu_radius = document.getElementById('reset_menu_radius');
+
+            reset_input_radius.addEventListener('click', () => {
+                const defaultBorderRadius = 4;
+                inputBorderRadius.value = defaultBorderRadius;
+                setCSS(
+                    'inputBorderRadius',
+                    `${defaultBorderRadius}px`,
+                    ['.form-control'],
+                    'borderRadius'
+                )
+            });
+
+            reset_menu_radius.addEventListener('click', () => {
+                const defaultBorderRadius = 15;
+                menuBorderRadius.value = defaultBorderRadius;
+                setCSS(
+                    'menuBorderRadius',
+                    `${defaultBorderRadius}px`,
+                    [...elements, '.text-block'],
+                    'borderRadius'
+                )
+            });
+
+
+            const hideDiscordBtns = document.getElementById('hideDiscordBtns');
+            const dclinkdiv = document.getElementById('dclinkdiv');
+
+            hideDiscordBtns.addEventListener('change', () => {
+                if (hideDiscordBtns.checked) {
+                    dclinkdiv.classList.add('hidden_full');
+                    modSettings.themes.hideDiscordBtns = true;
+                } else {
+                    dclinkdiv.classList.remove('hidden_full');
+                    modSettings.themes.hideDiscordBtns = false;
+                }
+                updateStorage();
+            });
+
+            if (modSettings.themes.hideDiscordBtns) {
+                dclinkdiv.classList.add('hidden_full');
+                hideDiscordBtns.checked = true;
+            }
+
+
+            const hideLangs = document.getElementById('hideLangs');
+            const langsDiv = document.querySelector('.ch-lang');
+
+            hideLangs.addEventListener('change', () => {
+                if (hideLangs.checked) {
+                    langsDiv.classList.add('hidden_full');
+                    modSettings.themes.hideLangs = true;
+                } else {
+                    langsDiv.classList.remove('hidden_full');
+                    modSettings.themes.hideLangs = false;
+                }
+                updateStorage();
+            });
+
+            if (modSettings.themes.hideLangs && langsDiv) {
+                langsDiv.classList.add('hidden_full');
+                hideLangs.checked = true;
+            }
+
+
+            const popup = byId('shop-popup');
+            const removeShopPopup = byId('removeShopPopup');
+            removeShopPopup.addEventListener('change', () => {
+                if (removeShopPopup.checked) {
+                    popup.classList.add('hidden_full');
+                    modSettings.settings.removeShopPopup = true;
+                } else {
+                    popup.classList.remove('hidden_full');
+                    modSettings.settings.removeShopPopup = false;
+                }
+                updateStorage();
+            });
+
+            if (modSettings.settings.removeShopPopup) {
+                popup.classList.add('hidden_full');
+                removeShopPopup.checked = true;
+            }
         },
 
         chat() {
-            // disable old chat
-            setTimeout(() => {
-                const showChat = document.querySelector('#showChat');
-                if (showChat && showChat.checked) {
-                    showChat.click();
-                }
-                if (showChat) {
-                    showChat.remove();
-                }
-            }, 300);
-
-            // If someone uninstalls the mod, the chat is visible again
-            window.addEventListener('beforeunload', () => {
-                localStorage.setItem(
-                    'settings',
-                    JSON.stringify({
-                        ...JSON.parse(localStorage.getItem('settings')),
-                        showChat: true,
-                    })
-                );
-            });
-
             const chatDiv = document.createElement('div');
             chatDiv.classList.add('modChat');
             chatDiv.innerHTML = `
@@ -6472,7 +6571,7 @@
                     </div>
                     <div id="mod-messages" class="scroll"></div>
                     <div id="chatInputContainer">
-                        <input type="text" id="chatSendInput" class="chatInput" placeholder="message..." maxlength="250" minlength="1" />
+                        <input type="text" id="chatSendInput" class="chatInput" placeholder="Login to use the chat" maxlength="250" minlength="1" disabled />
                         <button class="chatButton" id="openChatSettings">
                             <svg width="15" height="15" viewBox="0 0 20 20" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M17.4249 7.45169C15.7658 7.45169 15.0874 6.27836 15.9124 4.83919C16.3891 4.00503 16.1049 2.94169 15.2708 2.46503L13.6849 1.55753C12.9608 1.12669 12.0258 1.38336 11.5949 2.10753L11.4941 2.28169C10.6691 3.72086 9.31242 3.72086 8.47825 2.28169L8.37742 2.10753C7.96492 1.38336 7.02992 1.12669 6.30575 1.55753L4.71992 2.46503C3.88575 2.94169 3.60158 4.01419 4.07825 4.84836C4.91242 6.27836 4.23408 7.45169 2.57492 7.45169C1.62159 7.45169 0.833252 8.23086 0.833252 9.19336V10.8067C0.833252 11.76 1.61242 12.5484 2.57492 12.5484C4.23408 12.5484 4.91242 13.7217 4.07825 15.1609C3.60158 15.995 3.88575 17.0584 4.71992 17.535L6.30575 18.4425C7.02992 18.8734 7.96492 18.6167 8.39575 17.8925L8.49658 17.7184C9.32158 16.2792 10.6783 16.2792 11.5124 17.7184L11.6133 17.8925C12.0441 18.6167 12.9791 18.8734 13.7033 18.4425L15.2891 17.535C16.1233 17.0584 16.4074 15.9859 15.9307 15.1609C15.0966 13.7217 15.7749 12.5484 17.4341 12.5484C18.3874 12.5484 19.1758 11.7692 19.1758 10.8067V9.19336C19.1666 8.24003 18.3874 7.45169 17.4249 7.45169ZM9.99992 12.9792C8.35908 12.9792 7.02075 11.6409 7.02075 10C7.02075 8.35919 8.35908 7.02086 9.99992 7.02086C11.6408 7.02086 12.9791 8.35919 12.9791 10C12.9791 11.6409 11.6408 12.9792 9.99992 12.9792Z" fill="#fff"></path>
@@ -6511,18 +6610,16 @@
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             });
 
-            const messageCount = chatContainer.children.length;
-            const messageLimit = modSettings.chat.limit;
-            if (messageCount > messageLimit) {
-                const messagesToRemove = messageCount - messageLimit;
-                for (let i = 0; i < messagesToRemove; i++) {
-                    chatContainer.removeChild(chatContainer.firstChild);
-                }
-            }
-
             const main = byId('mainchat');
             const party = byId('partychat');
             main.addEventListener('click', () => {
+                if (!window.gameSettings.user) {
+                    const chatSendInput = document.querySelector('#chatSendInput');
+                    if (!chatSendInput) return;
+
+                    chatSendInput.placeholder = 'Login to use the chat';
+                    chatSendInput.disabled = true;
+                }
                 if (modSettings.chat.showClientChat) {
                     byId('mod-messages').innerHTML = '';
                     modSettings.chat.showClientChat = false;
@@ -6530,6 +6627,12 @@
                 }
             });
             party.addEventListener('click', () => {
+                const chatSendInput = document.querySelector('#chatSendInput');
+                if (chatSendInput) {
+                    chatSendInput.placeholder = 'message...';
+                    chatSendInput.disabled = false;
+                }
+
                 if (!modSettings.chat.showClientChat) {
                     modSettings.chat.showClientChat = true;
                     updateStorage();
@@ -6555,15 +6658,22 @@
             });
 
             if (modSettings.chat.showClientChat) {
-                const modMessages = byId('mod-messages');
-                if (modMessages.children.length > 1) return;
-                modMessages.innerHTML = `
-                    <div class="message">
-                        <span>
-                            <span style="color: #5a44eb" class="message_name">[SERVER]</span>: Welcome to the SigMod party chat!
-                        </span>
-                    </div>
-                `;
+                const chatSendInput = document.querySelector('#chatSendInput');
+                if (!chatSendInput) return;
+
+                chatSendInput.placeholder = 'message...';
+                chatSendInput.disabled = false;
+
+                setTimeout(() => {
+                    const modMessages = byId('mod-messages');
+                    modMessages.innerHTML = `
+                        <div class="message">
+                            <span>
+                                <span style="color: #5a44eb" class="message_name">[SERVER]</span>: Welcome to the SigMod party chat!
+                            </span>
+                        </div>
+                    `;
+                }, 1000);
             }
 
             const text = byId('chatSendInput');
@@ -6582,33 +6692,27 @@
                         },
                     });
                 } else {
-                    // Sigmally chat message - split text into parts if message is
-                    // longer than 15 characters.
+                    // Sigmally chat message: split text into parts if message is longer than 15 characters
                     if (val.length > 15) {
                         const parts = [];
                         let currentPart = '';
 
+                        // split the input value into individual words
                         val.split(' ').forEach((word) => {
-                            // Split the input value into individual words
                             if (currentPart.length + word.length + 1 <= 15) {
-                                // if adding the current word to the current part does not exceed the length limit
                                 currentPart += (currentPart ? ' ' : '') + word;
-                                // add the current word to the current part with a space separator
                             } else {
-                                // if adding the current word exceeds the length limit
                                 parts.push(currentPart);
                                 currentPart = word;
                             }
                         });
 
                         if (currentPart) {
-                            // Push the last current part to the parts array
                             parts.push(currentPart);
                         }
 
                         let index = 0;
                         const sendPart = () => {
-                            // If there are still parts left to send
                             if (index < parts.length) {
                                 window.sendChat(parts[index]);
                                 index++;
@@ -7206,24 +7310,6 @@
             modAlert_overlay.classList.add('alert_overlay');
             modAlert_overlay.id = 'modAlert_overlay';
             document.body.append(modAlert_overlay);
-
-            const popup = byId('shop-popup');
-            const removeShopPopup = byId('removeShopPopup');
-            removeShopPopup.addEventListener('change', () => {
-                const checked = removeShopPopup.checked;
-                if (checked) {
-                    popup.classList.add('hidden_full');
-                    modSettings.settings.removeShopPopup = true;
-                } else {
-                    popup.classList.remove('hidden_full');
-                    modSettings.settings.removeShopPopup = false;
-                }
-                updateStorage();
-            });
-            if (modSettings.settings.removeShopPopup) {
-                popup.classList.add('hidden_full');
-                removeShopPopup.checked = true;
-            }
 
             const autoRespawn = byId('autoRespawn');
             if (modSettings.settings.autoRespawn) {
@@ -9042,13 +9128,12 @@
 
         tagsystem() {
             const nick = document.querySelector('#nick');
-            const tagElement = document.createElement('input');
-            const tagText = document.querySelector('.tagText');
-
-            tagElement.classList.add('form-control');
-            tagElement.placeholder = 'tag';
-            tagElement.id = 'tag';
-            tagElement.maxLength = 3;
+            const tagElement = Object.assign(document.createElement('input'), {
+                id: 'tag',
+                className: 'form-control',
+                placeholder: 'Tag',
+                maxLength: 3
+            });
 
             const pnick = nick.parentElement;
             pnick.style = 'display: flex; gap: 5px;';
@@ -9056,12 +9141,13 @@
             tagElement.addEventListener('input', (e) => {
                 e.stopPropagation();
                 const tagValue = tagElement.value;
+                const tagText = document.querySelector('.tagText');
 
                 tagText.innerText = tagValue ? `Tag: ${tagValue}` : '';
 
                 modSettings.settings.tag = tagElement.value;
                 updateStorage();
-                client.send({
+                client?.send({
                     type: 'update-tag',
                     content: modSettings.settings.tag,
                 });

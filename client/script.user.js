@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.9
+// @version      10.1.9.1
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -4394,12 +4394,12 @@
                     );
                 });
 
-            waitForInit().then(() =>
+            waitForInit().then(() => {
                 client.send({
                     type: 'user',
                     content: { ...user, nick: mods.nick },
                 })
-            );
+            });
 
             const claim = document.getElementById('free-chest-button');
             if (
@@ -6684,6 +6684,7 @@
                 if (val === '') return;
 
                 if (modSettings.chat.showClientChat) {
+                    if (client?.ws?.readyState !== 1) return;
                     // party chat message
                     client.send({
                         type: 'chat-message',
@@ -6848,7 +6849,6 @@
 
             let { name, message, time = '' } = data;
             name = noXSS(name);
-            message = noXSS(message);
             time = data.time !== null ? prettyTime.am_pm(data.time) : '';
 
             const color = this.friend_names.has(name)
@@ -6869,10 +6869,11 @@
                         <span style="color: ${color};${glow}" class="message_name" id="${id}">${name}</span>
                         <span>&#58;</span>
                     </div>
-                    <span class="chatMessage-text">${message}</span>
+                    <span class="chatMessage-text"></span>
                 </div>
                 <span class="time">${time}</span>
             `;
+            chatMessage.querySelector('.chatMessage-text').innerHTML = message;
 
             chatContainer.append(chatMessage);
             if (isScrolledToBottom || isNearBottom)
@@ -10416,7 +10417,7 @@
 
             function sendMessage(val, target) {
                 if (!val || val.length > 200) return;
-                client.send({
+                client?.send({
                     type: 'private-message',
                     content: {
                         text: val,

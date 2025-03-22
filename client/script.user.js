@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.9.2
+// @version      10.1.9.3
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -5622,7 +5622,7 @@
                             <span class="text" style="color: #fff; font-size: 9px;">preview</span>
                         </div>
                         <div class="centerY" style="gap: 10px; margin-top: 10px;">
-                            <input type="text" class="form-control" style="background: #222; color: #fff;" placeholder="Theme name..." id="GradientThemeName"/>
+                            <input type="text" class="form-control" style="background: #222; color: #fff;" placeholder="Theme name..." id="gradientThemeName"/>
                             <button class="btn btn-success" id="saveGradientTheme">Save</button>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.9.1
+// @version      10.1.9.2
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -220,13 +220,13 @@
     // --- Time
     // --- (Coordinates)
 
-    function updateStorage() {
+    const updateStorage = () => {
         localStorage.setItem(storageName, JSON.stringify(modSettings));
     }
 
     const byId = (id) => document.getElementById(id);
 
-    function debounce(func, delay) {
+    const debounce = (func, delay) => {
         let timeoutId;
         return function (...args) {
             clearTimeout(timeoutId);
@@ -236,21 +236,17 @@
         };
     }
 
-    async function wait(ms) {
+    const wait = async (ms) => {
         return new Promise((r) => setTimeout(r, ms));
     }
 
-    function noXSS(text) {
+    const noXSS = (text) => {
         return text
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
-    }
-
-    function parsetxt(val) {
-        return /^(?:\{([^}]*)})?([^]*)/.exec(val)[2].trim();
     }
 
     // generate random string
@@ -263,7 +259,7 @@
     // --------- Colors --------- //
 
     // rgba values to hex color code
-    function RgbaToHex(code) {
+    const RgbaToHex = (code) => {
         const rgbaValues = code.match(/\d+/g);
         const [r, g, b] = rgbaValues.slice(0, 3);
         return `#${Number(r).toString(16).padStart(2, '0')}${Number(g)
@@ -271,7 +267,7 @@
             .padStart(2, '0')}${Number(b).toString(16).padStart(2, '0')}`;
     }
 
-    function bytesToHex(r, g, b) {
+    const bytesToHex = (r, g, b) => {
         return (
             '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
         );
@@ -279,18 +275,18 @@
 
     // --------- Game --------- //
 
-    function menuClosed() {
+    const menuClosed = () => {
         const menuWrapper = byId('menu-wrapper');
 
         return menuWrapper.style.display === 'none';
     }
 
-    function isDead() {
+    const isDead = () => {
         const __line2 = byId('__line2');
         return !__line2.classList.contains('line--hidden');
     }
 
-    function getGameMode() {
+    const getGameMode = () => {
         const gameMode = byId('gamemode');
         if (!gameMode.value) {
             return 'Tourney';
@@ -324,6 +320,25 @@
         const canvas = byId('canvas');
         canvas.dispatchEvent(mouseMoveEvent);
     }
+
+    const getCoordinates = (border, gridCount = 5) => {
+        const { left, top, width, height } = border;
+        const gridSize = width / gridCount;
+        const coordinates = {};
+
+        for (let i = 0; i < gridCount; i++) {
+            for (let j = 0; j < gridCount; j++) {
+                const label = String.fromCharCode(65 + i) + (j + 1);
+
+                coordinates[label] = {
+                    min: { x: left + i * gridSize, y: top + j * gridSize },
+                    max: { x: left + (i + 1) * gridSize, y: top + (j + 1) * gridSize },
+                };
+            }
+        }
+
+        return coordinates;
+    };
 
     // time formatters
     const prettyTime = {
@@ -398,25 +413,6 @@
 
             return result || '0s';
         }
-    };
-
-    const getCoordinates = (border, gridCount = 5) => {
-        const { left, top, width, height } = border;
-        const gridSize = width / gridCount;
-        const coordinates = {};
-
-        for (let i = 0; i < gridCount; i++) {
-            for (let j = 0; j < gridCount; j++) {
-                const label = String.fromCharCode(65 + i) + (j + 1);
-
-                coordinates[label] = {
-                    min: { x: left + i * gridSize, y: top + j * gridSize },
-                    max: { x: left + (i + 1) * gridSize, y: top + (j + 1) * gridSize },
-                };
-            }
-        }
-
-        return coordinates;
     };
 
     class Reader {
@@ -702,7 +698,7 @@
             if (admin) name = '[ADMIN] ' + name;
             if (mod) name = '[MOD] ' + name;
             if (name === '') name = 'Unnamed';
-            return parsetxt(name);
+            return name;
         }
 
         updateBorder(reader) {
@@ -1004,10 +1000,9 @@
         }
 
         handlePingMessage() {
-            const latency = Date.now() - mods.ping.start;
+            mods.ping.latency = Date.now() - mods.ping.start;
             mods.ping.end = Date.now();
-            mods.ping.latency = latency;
-            byId('clientPing').innerHTML = `Client Ping: ${latency}ms`;
+            byId('clientPing').innerHTML = `Client Ping: ${mods.ping.latency}ms`;
         }
 
         handleChatMessage(content) {
@@ -4303,6 +4298,7 @@
 
             showNames.addEventListener('change', syncCheckboxes);
             showSkins.addEventListener('change', syncCheckboxes);
+            syncCheckboxes();
 
             const deathScreenPos = byId('deathScreenPos');
             const deathScreen = byId('__line2');
@@ -5874,196 +5870,60 @@
 
                 let themesDiv = byId('themes');
 
-                const saveColorThemeBtn = byId('saveColorTheme');
-                const saveGradientThemeBtn = byId('saveGradientTheme');
-                const saveImageThemeBtn = byId('saveImageTheme');
+                const saveTheme = (type) => {
+                    const name = byId(`${type}ThemeName`).value;
+                    if (!name) return;
 
-                saveColorThemeBtn.addEventListener('click', () => {
-                    const name = byId('colorThemeName').value;
-                    const bgColorInput = byId(
-                        'theme-editor-bgcolorinput'
-                    ).value;
-                    const textColorInput = byId(
-                        'theme-editor-colorinput'
-                    ).value;
+                    let background, text;
+                    if (type === 'color') {
+                        background = byId('theme-editor-bgcolorinput').value;
+                        text = byId('theme-editor-colorinput').value;
+                    } else if (type === 'gradient') {
+                        const gColor1 = byId('theme-editor-gcolor1').value;
+                        const gColor2 = byId('theme-editor-g_color').value;
+                        text = byId('theme-editor-gcolor2').value;
+                        const gAngle = byId('g_angle').value;
+                        const gradientType = byId('gradient-type').value;
+                        background = gradientType === 'linear'
+                            ? `linear-gradient(${gAngle}deg, ${gColor1}, ${gColor2})`
+                            : `radial-gradient(circle, ${gColor1}, ${gColor2})`;
+                    } else if (type === 'image') {
+                        background = byId('theme-editor-imagelink').value;
+                        text = byId('theme-editor-textcolorImage').value;
+                        if (!background) return;
+                    }
 
-                    if (name === '') return;
-
-                    const theme = {
-                        name: name,
-                        background: bgColorInput,
-                        text: textColorInput,
-                    };
-
+                    const theme = { name, background, text };
                     const themeCard = document.createElement('div');
                     themeCard.classList.add('theme');
-                    let themeBG;
-                    if (theme.background.includes('http')) {
-                        themeBG = `background: url(${
-                            theme.preview || theme.background
-                        })`;
-                    } else {
-                        themeBG = `background: ${theme.background}`;
-                    }
                     themeCard.innerHTML = `
-                        <div class="themeContent" style="${themeBG}; background-size: cover; background-position: center"></div>
-                        <div class="themeName text" style="color: #fff">${theme.name}</div>
+                        <div class="themeContent" style="background: ${background.includes('http') ? `url(${theme.preview || background})` : background}; background-size: cover; background-position: center"></div>
+                        <div class="themeName text" style="color: #fff">${name}</div>
                     `;
 
-                    themeCard.addEventListener('click', () => {
-                        toggleTheme(theme);
-                    });
-
+                    themeCard.addEventListener('click', () => toggleTheme(theme));
                     themeCard.addEventListener('contextmenu', (ev) => {
                         ev.preventDefault();
                         if (confirm('Do you want to delete this Theme?')) {
                             themeCard.remove();
-                            const themeIndex =
-                                modSettings.themes.custom.findIndex(
-                                    (addedTheme) =>
-                                        addedTheme.name === theme.name
-                                );
-                            if (themeIndex !== -1) {
-                                modSettings.themes.custom.splice(themeIndex, 1);
+                            const index = modSettings.themes.custom.findIndex(t => t.name === name);
+                            if (index !== -1) {
+                                modSettings.themes.custom.splice(index, 1);
                                 updateStorage();
                             }
                         }
                     });
 
                     themesDiv.appendChild(themeCard);
-
                     modSettings.themes.custom.push(theme);
                     updateStorage();
-
                     themeEditor.style.display = 'none';
                     themesDiv.scrollTop = themesDiv.scrollHeight;
-                });
+                };
 
-                saveGradientThemeBtn.addEventListener('click', () => {
-                    const name = byId('GradientThemeName').value;
-                    const gColor1 = byId('theme-editor-gcolor1').value;
-                    const gColor2 = byId('theme-editor-g_color').value;
-                    const gTextColor = byId('theme-editor-gcolor2').value;
-                    const gAngle = byId('g_angle').value;
-                    const gradientType = byId('gradient-type').value;
-
-                    if (name === '') return;
-
-                    let gradient_radial_linear = () => {
-                        if (gradientType === 'linear') {
-                            return `${gradientType}-gradient(${gAngle}deg, ${gColor1}, ${gColor2})`;
-                        } else if (gradientType === 'radial') {
-                            return `${gradientType}-gradient(circle, ${gColor1}, ${gColor2})`;
-                        }
-                    };
-                    const theme = {
-                        name: name,
-                        background: gradient_radial_linear(),
-                        text: gTextColor,
-                    };
-
-                    const themeCard = document.createElement('div');
-                    themeCard.classList.add('theme');
-                    let themeBG;
-                    if (theme.background.includes('http')) {
-                        themeBG = `background: url(${
-                            theme.preview || theme.background
-                        })`;
-                    } else {
-                        themeBG = `background: ${theme.background}`;
-                    }
-                    themeCard.innerHTML = `
-                        <div class="themeContent" style="${themeBG}; background-size: cover; background-position: center"></div>
-                        <div class="themeName text" style="color: #fff">${theme.name}</div>
-                    `;
-
-                    themeCard.addEventListener('click', () => {
-                        toggleTheme(theme);
-                    });
-
-                    themeCard.addEventListener('contextmenu', (ev) => {
-                        ev.preventDefault();
-                        if (confirm('Do you want to delete this Theme?')) {
-                            themeCard.remove();
-                            const themeIndex =
-                                modSettings.themes.custom.findIndex(
-                                    (addedTheme) =>
-                                        addedTheme.name === theme.name
-                                );
-                            if (themeIndex !== -1) {
-                                modSettings.themes.custom.splice(themeIndex, 1);
-                                updateStorage();
-                            }
-                        }
-                    });
-
-                    themesDiv.appendChild(themeCard);
-
-                    modSettings.themes.custom.push(theme);
-                    updateStorage();
-
-                    themeEditor.style.display = 'none';
-                    themesDiv.scrollTop = themesDiv.scrollHeight;
-                });
-
-                saveImageThemeBtn.addEventListener('click', () => {
-                    const name = byId('imageThemeName').value;
-                    const imageLink = byId('theme-editor-imagelink').value;
-                    const textColorImageInput = byId(
-                        'theme-editor-textcolorImage'
-                    ).value;
-
-                    if (name === '' || imageLink === '') return;
-
-                    const theme = {
-                        name: name,
-                        background: imageLink,
-                        text: textColorImageInput,
-                    };
-
-                    const themeCard = document.createElement('div');
-                    themeCard.classList.add('theme');
-                    let themeBG;
-                    if (theme.background.includes('http')) {
-                        themeBG = `background: url(${
-                            theme.preview || theme.background
-                        })`;
-                    } else {
-                        themeBG = `background: ${theme.background}`;
-                    }
-                    themeCard.innerHTML = `
-                        <div class="themeContent" style="${themeBG}; background-size: cover; background-position: center"></div>
-                        <div class="themeName text" style="color: #fff">${theme.name}</div>
-                    `;
-
-                    themeCard.addEventListener('click', () => {
-                        toggleTheme(theme);
-                    });
-
-                    themeCard.addEventListener('contextmenu', (ev) => {
-                        ev.preventDefault();
-                        if (confirm('Do you want to delete this Theme?')) {
-                            themeCard.remove();
-                            const themeIndex =
-                                modSettings.themes.custom.findIndex(
-                                    (addedTheme) =>
-                                        addedTheme.name === theme.name
-                                );
-                            if (themeIndex !== -1) {
-                                modSettings.themes.custom.splice(themeIndex, 1);
-                                updateStorage();
-                            }
-                        }
-                    });
-
-                    themesDiv.appendChild(themeCard);
-
-                    modSettings.themes.custom.push(theme);
-                    updateStorage();
-
-                    themeEditor.style.display = 'none';
-                    themesDiv.scrollTop = themesDiv.scrollHeight;
-                });
+                byId('saveColorTheme').addEventListener('click', () => saveTheme('color'));
+                byId('saveGradientTheme').addEventListener('click', () => saveTheme('gradient'));
+                byId('saveImageTheme').addEventListener('click', () => saveTheme('image'));
             });
 
             const b_inner = document.querySelector('.body__inner');
@@ -7501,10 +7361,13 @@
 
             if (location.pathname.includes('tournament') || client.updateAvailable) return;
 
-            if (!enabled || sessionStorage.getItem('hide-alert')) {
+            const hideAlert = localStorage.getItem('hide-alert');
+            if (!enabled || (Date.now() - 24 * 60 * 60 * 1000) > hideAlert) {
                 byId('scrim_alert')?.remove();
                 return;
             }
+
+            localStorage.removeItem('hide-alert');
 
             const modAlert = document.createElement('div');
             modAlert.id = 'scrim_alert';
@@ -7540,7 +7403,7 @@
             close.addEventListener('click', () => {
                 modAlert.remove();
                 // make it not that annoying
-                sessionStorage.setItem('hide-alert', true);
+                localStorage.setItem('hide-alert', Date.now());
             });
         },
 
@@ -9070,7 +8933,7 @@
             const playerIndex = this.miniMapData.findIndex(
                 (player) => player[3] === playerId
             );
-            const nick = parsetxt(data.nick);
+            const nick = data.nick;
 
             if (playerIndex === -1) {
                 this.miniMapData.push([x, y, nick, playerId]);

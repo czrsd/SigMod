@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.9.3
+// @version      10.1.9.4
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -220,7 +220,7 @@
     // --- Time
     // --- (Coordinates)
 
-    const updateStorage = () => {
+    function updateStorage() {
         localStorage.setItem(storageName, JSON.stringify(modSettings));
     }
 
@@ -4539,7 +4539,7 @@
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Respawn</span>
-                                                          <input type="text" name="respawn" id="modinput16" class="keybinding" value="${
+                                                          <input type="text" name="respawn" id="modinput15" class="keybinding" value="${
                 modSettings.macros
                     .keys
                     .respawn || ''
@@ -4566,7 +4566,7 @@
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Vertical Line</span>
-                                                          <input type="text" name="line.vertical" id="modinput8" class="keybinding" value="${
+                                                          <input type="text" name="line.vertical" id="modinput7" class="keybinding" value="${
                 modSettings.macros
                     .keys.line
                     .vertical ||
@@ -4575,7 +4575,7 @@
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Fixed Line</span>
-                                                          <input type="text" name="line.fixed" id="modinput18" class="keybinding" value="${
+                                                          <input type="text" name="line.fixed" id="modinput16" class="keybinding" value="${
                 modSettings.macros
                     .keys.line
                     .fixed || ''
@@ -4717,7 +4717,7 @@
                                                     <input value="${
                 modSettings.macros.keys
                     .toggle.names || ''
-            }" placeholder="..." readonly id="modinput11" name="toggle.names" class="keybinding" onfocus="this.select();">
+            }" placeholder="..." readonly id="modinput10" name="toggle.names" class="keybinding" onfocus="this.select();">
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
@@ -4725,7 +4725,7 @@
                                                     <input value="${
                 modSettings.macros.keys
                     .toggle.skins || ''
-            }" placeholder="..." readonly id="modinput12" name="toggle.skins" class="keybinding" onfocus="this.select();">
+            }" placeholder="..." readonly id="modinput11" name="toggle.skins" class="keybinding" onfocus="this.select();">
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
@@ -4734,7 +4734,7 @@
                 modSettings.macros.keys
                     .toggle
                     .autoRespawn || ''
-            }" placeholder="..." readonly id="modinput13" name="toggle.autoRespawn" class="keybinding" onfocus="this.select();">
+            }" placeholder="..." readonly id="modinput12" name="toggle.autoRespawn" class="keybinding" onfocus="this.select();">
                                                 </div>
                                             </div>
                                         </div>
@@ -4754,7 +4754,7 @@
                 modSettings.macros.keys
                     .splits
                     .doubleTrick || ''
-            }" placeholder="..." readonly id="modinput14" name="splits.doubleTrick" class="keybinding" onfocus="this.select();">
+            }" placeholder="..." readonly id="modinput13" name="splits.doubleTrick" class="keybinding" onfocus="this.select();">
                                                 </div>
                                                 <div class="stats-line justify-sb">
                                                     <span>Self Trick</span>
@@ -4762,7 +4762,7 @@
                 modSettings.macros.keys
                     .splits.selfTrick ||
                 ''
-            }" placeholder="..." readonly id="modinput15" name="splits.selfTrick" class="keybinding" onfocus="this.select();">
+            }" placeholder="..." readonly id="modinput14" name="splits.selfTrick" class="keybinding" onfocus="this.select();">
                                                 </div>
                                             </div>
                                         </div>
@@ -5117,7 +5117,6 @@
 
             this.getSettings();
             this.smallMods();
-            this.setInputActions();
 
             mod_menu.addEventListener('click', (event) => {
                 if (event.target.closest('.mod_menu_wrapper')) return;
@@ -6928,7 +6927,7 @@
                                     <svg fill="#ffffff" id="Capa_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.979 416.979" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M356.004,61.156c-81.37-81.47-213.377-81.551-294.848-0.182c-81.47,81.371-81.552,213.379-0.181,294.85 c81.369,81.47,213.378,81.551,294.849,0.181C437.293,274.636,437.375,142.626,356.004,61.156z M237.6,340.786 c0,3.217-2.607,5.822-5.822,5.822h-46.576c-3.215,0-5.822-2.605-5.822-5.822V167.885c0-3.217,2.607-5.822,5.822-5.822h46.576 c3.215,0,5.822,2.604,5.822,5.822V340.786z M208.49,137.901c-18.618,0-33.766-15.146-33.766-33.765 c0-18.617,15.147-33.766,33.766-33.766c18.619,0,33.766,15.148,33.766,33.766C242.256,122.755,227.107,137.901,208.49,137.901z"></path> </g> </g></svg>
                                 </span>
                             </div>
-                            <input type="text" name="location" id="modinput9" class="keybinding" value="${
+                            <input type="text" name="location" id="modinput8" class="keybinding" value="${
                 modSettings.macros.keys.location || ''
             }" placeholder="..." maxlength="1" onfocus="this.select()">
                         </div>
@@ -6936,7 +6935,7 @@
                             <div class="csRowName">
                                 <span>Show / Hide</span>
                             </div>
-                            <input type="text" name="toggle.chat" id="modinput10" class="keybinding" value="${
+                            <input type="text" name="toggle.chat" id="modinput9" class="keybinding" value="${
                 modSettings.macros.keys.toggle.chat || ''
             }" placeholder="..." maxlength="1" onfocus="this.select()">
                         </div>
@@ -7361,8 +7360,9 @@
 
             if (location.pathname.includes('tournament') || client.updateAvailable) return;
 
-            const hideAlert = localStorage.getItem('hide-alert');
-            if (!enabled || (Date.now() - 24 * 60 * 60 * 1000) > hideAlert) {
+            const hideAlert = Number(localStorage.getItem('hide-alert'));
+            // Don't show alert if it has been closed the past 3 hours
+            if (!enabled || (hideAlert && (Date.now() - hideAlert < 3 * 60 * 60 * 1000))) {
                 byId('scrim_alert')?.remove();
                 return;
             }
@@ -8382,7 +8382,7 @@
         },
 
         setInputActions() {
-            const numModInputs = 18;
+            const numModInputs = 17;
             const macroInputs = Array.from(
                 { length: numModInputs },
                 (_, i) => `modinput${i + 1}`
@@ -11603,6 +11603,9 @@
                 this.setupUI();
                 this.setupGame();
                 this.setupNetworking();
+
+                // setup eventListeners for modInputs once every module has been loaded
+                this.setInputActions();
             } catch (e) {
                 console.error('An error occurred while loading SigMod: ', e);
             }

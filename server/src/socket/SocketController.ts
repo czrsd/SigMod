@@ -5,7 +5,7 @@ class SocketController {
     public sockets: Map<string, socket>;
     public modLink: string;
     public tournamentOverlay: boolean;
-    public version: string = '4.0.0';
+    public version: string = '4.0.3';
     public alert: alert;
     public tournamentDetails: string | null = null;
     public tournamentTimer: number | null = null;

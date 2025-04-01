@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.1.9.4
+// @version      10.2.0
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -135,7 +135,7 @@
 
     // really rare cases, but in case the storage structure changes completely again
     if (
-        modSettings.storageVersion &&
+        !modSettings.storageVersion ||
         modSettings.storageVersion !== storageVersion
     ) {
         localStorage.removeItem(storageName);
@@ -255,6 +255,9 @@
             .map(() => Math.random().toString(36).charAt(2))
             .join('');
     };
+
+    const textEncoder = new TextEncoder();
+    const textDecoder = new TextDecoder();
 
     // --------- Colors --------- //
 
@@ -415,85 +418,18 @@
         }
     };
 
-    class Reader {
-        constructor(view, offset, littleEndian) {
-            this._e = littleEndian;
-            if (view) this.repurpose(view, offset);
+    const getStringUTF8 = (view, o) => {
+        const startOffset = o;
+
+        while (view.getUint8(o) !== 0 && o < view.byteLength) {
+            o++;
         }
 
-        repurpose(view, offset) {
-            this.view = view;
-            this._o = offset || 0;
-        }
+        return o > startOffset
+            ? [new TextDecoder().decode(new DataView(view.buffer, startOffset, o - startOffset)), o + 1]
+            : ['', o + 1];
+    };
 
-        getUint8() {
-            return this.view.getUint8(this._o++, this._e);
-        }
-
-        getFloat64() {
-            return this.view.getFloat64((this._o += 8) - 8, this._e);
-        }
-
-        getStringUTF8(decode = true) {
-            let bytes = [];
-            let b;
-            while ((b = this.view.getUint8(this._o++)) !== 0) bytes.push(b);
-
-            let uint8Array = new Uint8Array(bytes);
-            let decoder = new TextDecoder('utf-8');
-            let s = decoder.decode(uint8Array);
-
-            return decode ? s : uint8Array;
-        }
-
-        raw(len = 0) {
-            const buf = this.view.buffer.slice(this._o, this._o + len);
-            this._o += len;
-            return buf;
-        }
-    }
-
-    const __buf = new DataView(new ArrayBuffer(8));
-
-    class Writer {
-        constructor(littleEndian) {
-            this._e = littleEndian;
-            this.reset();
-        }
-
-        reset() {
-            this._b = [];
-            this._o = 0;
-        }
-
-        setUint8(a) {
-            if (a >= 0 && a < 256) this._b.push(a);
-            return this;
-        }
-
-        setUint32(a) {
-            __buf.setUint32(0, a, this._e);
-            this._move(4);
-            return this;
-        }
-
-        _move(b) {
-            for (let i = 0; i < b; i++) this._b.push(__buf.getUint8(i));
-        }
-
-        setStringUTF8(s) {
-            const bytesStr = unescape(encodeURIComponent(s));
-            for (let i = 0, l = bytesStr.length; i < l; i++) {
-                this._b.push(bytesStr.charCodeAt(i));
-            }
-            this._b.push(0);
-            return this;
-        }
-
-        build() {
-            return new Uint8Array(this._b);
-        }
-    }
 
     // --------- END HELPER FUNCTIONS --------- //
 
@@ -548,9 +484,9 @@
                 try {
                     const arrayBuffer =
                         data instanceof ArrayBuffer ? data : data.buffer;
-                    const dataView = new DataView(arrayBuffer);
-                    const reader = new Reader(dataView, 0, true);
-                    const r = reader.getUint8();
+                    const view = new DataView(arrayBuffer);
+
+                    const r = view.getUint8();
 
                     if (this.R[r] === 0) {
                         window.gameSettings.isPlaying = true;
@@ -587,8 +523,6 @@
                 return;
             }
 
-            if (packet.build)
-                return window.gameSettings.ws.send(packet.build());
             window.gameSettings.ws.send(packet);
         }
 
@@ -599,10 +533,16 @@
                 return;
             }
 
-            const writer = new Writer(true);
-            writer.setUint8(this.C[0x00]);
-            writer.setStringUTF8(playData);
-            this.sendPacket(writer);
+            const json = JSON.stringify(playData);
+            const buf = textEncoder.encode(json);
+            const view = new DataView(new ArrayBuffer(buf.byteLength + 2));
+
+            view.setUint8(0, this.C[0x00]);
+            for (let i = 0; i < buf.byteLength; ++i)
+                view.setUint8(1 + i, buf[i]);
+
+
+            this.sendPacket();
         }
 
         sendChat(text) {
@@ -613,20 +553,25 @@
                 return;
             }
 
-            const writer = new Writer();
-            writer.setUint8(this.C[0x63]);
-            writer.setUint8(0);
-            writer.setStringUTF8(text);
-            this.sendPacket(writer);
+            const messageBuf = textEncoder.encode(text);
+            const view = new DataView(new ArrayBuffer(messageBuf.byteLength + 3));
+
+            view.setUint8(0, this.C[0x63]);
+
+            for (let i = 0; i < messageBuf; ++i)
+                view.setUint8(2 + i, messageBuf[i]);
+
+            this.sendPacket(view);
         }
 
         sendMouseMove(x, y) {
-            const writer = new Writer(true);
-            writer.setUint8(this.C[0x10]);
-            writer.setUint32(x);
-            writer.setUint32(y);
-            writer._b.push(0, 0, 0, 0);
-            this.sendPacket(writer);
+            const view = new DataView(new ArrayBuffer(14));
+
+            view.setUint8(0, this.C[0x10]);
+            view.setInt32(1, x, true);
+            view.setInt32(2, y, true);
+
+            this.sendPacket(view);
         }
 
         removePlayer(id) {
@@ -637,27 +582,32 @@
         }
 
         handleMessage(event) {
-            const reader = new Reader(new DataView(event.data), 0, true);
+            const view = new DataView(event.data);
+            let o = 0;
 
             if (!this.handshake) {
-                this.performHandshake(reader);
+                this.performHandshake(view, o);
                 return;
             }
 
-            const r = reader.getUint8();
+            const r = view.getUint8(o++);
             switch (this.R[r]) {
                 case 0x63:
-                    this.handleChatMessage(reader);
+                    this.handleChatMessage(view, o);
                     break;
                 case 0x40:
-                    this.updateBorder(reader);
+                    this.updateBorder(view, o);
                     break;
             }
         }
 
-        performHandshake(reader) {
-            reader.getStringUTF8(false);
-            this.C.set(new Uint8Array(reader.raw(256)));
+        performHandshake(view, o) {
+            let bytes = [];
+            let b;
+            while ((b = view.getUint8(o++)) !== 0) bytes.push(b);
+
+            this.C.set(new Uint8Array(view.buffer.slice(o, o + 256)));
+            o += 256;
 
             for (const i in this.C) {
                 this.R[this.C[i]] = ~~i;
@@ -666,51 +616,38 @@
             this.handshake = true;
         }
 
-        handleChatMessage(reader) {
-            const flags = reader.getUint8();
-            const [r, g, b] = [reader.getUint8(), reader.getUint8(), reader.getUint8()];
-            const color = bytesToHex(r, g, b);
-            let name = reader.getStringUTF8();
-            const message = reader.getStringUTF8();
+        handleChatMessage(view, o) {
+            const flags = view.getUint8(o++);
+            const rgb = Array.from({ length: 3 }, () => view.getUint8(o++) / 255);
+            const hex = `#${rgb.map(c => Math.floor(c * 255).toString(16).padStart(2, '0')).join('')}`;
 
-            const server = Boolean(flags & 0x80);
-            const admin = Boolean(flags & 0x40);
-            const mod = Boolean(flags & 0x20);
+            let [name, message] = [];
+            [name, o] = getStringUTF8(view, o);
+            [message, o] = getStringUTF8(view, o);
 
-            name = this.formatName(name, server, admin, mod);
-
-            if (mods.mutedUsers.includes(name) || mods.spamMessage(name, message) || modSettings.chat.showClientChat)
-                return;
-
-            mods.updateChat({
-                server,
-                admin,
-                mod,
-                color: modSettings.chat.showNameColors ? color : '#fafafa',
-                name,
-                message,
-                time: modSettings.chat.showTime ? Date.now() : null,
-            });
+            if (!mods.mutedUsers.includes(name) && !mods.spamMessage(name, message) && !modSettings.chat.showClientChat) {
+                mods.updateChat({
+                    color: modSettings.chat.showNameColors ? hex : '#fafafa',
+                    name,
+                    message,
+                    time: modSettings.chat.showTime ? Date.now() : null,
+                });
+            }
         }
 
-        formatName(name, server, admin, mod) {
-            if (server && name !== 'SERVER') name = '[SERVER]';
-            if (admin) name = '[ADMIN] ' + name;
-            if (mod) name = '[MOD] ' + name;
-            if (name === '') name = 'Unnamed';
-            return name;
-        }
+        updateBorder(view, o) {
+            const [left, top, right, bottom] = [
+                view.getFloat64(o, true),
+                view.getFloat64(o + 8, true),
+                view.getFloat64(o + 16, true),
+                view.getFloat64(o + 24, true)
+            ];
 
-        updateBorder(reader) {
-            mods.border.left = reader.getFloat64();
-            mods.border.top = reader.getFloat64();
-            mods.border.right = reader.getFloat64();
-            mods.border.bottom = reader.getFloat64();
-
-            mods.border.width = mods.border.right - mods.border.left;
-            mods.border.height = mods.border.bottom - mods.border.top;
-            mods.border.centerX = (mods.border.left + mods.border.right) / 2;
-            mods.border.centerY = (mods.border.top + mods.border.bottom) / 2;
+            mods.border = {
+                left, top, right, bottom,
+                width: right - left,
+                height: bottom - top
+            }
         }
     }
 
@@ -832,6 +769,7 @@
             this.updateAvailable = false;
 
             this.id = null;
+            this.connectedAmount = 0;
 
             this.connect();
         }
@@ -839,6 +777,7 @@
         connect() {
             this.ws = new WebSocket(this.wsUrl);
             this.ws.binaryType = 'arraybuffer';
+            window.sigmod.ws = this.ws;
 
             this.ws.addEventListener('open', this.onOpen.bind(this));
             this.ws.addEventListener('close', this.onClose.bind(this));
@@ -847,10 +786,19 @@
         }
 
         async onOpen() {
+            this.connectedAmount++;
             await this.waitForDOMLoad();
 
             this.updateClientInfo();
             this.updateTagInfo();
+
+            // Send nick if client got disconnected more than one time
+            if (this.connectedAmount > 1) {
+                client.send({
+                    type: 'update-nick',
+                    content: mods.nick,
+                });
+            }
         }
 
         waitForDOMLoad() {
@@ -974,13 +922,13 @@
 
         send(data) {
             if (!data || this.ws.readyState !== 1) return;
-            const binaryData = new TextEncoder().encode(JSON.stringify(data));
+            const binaryData = textEncoder.encode(JSON.stringify(data));
             this.ws.send(binaryData);
         }
 
         parseMessage(data) {
             try {
-                const stringData = new TextDecoder().decode(
+                const stringData = textDecoder.decode(
                     new Uint8Array(data)
                 );
                 return JSON.parse(stringData);
@@ -2006,6 +1954,26 @@
            color: #fff;
         }
 
+        .top-users__inner {
+            background: transparent;
+        }
+        .top-users__inner table {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border-radius: 6px;
+            padding-top: 4px;
+            padding-right: 6px;
+        }
+
+        .top-users_buttons button {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #fff;
+        }
+
+        .top-users_buttons button.active {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
         .top-users__inner::-webkit-scrollbar-thumb {
             border: none;
         }
@@ -2311,15 +2279,17 @@
             direction: ltr;
             margin: 2px 0 0 5px;
             text-overflow: ellipsis;
-            white-space: nowrap;
             max-width: 100%;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
 
         .message_name {
             user-select: none;
+        }
+
+        .chatMessage-text {
+            max-width: 310px;
         }
 
         .message .time {
@@ -5522,7 +5492,7 @@
             const elements = [
                 '#menu',
                 '#title',
-                '.top-users__inner',
+                '.top-users',
                 '#left-menu',
                 '.menu-links',
                 '.menu--stats-mode',
@@ -6723,7 +6693,7 @@
             const chatMessage = document.createElement('div');
             chatMessage.classList.add('message');
             chatMessage.innerHTML = `
-                <div class="centerXY" style="gap: 3px;">
+                <div class="centerX" style="gap: 3px;">
                     <div class="flex">
                         <span style="color: ${color};${glow}" class="message_name" id="${id}">${name}</span>
                         <span>&#58;</span>

@@ -52,22 +52,42 @@ class Socket {
         console.error(e);
     }
 
-    async onClose() {
-        // offline handling for mod users
+    private async updateUserStatus() {
         if (this.modUser) {
             await AccountModel.updateOne(
                 { _id: this.modUser._id },
                 { $set: { online: false, lastOnline: new Date() } }
             );
         }
+    }
 
+    private updateTournamentLobby() {
         if (
             this.user &&
             TournamentController.getLobbyByEmail(this.user.email)
         ) {
             TournamentController.disconnectPlayer(this);
         }
+    }
 
+    private clearMinimap() {
+        if (this.tag) {
+            wsHandler.sendToTag(
+                {
+                    type: 'minimap-data',
+                    content: {
+                        x: null,
+                        y: null,
+                        nick: this.nick,
+                        sid: this.sid,
+                    },
+                },
+                this.tag
+            );
+        }
+    }
+
+    private async logActivityDuration() {
         const connectedDuration = Date.now() - this.connectedTimestamp;
         if (connectedDuration >= 60000) {
             const activity = new ActivityModel({
@@ -78,6 +98,13 @@ class Socket {
 
             await activity.save();
         }
+    }
+
+    async onClose() {
+        this.updateUserStatus();
+        this.updateTournamentLobby();
+        this.clearMinimap();
+        await this.logActivityDuration();
 
         wsHandler.sockets.delete(this.sid);
     }

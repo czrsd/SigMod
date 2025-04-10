@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.0.1
+// @version      10.2.0.2
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -565,11 +565,16 @@
         }
 
         sendMouseMove(x, y) {
+            const {sigfix} = window;
+            if (sigfix) {
+                sigfix.net.move(sigfix.world.selected, x, y);
+                return;
+            }
             const view = new DataView(new ArrayBuffer(14));
 
             view.setUint8(0, this.C[0x10]);
             view.setInt32(1, x, true);
-            view.setInt32(2, y, true);
+            view.setInt32(5, y, true);
 
             this.sendPacket(view);
         }
@@ -625,6 +630,8 @@
             [name, o] = getStringUTF8(view, o);
             [message, o] = getStringUTF8(view, o);
 
+            if (name.trim() === '') name = 'Unnamed';
+
             if (!mods.mutedUsers.includes(name) && !mods.spamMessage(name, message) && !modSettings.chat.showClientChat) {
                 mods.updateChat({
                     color: modSettings.chat.showNameColors ? hex : '#fafafa',
@@ -654,9 +661,9 @@
     class SigFixHandler {
         constructor() {
             this.lastHadCells = false;
-
             this.checkInterval = null;
             this.updatePosInterval = null;
+            this.sendPosInterval = null;
             this.init();
         }
 
@@ -667,86 +674,73 @@
             let isHandlingFreeze = false;
 
             window.sigfix.net.move = (...args) => {
-                if (freezepos) {
-                    if (!isHandlingFreeze) {
-                        isHandlingFreeze = true;
-                        originalMove.call(
-                            this,
-                            playerPosition.x,
-                            playerPosition.y
-                        );
-                        isHandlingFreeze = false;
-                    }
+                if (freezepos && !isHandlingFreeze) {
+                    isHandlingFreeze = true;
+                    originalMove.call(this, playerPosition.x, playerPosition.y);
+                    isHandlingFreeze = false;
                     return;
                 }
                 return originalMove.apply(this, args);
             };
         }
-        updatePlayerPos() {
-            let myName = '';
-            let ownN = 0;
-            let ownX = 0;
-            let ownY = 0;
-            let hadCells = this.lastHadCells ?? true;
 
+        calculatePlayerPosition() {
+            let ownX = 0, ownY = 0, ownN = 0;
             const ownedCells = window.sigfix.world.views.get(window.sigfix.world.selected)?.owned || [];
 
             ownedCells.forEach(id => {
                 const cell = window.sigfix.world.cells.get(id)?.merged;
-                if (!cell) return;
-
-                myName = cell.name || 'An unnamed cell';
-                ++ownN;
-                ownX += cell.nx;
-                ownY += cell.ny;
+                if (cell) {
+                    ownN++;
+                    ownX += cell.nx;
+                    ownY += cell.ny;
+                }
             });
 
-            if (ownN > 0) {
-                ownX /= ownN;
-                ownY /= ownN;
+            return ownN > 0 ? { x: ownX / ownN, y: ownY / ownN } : null;
+        }
 
-                playerPosition.x = ownX;
-                playerPosition.y = ownY;
-
-                if (client?.ws?.readyState === 1 && modSettings.settings.tag) {
-                    client.send({
-                        type: 'position',
-                        content: {
-                            x: playerPosition.x,
-                            y: playerPosition.y,
-                        },
-                    });
-                }
-
+        updatePlayerPos() {
+            const newPos = this.calculatePlayerPosition();
+            if (newPos) {
+                playerPosition.x = newPos.x;
+                playerPosition.y = newPos.y;
                 this.lastHadCells = true;
-            } else if (hadCells) {
-                if (client?.ws?.readyState === 1 && modSettings.settings.tag) {
-                    client.send({
-                        type: 'position',
-                        content: {
-                            x: null,
-                            y: null,
-                        },
-                    });
-                }
+            } else if (this.lastHadCells) {
+                playerPosition.x = null;
+                playerPosition.y = null;
+                this.sendPlayerPos();
                 this.lastHadCells = false;
+            }
+        }
+
+        sendPlayerPos() {
+            if (playerPosition.x !== null && playerPosition.y !== null && client?.ws?.readyState === 1 && modSettings.settings.tag) {
+                client.send({
+                    type: 'position',
+                    content: { x: playerPosition.x, y: playerPosition.y }
+                });
+            }
+        }
+
+        startIntervals() {
+            this.updatePosInterval = setInterval(this.updatePlayerPos.bind(this));
+            this.sendPosInterval = setInterval(this.sendPlayerPos.bind(this), 300);
+        }
+
+        checkSigFix() {
+            if (window.sigfix) {
+                this.startIntervals();
+                this.overrideMoveFunction();
+                clearInterval(this.checkInterval);
             }
         }
 
         init() {
             const checkSigFix = () => {
-                if (window.sigfix) {
-                    this.updatePosInterval = setInterval(this.updatePlayerPos, 300);
-                }
+                this.checkSigFix();
                 if (window.sigfix?.net) {
-                    this.overrideMoveFunction();
-                    clearInterval(this.checkInterval);
-
-                    setTimeout(() => {
-                        if (window.sigfix?.net) {
-                            this.checkInterval = null;
-                        }
-                    }, 1000);
+                    setTimeout(() => { this.checkInterval = null; }, 1000);
                 }
             };
 
@@ -755,6 +749,7 @@
     }
 
     new SigFixHandler();
+
 
     // --------- Mod Client --------- //
     class modClient {
@@ -6390,6 +6385,12 @@
             }
         },
 
+        isAuthenticated() {
+            const name = byId('profile-name');
+            if (name && (name !== 'Guest' || name !== 'undefined')) return true;
+            else return false;
+        },
+
         chat() {
             const chatDiv = document.createElement('div');
             chatDiv.classList.add('modChat');
@@ -6403,7 +6404,7 @@
                     </div>
                     <div id="mod-messages" class="scroll"></div>
                     <div id="chatInputContainer">
-                        <input type="text" id="chatSendInput" class="chatInput" placeholder="Login to use the chat" maxlength="250" minlength="1" disabled />
+                        <input type="text" id="chatSendInput" class="chatInput" placeholder="${this.isAuthenticated() ? 'message...' : 'Login to use the chat'}" maxlength="250" minlength="1" ${this.isAuthenticated() ? '' : 'disabled'} />
                         <button class="chatButton" id="openChatSettings">
                             <svg width="15" height="15" viewBox="0 0 20 20" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M17.4249 7.45169C15.7658 7.45169 15.0874 6.27836 15.9124 4.83919C16.3891 4.00503 16.1049 2.94169 15.2708 2.46503L13.6849 1.55753C12.9608 1.12669 12.0258 1.38336 11.5949 2.10753L11.4941 2.28169C10.6691 3.72086 9.31242 3.72086 8.47825 2.28169L8.37742 2.10753C7.96492 1.38336 7.02992 1.12669 6.30575 1.55753L4.71992 2.46503C3.88575 2.94169 3.60158 4.01419 4.07825 4.84836C4.91242 6.27836 4.23408 7.45169 2.57492 7.45169C1.62159 7.45169 0.833252 8.23086 0.833252 9.19336V10.8067C0.833252 11.76 1.61242 12.5484 2.57492 12.5484C4.23408 12.5484 4.91242 13.7217 4.07825 15.1609C3.60158 15.995 3.88575 17.0584 4.71992 17.535L6.30575 18.4425C7.02992 18.8734 7.96492 18.6167 8.39575 17.8925L8.49658 17.7184C9.32158 16.2792 10.6783 16.2792 11.5124 17.7184L11.6133 17.8925C12.0441 18.6167 12.9791 18.8734 13.7033 18.4425L15.2891 17.535C16.1233 17.0584 16.4074 15.9859 15.9307 15.1609C15.0966 13.7217 15.7749 12.5484 17.4341 12.5484C18.3874 12.5484 19.1758 11.7692 19.1758 10.8067V9.19336C19.1666 8.24003 18.3874 7.45169 17.4249 7.45169ZM9.99992 12.9792C8.35908 12.9792 7.02075 11.6409 7.02075 10C7.02075 8.35919 8.35908 7.02086 9.99992 7.02086C11.6408 7.02086 12.9791 8.35919 12.9791 10C12.9791 11.6409 11.6408 12.9792 9.99992 12.9792Z" fill="#fff"></path>

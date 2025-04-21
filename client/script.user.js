@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.0.2
+// @version      10.2.0.3
 // @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
@@ -534,34 +534,26 @@
             }
 
             const json = JSON.stringify(playData);
-            const buf = textEncoder.encode(json);
-            const view = new DataView(new ArrayBuffer(buf.byteLength + 2));
+            const encoded = textEncoder.encode(json);
+            const buf = new Uint8Array(encoded.length + 2);
 
-            view.setUint8(0, this.C[0x00]);
-            for (let i = 0; i < buf.byteLength; ++i)
-                view.setUint8(1 + i, buf[i]);
+            buf[0] = this.C[0x00];
+            buf.set(encoded, 1);
 
-
-            this.sendPacket();
+            this.sendPacket(buf);
         }
 
         sendChat(text) {
             if (mods.aboveRespawnLimit && text === mods.respawnCommand) return;
+            if (window.sigfix) return window.sigfix.net.chat(text);
 
-            if (window.sigfix) {
-                window.sigfix.net.chat(text);
-                return;
-            }
+            const encoded = textEncoder.encode(text);
+            const buf = new Uint8Array(encoded.byteLength + 3);
 
-            const messageBuf = textEncoder.encode(text);
-            const view = new DataView(new ArrayBuffer(messageBuf.byteLength + 3));
+            buf[0] = this.C[0x63];
+            buf.set(encoded, 2);
 
-            view.setUint8(0, this.C[0x63]);
-
-            for (let i = 0; i < messageBuf; ++i)
-                view.setUint8(2 + i, messageBuf[i]);
-
-            this.sendPacket(view);
+            this.sendPacket(buf);
         }
 
         sendMouseMove(x, y) {

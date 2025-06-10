@@ -1,7 +1,12 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.0.3
-// @description  The best mod you can find for Sigmally - Agar.io: Macros, Friends, tag system (minimap, chat), color mod, custom skins, AutoRespawn, save names, themes and more!
+// @version      10.2.1
+// @description  Ultimate Sigmally-Agar.io mod: macros, friends, tag-system (minimap + chat), visuals, autorespawn, name customization, themes & more!
+// @description:de  Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tag-System (Minimap + Chat), visuelle Anpassungen, Autorespawn, Namensanpassung, Themes & mehr!
+// @description:es  Mod definitivo para Sigmally-Agar.io: macros, amigos, sistema de etiquetas (minimapa + chat), visuales, autorrespawn, personalización de nombres, temas y más!
+// @description:pt  Mod definitivo do Sigmally-Agar.io: macros, amigos, sistema de tags (minimapa + chat), visuais, autorresposta, personalização de nomes, temas e mais!
+// @description:ru  Лучший мод для Sigmally-Agar.io: макросы, друзья, система тегов (миникарта + чат), визуальные настройки, автоворожение, настройка имени, темы и многое другое!
+// @description:tr  Sigmally-Agar.io için en iyi mod: makrolar, arkadaşlar, etiket sistemi (minimap + sohbet), görseller, otomatik yeniden doğma, isim özelleştirme, temalar ve daha fazlası!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
 // @icon         https://czrsd.com/static/sigmod/SigMod25-rounded.png
@@ -234,11 +239,11 @@
                 func.apply(this, args);
             }, delay);
         };
-    }
+    };
 
     const wait = async (ms) => {
         return new Promise((r) => setTimeout(r, ms));
-    }
+    };
 
     const noXSS = (text) => {
         return text
@@ -247,7 +252,7 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
-    }
+    };
 
     // generate random string
     const rdmString = (length) => {
@@ -268,13 +273,7 @@
         return `#${Number(r).toString(16).padStart(2, '0')}${Number(g)
             .toString(16)
             .padStart(2, '0')}${Number(b).toString(16).padStart(2, '0')}`;
-    }
-
-    const bytesToHex = (r, g, b) => {
-        return (
-            '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
-        );
-    }
+    };
 
     // --------- Game --------- //
 
@@ -282,12 +281,12 @@
         const menuWrapper = byId('menu-wrapper');
 
         return menuWrapper.style.display === 'none';
-    }
+    };
 
-    const isDead = () => {
+    const isDeadUI = () => {
         const __line2 = byId('__line2');
         return !__line2.classList.contains('line--hidden');
-    }
+    };
 
     const getGameMode = () => {
         const gameMode = byId('gamemode');
@@ -299,7 +298,7 @@
             (option) => option.value === gameMode.value
         )[0];
         return selectedOption.textContent.split(' ')[0];
-    }
+    };
 
     function keypress(key, keycode) {
         const keyDownEvent = new KeyboardEvent('keydown', {
@@ -315,27 +314,21 @@
         window.dispatchEvent(keyUpEvent);
     }
 
-    function mousemove(sx, sy) {
-        const mouseMoveEvent = new MouseEvent('mousemove', {
-            clientX: sx,
-            clientY: sy,
-        });
-        const canvas = byId('canvas');
-        canvas.dispatchEvent(mouseMoveEvent);
-    }
-
     const getCoordinates = (border, gridCount = 5) => {
-        const { left, top, width, height } = border;
+        const { left, top, width } = border;
         const gridSize = width / gridCount;
         const coordinates = {};
 
-        for (let i = 0; i < gridCount; i++) {
-            for (let j = 0; j < gridCount; j++) {
+        for (let i = 0; i < gridCount; ++i) {
+            for (let j = 0; j < gridCount; ++j) {
                 const label = String.fromCharCode(65 + i) + (j + 1);
 
                 coordinates[label] = {
                     min: { x: left + i * gridSize, y: top + j * gridSize },
-                    max: { x: left + (i + 1) * gridSize, y: top + (j + 1) * gridSize },
+                    max: {
+                        x: left + (i + 1) * gridSize,
+                        y: top + (j + 1) * gridSize,
+                    },
                 };
             }
         }
@@ -402,8 +395,16 @@
             }
         },
         getTimeLeft(timestamp) {
-            let totalSeconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
-            const timeUnits = [['d', 86400], ['h', 3600], ['m', 60], ['s', 1]];
+            let totalSeconds = Math.max(
+                0,
+                Math.floor((timestamp - Date.now()) / 1000)
+            );
+            const timeUnits = [
+                ['d', 86400],
+                ['h', 3600],
+                ['m', 60],
+                ['s', 1],
+            ];
             let result = '';
 
             for (const [unit, seconds] of timeUnits) {
@@ -415,7 +416,7 @@
             }
 
             return result || '0s';
-        }
+        },
     };
 
     const getStringUTF8 = (view, o) => {
@@ -426,10 +427,14 @@
         }
 
         return o > startOffset
-            ? [new TextDecoder().decode(new DataView(view.buffer, startOffset, o - startOffset)), o + 1]
+            ? [
+                  new TextDecoder().decode(
+                      new DataView(view.buffer, startOffset, o - startOffset)
+                  ),
+                  o + 1,
+              ]
             : ['', o + 1];
     };
-
 
     // --------- END HELPER FUNCTIONS --------- //
 
@@ -438,11 +443,11 @@
 
     // --------- Sigmally WebSocket Handler --------- //
     class SigWsHandler {
-        constructor() {
-            this.handshake = false;
-            this.C = new Uint8Array(256);
-            this.R = new Uint8Array(256);
+        handshake = false;
+        C = new Uint8Array(256);
+        R = new Uint8Array(256);
 
+        constructor() {
             this.overrideWebSocketSend();
         }
 
@@ -486,15 +491,10 @@
                         data instanceof ArrayBuffer ? data : data.buffer;
                     const view = new DataView(arrayBuffer);
 
-                    const r = view.getUint8();
+                    const r = view.getUint8(0);
 
-                    if (this.R[r] === 0) {
-                        window.gameSettings.isPlaying = true;
-                    }
-
-                    if (!window.sigfix && freezepos && this.R[r] === 16) {
+                    if (!window.sigfix && freezepos && this.R[r] === 0x10)
                         return;
-                    }
 
                     originalSend(data);
                 } catch (e) {
@@ -502,14 +502,21 @@
                 }
             };
 
-            ws.addEventListener('message', (event) =>
-                this.handleMessage(event)
-            );
+            ws.addEventListener('message', (e) => this.handleMessage(e));
+        }
+
+        performHandshake(view, _o) {
+            let [_, o] = getStringUTF8(view, _o);
+
+            this.C.set(new Uint8Array(view.buffer.slice(o, o + 256)));
+
+            for (const i in this.C) this.R[this.C[i]] = ~~i;
+
+            this.handshake = true;
         }
 
         handleWebSocketClose() {
             this.handshake = false;
-            window.gameSettings.isPlaying = false;
 
             playerPosition.x = null;
             playerPosition.y = null;
@@ -535,34 +542,42 @@
 
             const json = JSON.stringify(playData);
             const encoded = textEncoder.encode(json);
-            const buf = new Uint8Array(encoded.length + 2);
+            const view = new DataView(new ArrayBuffer(encoded.length + 2));
 
-            buf[0] = this.C[0x00];
-            buf.set(encoded, 1);
+            view.setUint8(0, this.C[0x00]);
 
-            this.sendPacket(buf);
+            for (let i = 0; i < encoded.byteLength; ++i) {
+                view.setUint8(1 + i, encoded[i]);
+            }
+
+            this.sendPacket(view);
         }
 
         sendChat(text) {
+            if (window.sigfix) {
+                window.sigfix.net.chat(text);
+                return;
+            }
             if (mods.aboveRespawnLimit && text === mods.respawnCommand) return;
-            if (window.sigfix) return window.sigfix.net.chat(text);
 
             const encoded = textEncoder.encode(text);
-            const buf = new Uint8Array(encoded.byteLength + 3);
+            const view = new DataView(new ArrayBuffer(encoded.byteLength + 3));
 
-            buf[0] = this.C[0x63];
-            buf.set(encoded, 2);
+            view.setUint8(0, this.C[0x63]);
+            for (let i = 0; i < encoded.byteLength; ++i) {
+                view.setUint8(2 + i, encoded[i]);
+            }
 
-            this.sendPacket(buf);
+            this.sendPacket(view);
         }
 
         sendMouseMove(x, y) {
-            const {sigfix} = window;
+            const { sigfix } = window;
             if (sigfix) {
                 sigfix.net.move(sigfix.world.selected, x, y);
                 return;
             }
-            const view = new DataView(new ArrayBuffer(14));
+            const view = new DataView(new ArrayBuffer(13));
 
             view.setUint8(0, this.C[0x10]);
             view.setInt32(1, x, true);
@@ -578,53 +593,45 @@
             }
         }
 
-        handleMessage(event) {
-            const view = new DataView(event.data);
-            let o = 0;
+        handleMessage(e) {
+            try {
+                const view = new DataView(e.data);
+                let o = 0;
 
-            if (!this.handshake) {
-                this.performHandshake(view, o);
-                return;
-            }
+                if (!this.handshake) return this.performHandshake(view, o);
 
-            const r = view.getUint8(o++);
-            switch (this.R[r]) {
-                case 0x63:
-                    this.handleChatMessage(view, o);
-                    break;
-                case 0x40:
-                    this.updateBorder(view, o);
-                    break;
-            }
-        }
+                const r = view.getUint8(o++);
 
-        performHandshake(view, o) {
-            let bytes = [];
-            let b;
-            while ((b = view.getUint8(o++)) !== 0) bytes.push(b);
-
-            this.C.set(new Uint8Array(view.buffer.slice(o, o + 256)));
-            o += 256;
-
-            for (const i in this.C) {
-                this.R[this.C[i]] = ~~i;
-            }
-
-            this.handshake = true;
+                if (this.R[r] === 0x63) this.handleChatMessage(view, o);
+                if (this.R[r] === 0x40) this.updateBorder(view, o);
+            } catch (e) {}
         }
 
         handleChatMessage(view, o) {
-            const flags = view.getUint8(o++);
-            const rgb = Array.from({ length: 3 }, () => view.getUint8(o++) / 255);
-            const hex = `#${rgb.map(c => Math.floor(c * 255).toString(16).padStart(2, '0')).join('')}`;
+            o += 1; // skip flags
+            const rgb = Array.from(
+                { length: 3 },
+                () => view.getUint8(o++) / 255
+            );
+            const hex = `#${rgb
+                .map((c) =>
+                    Math.floor(c * 255)
+                        .toString(16)
+                        .padStart(2, '0')
+                )
+                .join('')}`;
 
-            let [name, message] = [];
+            let name, message;
             [name, o] = getStringUTF8(view, o);
             [message, o] = getStringUTF8(view, o);
 
-            if (name.trim() === '') name = 'Unnamed';
+            if (!name.trim()) name = 'Unnamed';
 
-            if (!mods.mutedUsers.includes(name) && !mods.spamMessage(name, message) && !modSettings.chat.showClientChat) {
+            if (
+                !mods.mutedUsers.includes(name) &&
+                !mods.spamMessage(name, message) &&
+                !modSettings.chat.showClientChat
+            ) {
                 mods.updateChat({
                     color: modSettings.chat.showNameColors ? hex : '#fafafa',
                     name,
@@ -639,14 +646,17 @@
                 view.getFloat64(o, true),
                 view.getFloat64(o + 8, true),
                 view.getFloat64(o + 16, true),
-                view.getFloat64(o + 24, true)
+                view.getFloat64(o + 24, true),
             ];
 
             mods.border = {
-                left, top, right, bottom,
+                left,
+                top,
+                right,
+                bottom,
                 width: right - left,
-                height: bottom - top
-            }
+                height: bottom - top,
+            };
         }
     }
 
@@ -677,10 +687,14 @@
         }
 
         calculatePlayerPosition() {
-            let ownX = 0, ownY = 0, ownN = 0;
-            const ownedCells = window.sigfix.world.views.get(window.sigfix.world.selected)?.owned || [];
+            let ownX = 0,
+                ownY = 0,
+                ownN = 0;
+            const ownedCells =
+                window.sigfix.world.views.get(window.sigfix.world.selected)
+                    ?.owned || [];
 
-            ownedCells.forEach(id => {
+            ownedCells.forEach((id) => {
                 const cell = window.sigfix.world.cells.get(id)?.merged;
                 if (cell) {
                     ownN++;
@@ -707,17 +721,27 @@
         }
 
         sendPlayerPos() {
-            if (playerPosition.x !== null && playerPosition.y !== null && client?.ws?.readyState === 1 && modSettings.settings.tag) {
+            if (
+                playerPosition.x !== null &&
+                playerPosition.y !== null &&
+                client?.ws?.readyState === 1 &&
+                modSettings.settings.tag
+            ) {
                 client.send({
                     type: 'position',
-                    content: { x: playerPosition.x, y: playerPosition.y }
+                    content: { x: playerPosition.x, y: playerPosition.y },
                 });
             }
         }
 
         startIntervals() {
-            this.updatePosInterval = setInterval(this.updatePlayerPos.bind(this));
-            this.sendPosInterval = setInterval(this.sendPlayerPos.bind(this), 300);
+            this.updatePosInterval = setInterval(
+                this.updatePlayerPos.bind(this)
+            );
+            this.sendPosInterval = setInterval(
+                this.sendPlayerPos.bind(this),
+                300
+            );
         }
 
         checkSigFix() {
@@ -729,19 +753,20 @@
         }
 
         init() {
-            const checkSigFix = () => {
-                this.checkSigFix();
-                if (window.sigfix?.net) {
-                    setTimeout(() => { this.checkInterval = null; }, 1000);
+            this.checkInterval = setInterval(() => {
+                if (window.sigfix) {
+                    clearInterval(this.checkInterval);
+                    this.startIntervals();
+                    this.overrideMoveFunction();
+                } else {
+                    clearInterval(this.checkInterval);
+                    requestAnimationFrame(window.checkPlaying);
                 }
-            };
-
-            this.checkInterval = setInterval(checkSigFix, 100);
+            }, 100);
         }
     }
 
     new SigFixHandler();
-
 
     // --------- Mod Client --------- //
     class modClient {
@@ -774,10 +799,8 @@
 
         async onOpen() {
             this.connectedAmount++;
-            await this.waitForDOMLoad();
 
             this.updateClientInfo();
-            this.updateTagInfo();
 
             // Send nick if client got disconnected more than one time
             if (this.connectedAmount > 1) {
@@ -788,11 +811,9 @@
             }
         }
 
-        waitForDOMLoad() {
-            return new Promise((resolve) => setTimeout(resolve, 500));
-        }
-
         updateClientInfo() {
+            this.updateTagInfo();
+
             this.send({
                 type: 'server-changed',
                 content: getGameMode(),
@@ -915,9 +936,7 @@
 
         parseMessage(data) {
             try {
-                const stringData = textDecoder.decode(
-                    new Uint8Array(data)
-                );
+                const stringData = textDecoder.decode(new Uint8Array(data));
                 return JSON.parse(stringData);
             } catch (error) {
                 console.error('Failed to parse message:', error);
@@ -937,7 +956,9 @@
         handlePingMessage() {
             mods.ping.latency = Date.now() - mods.ping.start;
             mods.ping.end = Date.now();
-            byId('clientPing').innerHTML = `Client Ping: ${mods.ping.latency}ms`;
+            byId(
+                'clientPing'
+            ).innerHTML = `Client Ping: ${mods.ping.latency}ms`;
         }
 
         handleChatMessage(content) {
@@ -965,7 +986,7 @@
         }
 
         handleUpdateAvailable(content) {
-            byId('play-btn').setAttribute('disabled', 'disabled');
+            mods.playBtn.setAttribute('disabled', 'disabled');
             byId('spectate-btn').setAttribute('disabled', 'disabled');
             this.updateAvailable = true;
             this.createModAlert(content);
@@ -1005,7 +1026,13 @@
     setTimeout(() => clearInterval(moveInterval), 600);
 
     // Disable chat before game settings actually load
-    localStorage.setItem('settings', JSON.stringify({ ...JSON.parse(localStorage.getItem('settings')), showChat: false }));
+    localStorage.setItem(
+        'settings',
+        JSON.stringify({
+            ...JSON.parse(localStorage.getItem('settings')),
+            showChat: false,
+        })
+    );
 
     function addSettings() {
         const gameSettings = document.querySelector('.checkbox-grid');
@@ -1075,10 +1102,7 @@
     let mods = {};
 
     let playerPosition = { x: null, y: null };
-    let lastGetScore = 0;
     let lastPosTime = 0;
-    let dead = false;
-    let dead2 = false;
 
     function Mod() {
         this.nick = null;
@@ -1117,7 +1141,7 @@
         this.mutedUsers = [];
         this.blockedChatData = {
             names: [],
-            messages: []
+            messages: [],
         };
 
         this.respawnCommand = '/leaveworld';
@@ -1145,77 +1169,35 @@
         };
 
         // for SigMod specific
+        const base = isDev
+            ? `http://localhost:${port}`
+            : 'https://mod.czrsd.com';
+        const r = (path) => `${base}/${path}`;
+
         this.appRoutes = {
-            badge: isDev
-                ? `http://localhost:${port}/badge`
-                : 'https://mod.czrsd.com/badge',
-            signIn: (path) =>
-                isDev
-                    ? `http://localhost:${port}/${path}`
-                    : `https://mod.czrsd.com/${path}`,
-            auth: isDev
-                ? `http://localhost:${port}/auth`
-                : `https://mod.czrsd.com/auth`,
-            users: isDev
-                ? `http://localhost:${port}/users`
-                : `https://mod.czrsd.com/users`,
-            search: isDev
-                ? `http://localhost:${port}/search`
-                : `https://mod.czrsd.com/search`,
-            request: isDev
-                ? `http://localhost:${port}/request`
-                : `https://mod.czrsd.com/request`,
-            friends: isDev
-                ? `http://localhost:${port}/me/friends`
-                : `https://mod.czrsd.com/me/friends`,
-            profile: (id) =>
-                isDev
-                    ? `http://localhost:${port}/profile/${id}`
-                    : `https://mod.czrsd.com/profile/${id}`,
-            myRequests: isDev
-                ? `http://localhost:${port}/me/requests`
-                : `https://mod.czrsd.com/me/requests`,
-            handleRequest: isDev
-                ? `http://localhost:${port}/me/handle`
-                : `https://mod.czrsd.com/me/handle`,
-            logout: isDev
-                ? `http://localhost:${port}/logout`
-                : `https://mod.czrsd.com/logout`,
-            imgUpload: isDev
-                ? `http://localhost:${port}/me/upload`
-                : `https://mod.czrsd.com/me/upload`,
-            removeAvatar: isDev
-                ? `http://localhost:${port}/me/handle`
-                : `https://mod.czrsd.com/me/handle`,
-            editProfile: isDev
-                ? `http://localhost:${port}/me/edit`
-                : `https://mod.czrsd.com/me/edit`,
-            delProfile: isDev
-                ? `http://localhost:${port}/me/remove`
-                : `https://mod.czrsd.com/me/remove`,
-            updateSettings: isDev
-                ? `http://localhost:${port}/me/update-settings`
-                : `https://mod.czrsd.com/me/update-settings`,
-            chatHistory: (id) =>
-                isDev
-                    ? `http://localhost:${port}/me/chat/${id}`
-                    : `https://mod.czrsd.com/me/chat/${id}`,
-            onlineUsers: isDev
-                ? `http://localhost:${port}/onlineUsers`
-                : `https://mod.czrsd.com/onlineUsers`,
-            announcements: isDev
-                ? `http://localhost:${port}/announcements`
-                : `https://mod.czrsd.com/announcements`,
-            announcement: (id) =>
-                isDev
-                    ? `http://localhost:${port}/announcement/${id}`
-                    : `https://mod.czrsd.com/announcement/${id}`,
-            fonts: isDev
-                ? `http://localhost:${port}/fonts`
-                : 'https://mod.czrsd.com/fonts',
+            badge: r('badge'),
+            signIn: (path) => r(path),
+            auth: r('auth'),
+            users: r('users'),
+            search: r('search'),
+            request: r('request'),
+            friends: r('me/friends'),
+            profile: (id) => r(`profile/${id}`),
+            myRequests: r('me/requests'),
+            handleRequest: r('me/handle'),
+            logout: r('logout'),
+            imgUpload: r('me/upload'),
+            removeAvatar: r('me/handle'),
+            editProfile: r('me/edit'),
+            delProfile: r('me/remove'),
+            updateSettings: r('me/update-settings'),
+            chatHistory: (id) => r(`me/chat/${id}`),
+            onlineUsers: r('onlineUsers'),
+            announcements: r('announcements'),
+            announcement: (id) => r(`announcement/${id}`),
+            fonts: r('fonts'),
             blockedChatData: 'https://mod.czrsd.com/spam.json',
         };
-
         this.init();
     }
 
@@ -1527,6 +1509,12 @@
 			color: #777;
 		}
 
+        .modCode {
+            background-color: rgba(50, 50, 50, 0.6);
+            padding: 4px;
+            border-radius: 3px;
+        }
+
         .modCheckbox input[type="checkbox"] {
              display: none;
              visibility: hidden;
@@ -1811,14 +1799,15 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 99995;
-            background: #3F3F3F;
+            background: #151515;
+            border: 1px solid #333;
             border-radius: 10px;
             display: flex;
             flex-direction: column;
             gap: 5px;
             padding: 10px;
             color: #fff;
-            max-width: 320px;
+            max-width: 360px;
         }
 
         .alert_overlay {
@@ -2475,12 +2464,6 @@
             right: 0;
             z-index: 99999;
         }
-        .minimap {
-            border-radius: 2px;
-            border-top: 1px solid rgba(255, 255, 255, .5);
-            border-left: 1px solid rgba(255, 255, 255, .5);
-            box-shadow: 0 0 4px rgba(255, 255, 255, .5);
-        }
 
         #tag {
             width: 50px;
@@ -2914,28 +2897,22 @@
             padding: 5px 10px;
         }
 
-        .playTimer {
-            z-index: 2;
+        .stats-additional {
+            display: flex;
+            flex-direction: column;
             position: absolute;
-            top: 128px;
             left: 4px;
+            top: 156px;
+            z-index: 2;
             color: #8d8d8d;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
             user-select: none;
             pointer-events: none;
-        }
-
-        .mouseTracker {
-            z-index: 2;
-            position: absolute;
-            top: 144px;
-            left: 4px;
-            color: #8d8d8d;
-            font-size: 14px;
-            font-weight: 500;
-            user-select: none;
-            pointer-events: none;
+            line-height: 1;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: auto;
         }
 
         .modInput-wrapper {
@@ -3575,6 +3552,7 @@
         }
             `;
         },
+        playBtn: byId('play-btn'),
         respawnTime: Date.now(),
         respawnCooldown: 1000,
         get friends_settings() {
@@ -3597,8 +3575,11 @@
             const { fillRect, fillText, strokeText, arc, drawImage } =
                 CanvasRenderingContext2D.prototype;
 
-            const showPosition = byId('showPosition');
-            if (showPosition && !showPosition.checked) showPosition.click();
+            // add a small delay so it works properly
+            setTimeout(() => {
+                const showPosition = byId('showPosition');
+                if (showPosition && !showPosition.checked) showPosition.click();
+            }, 1000);
 
             const loadStorage = () => {
                 if (modSettings.virusImage) {
@@ -3736,15 +3717,9 @@
                 fillRect.apply(this, arguments);
             };
 
-            CanvasRenderingContext2D.prototype.arc = function (
-                x,
-                y,
-                radius,
-                startAngle,
-                endAngle,
-                anticlockwise
-            ) {
-                if (this.canvas.id !== 'canvas') return arc.apply(this, arguments);
+            CanvasRenderingContext2D.prototype.arc = function (x, y, radius) {
+                if (this.canvas.id !== 'canvas')
+                    return arc.apply(this, arguments);
 
                 if (radius >= 86 && modSettings.game.cellColor) {
                     this.fillStyle = modSettings.game.cellColor;
@@ -3759,12 +3734,27 @@
                 arc.apply(this, arguments);
             };
 
+            let sentDead = false;
+            window.sawScoreThisFrame = false;
+            window.checkPlaying = () => {
+                if (window.sawScoreThisFrame) {
+                    if (!window.gameSettings.isPlaying)
+                        window.gameSettings.isPlaying = true;
+                } else {
+                    if (window.gameSettings.isPlaying)
+                        window.gameSettings.isPlaying = false;
+                }
+                window.sawScoreThisFrame = false;
+                requestAnimationFrame(checkPlaying);
+            };
+
             CanvasRenderingContext2D.prototype.fillText = function (
                 text,
                 x,
                 y
             ) {
-                if (this.canvas.id !== 'canvas') return fillText.apply(this, arguments);
+                if (this.canvas.id !== 'canvas')
+                    return fillText.apply(this, arguments);
 
                 const currentFontSizeMatch = this.font.match(/^(\d+)px/);
                 const fontSize = currentFontSizeMatch
@@ -3806,57 +3796,63 @@
                 }
 
                 if (!window.sigifx && text.startsWith('Score')) {
-                    if (Date.now() - lastGetScore >= 250) {
-                        const score = parseInt(text.split(': ')[1]);
-
-                        mods.cellSize = score;
-
-                        mods.aboveRespawnLimit = score >= 5500;
-
-                        lastGetScore = Date.now();
-                    }
+                    const score = parseInt(text.split(': ')[1]);
+                    mods.cellSize = score;
+                    mods.aboveRespawnLimit = score >= 5500;
+                    window.sawScoreThisFrame = true;
                 }
 
                 if (!window.sigfix && text.startsWith('X:')) {
                     this.fillStyle = 'transparent';
 
-                    const [, xValue, yValue] =
-                    /X: (.*), Y: (.*)/.exec(text) || [];
-                    if (!xValue) return;
+                    const parts = text.split(', ');
+                    const x = parseFloat(parts[0].slice(3));
+                    const y = parseFloat(parts[1].slice(3));
+                    if (isNaN(x) || isNaN(y)) return;
 
-                    const position = {
-                        x: parseFloat(xValue),
-                        y: parseFloat(yValue),
-                    };
+                    if (window.gameSettings.isPlaying) {
+                        if (x === 0 && y === 0) return;
 
-                    if (menuClosed() && !isDead()) {
-                        if (position.x === 0 && position.y === 0) return;
+                        if (playerPosition.x !== x || playerPosition.y !== y) {
+                            playerPosition.x = x;
+                            playerPosition.y = y;
 
-                        playerPosition.x = position.x;
-                        playerPosition.y = position.y;
+                            if (Date.now() - lastPosTime >= 300) {
+                                if (
+                                    modSettings.settings.tag &&
+                                    client?.ws?.readyState === 1
+                                ) {
+                                    sentDead = false;
+                                    client.send({
+                                        type: 'position',
+                                        content: { x, y },
+                                    });
+                                }
+                                lastPosTime = Date.now();
+                            }
+                        }
+                    } else {
+                        if (
+                            playerPosition.x !== null ||
+                            playerPosition.y !== null
+                        ) {
+                            playerPosition.x = null;
+                            playerPosition.y = null;
 
-                        // send position every 300 milliseconds
-                        if (Date.now() - lastPosTime >= 300) {
-                            if (modSettings.settings.tag && client?.ws?.readyState === 1) {
+                            if (
+                                modSettings.settings.tag &&
+                                client?.ws?.readyState === 1 &&
+                                !sentDead
+                            ) {
+                                sentDead = true;
                                 client.send({
                                     type: 'position',
                                     content: {
-                                        x: playerPosition.x,
-                                        y: playerPosition.y,
+                                        x: null,
+                                        y: null,
                                     },
                                 });
                             }
-                            lastPosTime = Date.now();
-                        }
-                    } else if (isDead() && !dead2) {
-                        dead2 = true;
-                        playerPosition.x = null;
-                        playerPosition.y = null;
-                        if (modSettings.settings.tag && client?.ws?.readyState === 1) {
-                            client.send({
-                                type: 'position',
-                                content: { x: null, y: null },
-                            });
                         }
                     }
                 }
@@ -3889,7 +3885,8 @@
                 x,
                 y
             ) {
-                if (this.canvas.id !== 'canvas') return strokeText.apply(this, arguments);
+                if (this.canvas.id !== 'canvas')
+                    return strokeText.apply(this, arguments);
 
                 const currentFontSizeMatch = this.font.match(/^(\d+)px/);
                 const fontSize = currentFontSizeMatch
@@ -4025,13 +4022,13 @@
             };
 
             function createModal({
-                                     title,
-                                     applyId,
-                                     resetId,
-                                     previewId,
-                                     modalId,
-                                     additional,
-                                 }) {
+                title,
+                applyId,
+                resetId,
+                previewId,
+                modalId,
+                additional,
+            }) {
                 const additionalContent = additional
                     ? `
 					<span>Select a skin that should be replaced:</span>
@@ -4115,17 +4112,17 @@
                             mods.skins.length > 0
                                 ? mods.skins
                                 : await fetch(
-                                    'https://one.sigmally.com/api/skins'
-                                )
-                                    .then((response) => response.json())
-                                    .then((data) => {
-                                        const skinNames = data.data.map(
-                                            (item) =>
-                                                item.name.replace('.png', '')
-                                        );
-                                        mods.skins = skinNames;
-                                        return skinNames;
-                                    });
+                                      'https://one.sigmally.com/api/skins'
+                                  )
+                                      .then((response) => response.json())
+                                      .then((data) => {
+                                          const skinNames = data.data.map(
+                                              (item) =>
+                                                  item.name.replace('.png', '')
+                                          );
+                                          mods.skins = skinNames;
+                                          return skinNames;
+                                      });
 
                         skinList.innerHTML = skins
                             .map(
@@ -4289,7 +4286,8 @@
                 updateStorage();
             });
 
-            const defaultPosition = modSettings.deathScreenPos || 'center';
+            const defaultPosition =
+                modSettings.settings.deathScreenPos || 'center';
 
             applyMargin(defaultPosition);
             deathScreenPos.value = defaultPosition;
@@ -4354,7 +4352,7 @@
                 client.send({
                     type: 'user',
                     content: { ...user, nick: mods.nick },
-                })
+                });
             });
 
             const claim = document.getElementById('free-chest-button');
@@ -4421,8 +4419,8 @@
                         <div class="mod_menu_content">
                             <div class="mod_tab" id="mod_home">
                                 <span class="text-center f-big" id="welcomeUser">Welcome ${
-                this.nick || 'Guest'
-            }, to the SigMod Client!</span>
+                                    this.nick || 'Guest'
+                                }, to the SigMod Client!</span>
                                 <div class="home-card-row">
 									<!-- CARD.1 -->
 									<div class="home-card-wrapper">
@@ -4474,72 +4472,72 @@
                                                     <div class="f-column g-10">
                                                         <label class="macroRow">
                                                           <span class="text">Rapid Feed</span>
-                                                          <input type="text" name="rapidFeed" id="modinput1" class="keybinding" value="${
-                modSettings.macros
-                    .keys
-                    .rapidFeed ||
-                ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="rapidFeed" data-label="Rapid Feed" id="modinput1" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys
+                                                                  .rapidFeed ||
+                                                              ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Double Split</span>
-                                                          <input type="text" name="splits.double" id="modinput2" class="keybinding" value="${
-                modSettings.macros
-                    .keys.splits
-                    .double || ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="splits.double" data-label="Double split" id="modinput2" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys.splits
+                                                                  .double || ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Triple Split</span>
-                                                          <input type="text" name="splits.triple" id="modinput3" class="keybinding" value="${
-                modSettings.macros
-                    .keys.splits
-                    .triple || ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="splits.triple" data-label="Triple split" id="modinput3" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys.splits
+                                                                  .triple || ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Respawn</span>
-                                                          <input type="text" name="respawn" id="modinput15" class="keybinding" value="${
-                modSettings.macros
-                    .keys
-                    .respawn || ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="respawn" data-label="Respawn" id="modinput15" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys
+                                                                  .respawn || ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                     </div>
                                                     <div class="f-column g-10">
                                                         <label class="macroRow">
                                                           <span class="text">Quad Split</span>
-                                                          <input type="text" name="splits.quad" id="modinput4" class="keybinding" value="${
-                modSettings.macros
-                    .keys.splits
-                    .quad || ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="splits.quad" data-label="Quad split" id="modinput4" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys.splits
+                                                                  .quad || ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Horizontal Line</span>
-                                                          <input type="text" name="line.horizontal" id="modinput5" class="keybinding" value="${
-                modSettings.macros
-                    .keys.line
-                    .horizontal ||
-                ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="line.horizontal" data-label="Horizontal line" id="modinput5" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys.line
+                                                                  .horizontal ||
+                                                              ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Vertical Line</span>
-                                                          <input type="text" name="line.vertical" id="modinput7" class="keybinding" value="${
-                modSettings.macros
-                    .keys.line
-                    .vertical ||
-                ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="line.vertical" data-label="Vertical line" id="modinput7" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys.line
+                                                                  .vertical ||
+                                                              ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                         <label class="macroRow">
                                                           <span class="text">Fixed Line</span>
-                                                          <input type="text" name="line.fixed" id="modinput16" class="keybinding" value="${
-                modSettings.macros
-                    .keys.line
-                    .fixed || ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                          <input type="text" name="line.fixed" data-label="Fixed line" id="modinput16" class="keybinding" value="${
+                                                              modSettings.macros
+                                                                  .keys.line
+                                                                  .fixed || ''
+                                                          }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                         </label>
                                                     </div>
                                                 </div>
@@ -4609,10 +4607,10 @@
                                                     <span>Speed</span>
 													<div class="justify-sb g-5" style="width: 200px;">
 														<span class="mod_badge" id="macroSpeedText">${
-                modSettings.macros
-                    .feedSpeed ||
-                '50'
-            }ms</span>
+                                                            modSettings.macros
+                                                                .feedSpeed ||
+                                                            '50'
+                                                        }ms</span>
 														<input
 															type="range"
 															class="modSlider"
@@ -4666,35 +4664,35 @@
 
                                                 <div class="stats-line justify-sb">
                                                     <span>Toggle Menu</span>
-                                                    <input type="text" name="toggle.menu" id="modinput6" class="keybinding" value="${
-                modSettings.macros.keys
-                    .toggle.menu || ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                    <input type="text" name="toggle.menu" data-label="Toggle menu" id="modinput6" class="keybinding" value="${
+                                                        modSettings.macros.keys
+                                                            .toggle.menu || ''
+                                                    }" maxlength="1" onfocus="this.select()" placeholder="..." />
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
                                                     <span>Toggle Names</span>
                                                     <input value="${
-                modSettings.macros.keys
-                    .toggle.names || ''
-            }" placeholder="..." readonly id="modinput10" name="toggle.names" class="keybinding" onfocus="this.select();">
+                                                        modSettings.macros.keys
+                                                            .toggle.names || ''
+                                                    }" placeholder="..." readonly id="modinput10" name="toggle.names" data-label="Toggle names" class="keybinding" onfocus="this.select();">
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
                                                     <span>Toggle Skins</span>
                                                     <input value="${
-                modSettings.macros.keys
-                    .toggle.skins || ''
-            }" placeholder="..." readonly id="modinput11" name="toggle.skins" class="keybinding" onfocus="this.select();">
+                                                        modSettings.macros.keys
+                                                            .toggle.skins || ''
+                                                    }" placeholder="..." readonly id="modinput11" name="toggle.skins" data-label="Toggle skins" class="keybinding" onfocus="this.select();">
                                                 </div>
 
                                                 <div class="stats-line justify-sb">
                                                 <span>Toggle Autorespawn</span>
                                                     <input value="${
-                modSettings.macros.keys
-                    .toggle
-                    .autoRespawn || ''
-            }" placeholder="..." readonly id="modinput12" name="toggle.autoRespawn" class="keybinding" onfocus="this.select();">
+                                                        modSettings.macros.keys
+                                                            .toggle
+                                                            .autoRespawn || ''
+                                                    }" placeholder="..." readonly id="modinput12" name="toggle.autoRespawn" data-label="Toggle Auto respawn" class="keybinding" onfocus="this.select();">
                                                 </div>
                                             </div>
                                         </div>
@@ -4711,18 +4709,18 @@
                                                 <div class="stats-line justify-sb">
                                                     <span>Double Trick</span>
                                                     <input value="${
-                modSettings.macros.keys
-                    .splits
-                    .doubleTrick || ''
-            }" placeholder="..." readonly id="modinput13" name="splits.doubleTrick" class="keybinding" onfocus="this.select();">
+                                                        modSettings.macros.keys
+                                                            .splits
+                                                            .doubleTrick || ''
+                                                    }" placeholder="..." readonly id="modinput13" name="splits.doubleTrick" data-label="Double tricksplit" class="keybinding" onfocus="this.select();">
                                                 </div>
                                                 <div class="stats-line justify-sb">
                                                     <span>Self Trick</span>
                                                     <input value="${
-                modSettings.macros.keys
-                    .splits.selfTrick ||
-                ''
-            }" placeholder="..." readonly id="modinput14" name="splits.selfTrick" class="keybinding" onfocus="this.select();">
+                                                        modSettings.macros.keys
+                                                            .splits.selfTrick ||
+                                                        ''
+                                                    }" placeholder="..." readonly id="modinput14" name="splits.selfTrick" data-label="Self tricksplit" class="keybinding" onfocus="this.select();">
                                                 </div>
                                             </div>
                                         </div>
@@ -4777,14 +4775,14 @@
 											<span class="text">Names</span>
 											<div class="modCheckbox">
 											  <input id="mod-showNames" type="checkbox" ${
-                JSON.parse(
-                    localStorage.getItem(
-                        'settings'
-                    )
-                )?.showNames
-                    ? 'checked'
-                    : ''
-            } />
+                                                  JSON.parse(
+                                                      localStorage.getItem(
+                                                          'settings'
+                                                      )
+                                                  )?.showNames
+                                                      ? 'checked'
+                                                      : ''
+                                              } />
 											  <label class="cbx" for="mod-showNames"></label>
 											</div>
 										</div>
@@ -4792,14 +4790,14 @@
 											<span class="text">Skins</span>
 											<div class="modCheckbox">
 											  <input id="mod-showSkins" type="checkbox" ${
-                JSON.parse(
-                    localStorage.getItem(
-                        'settings'
-                    )
-                )?.showSkins
-                    ? 'checked'
-                    : ''
-            } />
+                                                  JSON.parse(
+                                                      localStorage.getItem(
+                                                          'settings'
+                                                      )
+                                                  )?.showSkins
+                                                      ? 'checked'
+                                                      : ''
+                                              } />
 											  <label class="cbx" for="mod-showSkins"></label>
 											</div>
 										</div>
@@ -4807,9 +4805,9 @@
 											<span title="Long nicknames will be shorten on the leaderboard & ingame">Shorten names</span>
 											<div class="modCheckbox">
 											  <input id="shortenNames" type="checkbox" ${
-                modSettings.game
-                    .shortenNames && 'checked'
-            } />
+                                                  modSettings.game
+                                                      .shortenNames && 'checked'
+                                              } />
 											  <label class="cbx" for="shortenNames"></label>
 											</div>
 										</div>
@@ -4817,9 +4815,9 @@
 											<span>Text outlines & shadows</span>
 											<div class="modCheckbox">
 											  <input id="removeOutlines" type="checkbox" ${
-                modSettings.gameShortenNames &&
-                'checked'
-            } />
+                                                  modSettings.gameShortenNames &&
+                                                  'checked'
+                                              } />
 											  <label class="cbx" for="removeOutlines"></label>
 											</div>
 										</div>
@@ -4837,9 +4835,9 @@
 											<span class="text">Play timer</span>
 											<div class="modCheckbox">
 											  <input type="checkbox" id="playTimerToggle" ${
-                modSettings.settings
-                    .playTimer && 'checked'
-            } />
+                                                  modSettings.settings
+                                                      .playTimer && 'checked'
+                                              } />
 											  <label class="cbx" for="playTimerToggle"></label>
 											</div>
 										</div>
@@ -4847,9 +4845,9 @@
 											<span class="text">Mouse tracker</span>
 											<div class="modCheckbox">
 											  <input type="checkbox" id="mouseTrackerToggle" ${
-                modSettings.settings
-                    .mouseTracker && 'checked'
-            } />
+                                                  modSettings.settings
+                                                      .mouseTracker && 'checked'
+                                              } />
 											  <label class="cbx" for="mouseTrackerToggle"></label>
 											</div>
 										</div>
@@ -4975,10 +4973,10 @@
 								<div class="modColItems_2">
 									<label class="macroRow w-100">
 									  <span class="text">Keybind to save image</span>
-									  <input type="text" name="saveImage" id="modinput17" class="keybinding" value="${
-                modSettings.macros.keys.saveImage ||
-                ''
-            }" maxlength="1" onfocus="this.select()" placeholder="..." />
+									  <input type="text" name="saveImage" data-label="Save image" id="modinput17" class="keybinding" value="${
+                                          modSettings.macros.keys.saveImage ||
+                                          ''
+                                      }" maxlength="1" onfocus="this.select()" placeholder="..." />
 									</label>
 								</div>
 								<div class="modColItems_2">
@@ -5236,13 +5234,13 @@
 
             const playTimerToggle = byId('playTimerToggle');
             playTimerToggle.addEventListener('change', () => {
-                modSettings.playTimer = playTimerToggle.checked;
+                modSettings.settings.playTimer = playTimerToggle.checked;
                 updateStorage();
             });
 
             const mouseTrackerToggle = byId('mouseTrackerToggle');
             mouseTrackerToggle.addEventListener('change', () => {
-                modSettings.mouseTracker = mouseTrackerToggle.checked;
+                modSettings.settings.mouseTracker = mouseTrackerToggle.checked;
                 updateStorage();
             });
 
@@ -5423,11 +5421,11 @@
             badges.innerHTML =
                 user.badges && user.badges.length > 0
                     ? user.badges
-                        .map(
-                            (badge) =>
-                                `<span class="mod_badge">${badge}</span>`
-                        )
-                        .join('')
+                          .map(
+                              (badge) =>
+                                  `<span class="mod_badge">${badge}</span>`
+                          )
+                          .join('')
                     : '<span>User has no badges.</span>';
 
             role.classList.add(`${user.role}_role`);
@@ -5478,7 +5476,7 @@
             });
         },
 
-        themes() {
+        themes: function() {
             const elements = [
                 '#menu',
                 '#title',
@@ -5620,7 +5618,7 @@
                 const imageTab = byId('theme_editor_image');
                 const gradientAngleDiv = byId('theme-editor-gradient_angle');
 
-                themeTypeSelect.addEventListener('change', function () {
+                themeTypeSelect.addEventListener('change', function() {
                     const selectedOption = themeTypeSelect.value;
                     switch (selectedOption) {
                         case 'Static Color':
@@ -5646,15 +5644,15 @@
                 });
 
                 const colorInputs = document.querySelectorAll(
-                    '#theme_editor_color .colorInput'
+                    '#theme_editor_color .colorInput',
                 );
                 colorInputs.forEach((input) => {
-                    input.addEventListener('input', function () {
+                    input.addEventListener('input', function() {
                         const bgColorInput = byId(
-                            'theme-editor-bgcolorinput'
+                            'theme-editor-bgcolorinput',
                         ).value;
                         const textColorInput = byId(
-                            'theme-editor-colorinput'
+                            'theme-editor-colorinput',
                         ).value;
 
                         applyColorTheme(bgColorInput, textColorInput);
@@ -5662,10 +5660,10 @@
                 });
 
                 const gradientInputs = document.querySelectorAll(
-                    '#theme_editor_gradient .colorInput'
+                    '#theme_editor_gradient .colorInput',
                 );
                 gradientInputs.forEach((input) => {
-                    input.addEventListener('input', function () {
+                    input.addEventListener('input', function() {
                         const gColor1 = byId('theme-editor-gcolor1').value;
                         const gColor2 = byId('theme-editor-g_color').value;
                         const gTextColor = byId('theme-editor-gcolor2').value;
@@ -5677,21 +5675,21 @@
                             gColor2,
                             gTextColor,
                             gAngle,
-                            gradientType
+                            gradientType,
                         );
                     });
                 });
 
                 const imageInputs = document.querySelectorAll(
-                    '#theme_editor_image .colorInput'
+                    '#theme_editor_image .colorInput',
                 );
                 imageInputs.forEach((input) => {
-                    input.addEventListener('input', function () {
+                    input.addEventListener('input', function() {
                         const imageLinkInput = byId(
-                            'theme-editor-imagelink'
+                            'theme-editor-imagelink',
                         ).value;
                         const textColorImageInput = byId(
-                            'theme-editor-textcolorImage'
+                            'theme-editor-textcolorImage',
                         ).value;
 
                         let img;
@@ -5719,7 +5717,7 @@
                     timeoutId = setTimeout(() => {
                         const imageLinkInput = image_link.value;
                         const textColorImageInput = byId(
-                            'theme-editor-textcolorImage'
+                            'theme-editor-textcolorImage',
                         ).value;
 
                         let img;
@@ -5737,7 +5735,7 @@
                 const gradientTypeSelect = byId('gradient-type');
                 const angleInput = byId('g_angle');
 
-                gradientTypeSelect.addEventListener('change', function () {
+                gradientTypeSelect.addEventListener('change', function() {
                     const selectedType = gradientTypeSelect.value;
                     gradientAngleDiv.style.display =
                         selectedType === 'linear' ? 'flex' : 'none';
@@ -5752,11 +5750,11 @@
                         gColor2,
                         gTextColor,
                         gAngle,
-                        selectedType
+                        selectedType,
                     );
                 });
 
-                angleInput.addEventListener('input', function () {
+                angleInput.addEventListener('input', function() {
                     const gradient_angle_text = byId('gradient_angle_text');
                     gradient_angle_text.innerText = `Angle (${angleInput.value}deg): `;
                     const gColor1 = byId('theme-editor-gcolor1').value;
@@ -5770,13 +5768,13 @@
                         gColor2,
                         gTextColor,
                         gAngle,
-                        gradientType
+                        gradientType,
                     );
                 });
 
                 function applyColorTheme(bgColor, textColor) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_color .themes_preview'
+                        '#theme_editor_color .themes_preview',
                     );
                     previewDivs.forEach((previewDiv) => {
                         previewDiv.style.backgroundColor = bgColor;
@@ -5790,10 +5788,10 @@
                     gColor2,
                     gTextColor,
                     gAngle,
-                    gradientType
+                    gradientType,
                 ) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_gradient .themes_preview'
+                        '#theme_editor_gradient .themes_preview',
                     );
                     previewDivs.forEach((previewDiv) => {
                         const gradient =
@@ -5808,7 +5806,7 @@
 
                 function applyImageTheme(imageLink, textColor) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_image .themes_preview'
+                        '#theme_editor_image .themes_preview',
                     );
                     previewDivs.forEach((previewDiv) => {
                         previewDiv.style.backgroundImage = `url('${imageLink}')`;
@@ -5843,9 +5841,10 @@
                         text = byId('theme-editor-gcolor2').value;
                         const gAngle = byId('g_angle').value;
                         const gradientType = byId('gradient-type').value;
-                        background = gradientType === 'linear'
-                            ? `linear-gradient(${gAngle}deg, ${gColor1}, ${gColor2})`
-                            : `radial-gradient(circle, ${gColor1}, ${gColor2})`;
+                        background =
+                            gradientType === 'linear'
+                                ? `linear-gradient(${gAngle}deg, ${gColor1}, ${gColor2})`
+                                : `radial-gradient(circle, ${gColor1}, ${gColor2})`;
                     } else if (type === 'image') {
                         background = byId('theme-editor-imagelink').value;
                         text = byId('theme-editor-textcolorImage').value;
@@ -5856,16 +5855,24 @@
                     const themeCard = document.createElement('div');
                     themeCard.classList.add('theme');
                     themeCard.innerHTML = `
-                        <div class="themeContent" style="background: ${background.includes('http') ? `url(${theme.preview || background})` : background}; background-size: cover; background-position: center"></div>
+                        <div class="themeContent" style="background: ${
+                        background.includes('http')
+                            ? `url(${theme.preview || background})`
+                            : background
+                    }; background-size: cover; background-position: center"></div>
                         <div class="themeName text" style="color: #fff">${name}</div>
                     `;
 
-                    themeCard.addEventListener('click', () => toggleTheme(theme));
+                    themeCard.addEventListener('click', () =>
+                        toggleTheme(theme),
+                    );
                     themeCard.addEventListener('contextmenu', (ev) => {
                         ev.preventDefault();
                         if (confirm('Do you want to delete this Theme?')) {
                             themeCard.remove();
-                            const index = modSettings.themes.custom.findIndex(t => t.name === name);
+                            const index = modSettings.themes.custom.findIndex(
+                                (t) => t.name === name,
+                            );
                             if (index !== -1) {
                                 modSettings.themes.custom.splice(index, 1);
                                 updateStorage();
@@ -5880,14 +5887,20 @@
                     themesDiv.scrollTop = themesDiv.scrollHeight;
                 };
 
-                byId('saveColorTheme').addEventListener('click', () => saveTheme('color'));
-                byId('saveGradientTheme').addEventListener('click', () => saveTheme('gradient'));
-                byId('saveImageTheme').addEventListener('click', () => saveTheme('image'));
+                byId('saveColorTheme').addEventListener('click', () =>
+                    saveTheme('color'),
+                );
+                byId('saveGradientTheme').addEventListener('click', () =>
+                    saveTheme('gradient'),
+                );
+                byId('saveImageTheme').addEventListener('click', () =>
+                    saveTheme('image'),
+                );
             });
 
             const b_inner = document.querySelector('.body__inner');
             let bodyColorElements = b_inner.querySelectorAll(
-                '.body__inner > :not(.body__inner), #s-skin-select-icon-text'
+                '.body__inner > :not(.body__inner), #s-skin-select-icon-text',
             );
 
             const toggleColor = (element, background, text) => {
@@ -5905,7 +5918,7 @@
             };
 
             const openSVG = document.querySelector(
-                '#clans_and_settings > Button:nth-of-type(2) > svg'
+                '#clans_and_settings > Button:nth-of-type(2) > svg',
             );
             const openSVGPath = openSVG.querySelector('path');
             openSVG.setAttribute('width', '36');
@@ -5945,7 +5958,7 @@
                                     el.style.setProperty(
                                         'color',
                                         theme.text,
-                                        'important'
+                                        'important',
                                     );
                                     appliedElements.add(el);
                                     allApplied = false;
@@ -5977,7 +5990,7 @@
 
                         openSVGPath.setAttribute(
                             'fill',
-                            isBright(theme.text) ? theme.text : '#222'
+                            isBright(theme.text) ? theme.text : '#222',
                         );
 
                         modSettings.themes.current = theme.name;
@@ -6168,18 +6181,18 @@
                                 const themeIndex =
                                     modSettings.themes.custom.findIndex(
                                         (addedTheme) =>
-                                            addedTheme.name === theme.name
+                                            addedTheme.name === theme.name,
                                     );
                                 if (themeIndex !== -1) {
                                     modSettings.themes.custom.splice(
                                         themeIndex,
-                                        1
+                                        1,
                                     );
                                     updateStorage();
                                 }
                             }
                         },
-                        false
+                        false,
                     );
                 }
 
@@ -6207,15 +6220,15 @@
             if (savedTheme) {
                 let selectedTheme;
                 selectedTheme = themes.defaults.find(
-                    (theme) => theme.name === savedTheme
+                    (theme) => theme.name === savedTheme,
                 );
                 if (!selectedTheme) {
                     selectedTheme =
                         themes.orderly.find(
-                            (theme) => theme.name === savedTheme
+                            (theme) => theme.name === savedTheme,
                         ) ||
                         modSettings.themes.custom.find(
-                            (theme) => theme.name === savedTheme
+                            (theme) => theme.name === savedTheme,
                         );
                 }
 
@@ -6252,19 +6265,19 @@
                 'inputBorderRadius',
                 `${inputBorderRadius.value}px`,
                 ['.form-control'],
-                'borderRadius'
+                'borderRadius',
             );
             setCSS(
                 'menuBorderRadius',
                 `${menuBorderRadius.value}px`,
                 [...elements, '.text-block'],
-                'borderRadius'
+                'borderRadius',
             );
             setCSS(
                 'inputBorder',
                 inputBorder.checked ? '1px' : '0px',
                 ['.form-control'],
-                'borderWidth'
+                'borderWidth',
             );
 
             inputBorderRadius.addEventListener('input', () =>
@@ -6272,28 +6285,30 @@
                     'inputBorderRadius',
                     `${inputBorderRadius.value}px`,
                     ['.form-control'],
-                    'borderRadius'
-                )
+                    'borderRadius',
+                ),
             );
             menuBorderRadius.addEventListener('input', () =>
                 setCSS(
                     'menuBorderRadius',
                     `${menuBorderRadius.value}px`,
                     [...elements, '.text-block'],
-                    'borderRadius'
-                )
+                    'borderRadius',
+                ),
             );
             inputBorder.addEventListener('input', () =>
                 setCSS(
                     'inputBorder',
                     inputBorder.checked ? '1px' : '0px',
                     ['.form-control'],
-                    'borderWidth'
-                )
+                    'borderWidth',
+                ),
             );
 
-            const reset_input_radius = document.getElementById('reset_input_radius');
-            const reset_menu_radius = document.getElementById('reset_menu_radius');
+            const reset_input_radius =
+                document.getElementById('reset_input_radius');
+            const reset_menu_radius =
+                document.getElementById('reset_menu_radius');
 
             reset_input_radius.addEventListener('click', () => {
                 const defaultBorderRadius = 4;
@@ -6302,8 +6317,8 @@
                     'inputBorderRadius',
                     `${defaultBorderRadius}px`,
                     ['.form-control'],
-                    'borderRadius'
-                )
+                    'borderRadius',
+                );
             });
 
             reset_menu_radius.addEventListener('click', () => {
@@ -6313,10 +6328,9 @@
                     'menuBorderRadius',
                     `${defaultBorderRadius}px`,
                     [...elements, '.text-block'],
-                    'borderRadius'
-                )
+                    'borderRadius',
+                );
             });
-
 
             const hideDiscordBtns = document.getElementById('hideDiscordBtns');
             const dclinkdiv = document.getElementById('dclinkdiv');
@@ -6337,7 +6351,6 @@
                 hideDiscordBtns.checked = true;
             }
 
-
             const hideLangs = document.getElementById('hideLangs');
             const langsDiv = document.querySelector('.ch-lang');
 
@@ -6356,7 +6369,6 @@
                 langsDiv.classList.add('hidden_full');
                 hideLangs.checked = true;
             }
-
 
             const popup = byId('shop-popup');
             const removeShopPopup = byId('removeShopPopup');
@@ -6396,7 +6408,13 @@
                     </div>
                     <div id="mod-messages" class="scroll"></div>
                     <div id="chatInputContainer">
-                        <input type="text" id="chatSendInput" class="chatInput" placeholder="${this.isAuthenticated() ? 'message...' : 'Login to use the chat'}" maxlength="250" minlength="1" ${this.isAuthenticated() ? '' : 'disabled'} />
+                        <input type="text" id="chatSendInput" class="chatInput" placeholder="${
+                            this.isAuthenticated()
+                                ? 'message...'
+                                : 'Login to use the chat'
+                        }" maxlength="250" minlength="1" ${
+                this.isAuthenticated() ? '' : 'disabled'
+            } />
                         <button class="chatButton" id="openChatSettings">
                             <svg width="15" height="15" viewBox="0 0 20 20" fill="#fff" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M17.4249 7.45169C15.7658 7.45169 15.0874 6.27836 15.9124 4.83919C16.3891 4.00503 16.1049 2.94169 15.2708 2.46503L13.6849 1.55753C12.9608 1.12669 12.0258 1.38336 11.5949 2.10753L11.4941 2.28169C10.6691 3.72086 9.31242 3.72086 8.47825 2.28169L8.37742 2.10753C7.96492 1.38336 7.02992 1.12669 6.30575 1.55753L4.71992 2.46503C3.88575 2.94169 3.60158 4.01419 4.07825 4.84836C4.91242 6.27836 4.23408 7.45169 2.57492 7.45169C1.62159 7.45169 0.833252 8.23086 0.833252 9.19336V10.8067C0.833252 11.76 1.61242 12.5484 2.57492 12.5484C4.23408 12.5484 4.91242 13.7217 4.07825 15.1609C3.60158 15.995 3.88575 17.0584 4.71992 17.535L6.30575 18.4425C7.02992 18.8734 7.96492 18.6167 8.39575 17.8925L8.49658 17.7184C9.32158 16.2792 10.6783 16.2792 11.5124 17.7184L11.6133 17.8925C12.0441 18.6167 12.9791 18.8734 13.7033 18.4425L15.2891 17.535C16.1233 17.0584 16.4074 15.9859 15.9307 15.1609C15.0966 13.7217 15.7749 12.5484 17.4341 12.5484C18.3874 12.5484 19.1758 11.7692 19.1758 10.8067V9.19336C19.1666 8.24003 18.3874 7.45169 17.4249 7.45169ZM9.99992 12.9792C8.35908 12.9792 7.02075 11.6409 7.02075 10C7.02075 8.35919 8.35908 7.02086 9.99992 7.02086C11.6408 7.02086 12.9791 8.35919 12.9791 10C12.9791 11.6409 11.6408 12.9792 9.99992 12.9792Z" fill="#fff"></path>
@@ -6424,7 +6442,7 @@
                 }
                 if (
                     chatContainer.scrollHeight - chatContainer.scrollTop <
-                    299 &&
+                        299 &&
                     scrollDownButton.style.display === 'block'
                 ) {
                     scrollDownButton.style.display = 'none';
@@ -6439,7 +6457,8 @@
             const party = byId('partychat');
             main.addEventListener('click', () => {
                 if (!window.gameSettings.user) {
-                    const chatSendInput = document.querySelector('#chatSendInput');
+                    const chatSendInput =
+                        document.querySelector('#chatSendInput');
                     if (!chatSendInput) return;
 
                     chatSendInput.placeholder = 'Login to use the chat';
@@ -6658,8 +6677,12 @@
 
         spamMessage(name, message) {
             return (
-                this.blockedChatData.names.some(n => name.toLowerCase().includes(n.toLowerCase())) ||
-                this.blockedChatData.messages.some(m => message.toLowerCase().includes(m.toLowerCase()))
+                this.blockedChatData.names.some((n) =>
+                    name.toLowerCase().includes(n.toLowerCase())
+                ) ||
+                this.blockedChatData.messages.some((m) =>
+                    message.toLowerCase().includes(m.toLowerCase())
+                )
             );
         },
 
@@ -6764,7 +6787,7 @@
 
             const msgNames = document.querySelectorAll('.message_name');
             msgNames.forEach((msgName) => {
-                if (msgName.innerHTML == name) {
+                if (msgName.innerHTML === name) {
                     const msgParent = msgName.closest('.message');
                     msgParent.remove();
                 }
@@ -6772,11 +6795,9 @@
         },
 
         async getGoogleFonts() {
-            const fontFamilies = await (
+            return await (
                 await fetch(this.appRoutes.fonts)
             ).json();
-
-            return fontFamilies;
         },
 
         async getEmojis() {
@@ -6893,17 +6914,17 @@
                                     <svg fill="#ffffff" id="Capa_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.979 416.979" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M356.004,61.156c-81.37-81.47-213.377-81.551-294.848-0.182c-81.47,81.371-81.552,213.379-0.181,294.85 c81.369,81.47,213.378,81.551,294.849,0.181C437.293,274.636,437.375,142.626,356.004,61.156z M237.6,340.786 c0,3.217-2.607,5.822-5.822,5.822h-46.576c-3.215,0-5.822-2.605-5.822-5.822V167.885c0-3.217,2.607-5.822,5.822-5.822h46.576 c3.215,0,5.822,2.604,5.822,5.822V340.786z M208.49,137.901c-18.618,0-33.766-15.146-33.766-33.765 c0-18.617,15.147-33.766,33.766-33.766c18.619,0,33.766,15.148,33.766,33.766C242.256,122.755,227.107,137.901,208.49,137.901z"></path> </g> </g></svg>
                                 </span>
                             </div>
-                            <input type="text" name="location" id="modinput8" class="keybinding" value="${
-                modSettings.macros.keys.location || ''
-            }" placeholder="..." maxlength="1" onfocus="this.select()">
+                            <input type="text" name="location" data-label="Send location" id="modinput8" class="keybinding" value="${
+                                modSettings.macros.keys.location || ''
+                            }" placeholder="..." maxlength="1" onfocus="this.select()">
                         </div>
                         <div class="csRow">
                             <div class="csRowName">
                                 <span>Show / Hide</span>
                             </div>
-                            <input type="text" name="toggle.chat" id="modinput9" class="keybinding" value="${
-                modSettings.macros.keys.toggle.chat || ''
-            }" placeholder="..." maxlength="1" onfocus="this.select()">
+                            <input type="text" name="toggle.chat" data-label="Toggle chat" id="modinput9" class="keybinding" value="${
+                                modSettings.macros.keys.toggle.chat || ''
+                            }" placeholder="..." maxlength="1" onfocus="this.select()">
                         </div>
                     </div>
                     <div class="csBlock">
@@ -6963,8 +6984,8 @@
                             </div>
                             <div class="modCheckbox">
                               <input id="compactChat" type="checkbox" ${
-                modSettings.chat.compact ? 'checked' : ''
-            } />
+                                  modSettings.chat.compact ? 'checked' : ''
+                              } />
                               <label class="cbx" for="compactChat"></label>
                             </div>
                         </div>
@@ -7081,9 +7102,9 @@
 
                     state
                         ? (tagText.classList.add('blur'),
-                            tagElement.classList.add('blur'))
+                          tagElement.classList.add('blur'))
                         : (tagText.classList.remove('blur'),
-                            tagElement.classList.remove('blur'));
+                          tagElement.classList.remove('blur'));
                     modSettings.chat.blurTag = state;
                     updateStorage();
                 });
@@ -7132,6 +7153,31 @@
         },
 
         smallMods() {
+            // fix auth for tournament page
+            if (location.pathname.includes('tournament')) {
+                const tempDiv = Object.assign(document.createElement('div'), {
+                    className: 'top-winners__list',
+                });
+                const tempDiv2 = Object.assign(document.createElement('div'), {
+                    className: 'top-users__list',
+                });
+                document.body.append(tempDiv, tempDiv2);
+
+                const observer = new MutationObserver(() => {
+                    if (
+                        tempDiv.children.length === 10 &&
+                        tempDiv2.textContent.length > 0
+                    ) {
+                        tempDiv.remove();
+                        tempDiv2.remove();
+
+                        observer.disconnect();
+                    }
+                });
+
+                observer.observe(tempDiv, { childList: true });
+            }
+
             const modAlert_overlay = document.createElement('div');
             modAlert_overlay.classList.add('alert_overlay');
             modAlert_overlay.id = 'modAlert_overlay';
@@ -7160,14 +7206,14 @@
             const showChallenges = byId('showChallenges');
             showChallenges.addEventListener('change', () => {
                 if (showChallenges.checked) {
-                    modSettings.showChallenges = true;
+                    modSettings.settings.showChallenges = true;
                 } else {
-                    modSettings.showChallenges = false;
+                    modSettings.settings.showChallenges = false;
                 }
                 updateStorage();
             });
-            if (modSettings.showChallenges) {
-                auto.checked = true;
+            if (modSettings.settings.showChallenges) {
+                showChallenges.checked = true;
             }
 
             const gameTitle = byId('title');
@@ -7226,8 +7272,6 @@
                     content: getGameMode(),
                 });
 
-                window.gameSettings.isPlaying = false;
-
                 const modMessages = document.querySelector('#mod-messages');
                 if (modMessages) {
                     modMessages.innerHTML = '';
@@ -7268,8 +7312,7 @@
 
                 if (window.sigfix) return;
 
-                const playBtn = byId('play-btn');
-                playBtn.addEventListener('click', (e) => {
+                this.playBtn.addEventListener('click', (e) => {
                     const waitForConnection = () =>
                         new Promise((res) => {
                             if (client?.ws?.readyState === 1) return res(null);
@@ -7324,11 +7367,18 @@
         handleAlert(data) {
             const { title, description, enabled, password } = data;
 
-            if (location.pathname.includes('tournament') || client.updateAvailable) return;
+            if (
+                location.pathname.includes('tournament') ||
+                client.updateAvailable
+            )
+                return;
 
             const hideAlert = Number(localStorage.getItem('hide-alert'));
             // Don't show alert if it has been closed the past 3 hours
-            if (!enabled || (hideAlert && (Date.now() - hideAlert < 3 * 60 * 60 * 1000))) {
+            if (
+                !enabled ||
+                (hideAlert && Date.now() - hideAlert < 3 * 60 * 60 * 1000)
+            ) {
                 byId('scrim_alert')?.remove();
                 return;
             }
@@ -7405,8 +7455,8 @@
                     if (
                         confirm(
                             "Are you sure you want to delete the name '" +
-                            nameLabel.innerText +
-                            "'?"
+                                nameLabel.innerText +
+                                "'?"
                         )
                     ) {
                         nameDiv.remove();
@@ -7480,8 +7530,6 @@
                 const value = this.storage[stat];
                 this.updateStatElm(rawStat, value);
             });
-
-            this.session.bind(this)();
         },
 
         updateStat(key, value) {
@@ -7513,114 +7561,275 @@
             }
         },
 
-        session() {
+        setupSession() {
+            let sigfix_exists = false;
+            const check = setInterval(() => {
+                if (!window.sigfix) return;
+                clearInterval(check);
+
+                sigfix_exists = true;
+                this.sigfixSession();
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(check);
+
+                if (sigfix_exists) return;
+                this.defaultSession();
+            }, 500);
+        },
+
+        sigfixSession() {
+            const { sigfix } = window;
+            const { playTimer, mouseTracker } = modSettings.settings;
+
             let playingInterval;
-            let minPlaying = 0;
-            let isPlaying = window.gameSettings.isPlaying;
-
-            const playBtn = byId('play-btn');
-            let a = null;
-
-            playBtn.addEventListener('click', async () => {
-                if (isPlaying) return;
-
-                while (!window.gameSettings.isPlaying) {
-                    await new Promise((resolve) => setTimeout(resolve, 200));
-                }
-
-                isPlaying = true;
-                let timer = null;
-
-                if (modSettings.playTimer) {
-                    timer = document.createElement('span');
-                    timer.classList.add('playTimer');
-                    timer.innerText = '0m0s played';
-                    document.body.append(timer);
-                }
-
-                // mouse tracker in session method so it's only visible when playing
-                if (modSettings.mouseTracker) {
-                    const mouse = document.createElement('span');
-                    mouse.classList.add('mouseTracker');
-                    mouse.innerText = 'X: 0; Y: 0';
-                    document.body.append(mouse);
-
-                    if (!modSettings.playTimer) {
-                        mouse.style.top = '128px';
-                    }
-                }
-
-                let count = 0;
-                playingInterval = setInterval(() => {
-                    count++;
-                    this.storage['time-played']++;
-                    if (count % 60 === 0) {
-                        minPlaying++;
-                    }
-                    this.updateStat('time-played', this.storage['time-played']);
-
-                    if (modSettings.playTimer) {
-                        this.updateTimeStat(timer, count);
-                    }
-                }, 1000);
-            });
+            let lastCells = 0;
 
             setInterval(() => {
-                if (menuClosed() && byId('overlays').style.display !== 'none') {
-                    byId('overlays').style.display = 'none';
+                let allMyCells = 0;
+
+                sigfix.world.views.forEach((view) => {
+                    allMyCells += view.owned.length;
+                });
+
+                // end playing session
+                if (
+                    allMyCells === 0 &&
+                    lastCells > 0 &&
+                    window.gameSettings.isPlaying
+                ) {
+                    dead.call(this);
+                    return;
                 }
 
-                if (isDead() && !dead) {
-                    clearInterval(playingInterval);
-                    dead = true;
+                // start playing session
+                if (
+                    allMyCells > 0 &&
+                    lastCells === 0 &&
+                    !window.gameSettings.isPlaying
+                ) {
+                    window.gameSettings.isPlaying = true;
 
-                    const playTimer = document.querySelector('.playTimer');
-                    if (playTimer) playTimer.remove();
-
-                    const mouseTracker =
-                        document.querySelector('.mouseTracker');
-                    if (mouseTracker) mouseTracker.remove();
-
-                    const score = parseFloat(byId('highest_mass').innerText);
-                    const highest = this.storage['highest-mass'];
-
-                    if (score > highest) {
-                        this.storage['highest-mass'] = score;
-                        this.updateStat(
-                            'highest-mass',
-                            this.storage['highest-mass']
-                        );
-                    }
-
-                    this.storage['total-deaths']++;
-                    this.updateStat(
-                        'total-deaths',
-                        this.storage['total-deaths']
-                    );
-
-                    this.storage['total-mass'] += score;
-                    this.updateStat('total-mass', this.storage['total-mass']);
-                    isPlaying = window.gameSettings.isPlaying = false;
-
-                    if (this.lastOneStanding) {
-                        client.send({
-                            type: 'result',
-                            content: null,
+                    const waitForStats = () => {
+                        return new Promise((resolve) => {
+                            const interval = setInterval(() => {
+                                const stats = [
+                                    ...document.querySelectorAll(
+                                        'div[style*="white-space: pre"]'
+                                    ),
+                                ].find(
+                                    (d) =>
+                                        d.innerText.includes('players') &&
+                                        d.innerText.includes('load')
+                                );
+                                if (stats) {
+                                    clearInterval(interval);
+                                    resolve(stats);
+                                }
+                            }, 10);
                         });
-                        playBtn.disabled = true;
-                    }
+                    };
 
-                    if (modSettings.showChallenges && window.gameSettings.user)
-                        this.showChallenges();
-                } else if (!isDead()) {
-                    dead = false;
-                    const challengesDeathscreen = document.querySelector(
-                        '.challenges_deathscreen'
-                    );
-                    if (challengesDeathscreen) challengesDeathscreen.remove();
+                    waitForStats().then((stats) => {
+                        const additionalStats = stats.cloneNode();
+                        additionalStats.id = 'sigmod_stats';
+                        additionalStats.textContent = '';
+                        stats.insertAdjacentElement(
+                            'afterend',
+                            additionalStats
+                        );
+
+                        let timerEl;
+                        if (playTimer) {
+                            timerEl = document.createElement('span');
+                            timerEl.className = 'playTimer';
+                            timerEl.style.display = 'block';
+                            timerEl.textContent = '0m0s played';
+                            additionalStats.appendChild(timerEl);
+                        }
+
+                        if (mouseTracker) {
+                            const mouseEl = document.createElement('span');
+                            mouseEl.className = 'mouseTracker';
+                            mouseEl.style.display = 'block';
+                            mouseEl.textContent = `X: ${this.mouseX || 0}; Y: ${
+                                this.mouseY || 0
+                            }`;
+                            additionalStats.appendChild(mouseEl);
+                        }
+
+                        let sec = 0;
+                        playingInterval = setInterval(() => {
+                            sec++;
+                            this.storage['time-played']++;
+                            this.updateStat(
+                                'time-played',
+                                this.storage['time-played']
+                            );
+
+                            if (playTimer) {
+                                const m = Math.floor(sec / 60);
+                                const s = sec % 60;
+                                timerEl.textContent = `${m}m${s}s played`;
+                            }
+                        }, 1000);
+                    });
                 }
+
+                lastCells = allMyCells;
             });
+
+            function dead() {
+                window.gameSettings.isPlaying = false;
+                clearInterval(playingInterval);
+
+                const additionalStats = document.getElementById('sigmod_stats');
+                if (additionalStats) additionalStats.remove();
+
+                const score = parseFloat(byId('highest_mass').innerText);
+                const highest = this.storage['highest-mass'];
+
+                if (score && score > highest) {
+                    this.storage['highest-mass'] = score;
+                    this.updateStat('highest-mass', score);
+                }
+
+                this.storage['total-deaths']++;
+                this.updateStat('total-deaths', this.storage['total-deaths']);
+
+                this.storage['total-mass'] += score;
+                this.updateStat('total-mass', this.storage['total-mass']);
+
+                if (this.lastOneStanding) {
+                    client.send({ type: 'result', content: null });
+                    this.playBtn.disabled = true;
+                }
+
+                if (
+                    modSettings.settings.showChallenges &&
+                    window.gameSettings.user
+                ) {
+                    this.showChallenges();
+                }
+            }
         },
+
+        defaultSession() {
+            let running = false;
+            let playingInterval;
+
+            let deadCheckInterval;
+
+            this.playBtn.addEventListener('click', () => {
+                // prevent spamming the play button (fast respawn especially)
+                if (window.gameSettings.isPlaying || running) return;
+
+                // it takes some seconds to set isPLaying true (because of the score check)
+                const checkInterval = setInterval(() => {
+                    if (!window.gameSettings.isPlaying || running) return;
+
+                    clearInterval(checkInterval);
+                    startSession.call(this);
+                }, 100);
+            });
+
+            function startSession() {
+                const { playTimer, mouseTracker } = modSettings.settings;
+                let timerEl;
+
+                running = true;
+
+                const infoDiv = document.createElement('div');
+                infoDiv.classList.add('stats-additional');
+                Object.assign(infoDiv.style, {
+                    left: '4px',
+                    top: '12.2%',
+                    fontSize: '14px',
+                });
+                document.body.append(infoDiv);
+
+                if (playTimer) {
+                    timerEl = document.createElement('span');
+                    timerEl.classList.add('playTimer');
+                    timerEl.style.display = 'block';
+                    timerEl.innerText = '0m0s played';
+                    infoDiv.appendChild(timerEl);
+                }
+
+                if (mouseTracker) {
+                    const mouseEl = document.createElement('span');
+                    mouseEl.classList.add('mouseTracker');
+                    mouseEl.style.display = 'block';
+                    mouseEl.innerText = `X: ${this.mouseX || 0}; Y: ${
+                        this.mouseY || 0
+                    }`;
+                    infoDiv.appendChild(mouseEl);
+                }
+
+                let sec = 0;
+                playingInterval = setInterval(() => {
+                    sec++;
+                    this.storage['time-played']++;
+
+                    this.updateStat('time-played', this.storage['time-played']);
+
+                    if (playTimer) this.updateTimeStat(timerEl, sec);
+                }, 1000);
+
+                setTimeout(() => checkDead.call(this), 2000);
+            }
+
+            function checkDead() {
+                deadCheckInterval = setInterval(() => {
+                    if (!window.gameSettings.isPlaying && running) {
+                        clearInterval(playingInterval);
+                        clearInterval(deadCheckInterval);
+
+                        running = false;
+
+                        const additionalStats =
+                            document.querySelector('.stats-additional');
+                        if (additionalStats) additionalStats.remove();
+
+                        const score = parseFloat(
+                            byId('highest_mass').innerText
+                        );
+                        const highest = this.storage['highest-mass'];
+
+                        if (score > highest) {
+                            this.storage['highest-mass'] = score;
+                            this.updateStat('highest-mass', score);
+                        }
+
+                        this.storage['total-deaths']++;
+                        this.updateStat(
+                            'total-deaths',
+                            this.storage['total-deaths']
+                        );
+
+                        this.storage['total-mass'] += score;
+                        this.updateStat(
+                            'total-mass',
+                            this.storage['total-mass']
+                        );
+
+                        if (this.lastOneStanding) {
+                            client.send({ type: 'result', content: null });
+                            this.playBtn.disabled = true;
+                        }
+
+                        if (
+                            modSettings.settings.showChallenges &&
+                            window.gameSettings.user
+                        ) {
+                            this.showChallenges();
+                        }
+                    }
+                }, 100);
+            }
+        },
+
         updateTimeStat(el, seconds) {
             const minutes = Math.floor(seconds / 60);
             const remainingSeconds = seconds % 60;
@@ -7655,14 +7864,14 @@
                     .map(({ task, best, status, ready, goal }) => {
                         const desc = shopLocales.challenge_tab.tasks[
                             task
-                            ].replace('%n', task === 'alive' ? goal / 60 : goal);
+                        ].replace('%n', task === 'alive' ? goal / 60 : goal);
                         const btn = ready
                             ? `<button class="challenge-collect-secondary" onclick="this.challenge('${task}', ${status})">${shopLocales.challenge_tab.collect}</button>`
                             : `<div class="challenge-best-secondary">${
-                                shopLocales.challenge_tab.result
-                            }${Math.round(best)}${
-                                task === 'alive' ? 's' : ''
-                            }</div>`;
+                                  shopLocales.challenge_tab.result
+                              }${Math.round(best)}${
+                                  task === 'alive' ? 's' : ''
+                              }</div>`;
                         return `
                         <div class="challenge-row">
                           <div class="challenge-desc">${desc}</div>
@@ -7783,7 +7992,7 @@
                 const time = this.timeToString(distance);
 
                 const children = document.querySelector('.new-challenges');
-                if (!children || distance < 1000 || !isDead()) {
+                if (!children || distance < 1000 || !isDeadUI()) {
                     clearInterval(this.dayTimer);
                     return;
                 }
@@ -7828,7 +8037,7 @@
 
             // mouse fast feed interval
             setInterval(() => {
-                if (dead || !menuClosed() || !this.mouseDown) return;
+                if (isDeadUI() || !menuClosed() || !this.mouseDown) return;
                 keypress('w', 'KeyW');
             }, 50);
 
@@ -7860,18 +8069,6 @@
                 }
             }
 
-            function mouseToScreenCenter() {
-                const screenCenterX = canvas.width / 2;
-                const screenCenterY = canvas.height / 2;
-
-                mousemove(screenCenterX, screenCenterY);
-
-                return {
-                    x: screenCenterX,
-                    y: screenCenterY,
-                };
-            }
-
             async function instantSplit() {
                 await wait(300);
 
@@ -7888,10 +8085,10 @@
                 const x = playerPosition.x;
                 const y = playerPosition.y;
 
-                const offsetUpX = playerPosition.x;
-                const offsetUpY = playerPosition.y - 100;
-                const offsetDownX = playerPosition.x;
-                const offsetDownY = playerPosition.y + 100;
+                const offsetUpX = x;
+                const offsetUpY = y - 100;
+                const offsetDownX = x;
+                const offsetDownY = y;
 
                 freezepos = false;
                 window.sendMouseMove(offsetUpX, offsetUpY);
@@ -8031,8 +8228,6 @@
 
             function sendLocation() {
                 if (!playerPosition.x || !playerPosition.y) return;
-
-                const gamemode = byId('gamemode');
 
                 let field = '';
                 const coordinates = getCoordinates(mods.border);
@@ -8188,7 +8383,7 @@
                         break;
 
                     case modSettings.macros.keys.respawn:
-                        mods.respawnGame();
+                        mods.fastRespawn();
                         break;
 
                     case modSettings.macros.keys.saveImage:
@@ -8369,21 +8564,66 @@
                     const newValue = event.key.toLowerCase();
                     modInput.value = newValue;
 
-                    const isDuplicate = macroInputs.some((key) => {
-                        const input = byId(key);
-                        return (
-                            input &&
-                            input !== modInput &&
-                            input.value === newValue
+                    const duplicateInput = macroInputs
+                        .map((key) => byId(key))
+                        .find(
+                            (input) =>
+                                input &&
+                                input !== modInput &&
+                                input.value === newValue
                         );
-                    });
 
-                    if (newValue && isDuplicate) {
-                        alert("You can't use 2 keybindings at the same time.");
-                        setTimeout(() => (modInput.value = ''), 0);
+                    if (duplicateInput) {
+                        const overlay = document.createElement('div');
+                        overlay.classList.add('mod_overlay');
+                        document.body.append(overlay);
+
+                        const changeDiv = document.createElement('div');
+                        changeDiv.classList.add('modAlert');
+                        changeDiv.style.zIndex = '99999999';
+                        changeDiv.style.top = '50%';
+                        changeDiv.innerHTML = `
+                            <strong>Duplicate keybinding detected!</strong>
+                            <p>The key <code class="modCode">${newValue}</code> is already assigned to <code class="modCode">${duplicateInput.getAttribute(
+                            'data-label'
+                        )}</code>.</p>
+                            <p>Do you want to reassign this key to <code class="modCode">${modInput.getAttribute(
+                                'data-label'
+                            )}</code> and remove it from <code class="modCode">${duplicateInput.getAttribute(
+                            'data-label'
+                        )}</code>?</p>
+                            <div class="flex g-5" style="align-self: end;">
+                                <button class="modButton" id="cancelBtn">Cancel</button>
+                                <button class="modButton" id="confirmBtn">Yes, Reassign</button>
+                            </div>
+                        `;
+                        document.body.append(changeDiv);
+
+                        const removeDivs = () => {
+                            overlay.remove();
+                            changeDiv.remove();
+                        };
+
+                        const cancelBtn = changeDiv.querySelector('#cancelBtn');
+                        const confirmBtn =
+                            changeDiv.querySelector('#confirmBtn');
+
+                        cancelBtn.onclick = () => {
+                            modInput.value = '';
+                            updateModSettings(modInput.name, '');
+                            removeDivs();
+                        };
+
+                        confirmBtn.onclick = () => {
+                            updateModSettings(duplicateInput.name, '');
+                            updateModSettings(modInput.name, newValue);
+                            duplicateInput.value = '';
+                            removeDivs();
+                        };
+
                         return;
                     }
-
+                    modInput.value = newValue;
                     updateModSettings(modInput.name, newValue);
                 });
             });
@@ -8488,19 +8728,19 @@
             const imageHTML = `
 				<div class="image-container">
 					<img class="gallery-image lazy" data-src="${
-                image.dataURL
-            }" src="${placeholderURL}" data-image-id="${
+                        image.dataURL
+                    }" src="${placeholderURL}" data-image-id="${
                 image.timestamp
             }" />
 					<div class="justify-sb">
 						<span class="modDescText">${prettyTime.fullDate(image.timestamp, true)}</span>
 						<div class="centerXY g-5">
 							<button type="button" class="download_btn operation_btn" data-image-id="${
-                image.timestamp
-            }"></button>
+                                image.timestamp
+                            }"></button>
 							<button type="button" class="delete_btn operation_btn" data-image-id="${
-                image.timestamp
-            }"></button>
+                                image.timestamp
+                            }"></button>
 						</div>
 					</div>
 				</div>
@@ -8626,11 +8866,11 @@
 								<span class="modDescText">${prettyTime.fullDate(item.timestamp, true)}</span>
 								<div class="centerXY g-5">
 									<button type="button" class="download_btn operation_btn" data-image-id="${
-                                item.timestamp
-                            }"></button>
+                                        item.timestamp
+                                    }"></button>
 									<button type="button" class="delete_btn operation_btn" data-image-id="${
-                                item.timestamp
-                            }"></button>
+                                        item.timestamp
+                                    }"></button>
 								</div>
 							</div>
 						</div>
@@ -8720,7 +8960,7 @@
             const mime = header.match(/:(.*?);/)[1];
             const binary = atob(data);
             const array = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
+            for (let i = 0; i < binary.length; ++i) {
                 array[i] = binary.charCodeAt(i);
             }
             return new Blob([array], { type: mime });
@@ -8752,14 +8992,14 @@
             discordlinks.setAttribute('id', 'dclinkdiv');
             discordlinks.innerHTML = `
                 <a href="https://discord.gg/${
-                window.tourneyServer ? 'ERtbMJCp8s' : '4j4Rc4dQTP'
-            }" target="_blank" class="dclinks">
+                    window.tourneyServer ? 'ERtbMJCp8s' : '4j4Rc4dQTP'
+                }" target="_blank" class="dclinks">
                     <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M19.4566 5.35132C21.7154 8.83814 22.8309 12.7712 22.4139 17.299C22.4121 17.3182 22.4026 17.3358 22.3876 17.3473C20.6771 18.666 19.0199 19.4663 17.3859 19.9971C17.3732 20.0011 17.3596 20.0009 17.347 19.9964C17.3344 19.992 17.3234 19.9835 17.3156 19.9721C16.9382 19.4207 16.5952 18.8393 16.2947 18.2287C16.2774 18.1928 16.2932 18.1495 16.3287 18.1353C16.8734 17.9198 17.3914 17.6615 17.8896 17.3557C17.9289 17.3316 17.9314 17.2725 17.8951 17.2442C17.7894 17.1617 17.6846 17.0751 17.5844 16.9885C17.5656 16.9725 17.5404 16.9693 17.5191 16.9801C14.2844 18.5484 10.7409 18.5484 7.46792 16.9801C7.44667 16.9701 7.42142 16.9735 7.40317 16.9893C7.30317 17.0759 7.19817 17.1617 7.09342 17.2442C7.05717 17.2725 7.06017 17.3316 7.09967 17.3557C7.59792 17.6557 8.11592 17.9198 8.65991 18.1363C8.69517 18.1505 8.71192 18.1928 8.69442 18.2287C8.40042 18.8401 8.05742 19.4215 7.67292 19.9729C7.65617 19.9952 7.62867 20.0055 7.60267 19.9971C5.97642 19.4663 4.31917 18.666 2.60868 17.3473C2.59443 17.3358 2.58418 17.3174 2.58268 17.2982C2.23418 13.3817 2.94442 9.41613 5.53717 5.35053C5.54342 5.33977 5.55292 5.33137 5.56392 5.32638C6.83967 4.71165 8.20642 4.25939 9.63491 4.00111C9.66091 3.99691 9.68691 4.00951 9.70041 4.03365C9.87691 4.36176 10.0787 4.78252 10.2152 5.12637C11.7209 4.88489 13.2502 4.88489 14.7874 5.12637C14.9239 4.78987 15.1187 4.36176 15.2944 4.03365C15.3007 4.02167 15.3104 4.01208 15.3221 4.00623C15.3339 4.00039 15.3471 3.99859 15.3599 4.00111C16.7892 4.26018 18.1559 4.71244 19.4306 5.32638C19.4419 5.33137 19.4511 5.33977 19.4566 5.35132ZM10.9807 12.798C10.9964 11.6401 10.1924 10.6821 9.18316 10.6821C8.18217 10.6821 7.38592 11.6317 7.38592 12.798C7.38592 13.9639 8.19792 14.9136 9.18316 14.9136C10.1844 14.9136 10.9807 13.9639 10.9807 12.798ZM17.6261 12.798C17.6419 11.6401 16.8379 10.6821 15.8289 10.6821C14.8277 10.6821 14.0314 11.6317 14.0314 12.798C14.0314 13.9639 14.8434 14.9136 15.8289 14.9136C16.8379 14.9136 17.6261 13.9639 17.6261 12.798Z" fill="white"></path>
                     </svg>
                     <span>${
-                window.tourneyServer ? 'Tourney Server' : 'Sigmally'
-            }</span>
+                        window.tourneyServer ? 'Tourney Server' : 'Sigmally'
+                    }</span>
                 </a>
                 <a href="https://discord.gg/QyUhvUC8AD" target="_blank" class="dclinks">
                     <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -8781,7 +9021,6 @@
         respawn() {
             const __line2 = byId('__line2');
             const c = byId('continue_button');
-            const p = byId('play-btn');
 
             if (__line2.classList.contains('line--hidden')) return;
 
@@ -8789,50 +9028,27 @@
 
             setTimeout(() => {
                 c.click();
-                p.click();
+                this.playBtn.click();
             }, 20);
 
             this.respawnTime = Date.now();
         },
 
-        respawnGame() {
-            const { sigfix } = window;
-
-            if (
-                sigfix &&
-                sigfix.net.connections
-                    .get(sigfix.world.selected)
-                    .ws.url.includes('localhost')
-            ) {
-                this.fastRespawn();
-                return;
-            }
-
-            // respawns above 5.5k mass will be blocked
-            if (
-                (!sigfix && !this.aboveRespawnLimit) ||
-                (sigfix && sigfix.world.score(sigfix.world.selected) < 5500)
-            ) {
-                this.fastRespawn();
-            }
-        },
-
         fastRespawn() {
-            // leave the world with chat command
-            window.sendChat(this.respawnCommand);
-            const p = byId('play-btn');
+            if (window.sigfix || (!window.sigfix && this.aboveRespawnLimit))
+                return;
 
-            const intervalId = setInterval(() => {
-                if (isDead() || menuClosed()) {
-                    this.respawn();
-                    p.click();
-                } else {
-                    clearInterval(intervalId);
-                }
-            }, 50);
+            window.sendChat(this.respawnCommand);
+            // const additionalStats = document.querySelector('.stats-additional');
+            // if (additionalStats) additionalStats.remove();
+
             setTimeout(() => {
-                clearInterval(intervalId);
-            }, 1000);
+                byId('continue_button').click();
+                this.playBtn.click();
+                setTimeout(() => {
+                    this.playBtn.click();
+                }, 300);
+            }, 50);
         },
 
         clientPing() {
@@ -8886,8 +9102,7 @@
 
             window.addEventListener('resize', resizeMiniMap);
 
-            const playBtn = byId('play-btn');
-            playBtn.addEventListener('click', () => {
+            this.playBtn.addEventListener('click', () => {
                 setTimeout(() => {
                     lastPosTime = Date.now();
                 }, 300);
@@ -8915,7 +9130,7 @@
         },
 
         updMinimap() {
-            if (isDead()) return;
+            if (isDeadUI()) return;
             const miniMap = mods.canvas;
             const border = mods.border;
             const ctx = miniMap.getContext('2d');
@@ -8962,7 +9177,7 @@
                 id: 'tag',
                 className: 'form-control',
                 placeholder: 'Tag',
-                maxLength: 3
+                maxLength: 3,
             });
 
             const pnick = nick.parentElement;
@@ -9079,7 +9294,8 @@
         },
 
         updateTournamentDetails(details) {
-            const minimapContainer = document.querySelector('.minimapContainer');
+            const minimapContainer =
+                document.querySelector('.minimapContainer');
             if (!minimapContainer) return;
 
             document.getElementById('tournament-info')?.remove();
@@ -9101,7 +9317,8 @@
         },
 
         updateTournamentTimer(timer) {
-            const minimapContainer = document.querySelector('.minimapContainer');
+            const minimapContainer =
+                document.querySelector('.minimapContainer');
             if (!minimapContainer) return;
 
             document.getElementById('tournament-timer')?.remove();
@@ -9127,7 +9344,9 @@
                         return;
                     }
 
-                    timerElement.textContent = `${prettyTime.getTimeLeft(timer)} left`;
+                    timerElement.textContent = `${prettyTime.getTimeLeft(
+                        timer
+                    )} left`;
                 };
 
                 updateTimer();
@@ -9244,7 +9463,7 @@
                 });
             });
 
-            byId('play-btn').addEventListener('click', (e) => {
+            this.playBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.hideOverlays();
                 this.sendPlay(password);
@@ -9327,8 +9546,8 @@
             overlay.innerHTML = `
 				<span class="tournament-text">Round ${round}/${max || 3}</span>
 				<span class="tournament-text" id="tournament-countdown" style="font-size: 32px; font-weight: 600;">${
-                countdownTime / 1000
-            }</span>
+                    countdownTime / 1000
+                }</span>
 			`;
             document.body.append(overlay);
 
@@ -9391,7 +9610,7 @@
             const timerInterval = setInterval(updTime, 1000);
         },
 
-        getScore(data) {
+        getScore() {
             const { sigfix } = window;
             if (menuClosed()) {
                 client.send({
@@ -9432,10 +9651,10 @@
             fullResult.innerHTML = `
 				<div class="tournaments-wrapper f-column g-5">
 					<span class="text-center" style="font-size: 24px; font-weight: 600;">${
-                isEnd
-                    ? `END OF ${lobby.name}`
-                    : `Round ${lobby.currentRound}/${lobby.rounds}`
-            }</span>
+                        isEnd
+                            ? `END OF ${lobby.name}`
+                            : `Round ${lobby.currentRound}/${lobby.rounds}`
+                    }</span>
 					<div class="centerXY" style="gap: 20px; height: 140px; margin-top: 16px;">
 						${this.createStats(lobby)}
 					</div>
@@ -9585,8 +9804,8 @@
 					</div>
 					<span class="text-center" style="font-size: 20px; font-weight: 400;">Score: ${winningScore}</span>
 					<span class="text-center" style="font-size: 26px; font-weight: 600;">${
-                winningPoints || 0
-            }</span>
+                        winningPoints || 0
+                    }</span>
 				</div>
 				<div class="f-column" style="height: 100%; position: relative">
 					<svg style="margin: auto;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="60"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <rect x="142.853" y="486.511" style="fill:#56361D;" width="225.654" height="24.763"></rect> <path style="fill:#CCA400;" d="M223.069,256.172v50.773l0,0c8.126,0,14.712,6.587,14.712,14.712v96.74h36.49v-96.74 c0-8.126,6.587-14.712,14.712-14.712l0,0v-50.773H223.069z"></path> <rect x="223.064" y="251.211" style="opacity:0.16;fill:#664400;enable-background:new ;" width="65.919" height="40.689"></rect> <path style="fill:#EEBF00;" d="M274.378,271.341h-36.756c-50.613,0-91.644-41.03-91.644-91.644V0h220.043v179.697 C366.022,230.311,324.991,271.341,274.378,271.341z"></path> <g> <path style="fill:#664400;" d="M334.827,463.284H177.483V430.71c0-6.801,5.513-12.314,12.314-12.314h132.715 c6.801,0,12.314,5.513,12.314,12.314v32.574H334.827z"></path> <rect x="142.853" y="452.842" style="fill:#664400;" width="225.779" height="58.726"></rect> </g> <g> <path style="fill:#56361D;" d="M310.42,430.732l0.109,22.353l24.403-0.046l-0.109-22.307c-0.013-6.801-5.536-12.305-12.338-12.291 l-23.489,0.044C305.369,418.942,310.408,424.239,310.42,430.732z"></path> <polygon style="fill:#56361D;" points="368.616,452.85 344.213,452.896 344.324,511.573 142.951,511.954 142.951,512 368.727,511.573 "></polygon> </g> <g> <path style="fill:#EEBF00;" d="M99.268,40.707c-35.955,0-65.102,29.147-65.102,65.102s29.147,65.102,65.102,65.102h46.71V40.707 H99.268z M120.57,137.625H97.327c-17.89,0-32.393-14.502-32.393-32.393S79.437,72.84,97.327,72.84h23.242v64.785H120.57z"></path> <path style="fill:#EEBF00;" d="M412.732,40.707h-46.71v130.203h46.71c35.955,0,65.102-29.147,65.102-65.102 S448.687,40.707,412.732,40.707z M414.672,138.778H391.43V73.993h23.242c17.89,0,32.393,14.502,32.393,32.393 S432.562,138.778,414.672,138.778z"></path> </g> <rect x="145.974" y="75.284" style="fill:#CCA400;" width="219.828" height="77.612"></rect> <path style="fill:#FFEB99;" d="M189.004,184.953c-4.324,0-7.83-3.506-7.83-7.83V27.75c0-4.324,3.506-7.83,7.83-7.83 s7.83,3.506,7.83,7.83v149.373C196.835,181.447,193.329,184.953,189.004,184.953z"></path> <g> <rect x="366.022" y="40.707" style="opacity:0.16;fill:#664400;enable-background:new ;" width="14.996" height="129.113"></rect> <rect x="130.982" y="40.667" style="opacity:0.16;fill:#664400;enable-background:new ;" width="14.996" height="129.113"></rect> <path style="opacity:0.31;fill:#664400;enable-background:new ;" d="M335.941,0v157.465c0,50.613-41.03,91.644-91.644,91.644 h-36.756c-13.653,0-26.606-2.99-38.246-8.344c16.782,18.763,41.172,30.576,68.326,30.576h36.756 c50.613,0,91.644-41.03,91.644-91.644V0H335.941z"></path> </g> <rect x="177.483" y="439.03" style="fill:#56361D;" width="136.025" height="14.046"></rect> </g></svg>
@@ -9598,8 +9817,8 @@
 					</div>
 					<span class="text-center" style="font-size: 20px; font-weight: 400;">Score: ${losingScore}</span>
 					<span class="text-center" style="font-size: 26px; font-weight: 600;">${
-                losingPoints || 0
-            }</span>
+                        losingPoints || 0
+                    }</span>
 				</div>
 			`;
         },
@@ -9904,11 +10123,11 @@
                 let badges =
                     user.badges && user.badges.length > 0
                         ? user.badges
-                            .map(
-                                (badge) =>
-                                    `<span class="mod_badge">${badge}</span>`
-                            )
-                            .join('')
+                              .map(
+                                  (badge) =>
+                                      `<span class="mod_badge">${badge}</span>`
+                              )
+                              .join('')
                         : '<span>User has no badges.</span>';
                 let icon = null;
 
@@ -9935,10 +10154,10 @@
                     user.username
                 }">
                                         <span class="status_icon ${
-                    user.online
-                        ? 'online_icon'
-                        : 'offline_icon'
-                }"></span>
+                                            user.online
+                                                ? 'online_icon'
+                                                : 'offline_icon'
+                                        }"></span>
                                     </div>
                                     <div class="f-big">${user.username}</div>
                                 </div>
@@ -9956,15 +10175,15 @@
                                     ${badges}
                                 </div>
                                 ${
-                    user.lastOnline
-                        ? `<strong>Last online:</strong><span>${prettyTime.am_pm(
-                            user.lastOnline
-                        )} (${prettyTime.time_ago(
-                            user.lastOnline,
-                            true
-                        )})</span>`
-                        : ''
-                }
+                                    user.lastOnline
+                                        ? `<strong>Last online:</strong><span>${prettyTime.am_pm(
+                                              user.lastOnline
+                                          )} (${prettyTime.time_ago(
+                                              user.lastOnline,
+                                              true
+                                          )})</span>`
+                                        : ''
+                                }
                             </div>
                         </div>
                     </div>
@@ -10009,58 +10228,58 @@
                             .map(
                                 (user) => `
                       <div class="friends_row user-profile-wrapper" data-user-profile="${
-                                    user._id
-                                }">
+                          user._id
+                      }">
                         <div class="centerY g-5">
                           <div class="profile-img">
                             <img src="${user.imageURL}" alt="${
                                     user.username
                                 }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
                             <span class="status_icon ${
-                                    user.online ? 'online_icon' : 'offline_icon'
-                                }"></span>
+                                user.online ? 'online_icon' : 'offline_icon'
+                            }"></span>
                           </div>
                           ${
-                                    user.nick
-                                        ? `
+                              user.nick
+                                  ? `
                               <div class="f-column centerX">
                                   <div class="f-big">${user.username}</div>
                                   <span style="color: #A2A2A2" title="Nickname">${user.nick}</span>
                               </div>
                           `
-                                        : `
+                                  : `
                               <div class="f-big">${user.username}</div>
                           `
-                                }
+                          }
                         </div>
                         <div class="centerY g-10">
                             ${
-                                    user.server
-                                        ? `
+                                user.server
+                                    ? `
                                 <span>${user.server}</span>
                                 <div class="vr2"></div>
                             `
-                                        : ''
-                                }
+                                    : ''
+                            }
                             ${
-                                    user.tag
-                                        ? `
+                                user.tag
+                                    ? `
                                 <span>Tag: ${user.tag}</span>
                                 <div class="vr2"></div>
                             `
-                                        : ''
-                                }
+                                    : ''
+                            }
                             <div class="${user.role}_role">${user.role}</div>
                             <div class="vr2"></div>
                             <button class="modButton centerXY" id="remove-${
-                                    user._id
-                                }" style="padding: 7px;">
+                                user._id
+                            }" style="padding: 7px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="16"><path fill="#ffffff" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM472 200H616c13.3 0 24 10.7 24 24s-10.7 24-24 24H472c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg>
                             </button>
                             <div class="vr2"></div>
                             <button class="modButton centerXY" id="chat-${
-                                    user._id
-                                }" style="padding: 7px;">
+                                user._id
+                            }" style="padding: 7px;">
                                 <svg fill="#ffffff" width="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 458 458" stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M428,41.534H30c-16.569,0-30,13.431-30,30v252c0,16.568,13.432,30,30,30h132.1l43.942,52.243 c5.7,6.777,14.103,10.69,22.959,10.69c8.856,0,17.258-3.912,22.959-10.69l43.942-52.243H428c16.568,0,30-13.432,30-30v-252 C458,54.965,444.568,41.534,428,41.534z M323.916,281.534H82.854c-8.284,0-15-6.716-15-15s6.716-15,15-15h241.062 c8.284,0,15,6.716,15,15S332.2,281.534,323.916,281.534z M67.854,198.755c0-8.284,6.716-15,15-15h185.103c8.284,0,15,6.716,15,15 s-6.716,15-15,15H82.854C74.57,213.755,67.854,207.039,67.854,198.755z M375.146,145.974H82.854c-8.284,0-15-6.716-15-15 s6.716-15,15-15h292.291c8.284,0,15,6.716,15,15C390.146,139.258,383.43,145.974,375.146,145.974z"></path> </g> </g> </g></svg>
                             </button>
                         </div>
@@ -10166,14 +10385,14 @@
                 .map(
                     (message) => `
                         <div class="friends-message ${
-                        message.sender_id === this.profile._id
-                            ? 'message-right'
-                            : ''
-                    }">
+                            message.sender_id === this.profile._id
+                                ? 'message-right'
+                                : ''
+                        }">
                             <span>${message.content}</span>
                             <span class="message-date">${prettyTime.am_pm(
-                        message.timestamp
-                    )}</span>
+                                message.timestamp
+                            )}</span>
                         </div>
                     `
                 )
@@ -10187,8 +10406,8 @@
                 target.username
             }">
                             <span class="status_icon ${
-                target.online ? 'online_icon' : 'offline_icon'
-            }"></span>
+                                target.online ? 'online_icon' : 'offline_icon'
+                            }"></span>
                         </div>
                         <span class="f-big">${target.username}</span>
                     </div>
@@ -10200,10 +10419,10 @@
                 <div class="friends-chat-body">
                     <div class="friends-chat-messages private-chat-content scroll">
                         ${
-                history.length > 0
-                    ? messagesHTML
-                    : "<center id='beginning-of-conversation'>This is the beginning of your conversation...</center>"
-            }
+                            history.length > 0
+                                ? messagesHTML
+                                : "<center id='beginning-of-conversation'>This is the beginning of your conversation...</center>"
+                        }
                     </div>
                     <div class="messenger-wrapper">
                         <div class="container">
@@ -10275,12 +10494,12 @@
             const messages = chatDiv.querySelector('.friends-chat-messages');
             messages.innerHTML += `
                <div class="friends-message ${
-                sender_id === this.profile._id ? 'message-right' : ''
-            }">
+                   sender_id === this.profile._id ? 'message-right' : ''
+               }">
                    <span>${message}</span>
                    <span class="message-date">${prettyTime.am_pm(
-                timestamp
-            )}</span>
+                       timestamp
+                   )}</span>
                </div>
             `;
             messages.scrollTop = messages.scrollHeight;
@@ -10336,37 +10555,37 @@
             response.users.forEach((user) => {
                 const userHTML = `
                     <div class="friends_row user-profile-wrapper" style="${
-                    this.profile._id == user._id
-                        ? `background: linear-gradient(45deg, #17172d, black)`
-                        : ''
-                }" data-user-profile="${user._id}">
+                        this.profile._id == user._id
+                            ? `background: linear-gradient(45deg, #17172d, black)`
+                            : ''
+                    }" data-user-profile="${user._id}">
                         <div class="centerY g-5">
                             <div class="profile-img">
                                 <img src="${user.imageURL}" alt="${
                     user.username
                 }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
                                 <span class="status_icon ${
-                    user.online ? 'online_icon' : 'offline_icon'
-                }"></span>
+                                    user.online ? 'online_icon' : 'offline_icon'
+                                }"></span>
                             </div>
                             <div class="f-big">${
-                    this.profile.username === user.username
-                        ? `${user.username} (You)`
-                        : user.username
-                }</div>
+                                this.profile.username === user.username
+                                    ? `${user.username} (You)`
+                                    : user.username
+                            }</div>
                         </div>
                         <div class="centerY g-10">
                             <div class="${user.role}_role">${user.role}</div>
                             ${
-                    this.profile._id == user._id
-                        ? ''
-                        : `
+                                this.profile._id == user._id
+                                    ? ''
+                                    : `
                                 <div class="vr2"></div>
                                 <button class="modButton centerXY add-button" data-user-id="${user._id}" style="padding: 7px;">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="16"><path fill="#ffffff" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H552v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg>
                                 </button>
                             `
-                }
+                            }
                         </div>
                     </div>
                 `;
@@ -10461,41 +10680,41 @@
 
                         const newUserHTML = `
                             <div class="friends_row user-profile-wrapper" style="${
-                            this.profile._id == user._id
-                                ? `background: linear-gradient(45deg, #17172d, black)`
-                                : ''
-                        }" data-user-profile="${user._id}">
+                                this.profile._id == user._id
+                                    ? `background: linear-gradient(45deg, #17172d, black)`
+                                    : ''
+                            }" data-user-profile="${user._id}">
                                 <div class="centerY g-5">
                                     <div class="profile-img">
                                         <img src="${user.imageURL}" alt="${
                             user.username
                         }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
                                         <span class="status_icon ${
-                            user.online
-                                ? 'online_icon'
-                                : 'offline_icon'
-                        }"></span>
+                                            user.online
+                                                ? 'online_icon'
+                                                : 'offline_icon'
+                                        }"></span>
                                     </div>
                                     <div class="f-big">${
-                            this.profile.username === user.username
-                                ? `${user.username} (You)`
-                                : user.username
-                        }</div>
+                                        this.profile.username === user.username
+                                            ? `${user.username} (You)`
+                                            : user.username
+                                    }</div>
                                 </div>
                                 <div class="centerY g-10">
                                     <div class="${user.role}_role">${
                             user.role
                         }</div>
                                     ${
-                            this.profile._id == user._id
-                                ? ''
-                                : `
+                                        this.profile._id == user._id
+                                            ? ''
+                                            : `
                                         <div class="vr2"></div>
                                         <button class="modButton centerXY add-button" data-user-id="${user._id}" style="padding: 7px;">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="16"><path fill="#ffffff" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM504 312V248H440c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V136c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H552v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg>
                                         </button>
                                     `
-                        }
+                                    }
                                 </div>
                             </div>
                         `;
@@ -10568,8 +10787,8 @@
                             user.username
                         }" onerror="this.onerror=null; this.src='https://czrsd.com/static/sigmod/SigMod25-rounded.png';">
                                 <span class="status_icon ${
-                            user.online ? 'online_icon' : 'offline_icon'
-                        }"></span>
+                                    user.online ? 'online_icon' : 'offline_icon'
+                                }"></span>
                             </div>
                             <div class="f-big">${user.username}</div>
                         </div>
@@ -10577,13 +10796,13 @@
                             <div class="${user.role}_role">${user.role}</div>
                             <div class="vr2"></div>
                             <button class="modButton centerXY accept" data-user-id="${
-                            user._id
-                        }" style="padding: 6px 7px;">
+                                user._id
+                            }" style="padding: 6px 7px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16"><path fill="#ffffff" d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>
                             </button>
                             <button class="modButton centerXY decline" data-user-id="${
-                            user._id
-                        }" style="padding: 5px 8px;">
+                                user._id
+                            }" style="padding: 5px 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="16"><path fill="#ffffff" d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
                             </button>
                         </div>
@@ -10644,12 +10863,12 @@
                     <div class="centerY g-5">
                         <div class="profile-img">
                             <img src="${
-                this.profile.imageURL
-            }" alt="Profile picture" />
+                                this.profile.imageURL
+                            }" alt="Profile picture" />
                         </div>
                         <span class="f-big" id="profile_username_00" title="${
-                this.profile._id
-            }">${this.profile.username}</span>
+                            this.profile._id
+                        }">${this.profile.username}</span>
                     </div>
                     <button class="modButton-black val" id="editProfile">Edit Profile</button>
                 </div>
@@ -10657,25 +10876,25 @@
                     <span>Status</span>
                     <select class="form-control val" id="edit_static_status">
                         <option value="online" ${
-                this.friends_settings.static_status === 'online'
-                    ? 'selected'
-                    : ''
-            }>Online</option>
+                            this.friends_settings.static_status === 'online'
+                                ? 'selected'
+                                : ''
+                        }>Online</option>
                         <option value="offline" ${
-                this.friends_settings.static_status === 'offline'
-                    ? 'selected'
-                    : ''
-            }>Offline</option>
+                            this.friends_settings.static_status === 'offline'
+                                ? 'selected'
+                                : ''
+                        }>Offline</option>
                     </select>
                 </div>
                 <div class="friends_row">
                     <span>Accept friend requests</span>
                     <div class="modCheckbox val">
                         <input type="checkbox" ${
-                this.friends_settings.accept_requests
-                    ? 'checked'
-                    : ''
-            } id="edit_accept_requests" />
+                            this.friends_settings.accept_requests
+                                ? 'checked'
+                                : ''
+                        } id="edit_accept_requests" />
                         <label class="cbx" for="edit_accept_requests"></label>
                     </div>
                 </div>
@@ -10683,25 +10902,25 @@
                     <span>Highlight friends</span>
                     <div class="modCheckbox val">
                         <input type="checkbox" ${
-                this.friends_settings.highlight_friends
-                    ? 'checked'
-                    : ''
-            } id="edit_highlight_friends" />
+                            this.friends_settings.highlight_friends
+                                ? 'checked'
+                                : ''
+                        } id="edit_highlight_friends" />
                         <label class="cbx" for="edit_highlight_friends"></label>
                     </div>
                 </div>
                 <div class="friends_row">
                     <span>Highlight color</span>
                     <input type="color" class="colorInput" value="${
-                this.friends_settings.highlight_color
-            }" style="margin-right: 12px;" id="edit_highlight_color" />
+                        this.friends_settings.highlight_color
+                    }" style="margin-right: 12px;" id="edit_highlight_color" />
                 </div>
                 <div class="friends_row">
                     <span>Public profile</span>
                     <div class="modCheckbox val">
                         <input type="checkbox" ${
-                this.profile.visible ? 'checked' : ''
-            } id="edit_visible" />
+                            this.profile.visible ? 'checked' : ''
+                        } id="edit_visible" />
                         <label class="cbx" for="edit_visible"></label>
                     </div>
                 </div>
@@ -10813,8 +11032,8 @@
                         <div class="centerXY g-10">
                             <div class="profile-img" style="width: 6em;height: 6em;">
                                 <img src="${
-                this.profile.imageURL
-            }" alt="Profile picture" />
+                                    this.profile.imageURL
+                                }" alt="Profile picture" />
                             </div>
                             <div class="f-column g-5">
                                 <input type="file" id="imageUpload" accept="image/*" style="display: none;">
@@ -10831,20 +11050,20 @@
                         <div class="f-column w-100">
                             <label for="username_edit">Username</label>
                             <input type="text" class="form-control" id="username_edit" value="${
-                this.profile.username
-            }" maxlength="40" minlength="4" />
+                                this.profile.username
+                            }" maxlength="40" minlength="4" />
                         </div>
                         <div class="f-column w-100">
                             <label for="bio_edit">Bio</label>
                             <div class="textarea-container">
                                 <textarea placeholder="Hello! I'm ..." class="form-control" maxlength="250" id="bio_edit">${
-                this.profile.bio || ''
-            }</textarea>
+                                    this.profile.bio || ''
+                                }</textarea>
                                 <span class="char-counter" id="charCount">${
-                this.profile.bio
-                    ? this.profile.bio.length
-                    : '0'
-            }/250</span>
+                                    this.profile.bio
+                                        ? this.profile.bio.length
+                                        : '0'
+                                }/250</span>
                             </div>
                         </div>
                         <button class="modButton-black" style="margin-bottom: 20px;" id="saveChanges">Save changes</button>
@@ -11085,8 +11304,8 @@
 					<div class="centerY justify-sb">
 						<div class="centerY g-5">
 							<img style="border-radius: 50%;" src="${
-                    data.preview.icon
-                }" width="64" draggable="false" />
+                                data.preview.icon
+                            }" width="64" draggable="false" />
 							<div class="f-column centerX">
 								<h2>${data.full.title}</h2>
 								<span style="color: #7E7E7E">${prettyTime.fullDate(data.date)}</span>
@@ -11098,11 +11317,11 @@
 						<div class="f-column g-10 scroll">${data.full.description}</div>
 						<div class="mod-announcement-images scroll">
 							${data.full.images
-                    .map(
-                        (image) =>
-                            `<img src="${image}" onclick="window.open('${image}')" />`
-                    )
-                    .join('')}
+                                .map(
+                                    (image) =>
+                                        `<img src="${image}" onclick="window.open('${image}')" />`
+                                )
+                                .join('')}
 						</div>
 					</div>
 				`;
@@ -11138,21 +11357,22 @@
             // max values
             const statValues = {
                 timeplayed: [
-                    10_000, 50_000, 100_000, 150_000, 200_000, 250_000, 300_000,
-                    400_000, 800_000, 1_000_000,
+                    300, 900, 1_800, 3_600, 10_800, 21_600, 43_200, 86_400,
+                    172_800, 345_600, 604_800, 1_209_600, 2_419_200, 4_838_400,
+                    8_640_000,
                 ],
                 highestmass: [
-                    50_000, 100_000, 500_000, 700_000, 1_000_000, 5_000_000,
-                    10_000_000,
+                    100, 250, 500, 1_000, 2_000, 3_000, 5_000, 10_000, 20_000,
+                    50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000,
                 ],
                 totaldeaths: [
-                    100, 500, 1_000, 2_000, 3_000, 4_000, 5_000, 8_000, 10_000,
-                    30_000, 50_000, 100_000,
+                    5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000,
+                    25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
                 ],
                 totalmass: [
-                    100_000, 500_000, 1_000_000, 2_000_000, 3_000_000,
-                    5_000_000, 10_000_000, 50_000_000, 100_000_000, 500_000_000,
-                    1_000_000_000, 2_000_000_000, 5_000_000_000,
+                    1_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000,
+                    500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000,
+                    25_000_000, 50_000_000, 100_000_000, 250_000_000,
                 ],
             };
 
@@ -11178,25 +11398,25 @@
                         label: 'Your Stats',
                         data: [
                             stats['time-played'] /
-                            getBestValue(
-                                stats['time-played'],
-                                statValues.timeplayed
-                            ),
+                                getBestValue(
+                                    stats['time-played'],
+                                    statValues.timeplayed
+                                ),
                             stats['highest-mass'] /
-                            getBestValue(
-                                stats['highest-mass'],
-                                statValues.highestmass
-                            ),
+                                getBestValue(
+                                    stats['highest-mass'],
+                                    statValues.highestmass
+                                ),
                             stats['total-deaths'] /
-                            getBestValue(
-                                stats['total-deaths'],
-                                statValues.totaldeaths
-                            ),
+                                getBestValue(
+                                    stats['total-deaths'],
+                                    statValues.totaldeaths
+                                ),
                             stats['total-mass'] /
-                            getBestValue(
-                                stats['total-mass'],
-                                statValues.totalmass
-                            ),
+                                getBestValue(
+                                    stats['total-mass'],
+                                    statValues.totalmass
+                                ),
                         ],
                         backgroundColor: [
                             'rgba(255, 99, 132, 0.2)',
@@ -11228,7 +11448,7 @@
                         ? `${(actualValue / 1000).toFixed(1)}k`
                         : actualValue.toString();
                 } else {
-                    return actualValue.toString();
+                    return stats['total-deaths'].toString();
                 }
             };
 
@@ -11264,18 +11484,18 @@
                                             const actualValue =
                                                 context.dataset.data[
                                                     dataIndex
-                                                    ] *
+                                                ] *
                                                 getBestValue(
                                                     stats[
                                                         labelType
                                                             .toLowerCase()
                                                             .replace(' ', '-')
-                                                        ],
+                                                    ],
                                                     statValues[
                                                         labelType
                                                             .toLowerCase()
                                                             .replace(' ', '')
-                                                        ]
+                                                    ]
                                                 );
                                             return formatLabel(
                                                 labelType,
@@ -11379,15 +11599,15 @@
 
             Object.entries(colorPickerConfig).forEach(
                 ([
-                     selector,
-                     {
-                         path,
-                         opacity,
-                         color,
-                         default: defaultColor,
-                         elementTarget,
-                     },
-                 ]) => {
+                    selector,
+                    {
+                        path,
+                        opacity,
+                        color,
+                        default: defaultColor,
+                        elementTarget,
+                    },
+                ]) => {
                     const storagePath = path.split('.');
                     const colorPickerInstance = new Alwan(`#${selector}`, {
                         id: `edit-${selector}`,
@@ -11479,20 +11699,25 @@
 
         async getBlockedChatData() {
             try {
-                const res = await fetch(`${this.appRoutes.blockedChatData}?v=${Math.floor(Math.random() * 9e5)}`, {
-                    headers: {
-                        'Content-Type': 'application/json'
+                const res = await fetch(
+                    `${this.appRoutes.blockedChatData}?v=${Math.floor(
+                        Math.random() * 9e5
+                    )}`,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
                     }
-                });
+                );
                 const resData = await res.json();
                 const { names, messages } = resData;
 
                 this.blockedChatData = {
                     names,
-                    messages
-                }
-            } catch(e) {
-                console.error('Couldn\'t fetch blocked chat data.');
+                    messages,
+                };
+            } catch (e) {
+                console.error("Couldn't fetch blocked chat data.");
             }
         },
 
@@ -11555,6 +11780,7 @@
         setupGame() {
             this.game();
             this.macros();
+            this.setupSession();
         },
 
         setupNetworking() {
@@ -11586,7 +11812,7 @@
             new SigWsHandler();
 
             this.initModules();
-        }
+        },
     };
 
     mods = new Mod();

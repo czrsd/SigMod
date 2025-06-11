@@ -695,11 +695,14 @@
                     ?.owned || [];
 
             ownedCells.forEach((id) => {
-                const cell = window.sigfix.world.cells.get(id)?.merged;
-                if (cell) {
+                const cell = window.sigfix.world.cells.get(id);
+                const frame = window.sigfix.world.synchronized
+                    ? cell?.merged
+                    : cell?.views.get(window.sigfix.world.selected)?.frames[0];
+                if (frame) {
                     ownN++;
-                    ownX += cell.nx;
-                    ownY += cell.ny;
+                    ownX += frame.nx;
+                    ownY += frame.ny;
                 }
             });
 
@@ -5476,7 +5479,7 @@
             });
         },
 
-        themes: function() {
+        themes: function () {
             const elements = [
                 '#menu',
                 '#title',
@@ -5618,7 +5621,7 @@
                 const imageTab = byId('theme_editor_image');
                 const gradientAngleDiv = byId('theme-editor-gradient_angle');
 
-                themeTypeSelect.addEventListener('change', function() {
+                themeTypeSelect.addEventListener('change', function () {
                     const selectedOption = themeTypeSelect.value;
                     switch (selectedOption) {
                         case 'Static Color':
@@ -5644,15 +5647,15 @@
                 });
 
                 const colorInputs = document.querySelectorAll(
-                    '#theme_editor_color .colorInput',
+                    '#theme_editor_color .colorInput'
                 );
                 colorInputs.forEach((input) => {
-                    input.addEventListener('input', function() {
+                    input.addEventListener('input', function () {
                         const bgColorInput = byId(
-                            'theme-editor-bgcolorinput',
+                            'theme-editor-bgcolorinput'
                         ).value;
                         const textColorInput = byId(
-                            'theme-editor-colorinput',
+                            'theme-editor-colorinput'
                         ).value;
 
                         applyColorTheme(bgColorInput, textColorInput);
@@ -5660,10 +5663,10 @@
                 });
 
                 const gradientInputs = document.querySelectorAll(
-                    '#theme_editor_gradient .colorInput',
+                    '#theme_editor_gradient .colorInput'
                 );
                 gradientInputs.forEach((input) => {
-                    input.addEventListener('input', function() {
+                    input.addEventListener('input', function () {
                         const gColor1 = byId('theme-editor-gcolor1').value;
                         const gColor2 = byId('theme-editor-g_color').value;
                         const gTextColor = byId('theme-editor-gcolor2').value;
@@ -5675,21 +5678,21 @@
                             gColor2,
                             gTextColor,
                             gAngle,
-                            gradientType,
+                            gradientType
                         );
                     });
                 });
 
                 const imageInputs = document.querySelectorAll(
-                    '#theme_editor_image .colorInput',
+                    '#theme_editor_image .colorInput'
                 );
                 imageInputs.forEach((input) => {
-                    input.addEventListener('input', function() {
+                    input.addEventListener('input', function () {
                         const imageLinkInput = byId(
-                            'theme-editor-imagelink',
+                            'theme-editor-imagelink'
                         ).value;
                         const textColorImageInput = byId(
-                            'theme-editor-textcolorImage',
+                            'theme-editor-textcolorImage'
                         ).value;
 
                         let img;
@@ -5717,7 +5720,7 @@
                     timeoutId = setTimeout(() => {
                         const imageLinkInput = image_link.value;
                         const textColorImageInput = byId(
-                            'theme-editor-textcolorImage',
+                            'theme-editor-textcolorImage'
                         ).value;
 
                         let img;
@@ -5735,7 +5738,7 @@
                 const gradientTypeSelect = byId('gradient-type');
                 const angleInput = byId('g_angle');
 
-                gradientTypeSelect.addEventListener('change', function() {
+                gradientTypeSelect.addEventListener('change', function () {
                     const selectedType = gradientTypeSelect.value;
                     gradientAngleDiv.style.display =
                         selectedType === 'linear' ? 'flex' : 'none';
@@ -5750,11 +5753,11 @@
                         gColor2,
                         gTextColor,
                         gAngle,
-                        selectedType,
+                        selectedType
                     );
                 });
 
-                angleInput.addEventListener('input', function() {
+                angleInput.addEventListener('input', function () {
                     const gradient_angle_text = byId('gradient_angle_text');
                     gradient_angle_text.innerText = `Angle (${angleInput.value}deg): `;
                     const gColor1 = byId('theme-editor-gcolor1').value;
@@ -5768,13 +5771,13 @@
                         gColor2,
                         gTextColor,
                         gAngle,
-                        gradientType,
+                        gradientType
                     );
                 });
 
                 function applyColorTheme(bgColor, textColor) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_color .themes_preview',
+                        '#theme_editor_color .themes_preview'
                     );
                     previewDivs.forEach((previewDiv) => {
                         previewDiv.style.backgroundColor = bgColor;
@@ -5788,10 +5791,10 @@
                     gColor2,
                     gTextColor,
                     gAngle,
-                    gradientType,
+                    gradientType
                 ) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_gradient .themes_preview',
+                        '#theme_editor_gradient .themes_preview'
                     );
                     previewDivs.forEach((previewDiv) => {
                         const gradient =
@@ -5806,7 +5809,7 @@
 
                 function applyImageTheme(imageLink, textColor) {
                     const previewDivs = document.querySelectorAll(
-                        '#theme_editor_image .themes_preview',
+                        '#theme_editor_image .themes_preview'
                     );
                     previewDivs.forEach((previewDiv) => {
                         previewDiv.style.backgroundImage = `url('${imageLink}')`;
@@ -5856,22 +5859,22 @@
                     themeCard.classList.add('theme');
                     themeCard.innerHTML = `
                         <div class="themeContent" style="background: ${
-                        background.includes('http')
-                            ? `url(${theme.preview || background})`
-                            : background
-                    }; background-size: cover; background-position: center"></div>
+                            background.includes('http')
+                                ? `url(${theme.preview || background})`
+                                : background
+                        }; background-size: cover; background-position: center"></div>
                         <div class="themeName text" style="color: #fff">${name}</div>
                     `;
 
                     themeCard.addEventListener('click', () =>
-                        toggleTheme(theme),
+                        toggleTheme(theme)
                     );
                     themeCard.addEventListener('contextmenu', (ev) => {
                         ev.preventDefault();
                         if (confirm('Do you want to delete this Theme?')) {
                             themeCard.remove();
                             const index = modSettings.themes.custom.findIndex(
-                                (t) => t.name === name,
+                                (t) => t.name === name
                             );
                             if (index !== -1) {
                                 modSettings.themes.custom.splice(index, 1);
@@ -5888,19 +5891,19 @@
                 };
 
                 byId('saveColorTheme').addEventListener('click', () =>
-                    saveTheme('color'),
+                    saveTheme('color')
                 );
                 byId('saveGradientTheme').addEventListener('click', () =>
-                    saveTheme('gradient'),
+                    saveTheme('gradient')
                 );
                 byId('saveImageTheme').addEventListener('click', () =>
-                    saveTheme('image'),
+                    saveTheme('image')
                 );
             });
 
             const b_inner = document.querySelector('.body__inner');
             let bodyColorElements = b_inner.querySelectorAll(
-                '.body__inner > :not(.body__inner), #s-skin-select-icon-text',
+                '.body__inner > :not(.body__inner), #s-skin-select-icon-text'
             );
 
             const toggleColor = (element, background, text) => {
@@ -5918,7 +5921,7 @@
             };
 
             const openSVG = document.querySelector(
-                '#clans_and_settings > Button:nth-of-type(2) > svg',
+                '#clans_and_settings > Button:nth-of-type(2) > svg'
             );
             const openSVGPath = openSVG.querySelector('path');
             openSVG.setAttribute('width', '36');
@@ -5958,7 +5961,7 @@
                                     el.style.setProperty(
                                         'color',
                                         theme.text,
-                                        'important',
+                                        'important'
                                     );
                                     appliedElements.add(el);
                                     allApplied = false;
@@ -5990,7 +5993,7 @@
 
                         openSVGPath.setAttribute(
                             'fill',
-                            isBright(theme.text) ? theme.text : '#222',
+                            isBright(theme.text) ? theme.text : '#222'
                         );
 
                         modSettings.themes.current = theme.name;
@@ -6181,18 +6184,18 @@
                                 const themeIndex =
                                     modSettings.themes.custom.findIndex(
                                         (addedTheme) =>
-                                            addedTheme.name === theme.name,
+                                            addedTheme.name === theme.name
                                     );
                                 if (themeIndex !== -1) {
                                     modSettings.themes.custom.splice(
                                         themeIndex,
-                                        1,
+                                        1
                                     );
                                     updateStorage();
                                 }
                             }
                         },
-                        false,
+                        false
                     );
                 }
 
@@ -6220,15 +6223,15 @@
             if (savedTheme) {
                 let selectedTheme;
                 selectedTheme = themes.defaults.find(
-                    (theme) => theme.name === savedTheme,
+                    (theme) => theme.name === savedTheme
                 );
                 if (!selectedTheme) {
                     selectedTheme =
                         themes.orderly.find(
-                            (theme) => theme.name === savedTheme,
+                            (theme) => theme.name === savedTheme
                         ) ||
                         modSettings.themes.custom.find(
-                            (theme) => theme.name === savedTheme,
+                            (theme) => theme.name === savedTheme
                         );
                 }
 
@@ -6265,19 +6268,19 @@
                 'inputBorderRadius',
                 `${inputBorderRadius.value}px`,
                 ['.form-control'],
-                'borderRadius',
+                'borderRadius'
             );
             setCSS(
                 'menuBorderRadius',
                 `${menuBorderRadius.value}px`,
                 [...elements, '.text-block'],
-                'borderRadius',
+                'borderRadius'
             );
             setCSS(
                 'inputBorder',
                 inputBorder.checked ? '1px' : '0px',
                 ['.form-control'],
-                'borderWidth',
+                'borderWidth'
             );
 
             inputBorderRadius.addEventListener('input', () =>
@@ -6285,24 +6288,24 @@
                     'inputBorderRadius',
                     `${inputBorderRadius.value}px`,
                     ['.form-control'],
-                    'borderRadius',
-                ),
+                    'borderRadius'
+                )
             );
             menuBorderRadius.addEventListener('input', () =>
                 setCSS(
                     'menuBorderRadius',
                     `${menuBorderRadius.value}px`,
                     [...elements, '.text-block'],
-                    'borderRadius',
-                ),
+                    'borderRadius'
+                )
             );
             inputBorder.addEventListener('input', () =>
                 setCSS(
                     'inputBorder',
                     inputBorder.checked ? '1px' : '0px',
                     ['.form-control'],
-                    'borderWidth',
-                ),
+                    'borderWidth'
+                )
             );
 
             const reset_input_radius =
@@ -6317,7 +6320,7 @@
                     'inputBorderRadius',
                     `${defaultBorderRadius}px`,
                     ['.form-control'],
-                    'borderRadius',
+                    'borderRadius'
                 );
             });
 
@@ -6328,7 +6331,7 @@
                     'menuBorderRadius',
                     `${defaultBorderRadius}px`,
                     [...elements, '.text-block'],
-                    'borderRadius',
+                    'borderRadius'
                 );
             });
 
@@ -6795,9 +6798,7 @@
         },
 
         async getGoogleFonts() {
-            return await (
-                await fetch(this.appRoutes.fonts)
-            ).json();
+            return await (await fetch(this.appRoutes.fonts)).json();
         },
 
         async getEmojis() {

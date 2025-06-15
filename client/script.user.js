@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
 // @version      10.2.1
-// @description  Ultimate Sigmally-Agar.io mod: macros, friends, tag-system (minimap + chat), visuals, autorespawn, name customization, themes & more!
-// @description:de  Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tag-System (Minimap + Chat), visuelle Anpassungen, Autorespawn, Namensanpassung, Themes & mehr!
-// @description:es  Mod definitivo para Sigmally-Agar.io: macros, amigos, sistema de etiquetas (minimapa + chat), visuales, autorrespawn, personalización de nombres, temas y más!
-// @description:pt  Mod definitivo do Sigmally-Agar.io: macros, amigos, sistema de tags (minimapa + chat), visuais, autorresposta, personalização de nomes, temas e mais!
-// @description:ru  Лучший мод для Sigmally-Agar.io: макросы, друзья, система тегов (миникарта + чат), визуальные настройки, автоворожение, настройка имени, темы и многое другое!
-// @description:tr  Sigmally-Agar.io için en iyi mod: makrolar, arkadaşlar, etiket sistemi (minimap + sohbet), görseller, otomatik yeniden doğma, isim özelleştirme, temalar ve daha fazlası!
+// @description      Ultimate Sigmally-Agar.io mod: macros, friends, tags, themes, visuals & more!
+// @description:de   Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tags, Themes, Visuals & mehr!
+// @description:es   Mod definitivo de Sigmally-Agar.io: macros, amigos, etiquetas, temas, visuales ¡y más!
+// @description:pt   Mod definitivo do Sigmally-Agar.io: macros, amigos, tags, temas, visuais e mais!
+// @description:ru   Лучший мод для Sigmally-Agar.io: макросы, друзья, теги, темы, визуал и многое другое!
+// @description:tr   En iyi Sigmally-Agar.io modu: makrolar, arkadaşlar, etiketler, temalar, görseller ve fazlası!
 // @author       Cursed
 // @match        https://*.sigmally.com/*
 // @icon         https://czrsd.com/static/sigmod/SigMod25-rounded.png
@@ -14,6 +14,7 @@
 // @license      MIT
 // @grant        none
 // @namespace    https://greasyfork.org/users/981958
+// @homepageURL  https://mod.czrsd.com/
 // ==/UserScript==
 
 (function () {

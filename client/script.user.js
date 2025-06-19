@@ -1133,6 +1133,10 @@
         this.dayTimer = null;
         this.challenges = [];
 
+        this.gameStats = {};
+        this.chartInstance = null;
+        this.chartOverlay = null;
+
         this.scrolling = false;
         this.onContext = false;
         this.mouseDown = false;
@@ -2533,6 +2537,7 @@
 			width: 50%;
         }
         .home-card {
+            position: relative;
             display: flex;
             flex-direction: column;
 			justify-content: center;
@@ -6424,10 +6429,12 @@
                                 <path d="M17.4249 7.45169C15.7658 7.45169 15.0874 6.27836 15.9124 4.83919C16.3891 4.00503 16.1049 2.94169 15.2708 2.46503L13.6849 1.55753C12.9608 1.12669 12.0258 1.38336 11.5949 2.10753L11.4941 2.28169C10.6691 3.72086 9.31242 3.72086 8.47825 2.28169L8.37742 2.10753C7.96492 1.38336 7.02992 1.12669 6.30575 1.55753L4.71992 2.46503C3.88575 2.94169 3.60158 4.01419 4.07825 4.84836C4.91242 6.27836 4.23408 7.45169 2.57492 7.45169C1.62159 7.45169 0.833252 8.23086 0.833252 9.19336V10.8067C0.833252 11.76 1.61242 12.5484 2.57492 12.5484C4.23408 12.5484 4.91242 13.7217 4.07825 15.1609C3.60158 15.995 3.88575 17.0584 4.71992 17.535L6.30575 18.4425C7.02992 18.8734 7.96492 18.6167 8.39575 17.8925L8.49658 17.7184C9.32158 16.2792 10.6783 16.2792 11.5124 17.7184L11.6133 17.8925C12.0441 18.6167 12.9791 18.8734 13.7033 18.4425L15.2891 17.535C16.1233 17.0584 16.4074 15.9859 15.9307 15.1609C15.0966 13.7217 15.7749 12.5484 17.4341 12.5484C18.3874 12.5484 19.1758 11.7692 19.1758 10.8067V9.19336C19.1666 8.24003 18.3874 7.45169 17.4249 7.45169ZM9.99992 12.9792C8.35908 12.9792 7.02075 11.6409 7.02075 10C7.02075 8.35919 8.35908 7.02086 9.99992 7.02086C11.6408 7.02086 12.9791 8.35919 12.9791 10C12.9791 11.6409 11.6408 12.9792 9.99992 12.9792Z" fill="#fff"></path>
                             </svg>
                         </button>
-                        <button class="chatButton" id="openEmojiMenu">😎</button>
+                        <button class="chatButton" id="openEmojiMenu">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 512 512"><path fill="#ffffff" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM164.1 325.5C182 346.2 212.6 368 256 368s74-21.8 91.9-42.5c5.8-6.7 15.9-7.4 22.6-1.6s7.4 15.9 1.6 22.6C349.8 372.1 311.1 400 256 400s-93.8-27.9-116.1-53.5c-5.8-6.7-5.1-16.8 1.6-22.6s16.8-5.1 22.6 1.6zm53.5-96.7s0 0 0 0c0 0 0 0 0 0l-.2-.2c-.2-.2-.4-.5-.7-.9c-.6-.8-1.6-2-2.8-3.4c-2.5-2.8-6-6.6-10.2-10.3c-8.8-7.8-18.8-14-27.7-14s-18.9 6.2-27.7 14c-4.2 3.7-7.7 7.5-10.2 10.3c-1.2 1.4-2.2 2.6-2.8 3.4c-.3 .4-.6 .7-.7 .9l-.2 .2c0 0 0 0 0 0c0 0 0 0 0 0s0 0 0 0c-2.1 2.8-5.7 3.9-8.9 2.8s-5.5-4.1-5.5-7.6c0-17.9 6.7-35.6 16.6-48.8c9.8-13 23.9-23.2 39.4-23.2s29.6 10.2 39.4 23.2c9.9 13.2 16.6 30.9 16.6 48.8c0 3.4-2.2 6.5-5.5 7.6s-6.9 0-8.9-2.8c0 0 0 0 0 0s0 0 0 0zm160 0c0 0 0 0 0 0l-.2-.2c-.2-.2-.4-.5-.7-.9c-.6-.8-1.6-2-2.8-3.4c-2.5-2.8-6-6.6-10.2-10.3c-8.8-7.8-18.8-14-27.7-14s-18.9 6.2-27.7 14c-4.2 3.7-7.7 7.5-10.2 10.3c-1.2 1.4-2.2 2.6-2.8 3.4c-.3 .4-.6 .7-.7 .9l-.2 .2c0 0 0 0 0 0c0 0 0 0 0 0s0 0 0 0c-2.1 2.8-5.7 3.9-8.9 2.8s-5.5-4.1-5.5-7.6c0-17.9 6.7-35.6 16.6-48.8c9.8-13 23.9-23.2 39.4-23.2s29.6 10.2 39.4 23.2c9.9 13.2 16.6 30.9 16.6 48.8c0 3.4-2.2 6.5-5.5 7.6s-6.9 0-8.9-2.8c0 0 0 0 0 0s0 0 0 0s0 0 0 0z"/></svg>
+                        </button>
                         <button id="sendButton" class="chatButton">
                             Send
-                            <img src="https://raw.githubusercontent.com/Sigmally/SigMod/main/images/send.svg" width="20" height="20" draggable="false"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 512 512"><path fill="#ffffff" d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480l0-83.6c0-4 1.5-7.8 4.2-10.8L331.8 202.8c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8 17.7 316.6C7.1 311.3 .3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z"/></svg>
                         </button>
                     </div>
                 </div>
@@ -7510,10 +7517,11 @@
                 'stat-total-deaths',
                 'stat-total-mass',
             ];
-            this.storage = localStorage.getItem('game-stats');
 
-            if (!this.storage) {
-                this.storage = {
+            this.gameStats = localStorage.getItem('game-stats');
+
+            if (!this.gameStats) {
+                this.gameStats = {
                     'time-played': 0, // seconds
                     'highest-mass': 0,
                     'total-deaths': 0,
@@ -7521,22 +7529,22 @@
                 };
                 localStorage.setItem(
                     'game-stats',
-                    JSON.stringify(this.storage)
+                    JSON.stringify(this.gameStats)
                 );
             } else {
-                this.storage = JSON.parse(this.storage);
+                this.gameStats = JSON.parse(this.gameStats);
             }
 
             statElements.forEach((rawStat) => {
                 const stat = rawStat.replace('stat-', '');
-                const value = this.storage[stat];
+                const value = this.gameStats[stat];
                 this.updateStatElm(rawStat, value);
             });
         },
 
         updateStat(key, value) {
-            this.storage[key] = value;
-            localStorage.setItem('game-stats', JSON.stringify(this.storage));
+            this.gameStats[key] = value;
+            localStorage.setItem('game-stats', JSON.stringify(this.gameStats));
             this.updateStatElm(key, value);
         },
 
@@ -7592,7 +7600,11 @@
                 let allMyCells = 0;
 
                 sigfix.world.views.forEach((view) => {
-                    allMyCells += view.owned.length;
+                    // Newer sigfix versions use a set and older versions use an array for own cells
+                    // We check if it's an array in case people are still using old versions of sigfixes
+                    allMyCells += Array.isArray(view.owned)
+                        ? view.owned.length
+                        : view.owned.size || 0;
                 });
 
                 // end playing session
@@ -7664,10 +7676,10 @@
                         let sec = 0;
                         playingInterval = setInterval(() => {
                             sec++;
-                            this.storage['time-played']++;
+                            this.gameStats['time-played']++;
                             this.updateStat(
                                 'time-played',
-                                this.storage['time-played']
+                                this.gameStats['time-played']
                             );
 
                             if (playTimer) {
@@ -7690,18 +7702,20 @@
                 if (additionalStats) additionalStats.remove();
 
                 const score = parseFloat(byId('highest_mass').innerText);
-                const highest = this.storage['highest-mass'];
+                const highest = this.gameStats['highest-mass'];
 
                 if (score && score > highest) {
-                    this.storage['highest-mass'] = score;
+                    this.gameStats['highest-mass'] = score;
                     this.updateStat('highest-mass', score);
                 }
 
-                this.storage['total-deaths']++;
-                this.updateStat('total-deaths', this.storage['total-deaths']);
+                this.gameStats['total-deaths']++;
+                this.updateStat('total-deaths', this.gameStats['total-deaths']);
 
-                this.storage['total-mass'] += score;
-                this.updateStat('total-mass', this.storage['total-mass']);
+                this.gameStats['total-mass'] += score;
+                this.updateStat('total-mass', this.gameStats['total-mass']);
+
+                this.updateChart(this.gameStats);
 
                 if (this.lastOneStanding) {
                     client.send({ type: 'result', content: null });
@@ -7772,9 +7786,12 @@
                 let sec = 0;
                 playingInterval = setInterval(() => {
                     sec++;
-                    this.storage['time-played']++;
+                    this.gameStats['time-played']++;
 
-                    this.updateStat('time-played', this.storage['time-played']);
+                    this.updateStat(
+                        'time-played',
+                        this.gameStats['time-played']
+                    );
 
                     if (playTimer) this.updateTimeStat(timerEl, sec);
                 }, 1000);
@@ -7797,24 +7814,26 @@
                         const score = parseFloat(
                             byId('highest_mass').innerText
                         );
-                        const highest = this.storage['highest-mass'];
+                        const highest = this.gameStats['highest-mass'];
 
                         if (score > highest) {
-                            this.storage['highest-mass'] = score;
+                            this.gameStats['highest-mass'] = score;
                             this.updateStat('highest-mass', score);
                         }
 
-                        this.storage['total-deaths']++;
+                        this.gameStats['total-deaths']++;
                         this.updateStat(
                             'total-deaths',
-                            this.storage['total-deaths']
+                            this.gameStats['total-deaths']
                         );
 
-                        this.storage['total-mass'] += score;
+                        this.gameStats['total-mass'] += score;
                         this.updateStat(
                             'total-mass',
-                            this.storage['total-mass']
+                            this.gameStats['total-mass']
                         );
+
+                        this.updateChart(this.gameStats);
 
                         if (this.lastOneStanding) {
                             client.send({ type: 'result', content: null });
@@ -11350,42 +11369,42 @@
             }
         },
 
+        statValues: {
+            timeplayed: [
+                5, 15, 30, 60, 300, 900, 1_800, 3_600, 10_800, 21_600, 43_200,
+                86_400, 172_800, 345_600, 604_800, 1_209_600, 2_419_200,
+                4_838_400, 8_640_000,
+            ],
+            highestmass: [
+                100, 250, 500, 1_000, 2_000, 3_000, 5_000, 10_000, 20_000,
+                50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000,
+            ],
+            totaldeaths: [
+                5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000,
+                25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
+            ],
+            totalmass: [
+                1_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000,
+                1_000_000, 2_000_000, 5_000_000, 10_000_000, 25_000_000,
+                50_000_000, 100_000_000, 250_000_000,
+            ],
+        },
+
+        getUpperBound(stat, values) {
+            for (let value of values) {
+                if (stat < value) return value;
+            }
+
+            return values[values.length - 1];
+        },
+
         chart() {
             const canvas = byId('sigmod-stats');
             const { Chart } = window;
 
-            const stats = JSON.parse(localStorage.getItem('game-stats'));
+            let stats = this.gameStats;
 
-            // max values
-            const statValues = {
-                timeplayed: [
-                    300, 900, 1_800, 3_600, 10_800, 21_600, 43_200, 86_400,
-                    172_800, 345_600, 604_800, 1_209_600, 2_419_200, 4_838_400,
-                    8_640_000,
-                ],
-                highestmass: [
-                    100, 250, 500, 1_000, 2_000, 3_000, 5_000, 10_000, 20_000,
-                    50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000,
-                ],
-                totaldeaths: [
-                    5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000,
-                    25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000,
-                ],
-                totalmass: [
-                    1_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000,
-                    500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000,
-                    25_000_000, 50_000_000, 100_000_000, 250_000_000,
-                ],
-            };
-
-            const getBestValue = (stat, values) => {
-                for (let value of values) {
-                    if (stat < value) return value;
-                }
-                return values[values.length - 1];
-            };
-
-            const emojiLabels = ['⏲', '🏆', '💀', '🔢'];
+            const emojiLabels = ['⏲️', '🏆', '💀', '🔢'];
             const textLabels = [
                 'Time Played',
                 'Highest Mass',
@@ -11400,24 +11419,24 @@
                         label: 'Your Stats',
                         data: [
                             stats['time-played'] /
-                                getBestValue(
+                                this.getUpperBound(
                                     stats['time-played'],
-                                    statValues.timeplayed
+                                    this.statValues.timeplayed
                                 ),
                             stats['highest-mass'] /
-                                getBestValue(
+                                this.getUpperBound(
                                     stats['highest-mass'],
-                                    statValues.highestmass
+                                    this.statValues.highestmass
                                 ),
                             stats['total-deaths'] /
-                                getBestValue(
+                                this.getUpperBound(
                                     stats['total-deaths'],
-                                    statValues.totaldeaths
+                                    this.statValues.totaldeaths
                                 ),
                             stats['total-mass'] /
-                                getBestValue(
+                                this.getUpperBound(
                                     stats['total-mass'],
-                                    statValues.totalmass
+                                    this.statValues.totalmass
                                 ),
                         ],
                         backgroundColor: [
@@ -11441,7 +11460,12 @@
                 if (labelType === 'Time Played') {
                     const hours = Math.floor(actualValue / 3600);
                     const minutes = Math.floor((actualValue % 3600) / 60);
-                    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+                    const seconds = actualValue % 60;
+
+                    if (hours > 0) return `${hours}h ${minutes}m`;
+                    if (minutes > 0) return `${minutes}m ${seconds}s`;
+
+                    return `${seconds}s`;
                 } else if (
                     labelType === 'Highest Mass' ||
                     labelType === 'Total Mass'
@@ -11450,13 +11474,13 @@
                         ? `${(actualValue / 1000).toFixed(1)}k`
                         : actualValue.toString();
                 } else {
-                    return stats['total-deaths'].toString();
+                    return actualValue.toString();
                 }
             };
 
             const createChart = () => {
                 try {
-                    new Chart(canvas, {
+                    this.chartInstance = new Chart(canvas, {
                         type: 'bar',
                         data: data,
                         options: {
@@ -11472,9 +11496,7 @@
                                 },
                             },
                             plugins: {
-                                legend: {
-                                    display: false,
-                                },
+                                legend: { display: false },
                                 tooltip: {
                                     callbacks: {
                                         title: (context) =>
@@ -11487,13 +11509,13 @@
                                                 context.dataset.data[
                                                     dataIndex
                                                 ] *
-                                                getBestValue(
+                                                this.getUpperBound(
                                                     stats[
                                                         labelType
                                                             .toLowerCase()
                                                             .replace(' ', '-')
                                                     ],
-                                                    statValues[
+                                                    this.statValues[
                                                         labelType
                                                             .toLowerCase()
                                                             .replace(' ', '')
@@ -11507,6 +11529,55 @@
                                     },
                                 },
                             },
+                            animation: {
+                                onComplete: () => {
+                                    if (
+                                        Object.values(stats).every(
+                                            (v) => v === 0
+                                        )
+                                    ) {
+                                        if (this.chartOverlay) {
+                                            this.chartOverlay.remove();
+                                            this.chartOverlay = null;
+                                        }
+
+                                        const { left, top, width, height } =
+                                            this.chartInstance.chartArea;
+                                        const canvasRect =
+                                            canvas.getBoundingClientRect();
+                                        const containerRect =
+                                            canvas.parentElement.getBoundingClientRect();
+
+                                        const overlay =
+                                            document.createElement('div');
+                                        Object.assign(overlay.style, {
+                                            position: 'absolute',
+                                            left: `${
+                                                left +
+                                                (canvasRect.left -
+                                                    containerRect.left)
+                                            }px`,
+                                            top: `${
+                                                top +
+                                                (canvasRect.top -
+                                                    containerRect.top)
+                                            }px`,
+                                            width: `${width}px`,
+                                            height: `${height}px`,
+                                            background:
+                                                'repeating-linear-gradient(45deg, rgba(255,0,0,0.2), rgba(255,0,0,0.2) 4px, transparent 4px, transparent 8px)',
+                                            pointerEvents: 'none',
+                                            zIndex: 10,
+                                        });
+
+                                        canvas.parentElement.appendChild(
+                                            overlay
+                                        );
+
+                                        this.chartOverlay = overlay;
+                                    }
+                                },
+                            },
                         },
                     });
                 } catch (error) {
@@ -11518,6 +11589,43 @@
             };
 
             createChart();
+        },
+
+        updateChart(stats) {
+            if (!this.chartInstance) return;
+
+            if (
+                this.chartOverlay &&
+                Object.values(stats).some((v) => v !== 0)
+            ) {
+                this.chartOverlay.remove();
+                this.chartOverlay = null;
+            }
+
+            this.chartInstance.data.datasets[0].data = [
+                stats['time-played'] /
+                    this.getUpperBound(
+                        stats['time-played'],
+                        this.statValues.timeplayed
+                    ),
+                stats['highest-mass'] /
+                    this.getUpperBound(
+                        stats['highest-mass'],
+                        this.statValues.highestmass
+                    ),
+                stats['total-deaths'] /
+                    this.getUpperBound(
+                        stats['total-deaths'],
+                        this.statValues.totaldeaths
+                    ),
+                stats['total-mass'] /
+                    this.getUpperBound(
+                        stats['total-mass'],
+                        this.statValues.totalmass
+                    ),
+            ];
+
+            this.chartInstance.update();
         },
 
         // Color input events & Reset color event handler

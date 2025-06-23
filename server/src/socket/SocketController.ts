@@ -9,6 +9,7 @@ class SocketController {
     public alert: alert;
     public tournamentDetails: string | null = null;
     public tournamentTimer: number | null = null;
+    public PING_COOLDOWN: number = 1000;
 
     constructor() {
         this.sockets = new Map();
@@ -66,14 +67,14 @@ class SocketController {
         });
     }
 
-    getSocketsByTag(tag: string): socket[] {
-        const matchingSockets: socket[] = [];
-
-        this.sockets.forEach((socket) => {
-            if (socket.tag === tag) matchingSockets.push(socket);
-        });
-
-        return matchingSockets;
+    getTagMembersOnServer(
+        tag: string,
+        server: string,
+        excludeSid?: string
+    ): socket[] {
+        return [...this.sockets.values()].filter(
+            (s) => s.tag === tag && s.server === server && s.sid !== excludeSid
+        );
     }
 
     sendToUser(userId: string, data: any) {

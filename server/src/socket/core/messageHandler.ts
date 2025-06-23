@@ -9,13 +9,15 @@ import {
     updateMinimap,
     updateNick,
     updateTag,
+    updateScore,
+    sendPing,
 } from './socketUtils';
 import { socketMessageData } from '../../types';
 import TournamentController from './tournaments/TournamentController';
 
 const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
-    const bin: Uint8Array = new Uint8Array(raw);
-    const jsonString: string = new TextDecoder().decode(bin);
+    const buf: Uint8Array = new Uint8Array(raw);
+    const jsonString: string = new TextDecoder().decode(buf);
 
     try {
         const data = CircularJSON.parse(jsonString);
@@ -34,14 +36,23 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
             case 'version':
                 checkVersion(content, socket);
                 break;
+            case 'get-ping':
+                socket.send({ type: 'ping' });
+                break;
             case 'server-changed':
                 onServerChange(content, socket);
                 break;
             case 'update-tag':
                 updateTag(content, socket);
                 break;
-            case 'get-ping':
-                socket.send({ type: 'ping' });
+            case 'position':
+                updateMinimap(content, socket);
+                break;
+            case 'tag-ping':
+                sendPing(content, socket);
+                break;
+            case 'score':
+                updateScore(content, socket);
                 break;
             case 'update-nick':
                 updateNick(content, socket);
@@ -54,9 +65,6 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
                 break;
             case 'user':
                 onGoogleAuth(content, socket);
-                break;
-            case 'position':
-                updateMinimap(content, socket);
                 break;
             // Tournaments
             case 'ready':

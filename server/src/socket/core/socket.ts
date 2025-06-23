@@ -16,6 +16,9 @@ class Socket {
     sid: string;
     server: string | null = null;
     tag: string | null = null;
+    tagIndex: number | null = null;
+    score: number = 0;
+    lastPingSent = 0;
     nick: string | null = null;
     user: google_user | null = null;
     modUser: modAccount | null = null;
@@ -24,7 +27,6 @@ class Socket {
         y: number | null;
     };
     tournamentId: null | string = null;
-    connectedTimestamp: number;
 
     constructor(ws: WebSocket, req: Request) {
         this.ws = ws;
@@ -35,8 +37,6 @@ class Socket {
             x: null,
             y: null,
         };
-
-        this.connectedTimestamp = Date.now();
     }
 
     public send(data: socketMessageData): void {
@@ -87,24 +87,10 @@ class Socket {
         }
     }
 
-    private async logActivityDuration() {
-        const connectedDuration = Date.now() - this.connectedTimestamp;
-        if (connectedDuration >= 60000) {
-            const activity = new ActivityModel({
-                userId: this.user?._id,
-                connected: this.connectedTimestamp,
-                disconnected: Date.now(),
-            });
-
-            await activity.save();
-        }
-    }
-
     async onClose() {
         this.updateUserStatus();
         this.updateTournamentLobby();
         this.clearMinimap();
-        await this.logActivityDuration();
 
         wsHandler.sockets.delete(this.sid);
     }

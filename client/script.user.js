@@ -41,6 +41,7 @@
             keys: {
                 rapidFeed: 'w',
                 respawn: 'b',
+                ping: 'r',
                 location: 'y',
                 saveImage: null,
                 splits: {
@@ -105,6 +106,11 @@
         },
         settings: {
             tag: null,
+            partyPanel: {
+                x: 0,
+                y: 0,
+            },
+            pingDuration: 2000,
             savedNames: [],
             autoRespawn: false,
             playTimer: false,
@@ -171,7 +177,7 @@
     });
 
     // for development
-    let isDev = false;
+    let isDev = true;
     let port = 3001;
 
     // global sigmod
@@ -290,15 +296,13 @@
     };
 
     const getGameMode = () => {
-        const gameMode = byId('gamemode');
-        if (!gameMode.value) {
-            return 'Tourney';
-        }
-        const options = Object.values(gameMode.querySelectorAll('option'));
-        const selectedOption = options.filter(
-            (option) => option.value === gameMode.value
-        )[0];
-        return selectedOption.textContent.split(' ')[0];
+        const el = byId('gamemode');
+        const value = el.value;
+        if (!value) return 'Tourney';
+
+        const option = el.querySelector(`option[value="${value}"]`);
+        const server = option?.textContent.trim().split(' ')[0];
+        return server || getGameMode();
     };
 
     function keypress(key, keycode) {
@@ -660,30 +664,38 @@
             };
         }
     }
-
     class SigFixHandler {
         constructor() {
             this.lastHadCells = false;
             this.checkInterval = null;
             this.updatePosInterval = null;
             this.sendPosInterval = null;
+            this.sendScoreInterval = null;
+            this.sigfix = null;
+
+            this.lastScore = 0;
+
             this.init();
         }
 
         overrideMoveFunction() {
-            if (!window.sigfix?.net?.move) return;
+            if (!this.sigfix?.net?.move) return;
 
-            const originalMove = window.sigfix.net.move;
+            const originalMove = this.sigfix.net.move;
             let isHandlingFreeze = false;
 
-            window.sigfix.net.move = (...args) => {
+            this.sigfix.net.move = (...args) => {
                 if (freezepos && !isHandlingFreeze) {
                     isHandlingFreeze = true;
-                    originalMove.call(this, playerPosition.x, playerPosition.y);
+                    originalMove.call(
+                        this.sigfix.net,
+                        playerPosition.x,
+                        playerPosition.y
+                    );
                     isHandlingFreeze = false;
                     return;
                 }
-                return originalMove.apply(this, args);
+                return originalMove.apply(this.sigfix.net, args);
             };
         }
 
@@ -691,21 +703,29 @@
             let ownX = 0,
                 ownY = 0,
                 ownN = 0;
-            const ownedCells =
-                window.sigfix.world.views.get(window.sigfix.world.selected)
-                    ?.owned || [];
 
-            ownedCells.forEach((id) => {
-                const cell = window.sigfix.world.cells.get(id);
-                const frame = window.sigfix.world.synchronized
-                    ? cell?.merged
-                    : cell?.views.get(window.sigfix.world.selected)?.frames[0];
-                if (frame) {
-                    ownN++;
-                    ownX += frame.nx;
-                    ownY += frame.ny;
-                }
-            });
+            const selected = this.sigfix.world.selected;
+            if (!selected) return null;
+
+            const ownedCells = this.sigfix.world.views.get(selected)?.owned;
+            if (!ownedCells || ownedCells.size === 0) return null;
+
+            const cells = this.sigfix.world.cells;
+            const synchronized = this.sigfix.world.synchronized;
+
+            for (const id of ownedCells) {
+                const cell = cells.get(id);
+                if (!cell) continue;
+
+                const frame = synchronized
+                    ? cell.merged
+                    : cell.views.get(selected)?.frames[0];
+                if (!frame) continue;
+
+                ownX += frame.nx;
+                ownY += frame.ny;
+                ownN++;
+            }
 
             return ownN > 0 ? { x: ownX / ownN, y: ownY / ownN } : null;
         }
@@ -724,7 +744,7 @@
             }
         }
 
-        sendPlayerPos() {
+        sendPlayerPos = () => {
             if (
                 playerPosition.x !== null &&
                 playerPosition.y !== null &&
@@ -736,35 +756,91 @@
                     content: { x: playerPosition.x, y: playerPosition.y },
                 });
             }
+        };
+
+        sendPlayerScore() {
+            if (!modSettings.settings.tag || client?.ws?.readyState !== 1)
+                return;
+
+            const views = this.sigfix.world.views;
+            const cells = this.sigfix.world.cells;
+            const synchronized = this.sigfix.world.synchronized;
+
+            let totalScore = 0;
+
+            if (views.size > 1) {
+                for (const [symbol, view] of views.entries()) {
+                    if (!view?.owned?.size) continue;
+
+                    for (const id of view.owned) {
+                        const cell = cells.get(id);
+                        if (!cell) continue;
+
+                        const frame = synchronized
+                            ? cell.merged
+                            : cell.views.get(symbol)?.frames[0];
+
+                        if (!frame || frame.deadAt !== undefined) continue;
+
+                        const nr = frame.nr;
+                        totalScore += (nr * nr) / 100;
+                    }
+                }
+            } else {
+                totalScore = this.sigfix.world.score(
+                    this.sigfix.world.selected
+                );
+            }
+
+            if (totalScore > 0) {
+                client.send({
+                    type: 'score',
+                    content: Math.round(totalScore),
+                });
+            } else if (totalScore === 0 && this.lastScore !== 0) {
+                client.send({
+                    type: 'score',
+                    content: 0,
+                });
+            }
+
+            this.lastScore = totalScore;
         }
 
         startIntervals() {
+            if (this.updatePosInterval) clearInterval(this.updatePosInterval);
+            if (this.sendPosInterval) clearInterval(this.sendPosInterval);
+            if (this.sendScoreInterval) clearInterval(this.sendScoreInterval);
+
             this.updatePosInterval = setInterval(
-                this.updatePlayerPos.bind(this)
+                this.updatePlayerPos.bind(this),
+                200
             );
-            this.sendPosInterval = setInterval(
-                this.sendPlayerPos.bind(this),
-                300
+            this.sendPosInterval = setInterval(this.sendPlayerPos, 300);
+            this.sendScoreInterval = setInterval(
+                this.sendPlayerScore.bind(this),
+                500
             );
         }
 
         checkSigFix() {
             if (window.sigfix) {
+                this.sigfix = window.sigfix;
                 this.startIntervals();
                 this.overrideMoveFunction();
                 clearInterval(this.checkInterval);
+                this.checkInterval = null;
             }
         }
 
         init() {
             this.checkInterval = setInterval(() => {
                 if (window.sigfix) {
+                    this.sigfix = window.sigfix;
                     clearInterval(this.checkInterval);
+                    this.checkInterval = null;
                     this.startIntervals();
                     this.overrideMoveFunction();
-                } else {
-                    clearInterval(this.checkInterval);
-                    requestAnimationFrame(window.checkPlaying);
                 }
             }, 100);
         }
@@ -816,15 +892,14 @@
         }
 
         updateClientInfo() {
-            this.updateTagInfo();
+            this.send({
+                type: 'version',
+                content: serverVersion,
+            });
 
             this.send({
                 type: 'server-changed',
                 content: getGameMode(),
-            });
-            this.send({
-                type: 'version',
-                content: serverVersion,
             });
         }
 
@@ -879,6 +954,28 @@
                 case 'ping':
                     this.handlePingMessage();
                     break;
+                case 'tag-members':
+                    mods.renderTagMembers(message.content);
+                    break;
+                case 'join-tag':
+                    mods.joinTag(message.content);
+                    break;
+                case 'leave-tag':
+                    mods.leaveTag(message.content);
+                    break;
+                case 'score-tag':
+                    mods.updateTagScore(message.content);
+                    break;
+                case 'tag-ping': {
+                    const { i, x, y } = message.content;
+                    mods.renderPing(
+                        x,
+                        y,
+                        i,
+                        modSettings.settings.pingDuration || 2000
+                    );
+                    break;
+                }
                 case 'minimap-data':
                     mods.updData(message.content);
                     break;
@@ -1152,10 +1249,12 @@
             messages: [],
         };
 
+        this.tagMembers = new Map();
+        this.miniMapData = [];
+
         this.respawnCommand = '/leaveworld';
         this.aboveRespawnLimit = false;
         this.cellSize = 0;
-        this.miniMapData = [];
         this.border = {};
 
         this.dbCache = null;
@@ -2462,6 +2561,40 @@
             color: #fff;
         }
 
+        .party_panel {
+            position: absolute;
+            padding: 4px;
+            color: #fafafa;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 6px;
+            z-index: 1;
+        }
+
+        .drag-handle {
+            cursor: move;
+        }
+
+        .party_panel .drag-handle {
+            gap: 8px;
+        }
+
+        .tag-ping-container {
+            position: absolute;
+            color: #000000;
+            z-index: 10;
+            transform: translate(-9px, -32px);
+            pointer-events: none;
+            transition: opacity 0.1s ease;
+        }
+        
+        .tag-ping-container span {
+            position: absolute;
+            left: 50%;
+            top: 4px;
+            transform: translateX(-50%);
+            user-select: none;
+        }
+
         .minimapContainer {
             display: flex;
             flex-direction: column;
@@ -3743,6 +3876,7 @@
                 arc.apply(this, arguments);
             };
 
+            let scoreLastTimestamp = 0;
             let sentDead = false;
             window.sawScoreThisFrame = false;
             window.checkPlaying = () => {
@@ -3750,8 +3884,19 @@
                     if (!window.gameSettings.isPlaying)
                         window.gameSettings.isPlaying = true;
                 } else {
-                    if (window.gameSettings.isPlaying)
+                    if (window.gameSettings.isPlaying) {
                         window.gameSettings.isPlaying = false;
+
+                        if (
+                            modSettings.settings.tag &&
+                            client?.ws?.readyState === 1
+                        ) {
+                            client.send({
+                                type: 'score',
+                                content: 0,
+                            });
+                        }
+                    }
                 }
                 window.sawScoreThisFrame = false;
                 requestAnimationFrame(checkPlaying);
@@ -3809,6 +3954,15 @@
                     mods.cellSize = score;
                     mods.aboveRespawnLimit = score >= 5500;
                     window.sawScoreThisFrame = true;
+
+                    if (Date.now() - scoreLastTimestamp > 500) {
+                        scoreLastTimestamp = Date.now();
+
+                        client.send({
+                            type: 'score',
+                            content: score,
+                        });
+                    }
                 }
 
                 if (!window.sigfix && text.startsWith('X:')) {
@@ -4550,6 +4704,13 @@
                                                         </label>
                                                     </div>
                                                 </div>
+                                                <label class="macroRow" title="You need to be in a tag to use this keybind.">
+                                                        <span class="text">Ping</span>
+                                                        <input type="text" name="ping" data-label="Ping" id="modinput18" class="keybinding" value="${
+                                                            modSettings.macros
+                                                                .keys.ping || ''
+                                                        }" maxlength="1" onfocus="this.select()" placeholder="..." />
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -4580,6 +4741,7 @@
                                                         <option value="freeze">Horizontal Line</option>
                                                         <option value="dTrick">Double Trick</option>
                                                         <option value="sTrick">Self Trick</option>
+                                                        <option value="ping">Ping</option>
                                                     </select>
                                                 </div>
                                                 <div class="stats-line justify-sb">
@@ -4597,6 +4759,7 @@
                                                         <option value="freeze">Horizontal Line</option>
                                                         <option value="dTrick">Double Trick</option>
                                                         <option value="sTrick">Self Trick</option>
+                                                        <option value="ping">Ping</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -8022,7 +8185,6 @@
         },
 
         macros() {
-            let that = this;
             const KEY_SPLIT = this.splitKey;
             let ff = null;
             let keydown = false;
@@ -8030,17 +8192,13 @@
             const canvas = byId('canvas');
             const mod_menu = document.querySelector('.mod_menu');
 
-            const freezeType = byId('freezeType');
             let freezeKeyPressed = false;
-            let freezeMouseClicked = false;
             let freezeOverlay = null;
 
             let vOverlay = null;
-            let vLocked = false;
             let activeVLine = false;
 
             let fixedOverlay = null;
-            let fixedLocked = false;
             let activeFixedLine = false;
 
             /* intervals */
@@ -8054,7 +8212,7 @@
                 ) {
                     this.respawn();
                 }
-            });
+            }, 50);
 
             // mouse fast feed interval
             setInterval(() => {
@@ -8283,6 +8441,19 @@
                 }
             }
 
+            function sendPing() {
+                if (!modSettings.settings.tag || client?.ws?.readyState !== 1)
+                    return;
+
+                client.send({
+                    type: 'tag-ping',
+                    content: {
+                        x: mods.mouseX,
+                        y: mods.mouseY,
+                    },
+                });
+            }
+
             document.addEventListener('keyup', (e) => {
                 const key = e.key.toLowerCase();
                 if (key == modSettings.macros.keys.rapidFeed && keydown) {
@@ -8387,6 +8558,11 @@
                         sendLocation();
                         break;
 
+                    case modSettings.macros.keys.ping:
+                        console.log(modSettings.macros.keys.ping);
+                        sendPing();
+                        break;
+
                     case modSettings.macros.keys.toggle.chat:
                         mods.toggleChat();
                         break;
@@ -8441,6 +8617,8 @@
                         doubleTrick();
                     } else if (mouse.left === 'sTrick') {
                         selfTrick();
+                    } else if (mouse.left === 'ping') {
+                        sendPing();
                     }
                 } else if (e.button === 2) {
                     // Right mouse button (2)
@@ -8466,6 +8644,8 @@
                         doubleTrick();
                     } else if (mouse.right === 'sTrick') {
                         selfTrick();
+                    } else if (mouse.right === 'ping') {
+                        sendPing();
                     }
                 }
             });
@@ -8519,6 +8699,9 @@
                         sTrick: () => {
                             mouse[key] = 'sTrick';
                         },
+                        ping: () => {
+                            mouse[key] = 'ping';
+                        },
                     };
 
                     if (optionActions[selectedOption]) {
@@ -8564,7 +8747,7 @@
         },
 
         setInputActions() {
-            const numModInputs = 17;
+            const numModInputs = 18;
             const macroInputs = Array.from(
                 { length: numModInputs },
                 (_, i) => `modinput${i + 1}`
@@ -9130,6 +9313,180 @@
             });
         },
 
+        renderPing(x, y, number, duration) {
+            const existingPing = document.getElementById(`ping-${number}`);
+            if (existingPing) existingPing.remove();
+
+            const el = document.createElement('div');
+            el.classList.add('tag-ping-container');
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.id = `ping-${number}`;
+
+            el.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="34" viewBox="0 0 20 34" fill="none">
+                    <path d="M10 0C15.5228 0 20 4.30008 20 9.60449C20 11.1435 19.6201 12.5963 18.9502 13.8857L9.99902 34L1.03613 13.8633C0.373751 12.5797 0 11.1342 0 9.60449C1.44889e-05 4.30008 4.47716 0 10 0Z" fill="#FFCC00"/>
+                </svg>
+                <span>${number}</span>
+            `;
+
+            document.body.appendChild(el);
+
+            setTimeout(() => {
+                el.style.opacity = 0;
+                setTimeout(() => el.remove(), 100);
+            }, duration);
+        },
+
+        updateScore(members) {
+            const scoreElem = byId('tag_score');
+            const totalScore = members.reduce((sum, m) => sum + m.score, 0);
+            const formattedScore =
+                totalScore >= 1000
+                    ? (totalScore / 1000).toFixed(1) + 'k'
+                    : totalScore;
+            if (scoreElem) scoreElem.textContent = formattedScore;
+            return formattedScore;
+        },
+
+        /**
+         * @typedef {Object} Member
+         * @property {string} id
+         * @property {number} tagIndex
+         * @property {string} nick
+         * @property {number} score
+         */
+        /** @param {Member[]} members */
+        renderTagMembers(members) {
+            members.sort((a, b) => a.tagIndex - b.tagIndex);
+            this.tagMembers.clear();
+            members.forEach((m) => this.tagMembers.set(m.id, m));
+
+            const existing = byId('party_panel');
+            if (existing) existing.remove();
+
+            const panel = document.createElement('div');
+            panel.classList.add('party_panel');
+
+            const x = modSettings.settings.partyPanel?.x || 4;
+            const y = modSettings.settings.partyPanel?.y || 300;
+            panel.style.left = x + 'px';
+            panel.style.top = y + 'px';
+
+            panel.innerHTML = `
+        <div class="flex centerY justify-sb drag-handle">
+            <strong>Party</strong>
+            <div class="centerXY g-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="16"><path fill="#ffffff" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM609.3 512l-137.8 0c5.4-9.4 8.6-20.3 8.6-32l0-8c0-60.7-27.1-115.2-69.8-151.8c2.4-.1 4.7-.2 7.1-.2l61.4 0C567.8 320 640 392.2 640 481.3c0 17-13.8 30.7-30.7 30.7zM432 256c-31 0-59-12.6-79.3-32.9C372.4 196.5 384 163.6 384 128c0-26.8-6.6-52.1-18.3-74.3C384.3 40.1 407.2 32 432 32c61.9 0 112 50.1 112 112s-50.1 112-112 112z"/></svg>
+                <span id="tag_member_len">${members.length}</span>
+            </div>
+            <div class="centerXY g-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16"><path fill="#ffffff" d="M64 32C64 14.3 49.7 0 32 0S0 14.3 0 32L0 64 0 368 0 480c0 17.7 14.3 32 32 32s32-14.3 32-32l0-128 64.3-16.1c41.1-10.3 84.6-5.5 122.5 13.4c44.2 22.1 95.5 24.8 141.7 7.4l34.7-13c12.5-4.7 20.8-16.6 20.8-30l0-247.7c0-23-24.2-38-44.8-27.7l-9.6 4.8c-46.3 23.2-100.8 23.2-147.1 0c-35.1-17.6-75.4-22-113.5-12.5L64 48l0-16z"/></svg>
+                <span id="tag_score"></span>
+            </div>
+        </div>
+        <div class="flex f-column g-2" style="user-select: none;">
+            ${members
+                .map(
+                    (m) => `
+                <div class="flex g-2" id="tag_member_${m.id}">
+                    <span>${m.tagIndex}</span>
+                    <span>${m.nick}</span>
+                    <span id="score-${m.id}">${m.score || ''}</span>
+                </div>
+            `
+                )
+                .join('')}
+        </div>
+    `;
+
+            let isDragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            const header = panel.querySelector('.drag-handle');
+
+            header.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                offsetX = e.clientX - panel.offsetLeft;
+                offsetY = e.clientY - panel.offsetTop;
+                document.body.style.userSelect = 'none';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const x = e.clientX - offsetX;
+                const y = e.clientY - offsetY;
+                panel.style.left = x + 'px';
+                panel.style.top = y + 'px';
+                modSettings.settings.partyPanel.x = x;
+                modSettings.settings.partyPanel.y = y;
+                updateStorage();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                document.body.style.userSelect = '';
+            });
+
+            document.body.appendChild(panel);
+
+            this.updateScore(members);
+        },
+
+        joinTag(data) {
+            const { id, tagIndex, nick } = data;
+            if (this.tagMembers.has(id)) return;
+
+            this.tagMembers.set(id, { id, tagIndex, nick, score: 0 });
+
+            const container = byId('party_panel');
+            if (!container) return;
+
+            const memberDiv = document.createElement('div');
+            memberDiv.classList.add('flex', 'g-2');
+            memberDiv.id = `tag_member_${id}`;
+            memberDiv.innerHTML = `
+                <span>${tagIndex}</span>
+                <span>${nick}</span>
+                <span id="score-${id}"></span>
+            `;
+
+            container
+                .querySelector('div.flex.f-column.g-2')
+                .appendChild(memberDiv);
+
+            byId('tag_member_len').textContent = this.tagMembers.size;
+
+            this.updateScore([...this.tagMembers.values()]);
+        },
+
+        leaveTag(data) {
+            const { id } = data;
+            if (!this.tagMembers.has(id)) return;
+
+            this.tagMembers.delete(id);
+
+            const memberDiv = byId(`tag_member_${id}`);
+            if (memberDiv) memberDiv.remove();
+
+            byId('tag_member_len').textContent = this.tagMembers.size;
+
+            this.updateScore([...this.tagMembers.values()]);
+        },
+
+        updateTagScore(data) {
+            const { id, score } = data;
+            if (!this.tagMembers.has(id)) return;
+
+            this.tagMembers.get(id).score = score;
+
+            const scoreElem = byId(`score-${id}`);
+            if (scoreElem) scoreElem.textContent = score;
+
+            this.updateScore([...this.tagMembers.values()]);
+        },
+
         updData(data) {
             const { x, y, sid: playerId } = data;
             const playerIndex = this.miniMapData.findIndex(
@@ -9253,6 +9610,9 @@
 
                 nick.addEventListener('input', update);
                 update();
+
+                // send tag after nick
+                client.updateTagInfo();
             });
         },
 

@@ -1,7 +1,7 @@
 import socket from './socket';
 import { formatDate, noXSS, sanitizeNick } from '../../utils/helpers';
 import { wsHandler } from '../setup';
-import { google_user, minimapData } from '../../types';
+import { google_user, minimapData, PingData } from '../../types';
 import logger from '../../utils/logger';
 import ChatModel from '../../models/ChatModel';
 import { db } from '../../db/connection';
@@ -37,11 +37,90 @@ const onServerChange = (serverName: string, socket: socket) => {
 };
 
 const updateTag = (tag: string, socket: socket) => {
-    if (tag.length <= 3) socket.tag = tag;
+    if (
+        !tag ||
+        typeof tag !== 'string' ||
+        tag.trim().length > 3 ||
+        !socket.server
+    )
+        return;
+
+    const previousTag = socket.tag;
+
+    if (previousTag === tag) {
+        return;
+    }
+
+    socket.tag = tag;
+
+    const tagSockets = wsHandler.getTagMembersOnServer(tag, socket.server);
+    tagSockets.forEach((s, i) => (s.tagIndex = i + 1));
+
+    tagSockets.forEach((s) => {
+        if (s === socket) return;
+        s.send({
+            type: 'join-tag',
+            content: {
+                id: socket.sid,
+                index: socket.tagIndex,
+                nick: socket.nick,
+            },
+        });
+    });
+
+    socket.send({
+        type: 'tag-members',
+        content: tagSockets.map((m) => ({
+            id: m.sid,
+            tagIndex: m.tagIndex,
+            nick: m.nick,
+            score: m.score,
+        })),
+    });
+
+    if (previousTag && previousTag !== tag) {
+        const prevSockets = wsHandler.getTagMembersOnServer(
+            previousTag,
+            socket.server
+        );
+        for (const s of prevSockets) {
+            s.send({
+                type: 'leave-tag',
+                content: {
+                    id: socket.sid,
+                    index: socket.tagIndex,
+                    nick: socket.nick,
+                },
+            });
+        }
+    }
+};
+
+const sendPing = (data: PingData, socket: socket) => {
+    if (!socket.tag || !socket.server) return;
+
+    if (Date.now() - socket.lastPingSent < wsHandler.PING_COOLDOWN) return;
+
+    const { x, y } = data;
+
+    const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
+
+    for (const s of sockets) {
+        s.send({
+            type: 'tag-ping',
+            content: {
+                i: socket.tagIndex,
+                x,
+                y,
+            },
+        });
+    }
+
+    socket.lastPingSent = Date.now();
 };
 
 const updateMinimap = (data: minimapData, socket: socket) => {
-    if (!socket.tag || socket.tag.length > 3) return;
+    if (!socket.tag || !socket.server) return;
 
     const { x, y } = data;
 
@@ -50,30 +129,55 @@ const updateMinimap = (data: minimapData, socket: socket) => {
         y,
     };
 
-    const sockets = wsHandler.getSocketsByTag(socket.tag);
+    const sockets = wsHandler.getTagMembersOnServer(
+        socket.tag,
+        socket.server,
+        socket.sid
+    );
 
-    if (!sockets.every((s) => s.server === socket.server)) return;
-
-    wsHandler.sendToTag(
-        {
+    for (const s of sockets) {
+        s.send({
             type: 'minimap-data',
             content: {
-                x: x,
-                y: y,
+                x,
+                y,
                 nick: socket.nick,
                 sid: socket.sid,
             },
-        },
-        socket.tag,
-        socket.sid // exclude own socket
-    );
+        });
+    }
+};
+
+const updateScore = (score: number, socket: socket) => {
+    if (
+        !socket.tag ||
+        !socket.server ||
+        typeof score !== 'number' ||
+        score > 9_999_999_999
+    )
+        return;
+
+    socket.score = score;
+
+    const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
+
+    for (const s of sockets) {
+        s.send({
+            type: 'score-tag',
+            content: {
+                id: socket.sid,
+                score,
+            },
+        });
+    }
 };
 
 const onPartyChatMessage = (data: { message: string }, socket: socket) => {
     const message = noXSS(data.message.slice(0, 250));
-    if (!socket.tag || !message) throw new Error('Invalid chat message.');
+    if (!socket.tag || !socket.server || !message)
+        throw new Error('Invalid chat message.');
 
-    const { tag, modUser, nick } = socket;
+    const { modUser, nick } = socket;
 
     const roleColors: Record<string, string> = {
         Owner: '#6b72c4',
@@ -84,8 +188,10 @@ const onPartyChatMessage = (data: { message: string }, socket: socket) => {
     const role = modUser?.role;
     const color = roleColors[role as keyof typeof roleColors] ?? null;
 
-    wsHandler.sendToTag(
-        {
+    const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
+
+    sockets.forEach((s) => {
+        s.send({
             type: 'chat-message',
             content: {
                 admin: role === 'Owner',
@@ -95,9 +201,8 @@ const onPartyChatMessage = (data: { message: string }, socket: socket) => {
                 message,
                 color,
             },
-        },
-        tag
-    );
+        });
+    });
 };
 
 const handlePrivateMessage = async (
@@ -236,6 +341,8 @@ export {
     updateNick,
     onServerChange,
     updateTag,
+    updateScore,
+    sendPing,
     updateMinimap,
     onPartyChatMessage,
     handlePrivateMessage,

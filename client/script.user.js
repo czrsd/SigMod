@@ -2762,7 +2762,7 @@
             pointer-events: none;
             transition: opacity 0.1s ease;
         }
-        
+
         .tag-ping-container span {
             position: absolute;
             left: 50%;
@@ -8737,7 +8737,6 @@
                         break;
 
                     case modSettings.macros.keys.ping:
-                        console.log(modSettings.macros.keys.ping);
                         sendPing();
                         break;
 

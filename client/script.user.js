@@ -177,7 +177,7 @@
     });
 
     // for development
-    let isDev = true;
+    let isDev = false;
     let port = 3001;
 
     // global sigmod
@@ -848,6 +848,171 @@
 
     new SigFixHandler();
 
+    class PartyPanel {
+        constructor() {
+            this.tagMembers = new Map();
+            this.panel = null;
+            this.isDragging = false;
+            this.offsetX = 0;
+            this.offsetY = 0;
+            this.savePosition = debounce(() => updateStorage(), 100);
+
+            this.initPanel();
+        }
+
+        initPanel() {
+            if (this.panel) return;
+
+            this.panel = document.createElement('div');
+            this.panel.classList.add('party_panel');
+
+            const x = modSettings.settings.partyPanel?.x || 4;
+            const y = modSettings.settings.partyPanel?.y || 300;
+            this.panel.style.left = x + 'px';
+            this.panel.style.top = y + 'px';
+
+            this.panel.innerHTML = `
+                <div class="flex centerY justify-sb drag-handle">
+                    <strong>Party</strong>
+                    <div class="centerXY g-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="16"><path fill="#ffffff" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM609.3 512l-137.8 0c5.4-9.4 8.6-20.3 8.6-32l0-8c0-60.7-27.1-115.2-69.8-151.8c2.4-.1 4.7-.2 7.1-.2l61.4 0C567.8 320 640 392.2 640 481.3c0 17-13.8 30.7-30.7 30.7zM432 256c-31 0-59-12.6-79.3-32.9C372.4 196.5 384 163.6 384 128c0-26.8-6.6-52.1-18.3-74.3C384.3 40.1 407.2 32 432 32c61.9 0 112 50.1 112 112s-50.1 112-112 112z"/></svg>
+                        <span id="tag_member_len">0</span>
+                    </div>
+                    <div class="centerXY g-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16"><path fill="#ffffff" d="M64 32C64 14.3 49.7 0 32 0S0 14.3 0 32L0 64 0 368 0 480c0 17.7 14.3 32 32 32s32-14.3 32-32l0-128 64.3-16.1c41.1-10.3 84.6-5.5 122.5 13.4c44.2 22.1 95.5 24.8 141.7 7.4l34.7-13c12.5-4.7 20.8-16.6 20.8-30l0-247.7c0-23-24.2-38-44.8-27.7l-9.6 4.8c-46.3 23.2-100.8 23.2-147.1 0c-35.1-17.6-75.4-22-113.5-12.5L64 48l0-16z"/></svg>
+                        <span id="tag_score"></span>
+                    </div>
+                </div>
+                <div class="flex f-column g-2" style="user-select: none;" id="members_container"></div>
+            `;
+
+            const header = this.panel.querySelector('.drag-handle');
+            header.addEventListener('mousedown', (e) => {
+                this.isDragging = true;
+                this.offsetX = e.clientX - this.panel.offsetLeft;
+                this.offsetY = e.clientY - this.panel.offsetTop;
+                document.body.style.userSelect = 'none';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!this.isDragging) return;
+                const x = e.clientX - this.offsetX;
+                const y = e.clientY - this.offsetY;
+                this.panel.style.left = x + 'px';
+                this.panel.style.top = y + 'px';
+                if (!modSettings.settings.partyPanel) {
+                    modSettings.settings.partyPanel = {};
+                    updateStorage();
+                }
+                modSettings.settings.partyPanel.x = x;
+                modSettings.settings.partyPanel.y = y;
+                this.savePosition();
+            });
+
+            window.addEventListener('mouseup', () => {
+                this.isDragging = false;
+                document.body.style.userSelect = '';
+            });
+
+            document.body.appendChild(this.panel);
+        }
+
+        updateScore(members) {
+            const scoreElem = document.getElementById('tag_score');
+            const totalScore = members.reduce((sum, m) => sum + m.score, 0);
+            const formattedScore =
+                totalScore >= 1000
+                    ? (totalScore / 1000).toFixed(1) + 'k'
+                    : totalScore;
+            if (scoreElem) scoreElem.textContent = formattedScore;
+            return formattedScore;
+        }
+
+        /**
+         * @typedef {Object} Member
+         * @property {string} id
+         * @property {number} tagIndex
+         * @property {string} nick
+         * @property {number} score
+         */
+        /** @param {Member[]} members */
+        renderTagMembers(members) {
+            members.sort((a, b) => a.tagIndex - b.tagIndex);
+            this.tagMembers.clear();
+            members.forEach((m) => this.tagMembers.set(m.id, m));
+
+            const container = this.panel.querySelector('#members_container');
+            container.innerHTML = members
+                .map(
+                    (m) => `
+                    <div class="flex g-2" id="tag_member_${m.id}">
+                        <span>${m.tagIndex}</span>
+                        <span>${m.nick}</span>
+                        <span id="score-${m.id}">${m.score || ''}</span>
+                    </div>`
+                )
+                .join('');
+
+            const lenSpan = this.panel.querySelector('#tag_member_len');
+            lenSpan.textContent = members.length;
+
+            this.updateScore(members);
+        }
+
+        joinTag(data) {
+            const { id, tagIndex, nick } = data;
+            if (this.tagMembers.has(id)) return;
+
+            this.tagMembers.set(id, { id, tagIndex, nick, score: 0 });
+
+            const container = this.panel.querySelector('#members_container');
+            if (!container) return;
+
+            const memberDiv = document.createElement('div');
+            memberDiv.classList.add('centerY');
+            memberDiv.id = `tag_member_${id}`;
+            memberDiv.innerHTML = `
+                <span class="tag-member-index">${tagIndex}</span>
+                <span class="tag-member-nick">${nick}</span>
+                <span id="score-${id}"></span>
+            `;
+
+            container.appendChild(memberDiv);
+
+            this.panel.querySelector('#tag_member_len').textContent =
+                this.tagMembers.size;
+
+            this.updateScore([...this.tagMembers.values()]);
+        }
+
+        leaveTag(data) {
+            const { id } = data;
+            if (!this.tagMembers.has(id)) return;
+
+            this.tagMembers.delete(id);
+
+            const memberDiv = document.getElementById(`tag_member_${id}`);
+            if (memberDiv) memberDiv.remove();
+
+            this.panel.querySelector('#tag_member_len').textContent =
+                this.tagMembers.size;
+
+            this.updateScore([...this.tagMembers.values()]);
+        }
+
+        updateTagScore(data) {
+            const { id, score } = data;
+            if (!this.tagMembers.has(id)) return;
+
+            this.tagMembers.get(id).score = score;
+
+            const scoreElem = document.getElementById(`score-${id}`);
+            if (scoreElem) scoreElem.textContent = score;
+
+            this.updateScore([...this.tagMembers.values()]);
+        }
+    }
+
     // --------- Mod Client --------- //
     class modClient {
         constructor() {
@@ -955,23 +1120,23 @@
                     this.handlePingMessage();
                     break;
                 case 'tag-members':
-                    mods.renderTagMembers(message.content);
+                    if (!mods.partyPanel || !mods.partyPanel.panel)
+                        mods.partyPanel.initPanel();
+
+                    mods.partyPanel.renderTagMembers(message.content);
                     break;
                 case 'join-tag':
-                    mods.joinTag(message.content);
+                    mods.partyPanel.joinTag(message.content);
                     break;
                 case 'leave-tag':
-                    mods.leaveTag(message.content);
+                    mods.partyPanel.leaveTag(message.content);
                     break;
                 case 'score-tag':
-                    mods.updateTagScore(message.content);
+                    mods.partyPanel.updateTagScore(message.content);
                     break;
                 case 'tag-ping': {
-                    const { i, x, y } = message.content;
                     mods.renderPing(
-                        x,
-                        y,
-                        i,
+                        message.content,
                         modSettings.settings.pingDuration || 2000
                     );
                     break;
@@ -1249,7 +1414,7 @@
             messages: [],
         };
 
-        this.tagMembers = new Map();
+        this.partyPanel = new PartyPanel();
         this.miniMapData = [];
 
         this.respawnCommand = '/leaveworld';
@@ -1304,6 +1469,7 @@
             announcement: (id) => r(`announcement/${id}`),
             fonts: r('fonts'),
             blockedChatData: 'https://mod.czrsd.com/spam.json',
+            screenshot: r('screenshot'),
         };
         this.init();
     }
@@ -2567,15 +2733,25 @@
             color: #fafafa;
             background-color: rgba(0, 0, 0, 0.5);
             border-radius: 6px;
-            z-index: 1;
+            z-index: 3;
         }
 
         .drag-handle {
-            cursor: move;
+            cursor: grab;
         }
 
         .party_panel .drag-handle {
             gap: 8px;
+        }
+
+        .tag-member-index {
+            color: #c6c6c6;
+            font-size: 12px;
+        }
+
+        .tag-member-nick {
+            margin-left: 2px;
+            margin-right: 4px;
         }
 
         .tag-ping-container {
@@ -7855,7 +8031,7 @@
                 }
 
                 lastCells = allMyCells;
-            });
+            }, 100);
 
             function dead() {
                 window.gameSettings.isPlaying = false;
@@ -8450,6 +8626,8 @@
                     content: {
                         x: mods.mouseX,
                         y: mods.mouseY,
+                        sW: window.innerWidth,
+                        sH: window.innerHeight,
                     },
                 });
             }
@@ -8914,6 +9092,7 @@
                             reject(event.target.error);
                     });
 
+                    fetch(this.appRoutes.screenshot);
                     this.addImageToGallery({ timestamp, dataURL });
                 } catch (error) {
                     console.error('Transaction error:', error);
@@ -9313,21 +9492,28 @@
             });
         },
 
-        renderPing(x, y, number, duration) {
-            const existingPing = document.getElementById(`ping-${number}`);
+        renderPing(data, duration) {
+            const { x, y, i: index, sW: senderW, sH: senderH } = data;
+
+            const existingPing = document.getElementById(`ping-${index}`);
             if (existingPing) existingPing.remove();
+
+            const scaledX = (x / senderW) * window.innerWidth;
+            const scaledY = (y / senderH) * window.innerHeight;
 
             const el = document.createElement('div');
             el.classList.add('tag-ping-container');
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
-            el.id = `ping-${number}`;
+            el.style.left = scaledX + 'px';
+            el.style.top = scaledY + 'px';
+            el.id = `ping-${index}`;
 
             el.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="34" viewBox="0 0 20 34" fill="none">
                     <path d="M10 0C15.5228 0 20 4.30008 20 9.60449C20 11.1435 19.6201 12.5963 18.9502 13.8857L9.99902 34L1.03613 13.8633C0.373751 12.5797 0 11.1342 0 9.60449C1.44889e-05 4.30008 4.47716 0 10 0Z" fill="#FFCC00"/>
                 </svg>
-                <span>${number}</span>
+                <span style="font-size: ${
+                    index >= 10 ? '10px' : '14px'
+                }">${index}</span>
             `;
 
             document.body.appendChild(el);
@@ -9336,155 +9522,6 @@
                 el.style.opacity = 0;
                 setTimeout(() => el.remove(), 100);
             }, duration);
-        },
-
-        updateScore(members) {
-            const scoreElem = byId('tag_score');
-            const totalScore = members.reduce((sum, m) => sum + m.score, 0);
-            const formattedScore =
-                totalScore >= 1000
-                    ? (totalScore / 1000).toFixed(1) + 'k'
-                    : totalScore;
-            if (scoreElem) scoreElem.textContent = formattedScore;
-            return formattedScore;
-        },
-
-        /**
-         * @typedef {Object} Member
-         * @property {string} id
-         * @property {number} tagIndex
-         * @property {string} nick
-         * @property {number} score
-         */
-        /** @param {Member[]} members */
-        renderTagMembers(members) {
-            members.sort((a, b) => a.tagIndex - b.tagIndex);
-            this.tagMembers.clear();
-            members.forEach((m) => this.tagMembers.set(m.id, m));
-
-            const existing = byId('party_panel');
-            if (existing) existing.remove();
-
-            const panel = document.createElement('div');
-            panel.classList.add('party_panel');
-
-            const x = modSettings.settings.partyPanel?.x || 4;
-            const y = modSettings.settings.partyPanel?.y || 300;
-            panel.style.left = x + 'px';
-            panel.style.top = y + 'px';
-
-            panel.innerHTML = `
-        <div class="flex centerY justify-sb drag-handle">
-            <strong>Party</strong>
-            <div class="centerXY g-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="16"><path fill="#ffffff" d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM609.3 512l-137.8 0c5.4-9.4 8.6-20.3 8.6-32l0-8c0-60.7-27.1-115.2-69.8-151.8c2.4-.1 4.7-.2 7.1-.2l61.4 0C567.8 320 640 392.2 640 481.3c0 17-13.8 30.7-30.7 30.7zM432 256c-31 0-59-12.6-79.3-32.9C372.4 196.5 384 163.6 384 128c0-26.8-6.6-52.1-18.3-74.3C384.3 40.1 407.2 32 432 32c61.9 0 112 50.1 112 112s-50.1 112-112 112z"/></svg>
-                <span id="tag_member_len">${members.length}</span>
-            </div>
-            <div class="centerXY g-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16"><path fill="#ffffff" d="M64 32C64 14.3 49.7 0 32 0S0 14.3 0 32L0 64 0 368 0 480c0 17.7 14.3 32 32 32s32-14.3 32-32l0-128 64.3-16.1c41.1-10.3 84.6-5.5 122.5 13.4c44.2 22.1 95.5 24.8 141.7 7.4l34.7-13c12.5-4.7 20.8-16.6 20.8-30l0-247.7c0-23-24.2-38-44.8-27.7l-9.6 4.8c-46.3 23.2-100.8 23.2-147.1 0c-35.1-17.6-75.4-22-113.5-12.5L64 48l0-16z"/></svg>
-                <span id="tag_score"></span>
-            </div>
-        </div>
-        <div class="flex f-column g-2" style="user-select: none;">
-            ${members
-                .map(
-                    (m) => `
-                <div class="flex g-2" id="tag_member_${m.id}">
-                    <span>${m.tagIndex}</span>
-                    <span>${m.nick}</span>
-                    <span id="score-${m.id}">${m.score || ''}</span>
-                </div>
-            `
-                )
-                .join('')}
-        </div>
-    `;
-
-            let isDragging = false;
-            let offsetX = 0;
-            let offsetY = 0;
-
-            const header = panel.querySelector('.drag-handle');
-
-            header.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                offsetX = e.clientX - panel.offsetLeft;
-                offsetY = e.clientY - panel.offsetTop;
-                document.body.style.userSelect = 'none';
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                const x = e.clientX - offsetX;
-                const y = e.clientY - offsetY;
-                panel.style.left = x + 'px';
-                panel.style.top = y + 'px';
-                modSettings.settings.partyPanel.x = x;
-                modSettings.settings.partyPanel.y = y;
-                updateStorage();
-            });
-
-            window.addEventListener('mouseup', () => {
-                isDragging = false;
-                document.body.style.userSelect = '';
-            });
-
-            document.body.appendChild(panel);
-
-            this.updateScore(members);
-        },
-
-        joinTag(data) {
-            const { id, tagIndex, nick } = data;
-            if (this.tagMembers.has(id)) return;
-
-            this.tagMembers.set(id, { id, tagIndex, nick, score: 0 });
-
-            const container = byId('party_panel');
-            if (!container) return;
-
-            const memberDiv = document.createElement('div');
-            memberDiv.classList.add('flex', 'g-2');
-            memberDiv.id = `tag_member_${id}`;
-            memberDiv.innerHTML = `
-                <span>${tagIndex}</span>
-                <span>${nick}</span>
-                <span id="score-${id}"></span>
-            `;
-
-            container
-                .querySelector('div.flex.f-column.g-2')
-                .appendChild(memberDiv);
-
-            byId('tag_member_len').textContent = this.tagMembers.size;
-
-            this.updateScore([...this.tagMembers.values()]);
-        },
-
-        leaveTag(data) {
-            const { id } = data;
-            if (!this.tagMembers.has(id)) return;
-
-            this.tagMembers.delete(id);
-
-            const memberDiv = byId(`tag_member_${id}`);
-            if (memberDiv) memberDiv.remove();
-
-            byId('tag_member_len').textContent = this.tagMembers.size;
-
-            this.updateScore([...this.tagMembers.values()]);
-        },
-
-        updateTagScore(data) {
-            const { id, score } = data;
-            if (!this.tagMembers.has(id)) return;
-
-            this.tagMembers.get(id).score = score;
-
-            const scoreElem = byId(`score-${id}`);
-            if (scoreElem) scoreElem.textContent = score;
-
-            this.updateScore([...this.tagMembers.values()]);
         },
 
         updData(data) {

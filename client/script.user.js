@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.2
+// @version      10.2.2.2
 // @description      Ultimate Sigmally-Agar.io mod: macros, friends, tags, themes, visuals & more!
 // @description:de   Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tags, Themes, Visuals & mehr!
 // @description:es   Mod definitivo de Sigmally-Agar.io: macros, amigos, etiquetas, temas, visuales ¡y más!
@@ -856,8 +856,6 @@
             this.offsetX = 0;
             this.offsetY = 0;
             this.savePosition = debounce(() => updateStorage(), 100);
-
-            this.initPanel();
         }
 
         initPanel() {
@@ -917,13 +915,15 @@
             document.body.appendChild(this.panel);
         }
 
+        formatScore(score) {
+            return score >= 1000 ? (score / 1000).toFixed(1) + 'k' : score;
+        }
+
         updateScore(members) {
             const scoreElem = document.getElementById('tag_score');
-            const totalScore = members.reduce((sum, m) => sum + m.score, 0);
-            const formattedScore =
-                totalScore >= 1000
-                    ? (totalScore / 1000).toFixed(1) + 'k'
-                    : totalScore;
+            const formattedScore = this.formatScore(
+                members.reduce((sum, m) => sum + m.score, 0)
+            );
             if (scoreElem) scoreElem.textContent = formattedScore;
             return formattedScore;
         }
@@ -946,8 +946,8 @@
                 .map(
                     (m) => `
                     <div class="flex g-2" id="tag_member_${m.id}">
-                        <span>${m.tagIndex}</span>
-                        <span>${m.nick}</span>
+                        <span class="tag-member-index">${m.tagIndex}</span>
+                        <span class="tag-member-nick">${m.nick}</span>
                         <span id="score-${m.id}">${m.score || ''}</span>
                     </div>`
                 )
@@ -959,8 +959,7 @@
             this.updateScore(members);
         }
 
-        joinTag(data) {
-            const { id, tagIndex, nick } = data;
+        joinTag({ id, tagIndex, nick }) {
             if (this.tagMembers.has(id)) return;
 
             this.tagMembers.set(id, { id, tagIndex, nick, score: 0 });
@@ -985,8 +984,7 @@
             this.updateScore([...this.tagMembers.values()]);
         }
 
-        leaveTag(data) {
-            const { id } = data;
+        leaveTag({ id }) {
             if (!this.tagMembers.has(id)) return;
 
             this.tagMembers.delete(id);
@@ -1000,16 +998,25 @@
             this.updateScore([...this.tagMembers.values()]);
         }
 
-        updateTagScore(data) {
-            const { id, score } = data;
-            if (!this.tagMembers.has(id)) return;
+        updateMemberScore({ id, score }) {
+            const member = this.tagMembers.get(id);
+            if (!member) return;
 
-            this.tagMembers.get(id).score = score;
-
-            const scoreElem = document.getElementById(`score-${id}`);
-            if (scoreElem) scoreElem.textContent = score;
-
+            member.score = score;
             this.updateScore([...this.tagMembers.values()]);
+
+            const el = document.getElementById(`score-${id}`);
+            if (!el) return;
+
+            el.textContent = score > 0 ? this.formatScore(score) : '';
+        }
+
+        destroy() {
+            if (this.panel) {
+                this.panel.remove();
+                this.panel = null;
+                this.tagMembers.clear();
+            }
         }
     }
 
@@ -1101,6 +1108,8 @@
         onClose() {
             if (this.updateAvailable) return;
 
+            mods.partyPanel.destroy();
+
             this.retries++;
             if (this.retries > this.maxRetries)
                 throw new Error('SigMod server down.');
@@ -1132,7 +1141,7 @@
                     mods.partyPanel.leaveTag(message.content);
                     break;
                 case 'score-tag':
-                    mods.partyPanel.updateTagScore(message.content);
+                    mods.partyPanel.updateMemberScore(message.content);
                     break;
                 case 'tag-ping': {
                     mods.renderPing(
@@ -2305,9 +2314,9 @@
             justify-content: space-between;
         }
 
-        .macro-extanded_input {
-            width: 75px;
-            text-align: center;
+        .macro-extended-input {
+            width: 128px;
+            padding: 6px;
         }
         .form-control option {
             background: #111;
@@ -4907,7 +4916,7 @@
                                                         Mouse Button 1
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" viewBox="0 0 356.57 356.57"><path d="M181.563,0C120.762,0,59.215,30.525,59.215,88.873V237.5c0,65.658,53.412,119.071,119.071,119.071 c65.658,0,119.07-53.413,119.07-119.071V88.873C297.356,27.809,237.336,0,181.563,0z M274.945,237.5 c0,53.303-43.362,96.657-96.659,96.657c-53.299,0-96.657-43.354-96.657-96.657v-69.513c20.014,6.055,57.685,15.215,102.221,15.215 c28.515,0,59.831-3.809,91.095-14.567V237.5z M274.945,144.794c-81.683,31.233-168.353,7.716-193.316-0.364V88.873 c0-43.168,51.489-66.46,99.934-66.46c46.481,0,93.382,20.547,93.382,66.46V144.794z M190.893,48.389v81.248 c0,6.187-5.023,11.208-11.206,11.208c-6.185,0-11.207-5.021-11.207-11.208V48.389c0-6.186,5.021-11.207,11.207-11.207 C185.869,37.182,190.893,42.203,190.893,48.389z M154.938,40.068V143.73c-15.879,2.802-62.566-10.271-62.566-10.271 C80.233,41.004,154.938,40.068,154.938,40.068z"></path></svg>
                                                     </span>
-                                                    <select class="form-control macro-extanded_input" style="padding: 2px; text-align: left; width: 100px" id="m1_macroSelect">
+                                                    <select class="form-control macro-extended-input" id="m1_macroSelect">
                                                         <option value="none">None</option>
                                                         <option value="fastfeed">Fast Feed</option>
                                                         <option value="split">Split (1)</option>
@@ -4923,9 +4932,9 @@
                                                 <div class="stats-line justify-sb">
                                                     <span class="centerXY g-5">
                                                         Mouse Button 2
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" viewBox="0 0 356.57 356.57"><path d="M181.563,0C120.762,0,59.215,30.525,59.215,88.873V237.5c0,65.658,53.412,119.071,119.071,119.071 c65.658,0,119.07-53.413,119.07-119.071V88.873C297.356,27.809,237.336,0,181.563,0z M274.945,237.5 c0,53.303-43.362,96.657-96.659,96.657c-53.299,0-96.657-43.354-96.657-96.657v-69.513c20.014,6.055,57.685,15.215,102.221,15.215 c28.515,0,59.831-3.809,91.095-14.567V237.5z M274.945,144.794c-81.683,31.233-168.353,7.716-193.316-0.364V88.873 c0-43.168,51.489-66.46,99.934-66.46c46.481,0,93.382,20.547,93.382,66.46V144.794z M190.893,48.389v81.248 c0,6.187-5.023,11.208-11.206,11.208c-6.185,0-11.207-5.021-11.207-11.208V48.389c0-6.186,5.021-11.207,11.207-11.207 C185.869,37.182,190.893,42.203,190.893,48.389z M154.938,40.068V143.73c-15.879,2.802-62.566-10.271-62.566-10.271 C80.233,41.004,154.938,40.068,154.938,40.068z"></path></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" viewBox="0 0 356.572 356.572" ><path d="M181.563,0C120.762,0,59.215,30.525,59.215,88.873V237.5c0,65.658,53.412,119.071,119.071,119.071 c65.658,0,119.07-53.413,119.07-119.071V88.873C297.356,27.809,237.336,0,181.563,0z M274.945,237.5 c0,53.303-43.362,96.657-96.659,96.657c-53.299,0-96.657-43.354-96.657-96.657v-69.513c20.014,6.055,57.685,15.215,102.221,15.215 c28.515,0,59.831-3.809,91.095-14.567V237.5z M274.945,144.794c-81.683,31.233-168.353,7.716-193.316-0.364V88.873 c0-43.168,51.489-66.46,99.934-66.46c46.481,0,93.382,20.547,93.382,66.46V144.794z M190.893,48.389v81.248 c0,6.187-5.023,11.208-11.206,11.208c-6.185,0-11.207-5.021-11.207-11.208V48.389c0-6.186,5.021-11.207,11.207-11.207 C185.869,37.182,190.893,42.203,190.893,48.389z M264.272,130.378c0,0-46.687,13.072-62.566,10.271V36.988 C201.706,36.988,276.412,37.923,264.272,130.378z"></path></svg>
                                                     </span>
-                                                    <select class="form-control" style="padding: 2px; text-align: left; width: 100px" id="m2_macroSelect">
+                                                    <select class="form-control macro-extended-input" id="m2_macroSelect">
                                                         <option value="none">None</option>
                                                         <option value="fastfeed">Fast Feed</option>
                                                         <option value="split">Split (1)</option>
@@ -7936,6 +7945,13 @@
             let lastCells = 0;
 
             setInterval(() => {
+                if (
+                    menuClosed() &&
+                    !isDeadUI() &&
+                    byId('overlays').style.display !== 'none'
+                ) {
+                    byId('overlays').style.display = 'none';
+                }
                 let allMyCells = 0;
 
                 sigfix.world.views.forEach((view) => {
@@ -8031,7 +8047,7 @@
                 }
 
                 lastCells = allMyCells;
-            }, 100);
+            }, 75);
 
             function dead() {
                 window.gameSettings.isPlaying = false;
@@ -9601,6 +9617,12 @@
                 e.stopPropagation();
                 const tagValue = tagElement.value;
                 const tagText = document.querySelector('.tagText');
+
+                if (tagValue.trim().length > 0 && !this.partyPanel.panel) {
+                    this.partyPanel.initPanel();
+                } else {
+                    this.partyPanel.destroy();
+                }
 
                 tagText.innerText = tagValue ? `Tag: ${tagValue}` : '';
 
@@ -12148,8 +12170,8 @@
                         storageElement[storagePath.at(-1)] = e.hex;
 
                         if (
-                            path.includes('gradientName') &&
-                            modSettings.game.name.gradient.enabled
+                            path.includes('gradient') &&
+                            !modSettings.game.name.gradient.enabled
                         ) {
                             modSettings.game.name.gradient.enabled = true;
                         }
@@ -12180,9 +12202,9 @@
                         storageElement[storagePath.at(-1)] = defaultColor;
 
                         if (
-                            path.includes('gradientName') &&
-                            !modSettings.game.name.gradient.left &&
-                            !modSettings.game.name.gradient.right
+                            path.includes('gradient') &&
+                            (modSettings.game.name.gradient.left ||
+                                modSettings.game.name.gradient.right)
                         ) {
                             modSettings.game.name.gradient.enabled = false;
                         }

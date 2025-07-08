@@ -8,7 +8,6 @@ import logger from '../../utils/logger';
 import { google_user, modAccount, socketMessageData } from '../../types';
 import messageHandler from './messageHandler';
 import TournamentController from './tournaments/TournamentController';
-import ActivityModel from '../../models/ActivityModel';
 
 class Socket {
     ws: WebSocket;
@@ -71,19 +70,33 @@ class Socket {
     }
 
     private clearMinimap() {
-        if (this.tag) {
-            wsHandler.sendToTag(
-                {
-                    type: 'minimap-data',
-                    content: {
-                        x: null,
-                        y: null,
-                        nick: this.nick,
-                        sid: this.sid,
-                    },
+        if (!this.tag) return;
+
+        wsHandler.sendToTag(
+            {
+                type: 'minimap-data',
+                content: {
+                    x: null,
+                    y: null,
+                    nick: this.nick,
+                    sid: this.sid,
                 },
-                this.tag
-            );
+            },
+            this.tag
+        );
+    }
+
+    private clearTagMember() {
+        if (!this.tag || !this.server) return;
+        const sockets = wsHandler.getTagMembersOnServer(this.tag, this.server);
+
+        for (const s of sockets) {
+            s.send({
+                type: 'leave-tag',
+                content: {
+                    id: this.sid,
+                },
+            });
         }
     }
 
@@ -91,6 +104,7 @@ class Socket {
         this.updateUserStatus();
         this.updateTournamentLobby();
         this.clearMinimap();
+        this.clearTagMember();
 
         wsHandler.sockets.delete(this.sid);
     }

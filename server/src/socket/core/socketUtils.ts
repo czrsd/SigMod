@@ -37,12 +37,11 @@ const onServerChange = (serverName: string, socket: socket) => {
 };
 
 const updateTag = (tag: string, socket: socket) => {
-    if (
-        !tag ||
-        typeof tag !== 'string' ||
-        tag.trim().length > 3 ||
-        !socket.server
-    )
+    if (!tag) {
+        socket.tag = null;
+        return;
+    }
+    if (typeof tag !== 'string' || tag.trim().length > 3 || !socket.server)
         return;
 
     const previousTag = socket.tag;
@@ -62,7 +61,7 @@ const updateTag = (tag: string, socket: socket) => {
             type: 'join-tag',
             content: {
                 id: socket.sid,
-                index: socket.tagIndex,
+                tagIndex: socket.tagIndex,
                 nick: socket.nick,
             },
         });
@@ -88,8 +87,6 @@ const updateTag = (tag: string, socket: socket) => {
                 type: 'leave-tag',
                 content: {
                     id: socket.sid,
-                    index: socket.tagIndex,
-                    nick: socket.nick,
                 },
             });
         }

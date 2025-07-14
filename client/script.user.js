@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.2.2
+// @version      10.2.2.3
 // @description      Ultimate Sigmally-Agar.io mod: macros, friends, tags, themes, visuals & more!
 // @description:de   Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tags, Themes, Visuals & mehr!
 // @description:es   Mod definitivo de Sigmally-Agar.io: macros, amigos, etiquetas, temas, visuales ¡y más!
@@ -2055,6 +2055,10 @@
             font-weight: 500;
             text-align: center;
             color: #fff;
+            max-width: 170px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
         }
         .alwan {
             border-radius: 8px;
@@ -7802,7 +7806,11 @@
                     const name = nameLabel.innerText;
                     navigator.clipboard.writeText(name).then(() => {
                         this.modAlert(
-                            `Added the name '${name}' to your clipboard!`,
+                            `Added the name ${
+                                name.length > 20
+                                    ? name.slice(0, 20) + '...'
+                                    : name
+                            } to your clipboard!`,
                             'success'
                         );
                     });

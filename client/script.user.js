@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.2.3
+// @version      10.2.2.4
 // @description      Ultimate Sigmally-Agar.io mod: macros, friends, tags, themes, visuals & more!
 // @description:de   Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tags, Themes, Visuals & mehr!
 // @description:es   Mod definitivo de Sigmally-Agar.io: macros, amigos, etiquetas, temas, visuales ¡y más!
@@ -4088,8 +4088,9 @@
                     }
                 }
                 window.sawScoreThisFrame = false;
-                requestAnimationFrame(checkPlaying);
+                requestAnimationFrame(window.checkPlaying);
             };
+            window.checkPlaying();
 
             CanvasRenderingContext2D.prototype.fillText = function (
                 text,

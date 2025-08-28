@@ -4803,7 +4803,9 @@
                                         <div class="home-card">
                                             <div class="justify-sb">
                                                 <div class="flex" style="align-items: center; gap: 5px;">
-                                                    <svg width="50px" height="50px" viewBox="0 0 24.00 24.00" xmlns="http://www.w3.org/2000/svg" fill="#fafafa" stroke="#fafafa" stroke-width="0.9120000000000001"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zM6.023 15.416C7.491 17.606 9.695 19 12.16 19c2.464 0 4.669-1.393 6.136-3.584A8.968 8.968 0 0 0 12.16 13a8.968 8.968 0 0 0-6.137 2.416zM12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
+                                                    <div id="mod-profile-img">
+                                                        <svg width="50px" height="50px" viewBox="0 0 24.00 24.00" xmlns="http://www.w3.org/2000/svg" fill="#fafafa" stroke="#fafafa" stroke-width="0.9120000000000001"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zM6.023 15.416C7.491 17.606 9.695 19 12.16 19c2.464 0 4.669-1.393 6.136-3.584A8.968 8.968 0 0 0 12.16 13a8.968 8.968 0 0 0-6.137 2.416zM12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
+                                                    </div>
                                                     <span id="my-profile-name">Guest</span>
                                                 </div>
                                                 <span id="my-profile-role">Guest</span>
@@ -5781,7 +5783,7 @@
         },
 
         setProfile(user) {
-            const img = byId('my-profile-img');
+            const img = byId('mod-profile-img');
             const name = byId('my-profile-name');
             const role = byId('my-profile-role');
             const bioText = byId('my-profile-bio');
@@ -5789,7 +5791,9 @@
 
             const bio = user.bio ? user.bio : 'No bio.';
 
-            img.src = user.imageURL;
+            img.innerHTML = `
+                <img src="${user.imageURL}" width="50" height="50" alt="Profile image" draggable="false" style="border-radius: 50%" />
+            `;
             name.innerText = user.username;
             role.innerText = user.role;
             bioText.innerHTML = bio;
@@ -8002,8 +8006,8 @@
                 ) {
                     window.gameSettings.isPlaying = true;
 
-                    const waitForStats = () => {
-                        return new Promise((resolve) => {
+                    const waitForStats = () =>
+                        new Promise((resolve) => {
                             const interval = setInterval(() => {
                                 const stats = [
                                     ...document.querySelectorAll(
@@ -8018,11 +8022,10 @@
                                     clearInterval(interval);
                                     resolve(stats);
                                 }
-                            }, 10);
+                            }, 100);
                         });
-                    };
-
                     waitForStats().then((stats) => {
+                        window.gameSettings.isPlaying = true;
                         const additionalStats = stats.cloneNode();
                         additionalStats.id = 'sigmod_stats';
                         additionalStats.textContent = '';
@@ -8058,7 +8061,6 @@
                                 'time-played',
                                 this.gameStats['time-played']
                             );
-
                             if (playTimer) {
                                 const m = Math.floor(sec / 60);
                                 const s = sec % 60;

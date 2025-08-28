@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.2.4
+// @version      10.2.2.5
 // @description      Ultimate Sigmally-Agar.io mod: macros, friends, tags, themes, visuals & more!
 // @description:de   Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tags, Themes, Visuals & mehr!
 // @description:es   Mod definitivo de Sigmally-Agar.io: macros, amigos, etiquetas, temas, visuales ¡y más!
@@ -3665,6 +3665,7 @@
 			gap: 6px;
 			max-height: 144px;
 			overflow-y: auto;
+            padding-right: 4px;
 		}
 
 		.mod-announcement {
@@ -4786,7 +4787,7 @@
 									<div class="home-card-wrapper">
                                         <span>Announcements</span>
                                         <div class="home-card" style="justify-content: start;">
-											<div id="mod-announcements">No announcements yet...</div>
+											<div id="mod-announcements" class="scroll">No announcements yet...</div>
 										</div>
                                     </div>
                                 </div>
@@ -4802,7 +4803,7 @@
                                         <div class="home-card">
                                             <div class="justify-sb">
                                                 <div class="flex" style="align-items: center; gap: 5px;">
-                                                    <img src="https://sigmally.com/assets/images/agario-profile.png" alt="Agar-io profile" width="50" height="50" id="my-profile-img" style="border-radius: 50%;" draggable="false" />
+                                                    <svg width="50px" height="50px" viewBox="0 0 24.00 24.00" xmlns="http://www.w3.org/2000/svg" fill="#fafafa" stroke="#fafafa" stroke-width="0.9120000000000001"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zM6.023 15.416C7.491 17.606 9.695 19 12.16 19c2.464 0 4.669-1.393 6.136-3.584A8.968 8.968 0 0 0 12.16 13a8.968 8.968 0 0 0-6.137 2.416zM12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
                                                     <span id="my-profile-name">Guest</span>
                                                 </div>
                                                 <span id="my-profile-role">Guest</span>
@@ -5241,7 +5242,9 @@
                                         <span class="modDescText">Save your names locally</span>
                                         <div class="flex g-5">
                                             <input class="modInput" placeholder="Enter a name..." id="saveNameValue" />
-                                            <button id="saveName" class="modButton-secondary f-big" style="border-radius: 5px; background: url('https://sigmally.com/assets/images/icon/plus.svg'); background-color: #111; background-size: 50% auto; background-repeat: no-repeat; background-position: center;"></button>
+                                            <button id="saveName" class="modButton-secondary centerXY" style="border-radius: 5px; padding: 5px 10px;">
+                                                <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#fafafa"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4 12H20M12 4V20" stroke="#fafafa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+                                            </button>
                                         </div>
                                         <div id="savedNames" class="f-column scroll"></div>
                                     </div>
@@ -5274,7 +5277,9 @@
 								<span>Background presets</span>
                                 <div class="themes scroll" id="themes">
                                     <div class="theme" id="createTheme">
-                                        <div class="themeContent" style="background: url('https://sigmally.com/assets/images/icon/plus.svg'); background-size: 50% auto; background-repeat: no-repeat; background-position: center;"></div>
+                                        <div class="themeContent centerXY">
+                                              <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#fafafa"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4 12H20M12 4V20" stroke="#fafafa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+                                        </div>
                                         <div class="themeName text" style="color: #fff">Create</div>
                                     </div>
                                 </div>
@@ -5418,9 +5423,9 @@
 									</div>
 									<div class="w-100 centerXY">
 										<div class="justify-sb" style="width: 50%;">
-											<a href="https://mod.czrsd.com/" target="_blank">Website</a>
-											<a href="https://mod.czrsd.com/changelog" target="_blank">Changelog</a>
-											<a href="https://mod.czrsd.com/tos" target="_blank">Terms of Service</a>
+											<a href="https://sigmally.xyz/" target="_blank">Website</a>
+											<a href="https://greasyfork.org/scripts/454648-sigmod-client-macros/versions" target="_blank">Changelog</a>
+											<a href="https://sigmally.xyz/tos" target="_blank">Terms of Service</a>
 										</div>
 									</div>
 								</div>
@@ -5509,6 +5514,14 @@
             const fontSelectContainer = document.querySelector(
                 '#font-select-container'
             );
+
+            if (modSettings.game.font === 'Ubuntu') {
+                const link = document.createElement('link');
+                link.href = `https://fonts.googleapis.com/css2?family=Ubuntu&display=swap`;
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+                document.body.style.fontFamily = 'Ubuntu, Arial, sans-serif';
+            }
 
             try {
                 const fonts = await this.getGoogleFonts();

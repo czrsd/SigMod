@@ -4070,6 +4070,8 @@
             let sentDead = false;
             window.sawScoreThisFrame = false;
             window.checkPlaying = () => {
+                if (window.sigfix) return;
+                
                 if (window.sawScoreThisFrame) {
                     if (!window.gameSettings.isPlaying)
                         window.gameSettings.isPlaying = true;

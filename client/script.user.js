@@ -4071,7 +4071,7 @@
             window.sawScoreThisFrame = false;
             window.checkPlaying = () => {
                 if (window.sigfix) return;
-                
+
                 if (window.sawScoreThisFrame) {
                     if (!window.gameSettings.isPlaying)
                         window.gameSettings.isPlaying = true;
@@ -11757,13 +11757,13 @@
 
             function createAnnouncementTab(data) {
                 const menuContent = document.querySelector('.mod_menu_content');
-                const modHome = byId('mod_home');
                 const content = document.createElement('div');
 
                 content.setAttribute('id', 'announcement-tab');
-                content.classList.add('mod_tab');
+                content.classList.add('mod_tab', 'scroll');
                 content.style.display = 'none';
                 content.style.opacity = '0';
+                content.style.paddingRight = '4px';
 
                 const announcementHTML = `
 					<div class="centerY justify-sb">

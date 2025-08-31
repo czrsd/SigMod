@@ -4,54 +4,64 @@ A mod for **Sigmally.com** by **Cursed**.
 
 > **⚠️ Disclaimer:** This script is for an [Agar.io private server](https://one.sigmally.com) and **not** for Agar.io.
 
----  
+Check out the official website for more info: [sigmally.xyz](https://sigmally.xyz)
+
+---
 
 ## 🎮 What is SigMod?
 
 SigMod is the **#1 mod** for **Sigmally**, making the game more fun and customizable! Every feature is designed to improve your gameplay with smooth performance, powerful tools and a fully customizable experience.
 
----  
+---
 
 ## 🛠 Installation Guide
 
 ### 1️⃣ Install a Userscript Manager
+
 To use SigMod, you need a **userscript manager**:
-- **Tampermonkey** (Recommended) – [Get it here](https://tampermonkey.net)
-- **ViolentMonkey** (Alternative) – [Get it here](https://violentmonkey.github.io)
+
+-   **Tampermonkey** (Recommended) – [Get it here](https://tampermonkey.net)
+-   **ViolentMonkey** (Alternative) – [Get it here](https://violentmonkey.github.io)
 
 ### 2️⃣ Install SigMod
+
 Install the script via **Greasyfork** for automatic updates. [Install here](https://greasyfork.org/scripts/454648).
-- Click **Install this script** on Greasyfork.
-- In the Tampermonkey tab that opens, click **Install**.
+
+-   Click **Install this script** on Greasyfork.
+-   In the Tampermonkey tab that opens, click **Install**.
 
 ### ⚠️ Important: Enable Developer Mode
+
 Tampermonkey requires **Developer Mode** to work correctly. Enable it as follows:
 
 #### 🔹 Chrome / Edge / Opera
-- Click the **puzzle icon** in your browser’s top bar → **Manage extensions** → Enable **Developer Mode**.
-- OR open the extensions page and enable it manually:
-    - **Chrome:** `chrome://extensions`
-    - **Edge:** `edge://extensions` (Left navigation bar)
-    - **Opera:** `opera://extensions`
+
+-   Click the **puzzle icon** in your browser’s top bar → **Manage extensions** → Enable **Developer Mode**.
+-   OR open the extensions page and enable it manually:
+    -   **Chrome:** `chrome://extensions`
+    -   **Edge:** `edge://extensions` (Left navigation bar)
+    -   **Opera:** `opera://extensions`
 
 #### 🔹 Firefox
-- Open: `mozilla://extensions`
-- Enable **Developer Mode** in settings.
 
----  
+-   Open: `mozilla://extensions`
+-   Enable **Developer Mode** in settings.
+
+---
 
 ## 🎯 How to Use SigMod
 
-Once installed, you can open the **mod menu** by:  
-- **Clicking the gear icon** OR  
-- **Pressing the "V" key**
+Once installed, you can open the **mod menu** by:
+
+-   **Clicking the gear icon** OR
+-   **Pressing the "V" key**
 
 In the mod menu, you can **change hotkeys, adjust settings, and explore all features**.
 
 **Preview:**  
 ![](https://czrsd.com/static/sigmod/advertising/sigmod_menu.png)
 
----  
+---
 
 ## 🔥 Features
 
@@ -60,15 +70,15 @@ In the mod menu, you can **change hotkeys, adjust settings, and explore all feat
 ✅ **Mouse Macros** – Faster and easier actions  
 ✅ **Game Settings** – Change colors, images, fonts and more  
 ✅ **Freeze Player / Linesplit**  
-✅ **Auto Respawn**    
-✅ **Instant Respawn**    
-✅ **Custom Skins & Viruses**    
-✅ **Name Options**    
+✅ **Auto Respawn**  
+✅ **Instant Respawn**  
+✅ **Custom Skins & Viruses**  
+✅ **Name Options**  
 ✅ **Themes** – Customize the UI  
 ✅ **Friends Feature** – Connect with players  
 ✅ **Auto Claim Daily Coins**
 
----  
+---
 
 ## ⚡ Sigmally Fixes
 

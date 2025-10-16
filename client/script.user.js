@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.2.5
+// @version      10.2.2.6
 // @description      Ultimate Sigmally-Agar.io mod: macros, friends, tags, themes, visuals & more!
 // @description:de   Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tags, Themes, Visuals & mehr!
 // @description:es   Mod definitivo de Sigmally-Agar.io: macros, amigos, etiquetas, temas, visuales ¡y más!
@@ -14,7 +14,7 @@
 // @license      MIT
 // @grant        none
 // @namespace    https://greasyfork.org/users/981958
-// @homepageURL  https://mod.czrsd.com/
+// @homepageURL  https://sigmally.xyz/
 // ==/UserScript==
 
 (function () {
@@ -28,8 +28,8 @@
     const libs = {
         chart: 'https://cdn.jsdelivr.net/npm/chart.js',
         colorPicker: {
-            js: 'https://unpkg.com/alwan/dist/js/alwan.min.js',
-            css: 'https://unpkg.com/alwan/dist/css/alwan.min.css',
+            js: 'https://unpkg.com/alwan@2.2.0/dist/js/alwan.min.js',
+            css: 'https://unpkg.com/alwan@2.2.0/dist/css/alwan.min.css',
         },
         jszip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
     };

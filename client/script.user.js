@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SigMod Client (Macros)
-// @version      10.2.2.6
+// @version      10.2.2.7
 // @description      Ultimate Sigmally-Agar.io mod: macros, friends, tags, themes, visuals & more!
 // @description:de   Ultimatives Sigmally-Agar.io-Mod: Makros, Freunde, Tags, Themes, Visuals & mehr!
 // @description:es   Mod definitivo de Sigmally-Agar.io: macros, amigos, etiquetas, temas, visuales ¡y más!
@@ -12276,6 +12276,95 @@
             }
         },
 
+        shopAds() {
+            const paymentModal = document.getElementById('payments-modal');
+            const paymentButtons = document.getElementById(
+                'payments-modal-buttons'
+            );
+            const coinsTab = document.getElementById('coins-tab');
+
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (
+                        mutation.attributeName === 'style' &&
+                        window.getComputedStyle(paymentModal).display !== 'none'
+                    ) {
+                        if (document.getElementById('sigmodzshop_button'))
+                            return;
+
+                        const shopButton = document.createElement('button');
+                        shopButton.id = 'sigmodzshop_button';
+                        shopButton.style = `display: flex;justify-content: center;align-items: center;gap: 8px;background: #000;`;
+                        shopButton.innerHTML = `
+                            <img src="https://sigmally.xyz/sigmodz.svg" width="36" height="36" alt="SigModz shop icon" style="border-radius: 50%;" />
+                            <span style="color: white;font-size: 16px;">SigModz (cheaper!)</span>
+                        `;
+                        paymentButtons.insertAdjacentElement(
+                            'afterbegin',
+                            shopButton
+                        );
+                        shopButton.onclick = () =>
+                            window.open('https://sigmally.xyz/shop');
+                    }
+
+                    if (coinsTab) {
+                        if (document.getElementById('sigmodzshop_button2'))
+                            return;
+
+                        const shopButton = document.createElement('button');
+                        shopButton.id = 'sigmodzshop_button2';
+                        shopButton.style = `display: flex;justify-content: center;align-items:center;gap: 8px;background: #111111;border-radius:6px;border:none;width:100%;padding:4px;`;
+                        shopButton.innerHTML = `
+                            <img src="https://sigmally.xyz/sigmodz.svg" width="36" height="36" alt="SigModz shop icon" style="border-radius: 50%;" />
+                            <span style="color: white;font-size: 16px;">Get coins & subscriptions cheaper in the SigModz Shop</span>
+                        `;
+                        coinsTab.insertAdjacentElement(
+                            'afterbegin',
+                            shopButton
+                        );
+                        shopButton.onclick = () =>
+                            window.open('https://sigmally.xyz/shop');
+                    }
+                });
+            });
+
+            observer.observe(paymentModal, coinsTab, { attributes: true });
+
+            if (!localStorage.getItem('sigmodzshop_notification')) {
+                const notification = document.createElement('div');
+                notification.style =
+                    'position: absolute; bottom: 20px; right: 10px; z-index: 999999; padding: 6px 4px; background: #111111; color: #fafafa; display: flex; flex-direction: column; gap: 2px; border-radius: 10px; padding: 10px 20px; user-select: none; font-family: "Titillium Web", sans-serif;box-shadow:0 4px 10px #000';
+
+                notification.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; gap: 5px;">
+                        <span style="font-weight: 600; font-size: 18px;">New shop launched!</span>
+                        <Button style="font-size:14px; outline:none;background:#080808;border-radius:6px;border:1px solid #474747; padding: 2px; width: 26px;display:flex;justify-content:center;align-items:center" id="close_sm_shop_ad">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="16" height="16"><path fill="#fafafa" d="M183.1 137.4C170.6 124.9 150.3 124.9 137.8 137.4C125.3 149.9 125.3 170.2 137.8 182.7L275.2 320L137.9 457.4C125.4 469.9 125.4 490.2 137.9 502.7C150.4 515.2 170.7 515.2 183.2 502.7L320.5 365.3L457.9 502.6C470.4 515.1 490.7 515.1 503.2 502.6C515.7 490.1 515.7 469.8 503.2 457.3L365.8 320L503.1 182.6C515.6 170.1 515.6 149.8 503.1 137.3C490.6 124.8 470.3 124.8 457.8 137.3L320.5 274.7L183.1 137.4z"/></svg>
+                        </Button>
+                    </div>
+                    <img src="https://czrsd.com/static/sigmod/advertising/shop_ad.webp" alt="Shop ad" width="300" />
+                    <p style="max-width:300px">Purchase coins and subscriptions at reduced prices. All items are linked to your Sigmally account and unlock instantly after payment. Secure payment processing and direct activation included.</p>
+                    <Button class="modButton-black" style="margin-top: 6px;" id="visit_sm_shop">Visit shop</Button>
+                `;
+                document.body.appendChild(notification);
+
+                const closeButton = document.getElementById('close_sm_shop_ad');
+                const visitShopButton =
+                    document.getElementById('visit_sm_shop');
+
+                closeButton.addEventListener('click', () => {
+                    notification.remove();
+                    localStorage.setItem(
+                        'sigmodzshop_notification',
+                        Date.now()
+                    );
+                });
+
+                visitShopButton.onclick = () =>
+                    window.open('https://sigmally.xyz/shop');
+            }
+        },
+
         async loadLibraries() {
             const loadScript = (src) =>
                 new Promise((resolve, reject) => {
@@ -12330,6 +12419,7 @@
             this.tagsystem();
             this.createMinimap();
             this.themes();
+            this.shopAds();
         },
 
         setupGame() {

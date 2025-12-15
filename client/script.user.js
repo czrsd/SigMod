@@ -609,6 +609,8 @@
 
                 if (this.R[r] === 0x63) this.handleChatMessage(view, o);
                 if (this.R[r] === 0x40) this.updateBorder(view, o);
+                if (this.R[r] === 0xb4 && !document.getElementById('password'))
+                    mods.createPasswordField();
             } catch (e) {}
         }
 
@@ -7533,6 +7535,28 @@
             }
         },
 
+        createPasswordField() {
+            const errormodal = document.getElementById('errormodal');
+            const gamemode = document.getElementById('gamemode');
+
+            if (gamemode) gamemode.classList.add('gamemode-hide');
+            if (errormodal) {
+                window.closeErrorModalAlert();
+                keypress('Escape', 'Escape');
+            }
+
+            const passwordInput = document.createElement('input');
+            passwordInput.type = 'text';
+            passwordInput.id = 'password';
+            passwordInput.classList.add('form-control');
+            passwordInput.placeholder = 'Password';
+            passwordInput.style = `border-radius: 4px; border-width: 1px;`;
+
+            gamemode.insertAdjacentElement('beforebegin', passwordInput);
+
+            passwordInput.focus();
+        },
+
         smallMods() {
             // fix auth for tournament page
             if (location.pathname.includes('tournament')) {
@@ -12304,7 +12328,13 @@
                             shopButton
                         );
                         shopButton.onclick = () =>
-                            window.open('https://sigmally.xyz/shop');
+                            window.open(
+                                `https://sigmally.xyz/shop${
+                                    window.gameSettings.user
+                                        ? `/?email=${window.gameSettings.user.email}`
+                                        : ''
+                                }`
+                            );
                     }
 
                     if (coinsTab) {
@@ -12323,17 +12353,24 @@
                             shopButton
                         );
                         shopButton.onclick = () =>
-                            window.open('https://sigmally.xyz/shop');
+                            window.open(
+                                `https://sigmally.xyz/shop${
+                                    window.gameSettings.user
+                                        ? `/?email=${window.gameSettings.user.email}`
+                                        : ''
+                                }`
+                            );
                     }
                 });
             });
 
             observer.observe(paymentModal, coinsTab, { attributes: true });
 
+            // maybe too much
+            /*
             if (!localStorage.getItem('sigmodzshop_notification')) {
                 const notification = document.createElement('div');
-                notification.style =
-                    'position: absolute; bottom: 20px; right: 10px; z-index: 999999; padding: 6px 4px; background: #111111; color: #fafafa; display: flex; flex-direction: column; gap: 2px; border-radius: 10px; padding: 10px 20px; user-select: none; font-family: "Titillium Web", sans-serif;box-shadow:0 4px 10px #000';
+                notification.style = 'position: absolute; bottom: 20px; right: 10px; z-index: 999999; padding: 6px 4px; background: #111111; color: #fafafa; display: flex; flex-direction: column; gap: 2px; border-radius: 10px; padding: 10px 20px; user-select: none; font-family: "Titillium Web", sans-serif;box-shadow:0 4px 10px #000';
 
                 notification.innerHTML = `
                     <div style="display: flex; justify-content: space-between; gap: 5px;">
@@ -12349,20 +12386,16 @@
                 document.body.appendChild(notification);
 
                 const closeButton = document.getElementById('close_sm_shop_ad');
-                const visitShopButton =
-                    document.getElementById('visit_sm_shop');
+                const visitShopButton = document.getElementById('visit_sm_shop');
 
                 closeButton.addEventListener('click', () => {
                     notification.remove();
-                    localStorage.setItem(
-                        'sigmodzshop_notification',
-                        Date.now()
-                    );
+                    localStorage.setItem('sigmodzshop_notification', Date.now())
                 });
 
-                visitShopButton.onclick = () =>
-                    window.open('https://sigmally.xyz/shop');
+                visitShopButton.onclick = () => window.open('https://sigmally.xyz/shop');
             }
+            */
         },
 
         async loadLibraries() {

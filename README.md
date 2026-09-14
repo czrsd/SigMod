@@ -1,28 +1,5 @@
 # Sigmally Mod | SigMod Client
 
-> ## 🚀 Try NEMSIS — Cursed's latest game
->
-> **NEMSIS** ([nems.is](https://nems.is)) is the brand-new agar.io-style game from
-> **Cursed**, the developer of SigMod. It is the spiritual successor to the
-> Sigmally experience: FFA, Teams and Battle Royale modes, built-in
-> multiboxing, skins, quests, a seasonal Battle Pass, and rentable custom
-> rooms — all in the browser, no download.
->
-> ### Why a new game?
->
-> **Sigmally is no longer actively developed.** The original owner has stopped
-> maintaining the game — no meaningful updates, no new features, no response to
-> community issues. The server is slowly bleeding players and the experience
-> keeps degrading. SigMod will keep working for as long as Sigmally stays
-> online, but there is no future in a game whose owner has abandoned it.
->
-> **NEMSIS is what comes next** — built from the ground up, actively
-> developed, with a real roadmap, regular updates, and a developer who
-> actually plays and cares about the game. If you have been waiting for
-> Sigmally to get better, it will not. Come play what is being built instead.
->
-> 👉 **[Play NEMSIS for free](https://nems.is)** · [Discord](https://discord.gg/HumcwghDxR)
-
 A mod for **Sigmally.com** by **Cursed**.
 
 > **⚠️ Disclaimer:** This script is for an [Agar.io private server](https://one.sigmally.com) and **not** for Agar.io.

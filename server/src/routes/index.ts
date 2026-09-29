@@ -9,13 +9,17 @@ import genericRoutes from './GenericRoutes';
 import alertRoutes from './AlertRoutes';
 
 export default (app: Application) => {
-    app.use(announcementRoutes);
-    app.use(TournamentRoutes);
-    app.use(FontRoutes);
-    app.use(DiscordRoutes);
-    app.use(FriendRoutes);
-    app.use(genericRoutes);
-    app.use(alertRoutes);
+    const apiRouter = express.Router();
+
+    apiRouter.use(announcementRoutes);
+    apiRouter.use(TournamentRoutes);
+    apiRouter.use(FontRoutes);
+    apiRouter.use(DiscordRoutes);
+    apiRouter.use(FriendRoutes);
+    apiRouter.use(genericRoutes);
+    apiRouter.use(alertRoutes);
+
+    app.use('/api/v5', apiRouter);
 
     app.use('/profiles', express.static(path.join(process.cwd(), 'profiles')));
 

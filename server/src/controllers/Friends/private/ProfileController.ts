@@ -164,11 +164,12 @@ class ProfileController {
         const { type, userId: reqId } = req.body;
         const userId = req.user?.userId;
 
-        if (!type || !reqId || !userId)
+        if (!type || !reqId || !userId || typeof type !== 'string' || typeof reqId !== 'string') {
             return res.status(200).json({
                 success: false,
-                message: 'No type or userId provided.',
+                message: 'Invalid type or userId provided.',
             });
+        }
 
         try {
             if (type === 'remove-friend') {
@@ -209,6 +210,10 @@ class ProfileController {
             return res
                 .status(400)
                 .json({ success: false, message: 'User ID is missing.' });
+        }
+
+        if (typeof type !== 'string') {
+            return res.status(400).json({ success: false, message: 'Invalid type.' });
         }
 
         const updateActions: Record<string, () => Promise<void>> = {

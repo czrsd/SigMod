@@ -27,11 +27,11 @@ class DiscordAuthController {
             code: code,
             redirect_uri:
                 process.env.NODE_ENV === 'development'
-                    ? `http://localhost:3001/discord/callback`
-                    : `https://mod.czrsd.com/discord/callback`,
+                    ? `http://localhost:3001/api/v5/discord/callback`
+                    : `https://mod.czrsd.com/api/v5/discord/callback`,
         };
 
-        const searchParams = new URLSearchParams(params);
+        const searchParams = new URLSearchParams(params as any);
         const headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Accept-Encoding': 'application/x-www-form-urlencoded',
@@ -128,22 +128,6 @@ class DiscordAuthController {
             const accessToken = generateAccessToken(userId.toString());
             const refreshToken = generateRefreshToken(userId.toString());
 
-            return res.redirect(
-                `${process.env.DISCORD_REDIRECT_URL || 'https://one.sigmally.com'}?access_token=${accessToken}&refresh_token=${refreshToken}`
-            );
-        } catch (e) {
-            console.error(e);
-            return res.status(500).json({
-                success: false,
-                message: 'Internal server error.',
-            });
-        }
-    }
-
-    set_cookie(req: Request, res: Response) {
-        try {
-            const { accessToken, refreshToken } = req.query;
-
             res.cookie('mod_accessToken', accessToken, {
                 maxAge: 300000, // 5 minutes
                 httpOnly: true,
@@ -158,16 +142,14 @@ class DiscordAuthController {
                 sameSite: 'none',
             });
 
-            res.json({
-                success: true,
-                message: 'Successfully logged in.',
-            });
-        } catch (err) {
-            console.error('Error logging in user:', err);
+            return res.redirect(
+                `${process.env.DISCORD_REDIRECT_URL || 'https://one.sigmally.com'}?discord_login=success`
+            );
+        } catch (e) {
+            console.error(e);
             return res.status(500).json({
                 success: false,
-                message:
-                    'An error occurred while logging in. Please try again later.',
+                message: 'Internal server error.',
             });
         }
     }

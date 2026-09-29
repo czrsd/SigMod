@@ -31,8 +31,16 @@ const routes = {
 };
 
 // AUTH ROUTES
-router.post(routes.register, AccountController.register as RequestHandler);
-router.post(routes.login, AccountController.login as RequestHandler);
+import rateLimit from 'express-rate-limit';
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 10,
+    message: { success: false, message: 'Too many authentication attempts, please try again later.' },
+});
+
+router.post(routes.register, authLimiter, AccountController.register as RequestHandler);
+router.post(routes.login, authLimiter, AccountController.login as RequestHandler);
 router.get(
     routes.auth,
     requireUser as RequestHandler,

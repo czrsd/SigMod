@@ -1,5 +1,4 @@
 import socket from './socket';
-import CircularJSON from 'circular-json';
 import {
     checkVersion,
     handlePrivateMessage,
@@ -16,11 +15,16 @@ import { socketMessageData } from '../../types';
 import TournamentController from './tournaments/TournamentController';
 
 const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
+    if (raw.byteLength > 100 * 1024) {
+        socket.ws.close(1009, 'Payload too large');
+        return;
+    }
+
     const buf: Uint8Array = new Uint8Array(raw);
     const jsonString: string = new TextDecoder().decode(buf);
 
     try {
-        const data = CircularJSON.parse(jsonString);
+        const data = JSON.parse(jsonString);
 
         if (!data || !data.type) {
             socket.send({

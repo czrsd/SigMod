@@ -8,14 +8,16 @@ import FriendModel from '../../../models/FriendModel';
 class PublicUserController {
     // POST
     async getAllUsers(req: Request, res: Response): Promise<Response | void> {
-        const { amount, offset } = req.body;
+        let { amount, offset } = req.body;
 
-        if (!amount || amount < 1 || amount > 100) {
+        if (!amount || typeof amount !== 'number' || amount < 1 || amount > 100) {
             return res.status(401).json({
                 success: false,
                 message: 'No amount provided or not a valid amount.',
             });
         }
+
+        offset = typeof offset === 'number' && offset >= 0 ? Math.floor(offset) : 0;
 
         try {
             // gets all users by role priority, specific amount and given offset
@@ -116,10 +118,10 @@ class PublicUserController {
         const { req_id } = req.body;
         const userId = req.user?.userId;
 
-        if (!req_id) {
+        if (!req_id || typeof req_id !== 'string') {
             return res.status(400).json({
                 success: false,
-                message: 'User ID for request is required.',
+                message: 'Invalid User ID for request.',
             });
         }
 
@@ -211,7 +213,8 @@ class PublicUserController {
             });
         }
 
-        const regex = new RegExp(`^${query}`, 'i');
+        const escapedQuery = query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        const regex = new RegExp(`^${escapedQuery}`, 'i');
 
         try {
             const users = await AccountModel.find({ username: regex })

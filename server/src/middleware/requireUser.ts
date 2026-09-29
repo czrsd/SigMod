@@ -10,10 +10,16 @@ export const requireUser = async (
     next: NextFunction
 ): Promise<Response | void> => {
     let accessToken = req.cookies.mod_accessToken;
+    const authHeader = req.headers.authorization;
+
+    if (!accessToken && authHeader && authHeader.startsWith('Bearer ')) {
+        accessToken = authHeader.split(' ')[1];
+    }
 
     if (!accessToken) {
-        const refreshToken = req.cookies.mod_refreshToken;
-        if (!refreshToken) {
+        const refreshToken = req.cookies.mod_refreshToken || req.headers['x-refresh-token'];
+        
+        if (!refreshToken || typeof refreshToken !== 'string') {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
@@ -32,6 +38,8 @@ export const requireUser = async (
                 secure: true,
                 sameSite: 'none',
             });
+            // Also set a header so clients not using cookies can grab the new token
+            res.setHeader('x-new-access-token', newAccessToken);
 
             const user = await AccountModel.findOne({ _id: userId });
             if (!user) {

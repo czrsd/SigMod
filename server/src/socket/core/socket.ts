@@ -1,6 +1,5 @@
 import WebSocket from 'ws';
 import { Request } from 'express';
-import CircularJSON from 'circular-json';
 import { wsHandler } from '../setup';
 import { v4 as uuidv4 } from 'uuid';
 import AccountModel from '../../models/AccountModel';
@@ -40,7 +39,7 @@ class Socket {
 
     public send(data: socketMessageData): void {
         if (!data) return;
-        const json = CircularJSON.stringify(data);
+        const json = JSON.stringify(data);
         const encoder = new TextEncoder();
         const binaryData = encoder.encode(json);
 

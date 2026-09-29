@@ -2293,7 +2293,6 @@
         renderMouseBindingEditor() {
             const panel = this.root?.querySelector('#mod_controls_mouse');
             if (!(panel instanceof HTMLElement)) return;
-            const meta = this.mouseButtonMeta(this.activeMouseButton);
             const action = this.mouseBindingAction(this.activeMouseButton);
             const actionLabel = this.mouseActionLabel(action);
             const title = panel.querySelector('#mouse-binding-title');

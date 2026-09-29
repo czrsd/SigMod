@@ -1,0 +1,2853 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="index, follow" />
+<meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1.0" />
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta property="og:title" content="Agario - Agar.io private server by Sigmally" />
+<meta property="og:image" content="https://one.sigmally.com/assets/images/agario-private-server.png" />
+<meta property="og:image:secure_url" content="https://one.sigmally.com/assets/images/agario-private-server.png" />
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+<meta name="theme-color" content="#000000">
+<meta name="msapplication-TileImage" content="/mstile-150x150.png">
+<meta name="msapplication-TileColor" content="#000000">
+<meta name="msapplication-config" content="/browserconfig.xml">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://accounts.google.com" crossorigin>
+<link rel="preconnect" href="https://accounts.google.com/gsi/client" crossorigin>
+<link rel="preconnect" href="https://apis.google.com" crossorigin>
+<title>
+  Agario - Agar.io private server by Sigmally
+</title>
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Agario - Agar.io private server by Sigmally" />
+<meta name="twitter:image:src" content="https://one.sigmally.com/assets/images/agario-private-server.png" />
+<meta name="description" content="Agario is unblocked private server where players can play through their browser. Agar.io is a funny game, this mode called pvp." />
+<style>
+  :root {
+    --green: #5cb85c;
+    --blue: #2E5BC5;
+    --gray: #F1F5F9;
+    --black: #333136;
+    --gold: #FFC826
+  }
+
+  @media screen and (min-width:720px) {
+
+    body,
+    html {
+      overflow: hidden !important;
+    }
+  }
+
+  #title {
+    margin: 0;
+    padding: 0;
+    color: #333136;
+    font-size: 26px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal
+  }
+
+  @media (orientation: portrait) and (max-width: 500px) {
+    #__line1>.menu-wrapper {
+      margin-top: 20px;
+    }
+  }
+
+  .sign-in-btn>img {
+    padding: 0 10px !important;
+  }
+
+  .ch-lang__item {
+    margin: 0 5px;
+  }
+
+  .ch-lang__flag {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .menu-links .link,
+  .menu-links .link:active {
+    color: #365C7C !important;
+  }
+
+  .link_btn {
+    color: #365C7C !important;
+  }
+
+  #shop-popup {
+    background-color: #005F85 !important;
+    color: #FFFFFF !important;
+  }
+
+  #free-chest-button,
+  #collect-button {
+    background-color: #2A652E !important;
+  }
+
+  #shop-button {
+    background-color: #1150C5 !important;
+  }
+
+  #sigma-button {
+    background-color: #745001 !important;
+  }
+
+  .btn-success {
+    border-color: #286230 !important;
+    background-color: #286230 !important;
+  }
+
+  .plus::before {
+    content: '\002B';
+    font-size: 24px;
+    color: #FFFFFF;
+  }
+
+  .chatblock__button.chatblock__visability {
+    line-height: 0.35 !important;
+  }
+
+  .chatblock__button.chatblock__visability::before {
+    content: '\2709';
+    font-size: 24px;
+    color: #000000;
+  }
+</style>
+
+<link rel="preload" href="https://one.sigmally.com/assets/css/min/style.css?v=2.0.15" as="style" />
+<link rel="preload" href="https://one.sigmally.com/assets/css/min/menu.css?v=2.0.15" as="style" />
+
+<link rel="stylesheet" href="https://one.sigmally.com/assets/css/min/style.css?v=2.0.15" />
+<link rel="stylesheet" href="https://one.sigmally.com/assets/css/min/menu.css?v=2.0.15" />
+
+<script>
+  async function unregisterServiceWorkers() {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log(`Service Worker at ${registration.scope} unregistered`);
+      }
+
+      if (window.caches) {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          await caches.delete(name);
+          console.log(`Cache "${name}" deleted`);
+        }
+      }
+
+      console.log("All service workers unregistered and caches cleared.");
+    } else {
+      console.warn("Service Worker not supported in this browser.");
+    }
+  }
+
+  async function loadWorker() {
+    const isDev = JSON.parse('false');
+    if (isDev) return await unregisterServiceWorkers();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("https://one.sigmally.com/sw.js?v=2.0.15")
+        .then(req => console.log("Service Worker registered", req.scope))
+        .catch((error) => console.error("SW Register Error:", error));
+    }
+  }
+
+  loadWorker();
+</script>
+    <link rel="canonical" href="https://one.sigmally.com/" />
+<link rel="alternate" href="https://one.sigmally.com/es/" hreflang="es" />
+<link rel="alternate" href="https://one.sigmally.com/tr/" hreflang="tr" />
+<link rel="alternate" href="https://one.sigmally.com/fr/" hreflang="fr" />
+<link rel="alternate" href="https://one.sigmally.com/pt/" hreflang="pt" />
+<link rel="alternate" href="https://one.sigmally.com/" hreflang="x-default" />
+</head>
+
+  <body>
+    <noscript>
+      <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WV7SCVB" height="0" width="0"
+        style="display: none; visibility: hidden"></iframe>
+    </noscript>
+    <main class="body__inner">
+  <div id="overlays" style="display: none"></div>
+  <div class="container center">
+    <div class="flex-menu">
+      <div class="line" id="__line1">
+        <button id="shop-popup" class="hidden" onclick="this.openTab('coins')">
+          <span>Shop is available!</span>
+          <span>Buy gold and Sigma Pass!</span>
+        </button>
+        <div class="menu-wrapper top">
+  <div class="left-menu hidden" id="left-menu">
+
+    <div class="profile-header">
+      <div class="avatar-area">
+        <!--<div class="profile-image" onclick="loginIfNoUser()">-->
+        <div class="profile-image">
+          <img class="profile-image-icon" width="50" alt="Agario profile" src="https://one.sigmally.com/assets/images/profile.svg" loading="lazy" />
+        </div>
+      </div>
+
+      <div class="profile-body">
+        <p class="profile-name">
+          Guest
+        </p>
+
+      </div>
+
+      <div class="progress-row">
+        <div class="new-meter">
+          <span id="user-line-progress" style="width: 0%"></span>
+          <div id="progress-next">0/0 XP</div>
+          <div class="agario-star-level">
+            <picture>
+              <source srcset="https://one.sigmally.com/assets/images/star.webp" type="image/webp" />
+              <img width="35" height="35" src="https://one.sigmally.com/assets/images/star.png" loading="lazy" alt="Star" title="Star" />
+            </picture>
+            <div class="user-level">
+              <div id="user-level">0</div>
+            </div>
+          </div>
+        </div>
+        <button onclick="this.openTab('boosts')">
+          <svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect y="0.14209" width="15" height="15" rx="7.5" fill="#5CB85C" />
+            <path d="M2.93127 7.26118H7.50007M7.50007 7.26118H12.0689M7.50007 7.26118V11.83M7.50007 7.26118V2.69238"
+              stroke="white" stroke-width="1.1422" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <picture>
+            <source srcset="https://one.sigmally.com/assets/images/booster.webp" type="image/webp" />
+            <img width="41" height="38" src="https://one.sigmally.com/assets/images/booster.png" loading="lazy" alt="Booster" title="Booster" />
+          </picture>
+          <span>XP</span>
+          <div id="boost_timer"></div>
+        </button>
+      </div>
+
+
+
+      <div class="coins">
+        <div class="coins-num">
+          <span class="coins-value">0</span>
+          <img class="coins-num__coin" width="16" height="16" src="https://one.sigmally.com/assets/images/icon/coin.svg" loading="lazy" alt="Coin Icon" />
+        </div>
+        <button name="coins" type="button" class="plus" aria-label="Buy Coins" onclick="this.openTab('coins')"></button>
+      </div>
+    </div>
+
+
+
+    <!-- Offers Block -->
+    <div id="offers-block">
+      <div>
+        <button id="free-chest-button" onclick="this.hourly()">
+          <picture>
+            <source srcset="https://one.sigmally.com/assets/images/icon/bag-of-coins.webp" type="image/webp" />
+            <img width="42" height="36" src="https://one.sigmally.com/assets/images/icon/bag-of-coins.png" loading="lazy" alt="Bag of Coins" title="Bag of Coins" />
+          </picture>
+          <div>
+            Open
+          </div>
+        </button>
+        <button id="collect-button">
+          <img src="https://one.sigmally.com/assets/images/icon/collect.webp" loading="lazy" alt="Collect Chest Icon" />
+          <div>
+            <span>
+              Collect in:
+            </span>
+            <span id="collect_button_time">59m 28s</span>
+          </div>
+        </button>
+        <button onclick="this.openTab('skins')" id="shop-button">
+          <picture>
+            <source srcset="https://one.sigmally.com/assets/images/icon/chest-of-coins.webp" type="image/webp" />
+            <img width="38" height="38" src="https://one.sigmally.com/assets/images/icon/chest-of-coins.png" loading="lazy" alt="Chest of Coins" title="Chest of Coins" />
+          </picture>
+          <div>
+            Shop
+          </div>
+        </button>
+      </div>
+      <button id="sigma-button" onclick="this.openSigma()">
+        <img src="https://one.sigmally.com/assets/images/icon/sigma.svg" loading="lazy" width="52px" height="36px" alt="Sigma Pass Icon" />
+        <div>
+          Sigma pass
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    {
+      var el = document.querySelector('#collect-button');
+      el.style.display = 'none';
+    }
+  </script>
+
+  <style>
+    #free-chest-button,
+    #collect-button {
+      background-color: #47A950;
+      width: 120px;
+    }
+
+    #shop-button {
+      background-color: #246AEC;
+      width: 120px;
+    }
+
+    #sigma-button {
+      background-color: #FEB923;
+      width: 100%;
+    }
+  </style>
+
+  <div class="text-block" id="left_ad_block">
+    <div class="right-menu">
+      <!-- /21727042/sigmally-main-1 -->
+<div id="div-gpt-ad-1622841396282-0" style="min-width: 300px; min-height: 250px"></div>
+    </div>
+  </div>
+</div>
+          <div id="menu-wrapper" class="menu-wrapper menu-wrapper-center">
+  <div id="menu" class="menu menu-center">
+    <div>
+      <div id="center-header">
+  <div id="updates-button"><button type="button">
+      Updates
+    </button></div>
+  <div id="clans_and_settings">
+    <button type="button" onclick="this.openClan()">
+      Clan
+    </button>
+    <div></div>
+    <button name="settings" type="button" aria-label="Settings" onclick="_cm_settings_open()">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M17.4249 7.45169C15.7658 7.45169 15.0874 6.27836 15.9124 4.83919C16.3891 4.00503 16.1049 2.94169 15.2708 2.46503L13.6849 1.55753C12.9608 1.12669 12.0258 1.38336 11.5949 2.10753L11.4941 2.28169C10.6691 3.72086 9.31242 3.72086 8.47825 2.28169L8.37742 2.10753C7.96492 1.38336 7.02992 1.12669 6.30575 1.55753L4.71992 2.46503C3.88575 2.94169 3.60158 4.01419 4.07825 4.84836C4.91242 6.27836 4.23408 7.45169 2.57492 7.45169C1.62159 7.45169 0.833252 8.23086 0.833252 9.19336V10.8067C0.833252 11.76 1.61242 12.5484 2.57492 12.5484C4.23408 12.5484 4.91242 13.7217 4.07825 15.1609C3.60158 15.995 3.88575 17.0584 4.71992 17.535L6.30575 18.4425C7.02992 18.8734 7.96492 18.6167 8.39575 17.8925L8.49658 17.7184C9.32158 16.2792 10.6783 16.2792 11.5124 17.7184L11.6133 17.8925C12.0441 18.6167 12.9791 18.8734 13.7033 18.4425L15.2891 17.535C16.1233 17.0584 16.4074 15.9859 15.9307 15.1609C15.0966 13.7217 15.7749 12.5484 17.4341 12.5484C18.3874 12.5484 19.1758 11.7692 19.1758 10.8067V9.19336C19.1666 8.24003 18.3874 7.45169 17.4249 7.45169ZM9.99992 12.9792C8.35908 12.9792 7.02075 11.6409 7.02075 10C7.02075 8.35919 8.35908 7.02086 9.99992 7.02086C11.6408 7.02086 12.9791 8.35919 12.9791 10C12.9791 11.6409 11.6408 12.9792 9.99992 12.9792Z"
+          fill="#333136" />
+      </svg>
+    </button>
+  </div>
+</div>
+        <div class="menu-center-content">
+          <div class="menu__inner">
+            <div class="menu__title">
+              <h1 id="title">Sigmally</h1>
+            </div>
+            <div class="menu__item">
+              <div class="form-group menu__form-group">
+                <div class="form-group__flex">
+                  <div class="form-group__row">
+  <div class="skin-select">
+    <div class="skin-select__inner">
+      <div class="skin-select__icon-cross" id="skin-select_add" onclick="this.openTab('skins');">
+        <div class="skin-select__icon-cross-items"></div>
+      </div>
+      <div class="skin-select__icon-cross hide" id="skin-select_remove" onclick="this.withoutSkin();">
+        <div class="skin-select__icon-cross-items"></div>
+      </div>
+      <div id="js-skin-select-icon" class="skin-select__icon" onclick="this.openTab('skins');">
+        <div class="skin-select__icon-text" id="js-skin-select-icon-text">
+          Skins
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+                    <div class="form-group__rows">
+                      <div class="form-group__row">
+  <input id="nick" class="form-control" placeholder="Nickname" maxlength="15" />
+</div>
+                        <div class="form-group__row">
+  <select id="gamemode" class="form-control gamemode-select" onchange="setserver(this.value)" aria-label="Server">
+    
+        
+          <option id="option_0" value="ca0.sigmally.com/ws/">
+            US-1
+          </option>
+          
+          <option id="option_1" value="ca1.sigmally.com/ws/">
+            US-2
+          </option>
+          
+          <option id="option_2" value="eu0.sigmally.com/ws/">
+            Europe-1
+          </option>
+          
+            
+  </select>
+</div>
+                          <div id="gameloading" class="hide"></div>
+                    </div>
+                </div>
+              </div>
+              <div class="mode-btns">
+  <button id="play-btn" class="btn btn-play btn-success btn-needs-server">
+    Play
+  </button>
+  <button id="spectate-btn">
+    <img src="https://one.sigmally.com/assets/images/spectate.svg" width="36" height="36" alt="Spectate Icon" />
+  </button>
+</div>
+<!-- Sign in Google button -->
+<button class="sign-in-btn" id="signInBtn">
+  <img src="https://one.sigmally.com/assets/images/google.svg" loading="lazy" width="18" height="18" alt="Google" title="Google" />
+  Sign in with Google
+    <div id="signInWrap"></div>
+</button>
+
+<!-- Sign out Google button -->
+<div class="sign-in-out-btn hide" id="signOutBtn" onclick="signOut()">
+  Sign out
+</div>
+            </div>
+
+            <div class="ch-lang">
+              <ul class="ch-lang__items">
+                <li class="ch-lang__item">
+                  <a class="ch-lang__btn" href="https://one.sigmally.com">
+                    <img class="ch-lang__flag" src="https://one.sigmally.com/assets/images/english.svg" loading="lazy"
+                      alt="English" />
+                  </a>
+                </li>
+                <li class="ch-lang__item">
+                  <a class="ch-lang__btn" href="https://one.sigmally.com/es/">
+                    <img class="ch-lang__flag" src="https://one.sigmally.com/assets/images/spanish.svg" loading="lazy"
+                      alt="Spanish" />
+                  </a>
+                </li>
+                <li class="ch-lang__item">
+                  <a class="ch-lang__btn" href="https://one.sigmally.com/tr/">
+                    <img class="ch-lang__flag" src="https://one.sigmally.com/assets/images/turkish.svg" loading="lazy"
+                      alt="Turkish" />
+                  </a>
+                </li>
+                <li class="ch-lang__item">
+                  <a class="ch-lang__btn" href="https://one.sigmally.com/fr/">
+                    <img class="ch-lang__flag" src="https://one.sigmally.com/assets/images/french.svg" loading="lazy"
+                      alt="French" />
+                  </a>
+                </li>
+                <li class="ch-lang__item">
+                  <a class="ch-lang__btn" href="https://one.sigmally.com/pt/">
+                    <img class="ch-lang__flag" src="https://one.sigmally.com/assets/images/portugal.svg" loading="lazy"
+                      alt="Portugal" />
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="flex-col">
+      <a href="https://one.sigmally.com/tournament/" id="tournament_link">
+        <picture>
+          <source srcset="https://one.sigmally.com/assets/images/icon/tournament.webp" type="image/webp" />
+          <img width="32" height="32" src="https://one.sigmally.com/assets/images/icon/tournament.png" loading="lazy"
+            alt="Tournaments" />
+        </picture>
+        <span>
+          Join Tournament
+        </span>
+      </a>
+      <a href="https://discord.gg/4j4Rc4dQTP" target="_blank" id="discord_link">
+        <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M19.4566 5.35132C21.7154 8.83814 22.8309 12.7712 22.4139 17.299C22.4121 17.3182 22.4026 17.3358 22.3876 17.3473C20.6771 18.666 19.0199 19.4663 17.3859 19.9971C17.3732 20.0011 17.3596 20.0009 17.347 19.9964C17.3344 19.992 17.3234 19.9835 17.3156 19.9721C16.9382 19.4207 16.5952 18.8393 16.2947 18.2287C16.2774 18.1928 16.2932 18.1495 16.3287 18.1353C16.8734 17.9198 17.3914 17.6615 17.8896 17.3557C17.9289 17.3316 17.9314 17.2725 17.8951 17.2442C17.7894 17.1617 17.6846 17.0751 17.5844 16.9885C17.5656 16.9725 17.5404 16.9693 17.5191 16.9801C14.2844 18.5484 10.7409 18.5484 7.46792 16.9801C7.44667 16.9701 7.42142 16.9735 7.40317 16.9893C7.30317 17.0759 7.19817 17.1617 7.09342 17.2442C7.05717 17.2725 7.06017 17.3316 7.09967 17.3557C7.59792 17.6557 8.11592 17.9198 8.65991 18.1363C8.69517 18.1505 8.71192 18.1928 8.69442 18.2287C8.40042 18.8401 8.05742 19.4215 7.67292 19.9729C7.65617 19.9952 7.62867 20.0055 7.60267 19.9971C5.97642 19.4663 4.31917 18.666 2.60868 17.3473C2.59443 17.3358 2.58418 17.3174 2.58268 17.2982C2.23418 13.3817 2.94442 9.41613 5.53717 5.35053C5.54342 5.33977 5.55292 5.33137 5.56392 5.32638C6.83967 4.71165 8.20642 4.25939 9.63491 4.00111C9.66091 3.99691 9.68691 4.00951 9.70041 4.03365C9.87691 4.36176 10.0787 4.78252 10.2152 5.12637C11.7209 4.88489 13.2502 4.88489 14.7874 5.12637C14.9239 4.78987 15.1187 4.36176 15.2944 4.03365C15.3007 4.02167 15.3104 4.01208 15.3221 4.00623C15.3339 4.00039 15.3471 3.99859 15.3599 4.00111C16.7892 4.26018 18.1559 4.71244 19.4306 5.32638C19.4419 5.33137 19.4511 5.33977 19.4566 5.35132ZM10.9807 12.798C10.9964 11.6401 10.1924 10.6821 9.18316 10.6821C8.18217 10.6821 7.38592 11.6317 7.38592 12.798C7.38592 13.9639 8.19792 14.9136 9.18316 14.9136C10.1844 14.9136 10.9807 13.9639 10.9807 12.798ZM17.6261 12.798C17.6419 11.6401 16.8379 10.6821 15.8289 10.6821C14.8277 10.6821 14.0314 11.6317 14.0314 12.798C14.0314 13.9639 14.8434 14.9136 15.8289 14.9136C16.8379 14.9136 17.6261 13.9639 17.6261 12.798Z"
+            fill="white" />
+        </svg>
+        <span>Discord</span>
+      </a>
+    </div>
+  </div>
+</div>
+            <div id="right-menu" class="menu-wrapper top">
+  <div class="top-users">
+    <div class="top-users_buttons">
+      <button type="button" class="active" onclick="this.rightmenu('top_users')">
+        Top Users
+      </button>
+      <button type="button" onclick="this.rightmenu('winners')">
+        Winners
+      </button>
+    </div>
+
+    <div class="top-users__inner">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th style="text-align: left">
+              Top Users
+            </th>
+            <th>
+              Season EXP
+            </th>
+          </tr>
+        </thead>
+        <tbody class="top-users__list"></tbody>
+      </table>
+
+      <table class="hide">
+        <thead>
+          <tr>
+            <th></th>
+            <th style="text-align: left">
+              Top Users
+            </th>
+            <th>
+              Prize
+            </th>
+          </tr>
+        </thead>
+        <tbody class="top-winners__list">
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="text-block" id="text-block">
+    <div class="right-menu">
+      <!-- /21727042/sigmally-main-1 -->
+<div id="div-gpt-ad-1622632389350-0" style="min-width: 300px; min-height: 250px"></div>
+    </div>
+  </div>
+</div>
+      </div>
+      <div class="ad_bottom" id="ad_bottom">
+  <!-- /21727042/sigmally-main-1 -->
+  <div id="div-gpt-ad-1622841482467-0" style="min-width: 728px; min-height: 90px"></div>
+</div>
+    </div>
+
+
+    <div class="line line--hidden" id="__line2">
+  <div id="menu-wrapper" class="menu-wrapper menu-wrapper--stats-mode">
+    <div id="menu" class="menu menu--stats-mode">
+      <div class="menu__inner">
+        <div class="menu__title">
+          <p id="title">
+            <strong>Match Results</strong>
+          </p>
+          <p id="menu__bonus">
+            Bonus score: <span>0</span>
+          </p>
+        </div>
+        <div class="stats">
+          <div class="stats__inner">
+            <div class="stats__ver stats__ver-l"></div>
+            <div class="stats__ver stats__ver-r"></div>
+            <div class="stats__items">
+              <div class="stats__item">
+                <span class="stats__item-title">
+                  Top Position
+                </span>
+                <span class="stats__item-value" id="top_leaderboard_position">0</span>
+                <div class="stats__hor"></div>
+              </div>
+              <div class="stats__item">
+                <span class="stats__item-title">
+                  Highest mass
+                </span>
+                <span class="stats__item-value" id="highest_mass">0</span>
+              </div>
+              <div class="stats__item">
+                <span class="stats__item-title">
+                  Time alive
+                </span>
+                <span class="stats__item-value" id="time_alive">0</span>
+                <div class="stats__hor"></div>
+              </div>
+              <div class="stats__item">
+                <span class="stats__item-title">
+                  Food eaten
+                </span>
+                <span class="stats__item-value" id="food_eaten">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stats-btn">
+          <div class="stats-btn__inner">
+            <button id="continue_button" class="stats-btn__continue">
+              Continue
+            </button>
+            <div class="stats-btn__row">
+              <button onclick="Share('tw')" class="stats-btn__share-btn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M18.8147 4.93507C18.2756 5.16025 17.7088 5.31705 17.1284 5.40159C17.3997 5.35645 17.799 4.8824 17.958 4.69053C18.1994 4.4011 18.3835 4.0707 18.5007 3.71611C18.5007 3.68977 18.5278 3.65215 18.5007 3.63334C18.487 3.62609 18.4717 3.6223 18.4561 3.6223C18.4405 3.6223 18.4252 3.62609 18.4115 3.63334C17.7813 3.96457 17.1105 4.21738 16.4151 4.38579C16.3908 4.39297 16.365 4.39362 16.3404 4.38765C16.3158 4.38169 16.2934 4.36934 16.2755 4.35193C16.2214 4.28937 16.1631 4.23031 16.101 4.1751C15.8174 3.92847 15.4956 3.72661 15.1474 3.5769C14.6774 3.38976 14.1697 3.30871 13.6626 3.33988C13.1707 3.37004 12.6903 3.4981 12.2515 3.71611C11.8194 3.94595 11.4397 4.2582 11.1351 4.6341C10.8146 5.02099 10.5833 5.46998 10.4566 5.95088C10.3522 6.40831 10.3403 6.88109 10.4217 7.34291C10.4217 7.42192 10.4217 7.43321 10.352 7.42192C7.58791 7.02688 5.32007 6.07504 3.46703 4.03214C3.38562 3.94184 3.34298 3.94184 3.27707 4.03214C2.47073 5.22101 2.86227 7.10213 3.8702 8.0314C4.00588 8.15556 4.14544 8.27595 4.29276 8.38881C3.83063 8.35698 3.37978 8.23544 2.96694 8.0314C2.88941 7.98249 2.84676 8.00883 2.84289 8.09912C2.8319 8.2243 2.8319 8.35017 2.84289 8.47535C2.92378 9.07527 3.16739 9.64359 3.54883 10.1222C3.93026 10.6008 4.43582 10.9724 5.01381 11.1992C5.15472 11.2578 5.30153 11.3019 5.45188 11.3309C5.02406 11.4126 4.58528 11.4253 4.1532 11.3685C4.06016 11.3497 4.02527 11.3986 4.06016 11.4851C4.63003 12.99 5.86668 13.449 6.77382 13.7049C6.89787 13.7237 7.02192 13.7237 7.16148 13.7538C7.16148 13.7538 7.16148 13.7538 7.13822 13.7763C6.87073 14.2504 5.78915 14.5702 5.29293 14.7357C4.38722 15.0514 3.42156 15.1721 2.46298 15.0894C2.31179 15.0668 2.2769 15.0706 2.23813 15.0894C2.19936 15.1082 2.23813 15.1496 2.28077 15.1872C2.47461 15.3113 2.66844 15.4205 2.87002 15.5258C3.47015 15.8435 4.1046 16.0958 4.76183 16.2782C8.16554 17.1887 11.9957 16.519 14.5504 14.0548C16.5585 12.121 17.264 9.45353 17.264 6.78234C17.264 6.68076 17.392 6.62056 17.4656 6.56789C17.9737 6.18372 18.4216 5.73003 18.7953 5.22101C18.8601 5.14513 18.8932 5.04852 18.8884 4.95012C18.8884 4.89369 18.8884 4.90498 18.8147 4.93507Z"
+                    fill="#6BAAE8" />
+                </svg>
+              </button>
+              <button onclick="Share('fb')" class="stats-btn__share-btn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="20" height="20" rx="2" fill="white" />
+                  <path
+                    d="M12.8936 10.8329L13.2884 8.42099H10.8568V6.85325C10.8568 6.19375 11.1963 5.54931 12.2818 5.54931H13.4028V3.49542C12.75 3.39531 12.0903 3.34115 11.4291 3.33337C9.42783 3.33337 8.12125 4.49034 8.12125 6.58191V8.42099H5.90283V10.8329H8.12125V16.6667H10.8568V10.8329H12.8936Z"
+                    fill="#5589C5" />
+                </svg>
+
+
+              </button>
+              <span class="stats-btn__text">
+                Share
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-block">
+      <div class="ad-block__inner">
+        <!-- /21727042/sigmally-final-1 -->
+        <div id="div-gpt-ad-1622635433462-0" style="min-width: 300px; min-height: 250px"></div>
+      </div>
+    </div>
+
+    <div class="ad-block-left">
+      <div class="ad-block-left__inner">
+        <!-- /21727042/sigmally-final-2 -->
+        <div id="div-gpt-ad-1622636498971-0" style="min-width: 160px; min-height: 600px"></div>
+      </div>
+    </div>
+
+    <div class="ad-block-right">
+      <div class="ad-block-right__inner">
+        <!-- /21727042/sigmally-final-3 -->
+        <div id="div-gpt-ad-1622636569591-0" style="min-width: 160px; min-height: 600px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+      <style>
+  #settings>.checkbox-grid {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+
+  #menu-nav {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  #menu-nav>#menu-links {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: max-content;
+    margin: 0;
+    padding: 6px 12px;
+    border-radius: 0px 0px 0px 10px;
+  }
+
+  #center-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+  }
+
+  #clans_and_settings {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    height: 20px;
+  }
+
+  #clans_and_settings>button,
+  #updates-button>button {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 18px;
+    height: 100%;
+    line-height: 100%;
+  }
+
+  #clans_and_settings>div {
+    width: 1px;
+    height: 20px;
+    background: #DEDEDE;
+  }
+
+  #updates-button {
+    position: relative;
+    top: 1px;
+    display: none;
+  }
+
+  #discord_link {
+    width: calc(100% - 20px);
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(88, 101, 242, 1);
+    border-radius: 6px;
+    margin: 0 auto;
+  }
+
+  #discord_link span {
+    margin-left: 4px;
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .line--hidden {
+    display: none;
+  }
+
+  #menu.menu--stats-mode {
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  div#menu-wrapper.menu-wrapper--stats-mode {
+    flex-direction: column;
+  }
+
+
+  #menu-wrapper>.menu-center {
+    height: 511px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+  }
+
+  .menu-center #menu__title {
+    font-weight: bold;
+  }
+
+  .menu-center-content {
+    margin: 28px auto 0 auto;
+    width: calc(100% - 20px);
+  }
+
+  .menu-center>div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-center>div>.menu-center-content>div>.menu__item {
+    margin-top: 28px;
+    margin-bottom: 28px;
+  }
+
+  .menu-center>div>.menu-center-content>div>div>.menu__form-group {
+    margin-bottom: 28px;
+  }
+
+  .menu-center .form-group__flex>.form-group__row {
+    margin-right: 17px;
+  }
+
+  .menu-center #js-skin-select-icon {
+    width: 72px;
+    height: 72px;
+    font-weight: 400;
+    box-shadow: 0px 0px 10px 0px rgba(51, 49, 54, 0.25);
+    border: 1px solid rgba(200, 201, 217, 1)
+  }
+
+  .skin-select__inner {
+    position: relative;
+  }
+
+  .menu-center .skin-select__inner .skin-select__icon-cross {
+    background-color: #43A952;
+    border: 1px solid #5DB75D;
+    width: 25px;
+    height: 25px;
+    z-index: 3;
+  }
+
+  #skin-select_remove {
+    background-color: var(--red);
+    border-color: var(--red);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+  }
+
+  #skin-select_remove .skin-select__icon-cross-items {
+    transform: rotate(45deg);
+  }
+
+  #skin-select_remove .skin-select__icon-cross-items::before {
+    height: 66%;
+  }
+
+  #skin-select_remove .skin-select__icon-cross-items:after {
+    width: 66%;
+  }
+
+  hr.stats-hr {
+    margin: 10px 0px;
+  }
+
+  .stats__items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 5px;
+    gap: 5px;
+    row-gap: 20px;
+  }
+
+  .stats__item>span {
+    display: block;
+    text-align: center;
+  }
+
+  .stats-btn__row {
+    display: flex;
+    padding-bottom: 5px;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-black, #333136);
+    font-size: 16px;
+    font-weight: 500;
+    gap: 6px;
+  }
+
+  .stats-btn__share-btn {
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+  }
+
+  .stats-btn__continue {
+    margin-bottom: 15px;
+    color: var(--text-white, #FFF);
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 36px;
+    border-radius: 6px;
+    background: #3966D1;
+    border: none;
+  }
+
+  .stats-btn__continue:hover {
+    background: #577DD8;
+  }
+
+  .ad-block {
+    padding-top: 10px;
+  }
+
+  .ad-block__inner {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .ad-block-left,
+  .ad-block-right {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .ad-block-left {
+    left: 0px;
+  }
+
+  .ad-block-right {
+    right: 0px;
+  }
+
+  .ad-block-left__inner,
+  .ad-block-right__inner {
+    /* width: 160px; */
+    /* height: 600px; */
+    background-color: white;
+    border-radius: 5px;
+    padding: 5px;
+  }
+
+  @media (max-width: 900px) {
+
+
+    #cm_modal__rules .ctrl-modal__modal {
+      margin: 5vh 5vw 5vh;
+    }
+
+    .center {
+      padding-top: 35px;
+      padding-bottom: 35px;
+    }
+  }
+
+  @media (max-width: 682px) {
+
+    .ad-block-left,
+    .ad-block-right {
+      position: relative;
+      transform: unset;
+      margin-top: 10px;
+    }
+
+    .ad-block-right {
+      margin-bottom: 10px;
+    }
+
+    #menu-nav>#menu-links {
+      width: 100vw;
+      border-radius: 0px 0px 10px 10px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 4px;
+    }
+  }
+
+  @media (max-width: 370px) {
+    .stats__inner {
+      width: 270px;
+    }
+  }
+</style>
+
+
+
+        <script>
+          const menu = document.querySelector("#menu");
+          const menuHeight = menu.clientHeight;
+          const textBlock = document.querySelector("#text-block");
+          textBlock.setAttribute("style", `height: ${menuHeight}px`);
+
+          //document.getElementById("right-menu").style.height = document.getElementById("menu-wrapper").offsetHeight + "px";
+          textBlock.removeAttribute("style", "");
+        </script>
+  </div>
+
+
+  <div id="mobileStuff" style="display: none">
+    <div id="touchpad"></div>
+    <div id="touchCircle" style="display: none"></div>
+    <img src="https://one.sigmally.com/assets/images/agario-split.png" loading="lazy" alt="agario split" id="splitBtn" />
+    <img src="https://one.sigmally.com/assets/images/agario-eject.png" loading="lazy" alt="agario eject" id="ejectBtn" />
+  </div>
+  <canvas id="canvas" width="800" height="600"></canvas>
+  <div id="chat_block" class="chatblock">
+  <div id="chat_scrollbar" class="chatblock__scrollbar">
+    <div id="chat_thumb" class="chatblock__scrollbar-thumb"></div>
+  </div>
+  <button id="chat_vsbltyBtn" name="chat" type="button" class="chatblock__button chatblock__visability" aria-label="Chat"></button>
+  <input type="text" id="chat_textbox" class="chatblock__textarea" placeholder="Press Enter To Chat" maxlength="200" />
+</div>
+</main>
+      <footer>
+  <!-- <script src="https://accounts.google.com/gsi/client" async></script> -->
+  <script>
+    Object.defineProperty(window, "setInterval", { configurable: false, writable: false });
+    Object.defineProperty(window, "setTimeout", { configurable: false, writable: false });
+    Array.prototype.remove = function (a) {
+      var i = this.indexOf(a);
+      if (i !== -1) this.splice(i, 1);
+      return i !== -1;
+    };
+    Element.prototype.hide = function () {
+      this.style.display = 'none';
+      if (this.style.opacity == 1) this.style.opacity = 0;
+    };
+    Element.prototype.show = function (seconds) {
+      this.style.display = '';
+      var that = this;
+      if (seconds) {
+        this.style.transition = 'opacity ' + seconds + 's ease 0s';
+        setTimeout(function () {
+          that.style.opacity = 1;
+        }, 20);
+      }
+    };
+    if (!Array.prototype.includes) {
+      Array.prototype.includes = function (val) {
+        for (var i = 0; i < this.length; i++) {
+          if (this[i] === val) return true;
+        }
+        return false;
+      };
+    }
+  </script>
+  <script>
+    window.servers = 'ca0.sigmally.com,US-1,ca1.sigmally.com,US-2,eu0.sigmally.com,Europe-1'.split(',').reduce((acc, v, i) => {
+      if (!acc[Math.floor(i / 2)]) acc[Math.floor(i / 2)] = [];
+      acc[Math.floor(i / 2)][i % 2] = v
+      return acc;
+    }, []);
+    window.lang = 'en';
+    window.isLocal = JSON.parse('false');
+    window.isDev = JSON.parse('false');
+    window.siteName = 'https://one.sigmally.com';
+    window.shopLocales = JSON.parse(`{"tabs":{"skins":"Skins","coins":"Coins","chests":"Chests","sub":"Sigma Pass","boosts":"XP Boost","challenge":"Daily Challeges"},"boosts_tab":{"title":"XP Boost","triple":"Double XP Boost","hour":"hour"},"challenge_tab":{"title":"Daily challenges","result":"Best result: ","collect":"Collect reward","daily":"Daily challenge","completed":"All current challenges are completed","tasks":{"eaten":"Eat %n food in one game","xp":"Get %n XP in one game","alive":"Stay alive in a game %n minutes","pos":"Reach top%n on leaderbord"}},"skins_tab":{"title":"Skins","buttons":{"free":"Free","premium":"Premium","clan":"Clan","level":"Level","owned":"Owned"},"rarity":{"common":"Common","rare":"Rare","epic":"Epic","legendary":"Legendary"},"action_button":{"use":"Use","free":"Free","level":"LEVEL"},"titles":{"gold":"You need more gold!","cards":"You need more cards.","both":"You need more gold and cards for this skin"},"messages":{"gold":"Do you want to buy gold?","cards":"You can get more cards from chests.","both":"You can get more cards from chests. To get more gold, you can check our offers."},"error_gold_btn":"Buy Gold","error_card_btn":"Buy chest"},"coins_tab":{"title":"Coins","type":{"purse":"Gold purse","bag":"Bag of gold","bucket":"Bucket of gold","cart":"Cart of gold"}},"chests_tab":{"title":"Chests","type":{"common":"Common chest","rare":"Rare chest","epic":"Epic chest","legendary":"Legendary chest","mystery":"Mystery chest"},"cards":" Cards","claim":"Claim","upto":"Up to","received":"You received","rarity":{"common":"Common","rare":"Rare","epic":"Epic","legendary":"Legend"}},"sub_tab":{"title":"Subscription","description":{"title":"Diamond Subscription","text":"Sign up for our unique subscription and get super benefits"},"tags":{"create":"Create Clans","skins":"Sigma Pass","nickname":"Gold Nickname"},"options":{"month":"month","months":"months","mo":"mo","buy":"Buy","save":"SAVE","popular":"Most popular","withoutSub":"You have no active subscription","withSub":"The subscription is valid until "}}}`);
+    window.sigmaLocales = JSON.parse(`{"title":"Sigma Pass","get_pass":"Get Pass!","free":"Free!","comming":"Comming","soon":"Soon","buy":"Buy a Sigma pass","contains_title":"Opens with a Sigma Pass","contains_gold":"The chest contains gold","contains_chest":"See what's in the chest","contains_boost":"Contains XP Booster"}`);
+    window.clanLocales = JSON.parse('{"clan":"Clan","clans":"Clans","join":"Join","sent":"Sent","placeholder":"Unique name","create":"Create","members":"Members","requests":"Requests","leave":"Leave clan","assign":"Assign role to the player","member":"Member","elder":"Elder","leader":"Leader","co-leader":"Co-leader","expel":"Expel","leaveMessage":"Do you really want to leave?","okay":"Okay","cancel":"Cancel"}');
+    window.preload = JSON.parse(`[[{"_id":"5ff799de9d6ee153fbb39a6f","level":null,"cost":0,"name":"Alexander.png","category":"free","visible":true,"createTime":"2021-01-07T23:31:42.723Z","updateTime":"2021-01-07T23:31:42.723Z","__v":0,"quantity":0,"rarity":"common"},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a70","level":null,"cost":null,"name":"Celia.png","category":"free","visible":true,"createTime":"2021-01-07T23:31:42.738Z","updateTime":"2021-01-07T23:31:42.738Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a72","level":null,"cost":null,"name":"Chip.png","category":"free","visible":true,"createTime":"2021-01-07T23:31:42.744Z","updateTime":"2021-01-07T23:31:42.744Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a73","level":null,"cost":null,"name":"Dale.png","category":"free","visible":true,"createTime":"2021-01-07T23:31:42.746Z","updateTime":"2021-01-07T23:31:42.746Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a74","level":null,"cost":null,"name":"Hardscrabble.png","category":"free","visible":true,"createTime":"2021-01-07T23:31:42.748Z","updateTime":"2021-01-07T23:31:42.748Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a75","level":null,"cost":null,"name":"Harley.png","category":"free","visible":true,"createTime":"2021-01-07T23:31:42.749Z","updateTime":"2021-01-07T23:31:42.749Z","__v":0},{"_id":"5ff799de9d6ee153fbb39a76","level":null,"cost":20000,"name":"Art.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.751Z","updateTime":"2021-01-07T23:31:42.751Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a77","level":null,"cost":20000,"name":"Bile.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.753Z","updateTime":"2021-01-07T23:31:42.753Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a78","level":null,"cost":20000,"name":"Boo.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.755Z","updateTime":"2021-01-07T23:31:42.755Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a79","level":null,"cost":20000,"name":"Brandywine.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.756Z","updateTime":"2021-01-07T23:31:42.756Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a7a","level":null,"cost":20000,"name":"Carlton.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.758Z","updateTime":"2021-01-07T23:31:42.758Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a7b","level":null,"cost":20000,"name":"Derek.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.760Z","updateTime":"2021-01-07T23:31:42.760Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a7c","level":null,"cost":20000,"name":"Fungus.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.761Z","updateTime":"2021-01-07T23:31:42.761Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a7d","level":null,"cost":20000,"name":"George.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.763Z","updateTime":"2021-01-07T23:31:42.763Z","__v":0,"quantity":500,"rarity":"common"},{"_id":"5ff799de9d6ee153fbb39a7e","level":null,"cost":50000,"name":"Gesner.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.765Z","updateTime":"2021-01-07T23:31:42.765Z","__v":0,"quantity":250,"rarity":"rare"},{"_id":"5ff799de9d6ee153fbb39a7f","level":null,"cost":50000,"name":"Josh.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.766Z","updateTime":"2021-01-07T23:31:42.766Z","__v":0,"quantity":250,"rarity":"rare"},{"_id":"5ff799de9d6ee153fbb39a80","level":null,"cost":50000,"name":"Michael.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.768Z","updateTime":"2021-01-07T23:31:42.768Z","__v":0,"quantity":250,"rarity":"rare"},{"_id":"5ff799de9d6ee153fbb39a81","level":null,"cost":50000,"name":"Needleman.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.769Z","updateTime":"2021-01-07T23:31:42.769Z","__v":0,"quantity":250,"rarity":"rare"},{"_id":"5ff799de9d6ee153fbb39a82","level":null,"cost":50000,"name":"Peterson.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.771Z","updateTime":"2021-01-07T23:31:42.771Z","__v":0,"quantity":250,"rarity":"rare"},{"_id":"5ff799de9d6ee153fbb39a83","level":null,"cost":50000,"name":"Randall.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.772Z","updateTime":"2021-01-07T23:31:42.772Z","__v":0,"quantity":250,"rarity":"rare"},{"_id":"5ff799de9d6ee153fbb39a84","level":null,"cost":50000,"name":"Smitty.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.774Z","updateTime":"2021-01-07T23:31:42.774Z","__v":0,"quantity":50,"rarity":"epic"},{"_id":"5ff799de9d6ee153fbb39a85","level":null,"cost":50000,"name":"Spike.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.775Z","updateTime":"2021-01-07T23:31:42.775Z","__v":0,"quantity":50,"rarity":"epic"},{"_id":"5ff799de9d6ee153fbb39a86","level":null,"cost":50000,"name":"Squibbles.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.777Z","updateTime":"2021-01-07T23:31:42.777Z","__v":0,"quantity":50,"rarity":"epic"},{"_id":"5ff799de9d6ee153fbb39a87","level":null,"cost":50000,"name":"Sulley.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.780Z","updateTime":"2021-01-07T23:31:42.780Z","__v":0,"quantity":50,"rarity":"epic"},{"_id":"5ff799de9d6ee153fbb39a88","level":null,"cost":50000,"name":"Terri.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.781Z","updateTime":"2021-01-07T23:31:42.781Z","__v":0,"quantity":6,"rarity":"legendary"},{"_id":"5ff799de9d6ee153fbb39a89","level":null,"cost":50000,"name":"Waternoose.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.783Z","updateTime":"2021-01-07T23:31:42.783Z","__v":0,"quantity":50,"rarity":"epic"},{"_id":"5ff799de9d6ee153fbb39a8a","level":null,"cost":50000,"name":"Worthington.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.784Z","updateTime":"2021-01-07T23:31:42.784Z","__v":0,"quantity":50,"rarity":"epic"},{"_id":"5ff799de9d6ee153fbb39a8b","level":null,"cost":50000,"name":"Yeti.png","category":"premium","visible":true,"createTime":"2021-01-07T23:31:42.789Z","updateTime":"2021-01-07T23:31:42.789Z","__v":0,"quantity":6,"rarity":"legendary"},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a8c","level":20,"cost":null,"name":"Rocky.png","category":"level","visible":true,"createTime":"2021-01-07T23:31:42.790Z","updateTime":"2021-01-07T23:31:42.790Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a8d","level":30,"cost":null,"name":"Lenny.png","category":"level","visible":true,"createTime":"2021-01-07T23:31:42.792Z","updateTime":"2021-01-07T23:31:42.792Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a8e","level":40,"cost":null,"name":"Bullseye.png","category":"level","visible":true,"createTime":"2021-01-07T23:31:42.793Z","updateTime":"2021-01-07T23:31:42.793Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a8f","level":50,"cost":null,"name":"Hamm.png","category":"level","visible":true,"createTime":"2021-01-07T23:31:42.795Z","updateTime":"2021-01-07T23:31:42.795Z","__v":0},{"quantity":null,"rarity":"common","_id":"5ff799de9d6ee153fbb39a90","level":60,"cost":null,"name":"Peep.png","category":"level","visible":true,"createTime":"2021-01-07T23:31:42.796Z","updateTime":"2021-01-07T23:31:42.796Z","__v":0},{"quantity":null,"rarity":"common","_id":"601f14bcc7e5ba47b6d54da3","level":null,"cost":null,"name":"Proctor.png","category":"free","visible":true,"createTime":"2021-02-06T22:14:20.829Z","updateTime":"2021-02-06T22:14:20.829Z","__v":0},{"_id":"601f14bcc7e5ba47b6d54da4","level":null,"cost":0,"name":"Roz.png","category":"free","visible":true,"createTime":"2021-02-06T22:14:20.843Z","updateTime":"2021-02-06T22:14:20.843Z","__v":0,"quantity":0,"rarity":"common"},{"_id":"60296810c7a2c784e938fa7f","level":null,"cost":50000,"name":"Captain.png","category":"premium","visible":true,"createTime":"2021-02-14T18:12:32.981Z","updateTime":"2021-02-14T18:12:32.981Z","__v":0,"quantity":6,"rarity":"legendary"},{"_id":"60296811c7a2c784e938fa80","level":null,"cost":50000,"name":"Maya.png","category":"premium","visible":true,"createTime":"2021-02-14T18:12:33.195Z","updateTime":"2021-02-14T18:12:33.195Z","__v":0,"quantity":50,"rarity":"epic"},{"_id":"60296811c7a2c784e938fa82","level":null,"cost":50000,"name":"Valentine.png","category":"premium","visible":true,"createTime":"2021-02-14T18:12:33.550Z","updateTime":"2021-02-14T18:12:33.550Z","__v":0,"quantity":null,"rarity":"epic"},{"_id":"60296811c7a2c784e938fa83","level":null,"cost":999999999,"name":"Cara.png","category":"clan","visible":true,"createTime":"2021-02-14T18:12:33.727Z","updateTime":"2021-02-14T18:12:33.727Z","__v":0,"quantity":null,"rarity":"common"},{"_id":"6548deb2ef3e2c0c63738317","name":"Jack.png","category":"premium","visible":true,"level":null,"quantity":500,"cost":20000,"createTime":"2023-11-06T12:40:18.052Z","updateTime":"2023-11-06T12:40:18.052Z","rarity":"common","__v":0},{"_id":"655ba0dbea6f510a60aa6740","name":"Tom.png","category":"premium","visible":true,"level":null,"quantity":6,"cost":50000,"createTime":"2023-11-20T18:09:31.705Z","updateTime":"2023-11-20T18:09:31.705Z","rarity":"legendary","__v":0},{"_id":"65705673655043382cc0a525","name":"Jim.png","category":"premium","visible":true,"level":null,"quantity":50,"cost":50000,"createTime":"2023-12-06T11:09:39.762Z","updateTime":"2023-12-06T11:09:39.762Z","rarity":"epic","__v":0},{"_id":"658826a1245e7196bce4f259","name":"Snowman.png","category":"premium","visible":true,"level":null,"quantity":250,"cost":50000,"createTime":"2023-12-24T12:40:01.966Z","updateTime":"2023-12-24T12:40:01.966Z","rarity":"rare","__v":0},{"_id":"65a5a18a2ec11d5ec1882732","name":"Wisp.png","category":"premium","visible":true,"level":null,"quantity":6,"cost":50000,"createTime":"2024-01-15T21:20:10.764Z","updateTime":"2024-01-15T21:20:10.764Z","rarity":"legendary","__v":0},{"_id":"65f9d0eb5c6335f4f607012c","name":"Mush.png","category":"premium","visible":true,"level":null,"quantity":6,"cost":50000,"createTime":"2024-03-19T17:52:43.868Z","updateTime":"2024-03-19T17:52:43.868Z","rarity":"legendary","__v":0},{"_id":"66290090ae4eb889591d5c30","name":"Vorathrax.png","category":"premium","visible":true,"level":null,"quantity":250,"cost":50000,"createTime":"2024-04-24T12:52:32.685Z","updateTime":"2024-04-24T12:52:32.685Z","rarity":"rare","__v":0},{"_id":"5ff799de9d6ee153fbb39a71","name":"Chet.png","category":"free","visible":true,"level":null,"quantity":0,"cost":0,"createTime":"2024-06-13T17:29:06.334Z","updateTime":"2024-06-13T17:29:06.334Z","rarity":"common","__v":0},{"_id":"6672147408a5e0b1b25b4036","name":"Zak.png","category":"premium","visible":true,"level":null,"quantity":250,"cost":50000,"createTime":"2024-06-18T23:12:52.437Z","updateTime":"2024-06-18T23:12:52.437Z","rarity":"rare","__v":0},{"_id":"66b0dab4ba1eacbec15f5a43","name":"Dreamer.png","category":"premium","visible":true,"level":null,"quantity":250,"cost":50000,"createTime":"2024-08-05T13:59:16.532Z","updateTime":"2024-08-05T13:59:16.532Z","rarity":"rare","__v":0},{"_id":"66fb03c2ba1eacbec171ca97","name":"Lirael.png","category":"premium","visible":true,"level":null,"quantity":6,"cost":50000,"createTime":"2024-09-30T20:02:10.785Z","updateTime":"2024-09-30T20:02:10.785Z","rarity":"legendary","__v":0},{"_id":"691ccf03bc4c153fe578bc6a","name":"Lumi.png","category":"premium","visible":true,"level":null,"quantity":null,"cost":50000,"createTime":"2025-11-18T19:54:43.808Z","updateTime":"2025-11-18T19:54:43.808Z","rarity":"epic","__v":0}],[{"_id":"648e48907762bfc916b95542","type":"purse","price":3.99,"gold":1000,"__v":0},{"_id":"648e48907762bfc916b95543","type":"bag","price":5.99,"gold":5000,"__v":0},{"_id":"648e48907762bfc916b95544","type":"bucket","price":9.99,"gold":10000,"__v":0},{"_id":"648e48907762bfc916b95545","type":"cart","price":29.99,"gold":50000,"__v":0},{"_id":"650da03a83a0bdf6f938c418","type":"cart","price":49.99,"gold":100000,"__v":0}],[{"_id":"648e3942ab490e3121744d9a","type":"common","price":500,"entities":{"common":26,"rare":3},"guaranteed":3,"guaranteedType":"rare","visible":true,"__v":0},{"_id":"648e3942ab490e3121744d9b","type":"rare","price":2000,"entities":{"common":10,"rare":25,"epic":2},"guaranteed":2,"guaranteedType":"epic","visible":true,"__v":0},{"_id":"648e3942ab490e3121744d9c","type":"epic","price":4000,"entities":{"common":25,"rare":10,"epic":16},"guaranteed":16,"guaranteedType":"epic","visible":true,"__v":0},{"_id":"648e3942ab490e3121744d9d","type":"legendary","price":9000,"entities":{"common":25,"rare":25,"epic":12,"legendary":1},"guaranteed":1,"guaranteedType":"legendary","visible":true,"__v":0}],{"_id":"6a9615872ea2fcecbe32ef85","start_date":1788220800000,"end_date":1790812800000,"rewards":[{"type":"free","reward":"boost-1h"},{"type":"sub","reward":"boost-3h"},{"type":"free","reward":"common"},{"type":"sub","reward":"gold"},{"type":"free","reward":"common"},{"type":"sub","reward":"gold"},{"type":"sub","reward":"common"},{"type":"free","reward":"gold"},{"type":"sub","reward":"common"},{"type":"sub","reward":"gold"},{"type":"free","reward":"rare"},{"type":"sub","reward":"gold"},{"type":"free","reward":"rare"},{"type":"sub","reward":"gold"},{"type":"sub","reward":"epic"},{"type":"free","reward":"gold"},{"type":"sub","reward":"common"},{"type":"sub","reward":"rare"},{"type":"free","reward":"epic"},{"type":"sub","reward":"legendary"},{"type":"sub","reward":"common"},{"type":"free","reward":"rare"},{"type":"sub","reward":"epic"},{"type":"free","reward":"gold"},{"type":"free","reward":"legendary"}],"__v":0},[{"image":{"url":"https://sigmally.com/static/skins/Valentine.png","type":"skin"},"_id":"6990752d269ffa995a1ec4e4","date":1771074577347,"locale":{"en":{"title":"Happy Valentines Day!","text":["It is a wonderful day to celebrate love, affection, and appreciation for the special people in your life.","Thats why we decided to add Valentine skin to the game.","For a few days it will be possible to buy without cards this skin."],"_id":"6990752d269ffa995a1ec4e5"}},"__v":0},{"_id":"692b1490269ffa995af090f2","date":1764430922412,"locale":{"en":{"title":"Black Friday SALE! 🎉","text":["We added 50% DISCOUNT to all items for the Black Friday SALE! 🎉"],"_id":"692b1490269ffa995af090f3"}},"__v":0},{"image":{"url":"https://sigmally.com/static/skins/Lumi.png","type":"skin"},"_id":"691cd006d6b2d49571baa27f","date":1763495885643,"locale":{"en":{"title":"New Epic Skin Released!","text":["After the long break, now, the new Epic skin added to the game. For a 1 week it will be possible to buy without cards this skin."],"_id":"691cd006d6b2d49571baa280"}},"__v":0},{"_id":"68015dad02b6f11a1398dd39","date":1744919924577,"locale":{"en":{"title":"SPRING SALE -30% !","text":["We added -30% discount for all items."],"_id":"68015dad02b6f11a1398dd3a"}},"__v":0},{"image":{"url":"https://i.imgur.com/hpqNW1G.jpeg","type":"hor"},"_id":"67ebd7811b0cae0245c92907","date":1743509202077,"locale":{"en":{"title":"Season prizes for top 10 players!","text":["We added new tab with season winners! ","Now top 10 winners will receive gold as you see on the screenshot. ","For the previous season top 10 players already received the gold.  ","Also, don't forget to clean your browser cache, so update could work correctly."],"_id":"67ebd7811b0cae0245c92908"}},"__v":0},{"_id":"67337e9f632a15dfa68d7d8b","date":1731427843632,"locale":{"en":{"title":"Update! Problems with connections fix","text":["For the last hour, you might have had problems connecting into the game because we were working on our servers. Now the situation is stable and you can enjoy the game.","If you can't connect to the server. Try clear cache - Press F12 and right click on rounded arrow. Select ''Empty cache and hard reload''"],"_id":"67337e9f632a15dfa68d7d8c"}},"__v":0},{"_id":"66b4e9ec03edc0025cfe2e9b","date":1729018320000,"locale":{"en":{"title":"SALE - 30%","text":["We added -30% discount for all items till the end of the week."],"_id":"66b4e9ec03edc0025cfe2e9c"}},"__v":0},{"image":{"url":"https://sigmally.com/static/skins/Lirael.png","type":"skin"},"_id":"66fb055203edc0025c0fb053","date":1727726845538,"locale":{"en":{"title":"New Legendary Skin Lirael!","text":["The new Legendary skin added to the game. For a few days it will be possible to buy without cards this skin."],"_id":"66fb055203edc0025c0fb054"}},"__v":0},{"_id":"66b7997803edc0025cfedff9","date":1723308388623,"locale":{"en":{"title":"Security Update!","text":["We added new Cloudflare captcha. If you have problems with login, please clear cache."],"_id":"66b7997803edc0025cfedffa"}},"__v":0},{"image":{"url":"https://sigmally.com/static/skins/Dreamer.png","type":"skin"},"_id":"66b1077603edc0025cfd2023","date":1722877755346,"locale":{"en":{"title":"New Rare Skin Dreamer Is Available!","text":["For a few days it will be possible to buy without cards this skin."],"_id":"66b1077603edc0025cfd2024"}},"__v":0}],[{"_id":"655428b8036135746e2ca11c","hours":1,"price":3000,"__v":0},{"_id":"655428b8036135746e2ca11d","hours":3,"price":5000,"__v":0}],0,{"color":"#ffffff","background":"#000","left":"Shop is available!","right":"Buy gold and Sigma Pass!"},[{"position":1,"fullName":"Sena Gold","id":"111692240525936595432"},{"position":2,"fullName":"Zelko","id":"108856794464219715020"},{"position":3,"fullName":"yens","id":"107974785397898399409"},{"position":4,"fullName":"OPSSS","id":"104986780497345064419"},{"position":5,"fullName":"radovan sikora","id":"103119608835020254376"},{"position":6,"fullName":"Us2 GABRIEL","id":"105040758754641601991"},{"position":7,"fullName":"tens","id":"110851219216322562278"},{"position":8,"fullName":"Yordan Luna","id":"103608074894454903611"},{"position":9,"fullName":"Bibas we are sory","id":"102220892170841314909"},{"position":10,"fullName":"anthony Solano","id":"118344505330319000705"}],0]`);
+    window.tourneyServer = '';
+    window.CAPTCHA2 = '6Lck1wsmAAAAACmj_46s4DLFaLoFwJCXkzh6HEaM';
+    window.CAPTCHA3 = '6LeqgRYdAAAAABO1HoCmpDhZRhqATZTwT6wKZjE_';
+    window.TURNSTILE = '0x4AAAAAAAg1OSVTY0dfKdeG';
+    window.OAUTH = '1063846395656-tkpcrm37hfklkkq7sf7o3vran20qm0ji.apps.googleusercontent.com';
+    localStorage.setItem("macro-settings", 'sigmally');
+    document.querySelector('.menu-wrapper>#left-menu').classList.remove('hidden');
+    document.querySelector('.line>#shop-popup').classList.remove('hidden');
+  </script>
+
+  <script src="https://one.sigmally.com/assets/js/game.js?v=2.0.15" defer></script>
+</footer>
+        <div id="cm_modal__rules" class="ctrl-modal ctrl-modal--hidden">
+  <div class="ctrl-modal__overlay">
+    <div class="ctrl-modal__modal">
+      <div class="ctrl-modal__header">
+        <div class="ctrl-modal__title h3">How to play</div>
+        <button id="cm_close" class="ctrl-modal__close">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 512 512" width="24px" fill="#333333">
+            <path
+              d="m256 512c-141.160156 0-256-114.839844-256-256s114.839844-256 256-256 256 114.839844 256 256-114.839844 256-256 256zm0-475.429688c-120.992188 0-219.429688 98.4375-219.429688 219.429688s98.4375 219.429688 219.429688 219.429688 219.429688-98.4375 219.429688-219.429688-98.4375-219.429688-219.429688-219.429688zm0 0" />
+            <path
+              d="m347.429688 365.714844c-4.679688 0-9.359376-1.785156-12.929688-5.359375l-182.855469-182.855469c-7.144531-7.144531-7.144531-18.714844 0-25.855469 7.140625-7.140625 18.714844-7.144531 25.855469 0l182.855469 182.855469c7.144531 7.144531 7.144531 18.714844 0 25.855469-3.570313 3.574219-8.246094 5.359375-12.925781 5.359375zm0 0" />
+            <path
+              d="m164.570312 365.714844c-4.679687 0-9.355468-1.785156-12.925781-5.359375-7.144531-7.140625-7.144531-18.714844 0-25.855469l182.855469-182.855469c7.144531-7.144531 18.714844-7.144531 25.855469 0 7.140625 7.140625 7.144531 18.714844 0 25.855469l-182.855469 182.855469c-3.570312 3.574219-8.25 5.359375-12.929688 5.359375zm0 0" />
+          </svg>
+        </button>
+      </div>
+      <div class="ctrl-modal__content">
+        <h5 class="menu__desc-title"><b>Agario Controls</b></h5>
+        <p class="menu__desc-text"></p>
+        <ul>
+          <li>Eject Mass - W</li>
+          <li>Chat - ENTER</li>
+          <li>Split - SPACE</li>
+          <li>Navigation - Mouse</li>
+        </ul>
+        <h5 class="menu__desc-title">
+          <b>Agario Registration</b>
+        </h5>
+        <p class="menu__desc-text">
+          After Registration, you will be able to save your
+          progress.
+        </p>
+        <h5 class="menu__desc-title">
+          <b>How to hide agario player names and skins</b>
+        </h5>
+        <p class="menu__desc-text">
+          On the main menu clear checkboxes "Skin", "Name".
+          Skins and nicknames will be hidden.
+        </p>
+        <h5 class="menu__desc-title">
+          <b>How to change agario skin</b>
+        </h5>
+        <p class="menu__desc-text">
+          Click the "Skins" button and then choose one of the
+          available skins. All skins have their names. If you
+          want to add custom skins contact admin in Discord.
+        </p>
+        <h5 class="menu__desc-title">
+          <b>How to make a white background in Agario</b>
+        </h5>
+        <p class="menu__desc-text">
+          Clear the "Dark" checkbox on the main menu. Also,
+          you can use the "Grid" option which marks each
+          sector in the background.
+        </p>
+        <h5 class="menu__desc-title">
+          <b>How to fix Agario lags</b>
+        </h5>
+        <div class="menu__desc-text">
+          Close apps that may use internet traffic. Restart
+          browser. Disable the "Skin" option, they cause
+          additional load. Check if someone uses the same
+          connection.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>How to split in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          All you need to split is to press the SPACE button
+          and have a mass of more than 90. Cells that have
+          less than 90 mass can’t split.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to play agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          Your main goal is to become the biggest player on
+          the map. To achieve these you need to eat small
+          pellets on the map and after that, you need to eat
+          other players that are smaller than you. Also, you
+          need to be careful and avoid bigger cells.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to eat viruses in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          If you want to eat a virus in agario, you should be
+          split into 16 cells. Because you can’t split more,
+          you can easily eat viruses. One more condition: you
+          should be bigger than the virus.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to merge in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          If you want to recombine in agario you should wait
+          30 seconds and after that, you will automatically
+          merge.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to be good at agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          To become a better player you need to have more game
+          practice and to watch youtube videos of how other
+          gamers play. Also, you can record your screen and
+          analyze your game.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to get big in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          The best tactic is to be careful as you can. Just
+          eat pellets, try not to split, and avoid big
+          players.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to shoot in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          Some players want to shoot viruses into other
+          players. For doing that you need to eject 5 pellets
+          (Press W button) into the virus. After that, the
+          virus will be split.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to play agario with friends?</b>
+        </h5>
+        <div class="menu__desc-text">
+          To play agario with friends you need to connect to
+          the same server. Just select “US” or “EU” server.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to record agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          If you want to record your game you need to install
+          a recording program on your computer. For example
+          Fraps or Bandicam.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to feed in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          If you want to give mass to another player in the
+          agario, you can split or eject mass.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to zoom out in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          To zoom out in agario you need to use the scroll.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>What is a virus in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          A virus is a type of cell in agario. If you touch it
+          then your cell will be split.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to level up in agario?</b>
+        </h5>
+        <div class="menu__desc-text">
+          If you want to level up in agario, you need to earn
+          a lot of points. To achieve that goal you need to
+          eat other players and pellets on the map. Also,
+          other players can share their mass with you.
+        </div>
+
+        <h5 class="menu__desc-title">
+          <b>How to play agario at school?</b>
+        </h5>
+        <div class="menu__desc-text">
+          If you want to play unblocked agario at school, you
+          just need to play agario on our site.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>Is agario modded?</b>
+        </h5>
+        <div class="menu__desc-text">
+          Yes, agar.io is onlnie modded game. All players move
+          faster, cells have bigger mass, players lose mass
+          faster too.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>Essential tips for Agar.io</b>
+        </h5>
+        <div class="menu__desc-text">
+          Today we will cover the necessary aspects of the
+          game and examine a few cell growth strategies. The
+          game is available both within the browser and as an
+          app. Agar.io has become popular and loved by
+          numerous people, not because of the right graphics
+          but because of gameplay.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>How to become a giant cell in Agario</b>
+        </h5>
+        <div class="menu__desc-text">
+          The game's point is not to win but to keep the giant
+          cell as long as possible. How do you do it quickly
+          and make it last? Our team has prepared some
+          strategies that will be useful to you. You have to
+          be patient if you want to win. These strategies
+          don't work immediately.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>Easy start in Agario</b>
+        </h5>
+        <div class="menu__desc-text">
+          How can you successfully play the game without basic
+          knowledge of controls? You can't! And we still need
+          to win. There is some difference between playing
+          through an app and playing in a browser window. The
+          difference is in the controls. If you control the
+          cell with the mouse in the browser, in the app, you
+          do it with your fingers.
+          <ul>
+            <li>
+              Don't split at the start of the game, or
+              you'll just get eaten straight away.
+            </li>
+            <li>
+              Please stay away from prominent opponents,
+              or they will eat you up.
+            </li>
+            <li>
+              Are you getting bigger? Don't get too
+              excited. You are also getting slower.
+            </li>
+            <li>
+              Have you met an opponent of your size? He
+              will not be able to overcome you, and you
+              will go through each other.
+            </li>
+          </ul>
+        </div>
+        <h5 class="menu__desc-title">
+          <b>Use surroundings in Agario to win.</b>
+        </h5>
+        <div class="menu__desc-text">
+          In Agario private server you need to adapt to your
+          environment and trick bigger opponents with green
+          objects called viruses. These dangerous objects
+          cannot harm you if you are smaller than them. A much
+          bigger opponent won't take any chances and get at
+          you while you're around viruses. But avoid the
+          viruses when you're big. Otherwise, they will tear
+          you apart into small pieces, and other players will
+          take advantage of it.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>Get all pieces together quickly!</b>
+        </h5>
+        <div class="menu__desc-text">
+          Being a large cell, you will inevitably need to
+          split it. Some advice on this:
+          <ul>
+            <li>
+              You find it harder to eat your opponents
+              because you are big and slow.
+            </li>
+            <li>Split into the enemy!</li>
+            <li>
+              Move cautiously in a state of separation.
+              Opponents do not sleep.
+            </li>
+          </ul>
+          Your two separated cells stand together and must
+          come together to reunite.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>Remember: you are losing size.</b>
+        </h5>
+        <div class="menu__desc-text">
+          You've probably guessed by now. Every second when
+          you are playing agario game you lose in mass. Also,
+          the bigger you are, the faster you lose. You should
+          notice these changes in the score table. The problem
+          is that the table only shows the peak of your
+          rating. But the problem is solvable. That you have
+          lost a lot in mass can be seen by how many points
+          are added by eating other cells. Eat everyone, but
+          be cautious about larger cells.The longer you don't
+          eat anything, the faster you lose weight.
+        </div>
+        <h5 class="menu__desc-title"><b>Agario strategy</b></h5>
+        <div class="menu__desc-text">
+          Once we've given you some initial information on
+          Agario controls and essential survival tips for the
+          game, we move on to the most important thing of all:
+          strategy. There are about 100 players in the regular
+          game. So agree, it's not easy to survive.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>The very beginning: run and hide</b>
+        </h5>
+        <div class="menu__desc-text">
+          Do not challenge yourself or other players at the
+          start on the agario pvp server. First, you should
+          swallow up points on the map. If your opponent has
+          spotted you and started to chase you, try your best
+          to run away. Never cram yourself into a corner of
+          the map. Otherwise, players will kill you. Also,
+          remember the advice with viruses! Collect points,
+          watch out for prominent opponents. Split yourself!
+          This is the way to win! When you have finally
+          achieved a result in size, you're going to split
+          yourself up and shoot the second part at your
+          opponent, thereby quickly engulfing him. The
+          opponent will eat your second part if you
+          miscalculate your mass. You must not divide yourself
+          too often. Everything is on track as long as no big
+          adversaries are around. But as soon as they appear,
+          all your small parts will be eaten in one go. You
+          must be extremely careful if you are in one of the
+          top five positions. Don't split more than twice, or
+          you will be swallowed up.
+        </div>
+        <h5 class="menu__desc-title"><b>Corner them!</b></h5>
+        <div class="menu__desc-text">
+          If you have become the giant cell playing agario
+          online, you have become the game's slowest cell. But
+          that's okay. Try to corner your opponents. This will
+          help you to eat them.
+        </div>
+        <h5 class="menu__desc-title">
+          <b>The essence of the Agario game</b>
+        </h5>
+        <div class="menu__desc-text">
+          The gameplay is simple and straightforward: dominate
+          or be dominated by others. The problem with slowness
+          when you're large could be a challenge, but we
+          solved it above. I hope our tips are going to help
+          you with the game! Win and become the biggest!
+        </div>
+      </div>
+      <div class="ctrl-modal__footer">
+        <button id="cm_confirm" class="btn btn-success">
+          Got it!
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+          <div id="cm_modal__settings" class="ctrl-modal ctrl-modal--hidden">
+  <div class="ctrl-modal__overlay">
+    <div class="ctrl-modal__modal">
+      <div class="ctrl-modal__header">
+        <div class="ctrl-modal__title h3">
+          Settings
+        </div>
+        <button id="cm_close__settings" class="ctrl-modal__close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.6001 14.4L14.4001 1.59998M14.4001 14.4L1.6001 1.59998" stroke="#333136" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+
+        </button>
+      </div>
+      <div class="ctrl-modal__content">
+        <div class="menu__item">
+          <div id="settings" class="checkboxes">
+            <ul class="checkbox-grid">
+              <!-- <li>
+                                      <div class="pretty p-svg p-round p-smooth">
+                                          <input type="checkbox" id="showSkins" />
+                                          <div class="state p-success">
+                                              <svg class="svg svg-icon" viewBox="0 0 20 20">
+                                                  <path
+                                                      d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                                                      style="stroke: white;fill:white;"></path>
+                                              </svg>
+                                              <label>Skins</label>
+                                          </div>
+                                      </div>
+                                  </li> -->
+
+              <!--  <li>
+                                      <div class="pretty p-svg p-round p-smooth">
+                                          <input type="checkbox" id="showNames" />
+                                          <div class="state p-success">
+                                              <svg class="svg svg-icon" viewBox="0 0 20 20">
+                                                  <path
+                                                      d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                                                      style="stroke: white;fill:white;"></path>
+                                              </svg>
+                                              <label>Names</label>
+                                          </div>
+                                      </div>
+                                  </li> -->
+
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="darkTheme" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Dark
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="showMass" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Mass
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="showChat" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Chat
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="showMinimap" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Minimap
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <!--   <li>
+                                      <div class="pretty p-svg p-round p-smooth">
+                                          <input type="checkbox" id="showPosition" />
+                                          <div class="state p-success">
+                                              <svg class="svg svg-icon" viewBox="0 0 20 20">
+                                                  <path
+                                                      d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                                                      style="stroke: white;fill:white;"></path>
+                                              </svg>
+                                              <label>Position</label>
+                                          </div>
+                                      </div>
+                                  </li>
+-->
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="showBorder" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Border
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="showGrid" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Grid
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="moreZoom" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Zoomout
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <!--  <li>
+                                      <div class="pretty p-svg p-round p-smooth">
+                                          <input type="checkbox" id="fillSkin" />
+                                          <div class="state p-success">
+                                              <svg class="svg svg-icon" viewBox="0 0 20 20">
+                                                  <path
+                                                      d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                                                      style="stroke: white;fill:white;"></path>
+                                              </svg>
+                                              <label>Fill Skin</label>
+                                          </div>
+                                      </div>
+                                  </li> -->
+              <!--  <li>
+                                      <div class="pretty p-svg p-round p-smooth">
+                                          <input type="checkbox" id="backgroundSectors" />
+                                          <div class="state p-success">
+                                              <svg class="svg svg-icon" viewBox="0 0 20 20">
+                                                  <path
+                                                      d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                                                      style="stroke: white;fill:white;"></path>
+                                              </svg>
+                                              <label>Background Sectors</label>
+                                          </div>
+                                      </div>
+                                  </li> -->
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="jellyPhysics" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Jelly Physics
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+              <li>
+                <div class="pretty p-svg p-round p-smooth">
+                  <input type="checkbox" id="showClanmates" />
+                  <div class="state p-success">
+                    <svg class="svg svg-icon" viewBox="0 0 20 20">
+                      <path
+                        d="M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z"
+                        style="
+                                                              stroke: white;
+                                                              fill: white;
+                                                          "></path>
+                    </svg>
+                    <label>
+                      Show clanmates
+                    </label>
+                  </div>
+                </div>
+              </li>
+
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+            <style>
+  .ctrl-modal__overlay {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+    z-index: 501;
+  }
+
+  .ctrl-modal__modal {
+    display: block;
+    width: 330px;
+    background-color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20vh 0 35vh;
+  }
+
+  #cm_modal__rules .ctrl-modal__modal {
+    width: 500px;
+    padding: 15px;
+  }
+
+  #cm_modal__settings .ctrl-modal__modal {
+    padding: 20px 20px 40px 20px;
+    margin: 30vh 0 35vh;
+  }
+
+  #cm_modal__clans .ctrl-modal__modal {
+    width: 390px;
+    padding: 20px 20px 32px 20px;
+  }
+
+  .ctrl-modal__header {
+    display: flex;
+  }
+
+  .ctrl-modal__title {
+    flex: 1;
+    margin: 10px 0;
+    text-align: center;
+  }
+
+  button.ctrl-modal__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .ctrl-modal__footer {
+    text-align: center;
+    padding-top: 10px;
+  }
+
+  .ctrl-modal--hidden {
+    display: none;
+  }
+
+  .body--noscroll {
+    overflow: hidden;
+  }
+
+  @media (max-width: 551px) {
+    .ctrl-modal__modal {
+      width: 100%;
+      margin: 20vh 20px 35vh;
+    }
+  }
+
+  .link_btn {
+    color: #337ab7;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+</style>
+<script>
+  function _cm_open() {
+    document.body.classList.add("body--noscroll");
+    cm_modal__rules.classList.remove("ctrl-modal--hidden");
+  }
+  function _cm_close() {
+    document.body.classList.remove("body--noscroll");
+    cm_modal__rules.classList.add("ctrl-modal--hidden");
+  }
+  cm_confirm.addEventListener("click", _cm_close);
+  cm_close.addEventListener("click", _cm_close);
+</script>
+<script>
+  function _cm_settings_open() {
+    document.body.classList.add("body--noscroll");
+    cm_modal__settings.classList.remove("ctrl-modal--hidden");
+  }
+  function _cm_settings_close() {
+    document.body.classList.remove("body--noscroll");
+    cm_modal__settings.classList.add("ctrl-modal--hidden");
+  }
+  cm_close__settings.addEventListener("click", _cm_settings_close);
+</script>
+              <div id="connecting" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div id="connecting-content" class="connecting__content loading-body">
+    <div class="close-connecting-button loading-close">
+      <i onclick="closeAlert()" class="fas fa-times"></i>
+    </div>
+    <h4 class="alert-heading">
+      Loading...
+    </h4>
+    <div class="loading-bar">
+      <div class="loading-bar-progress"></div>
+    </div>
+  </div>
+</div>
+<script>
+  function closeAlert() {
+    document.querySelector("#connecting").hide();
+  }
+  {
+    const el = document.querySelector("#connecting");
+    if (el) el.style.display = 'none';
+  }
+</script>
+  <div id="needtobeloggined" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          <img src="https://one.sigmally.com/assets/images/icon/alert.svg" loading="lazy" width="24px" height="24px" alt="error icon" />
+          Error!
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeNeedToBeLoginnedAlert()" class="fas fa-times"></i>
+        </div>
+      </div>
+      <p class="mb-0">
+        You must be logged in to open shop
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+  function closeNeedToBeLoginnedAlert() {
+    document.querySelector("#needtobeloggined").hide();
+  }
+  closeNeedToBeLoginnedAlert();
+</script>
+    <div id="errormodal" class="connecting hide" onclick="if (event.target === this) closeErrorModalAlert()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          <img src="https://one.sigmally.com/assets/images/icon/alert.svg" loading="lazy" width="24px" height="24px" alt="error icon" />
+          Error
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeErrorModalAlert()" class="fas fa-times"></i>
+        </div>
+      </div>
+      <p class="mb-0" id="errormodal-message">
+        Our shop server is overloaded or not available now. Try to restart the page, or use the shop later
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+  function closeErrorModalAlert() {
+    document.querySelector("#errormodal").hide();
+    const message = document.querySelector("#errormodal-message");
+    message.innerHTML = `Our shop server is overloaded or not available now. Try to restart the page, or use the shop later`;
+  }
+  {
+    const el = document.querySelector("#errormodal");
+    if (el) el.style.display = 'none';
+  }
+</script>
+      <div id="sigma_contais" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div>
+        <img src="https://one.sigmally.com/assets/images/icon/sigma.svg" loading="lazy" height="28px" alt="sigma pass icon" />
+        <p>Opens with a Sigma Pass</p>
+      </div>
+      <div>
+        <p id="contains_text">See what's in the chest</p>
+        <button id="contains_show_btn">
+          <img src="https://one.sigmally.com/assets/images/icon/contains.svg" loading="lazy" height="13px" width="12px" alt="contains button" />
+        </button>
+      </div>
+      <button id="contains_sub_btn">
+        Buy a Sigma pass
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+  {
+    const el = document.querySelector("#sigma_contais");
+    if (el) el.style.display = 'none';
+  }
+</script>
+        <div id="goldmodal" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <p id="goldmodal_title"></p>
+      <div class="goldmodal-contain">
+        <img id="goldmodal_image" src="https://one.sigmally.com/assets/images/icon/coin.svg" height="80px" alt="Coin" loading="lazy" />
+        <p class="mb-0" style="color: #333136" id="goldmodal_message">
+          You haven&#39;t enough gold or particles for this skin. You can get more particles from chests. And for getting more gold you can check our coins proposions.
+        </p>
+      </div>
+      <button id="goldmodal_button"></button>
+    </div>
+  </div>
+</div>
+<script>
+  function closeGoldModalAlert() {
+    document.querySelector("#goldmodal").hide();
+  }
+  {
+    const el = document.querySelector("#goldmodal");
+    if (el) el.style.display = 'none';
+  }
+</script>
+          <div id="particlesalert" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          <img src="https://one.sigmally.com/assets/images/icon/alert.svg" loading="lazy" width="24px" height="24px" alt="error icon" />
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeParticlesModalAlert()" class="fas fa-times"></i>
+        </div>
+      </div>
+      <p class="mb-0" style="color: #333136">
+        Sorry, but you have already all cards from this chest. Check our shop later for more new skins or try your luck with other chests
+      </p>
+    </div>
+  </div>
+</div>
+<script>
+  function closeParticlesModalAlert() {
+    document.querySelector("#particlesalert").hide();
+  }
+  {
+    const el = document.querySelector("#particlesalert");
+    if (el) el.style.display = 'none';
+  }
+</script>
+            <div id="chest-content" class="chest-modal hide" onclick="if (event.target === this) this.hide()"></div>
+<style>
+  .chest-modal-image.open {
+    background-image: url('https://one.sigmally.com/assets/images/chests/open.svg');
+  }
+
+  .chest-modal-image.common {
+    background-image: url('https://one.sigmally.com/assets/images/chests/common.svg');
+  }
+
+  .chest-modal-image.rare {
+    background-image: url('https://one.sigmally.com/assets/images/chests/rare.svg');
+  }
+
+  .chest-modal-image.epic {
+    background-image: url('https://one.sigmally.com/assets/images/chests/epic.svg');
+  }
+
+  .chest-modal-image.legendary {
+    background-image: url('https://one.sigmally.com/assets/images/chests/legendary.svg');
+  }
+
+  .chest-upto-card {
+    background-image: url('https://one.sigmally.com/assets/images/cards/default.svg');
+  }
+
+  .chest-upto-card.common {
+    background-image: url('https://one.sigmally.com/assets/images/cards/common.svg');
+  }
+
+  .chest-upto-card.rare {
+    background-image: url('https://one.sigmally.com/assets/images/cards/rare.svg');
+  }
+
+  .chest-upto-card.epic {
+    background-image: url('https://one.sigmally.com/assets/images/cards/epic.svg');
+  }
+
+  .chest-upto-card.legendary {
+    background-image: url('https://one.sigmally.com/assets/images/cards/legendary.svg');
+  }
+
+  .chest-content-item.common .chest-content-card {
+    background-image: url('https://one.sigmally.com/assets/images/cards_flat/common.svg');
+  }
+
+  .chest-content-item.rare .chest-content-card {
+    background-image: url('https://one.sigmally.com/assets/images/cards_flat/rare.svg');
+  }
+
+  .chest-content-item.epic .chest-content-card {
+    background-image: url('https://one.sigmally.com/assets/images/cards_flat/epic.svg');
+  }
+
+  .chest-content-item.legendary .chest-content-card {
+    background-image: url('https://one.sigmally.com/assets/images/cards_flat/legendary.svg');
+  }
+</style>
+<script>
+  function closeChestContentModal() {
+    document.querySelector("#chest-content").hide();
+  }
+  {
+    const el = document.querySelector("#chest-content");
+    if (el) el.style.display = 'none';
+  }
+</script>
+              <div id="chest-total" class="chest-modal hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="close-connecting-button">
+      <i onclick="closeChestTotalModal()" class="fas fa-times"></i>
+    </div>
+
+    <div class="chest-modal-image open"></div>
+    <div class="chest-modal-title" id="total-chest-title">Common Chest</div>
+
+    <div id="total-chest-modal-body">
+      <div id="chest-total-upto" class="common">
+        <div id="total-upto-card">
+          <div class="chest-upto-card"></div>
+        </div>
+        <div>
+          <p>You received</p>
+          <p>+<span id="total-cards-number">77</span>  Cards</p>
+        </div>
+      </div>
+      <div id="chest-total-items" class="hidden-scroll">
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<script>
+  function closeChestTotalModal() {
+    document.querySelector("#chest-total").hide();
+  }
+  {
+    const el = document.querySelector("#chest-total");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                <div id="chest-results" class="chest-modal hide" onclick="if (event.target === this) this.claim()">
+
+</div>
+<script>
+  function closeChestResultModal() {
+    document.querySelector("#chest-results").hide();
+  }
+  {
+    const el = document.querySelector("#chest-results");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                  <div id="free-coins" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          Free Coins!
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeFreeCoinsModal()" class="fas fa-times"></i>
+        </div>
+      </div>
+      <p class="mb-0">
+        Welcome back, you have earned:
+      </p>
+      <div class="free-coins-body">
+        <div>
+          <div id="free-coins-image"></div>
+          <p>
+            <span id="free-coins-value">50</span>
+             coins
+          </p>
+        </div>
+        <p>
+          Come back in 4 Hours to receive free coins
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  #free-coins-image {
+    background-image: url('https://one.sigmally.com/assets/images/icon/coin.svg');
+    height: 110px;
+    width: 110px;
+    padding: 2px;
+    margin-bottom: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+</style>
+<script>
+  function closeFreeCoinsModal() {
+    document.querySelector("#free-coins").hide();
+  }
+  {
+    const el = document.querySelector("#free-coins");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                    <div id="reward-coins" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          You have earned
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeRewardCoinsModal()" class="fas fa-times"></i>
+        </div>
+      </div>
+      <p class="mb-0">
+        Bag of gold
+      </p>
+      <div class="free-coins-body">
+        <div>
+          <div class="reward-coins-image"></div>
+          <p>
+            <span id="reward-coins-value">150</span>
+             coins
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .reward-coins-image {
+    background-image: url('https://one.sigmally.com/assets/images/icon/coin.svg');
+    height: 110px;
+    width: 110px;
+    padding: 2px;
+    margin-bottom: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+</style>
+<script>
+  function closeRewardCoinsModal() {
+    document.querySelector("#reward-coins").hide();
+  }
+  {
+    const el = document.querySelector("#reward-coins");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                      <div id="reward-booster" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          Double XP Boost
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeRewardBoosterModal()" class="fas fa-times"></i>
+        </div>
+      </div>
+      <p class="mb-0">
+        Congratulation, you have earned:
+      </p>
+      <div class="free-coins-body">
+        <div>
+          <div id="reward-booster-image"></div>
+          <p>
+            <span id="reward-booster-value">1</span>
+            hour XP Boost
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  #reward-booster-image {
+    background-image: url('https://one.sigmally.com/assets/images/boost_large.svg');
+    height: 100px;
+    width: 100px;
+    padding: 2px;
+    margin-bottom: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+</style>
+<script>
+  function closeRewardBoosterModal() {
+    document.querySelector("#reward-booster").hide();
+  }
+  {
+    const el = document.querySelector("#reward-booster");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                        <div id="clan-assign" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="close-connecting-button">
+      <i onclick="closeClanAssignModal()" class="fas fa-times"></i>
+    </div>
+    <h2>Assign role to the player</h2>
+    <div id="assign-buttons">
+      <button class="btn-member" onclick="this.handleClan('confirm-role', 'member')">Member</button>
+      <button class="btn-elder" onclick="this.handleClan('confirm-role', 'elder')">Elder</button>
+      <button class="btn-coleader" onclick="this.handleClan('confirm-role', 'co-leader')">Co-leader</button>
+      <button class="btn-expel" onclick="this.handleClan('confirm-role', 'expel')">Expel</button>
+    </div>
+  </div>
+</div>
+<script>
+  function closeClanAssignModal() {
+    document.querySelector("#clan-assign").hide();
+  }
+  {
+    const el = document.querySelector("#clan-assign");
+    if (el) el.style.display = 'none';
+  }
+</script>
+  <div id="clans" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="close-connecting-button">
+      <i onclick="closeClansModal()" class="fas fa-times"></i>
+    </div>
+    <h2>Clans</h2>
+    <div id="clans-list" class="with-scroll"></div>
+    <div id="clans-input">
+      <input type="text" placeholder="Unique name" />
+      <button>Create</button>
+    </div>
+  </div>
+</div>
+<script>
+  function closeClansModal() {
+    document.querySelector("#clans").hide();
+  }
+  {
+    const el = document.querySelector("#clans");
+    if (el) el.style.display = 'none';
+  }
+</script>
+    <div id="clan" class="connecting hide" onclick="if (event.target === this) this.hide()">
+
+</div>
+<style>
+  .star-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/star.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+  }
+
+  .role-icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/role.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+  }
+
+  .reject-icon {
+    width: 18px;
+    height: 18px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/reject.svg');
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .resolve-icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/resolve.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+  }
+
+  .clan-icon {
+    width: 24px;
+    height: 24px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/earth.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+  }
+</style>
+<script>
+  function closeClanModal() {
+    document.querySelector("#clan").hide();
+  }
+  {
+    const el = document.querySelector("#clan");
+    if (el) el.style.display = 'none';
+  }
+</script>
+      <div id="clan-leave-modal" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="close-connecting-button">
+      <i onclick="closeClanLeaveModal()" class="fas fa-times"></i>
+    </div>
+    <h2>Do you really want to leave?</h2>
+    <div id="leave-buttons">
+      <button class="leave-cancel" onclick="this.hide()">Cancel</button>
+      <button class="leave-ok" onclick="this.handleClan('confirmed-leave')">Okay</button>
+    </div>
+  </div>
+</div>
+<script>
+  function closeClanLeaveModal() {
+    document.querySelector("#clan-leave-modal").hide();
+  }
+  {
+    const el = document.querySelector("#clan-leave-modal");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                          <div id="sigma-pass" class="hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div id="sigma-pass-image"></div>
+    <div class="close-connecting-button">
+      <i onclick="closeSigmaModal()" class="fas fa-times"></i>
+    </div>
+    <h3>
+      Sigma Pass
+    </h3>
+    <div id="sigma-status">
+      <div id="sigma-exp">
+        <div class="sigma-meter">
+          <span id="sigma-line-progress" style="width: 66%"></span>
+          <div id="sigma-progress">660 000/1M</div>
+          <div class="agario-star-level">
+            <picture>
+              <source srcset="https://one.sigmally.com/assets/images/star.webp" type="image/webp" />
+              <img width="45" height="45" src="https://one.sigmally.com/assets/images/star.png" loading="lazy" alt="Star" title="Star" />
+            </picture>
+
+            <div class="user-level">
+              <div id="sigma-level">1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button id="sigma-time" onclick="this.openTab('sub')">
+        <div id="sigma-time-text">
+          Get Pass!
+        </div>
+        <div><img src="https://one.sigmally.com/assets/images/icon/sandglass.svg" loading="lazy" /><span id="sigma-time-value">22d 11h</span>
+        </div>
+      </button>
+    </div>
+    <div id="sigma-scroll">
+      <div id="sigma-content">
+        <div class="sigma-item sigma-common">
+          <div class="sigma-requirement">
+            <label class="sigmabox">
+              <input type="checkbox" checked onchange="this.checked = true" />
+              <span>1</span>
+            </label>
+          </div>
+          <div class="sigma-free"></div>
+          <div class="sigma-reward"></div>
+        </div>
+        <div class="sigma-item sigma-rare">
+          <div class="sigma-requirement">
+            <div class="sigma-lock">2</div>
+          </div>
+          <div class="sigma-sub"></div>
+          <div class="sigma-reward"></div>
+        </div>
+        <div class="sigma-item sigma-epic">
+          <div class="sigma-requirement">
+            <div class="sigma-lock">3</div>
+          </div>
+          <div class="sigma-sub"></div>
+          <div class="sigma-reward"></div>
+        </div>
+        <div class="sigma-item sigma-legendary">
+          <div class="sigma-requirement">
+            <div class="sigma-lock">4</div>
+          </div>
+          <div class="sigma-sub"></div>
+          <div class="sigma-reward"></div>
+        </div>
+        <div class="sigma-item sigma-gold">
+          <div class="sigma-requirement">
+            <div class="sigma-lock">5</div>
+          </div>
+          <div class="sigma-sub"></div>
+          <div class="sigma-reward"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .sigmabox>input:checked+span::before {
+    content: url('https://one.sigmally.com/assets/images/icon/sigmabox.svg');
+  }
+
+  .sigma-lock::before {
+    content: '';
+    width: 12.5px;
+    height: 16px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/lock.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-top: -3px;
+  }
+
+  .sigma-gold .sigma-lock::before,
+  .sigma-boost-3h .sigma-lock::before {
+    content: '';
+    width: 12.5px;
+    height: 16px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/lock_dark.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-top: -3px;
+  }
+
+  .sigma-sub::before {
+    content: '';
+    width: 25px;
+    height: 18px;
+    display: block;
+    background-image: url('https://one.sigmally.com/assets/images/icon/sigma.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-top: -3px;
+  }
+
+  .sigma-free::before {
+    content: 'Free!';
+    display: block;
+    padding-left: 10px;
+    padding-right: 10px;
+    color: #FFF;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.56px;
+    padding-top: 7px;
+  }
+
+  #sigma-pass-image {
+    background-image: url('https://one.sigmally.com/assets/images/icon/sigma.svg');
+  }
+
+  .sigma-boost-1h .sigma-reward,
+  .sigma-boost-3h .sigma-reward {
+    background-image: url('https://one.sigmally.com/assets/images/boost_large.svg');
+    width: 100px;
+  }
+
+  .sigma-common .sigma-reward {
+    background-image: url('https://one.sigmally.com/assets/images/chests/common.svg');
+  }
+
+  .sigma-rare .sigma-reward {
+    background-image: url('https://one.sigmally.com/assets/images/chests/rare.svg');
+  }
+
+  .sigma-epic .sigma-reward {
+    background-image: url('https://one.sigmally.com/assets/images/chests/epic.svg');
+  }
+
+  .sigma-legendary .sigma-reward {
+    background-image: url('https://one.sigmally.com/assets/images/chests/legendary.svg');
+  }
+
+  .sigma-gold .sigma-reward {
+    background-image: url('https://one.sigmally.com/assets/images/coins/bag.svg');
+  }
+</style>
+<script>
+  function closeSigmaModal() {
+    document.querySelector("#sigma-pass").hide();
+  }
+  {
+    const el = document.querySelector("#sigma-pass");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                            <div id="menu-nav">
+  <div class="menu-links" id="menu-links">
+    <a class="link" href="/privacy.html" title="Privacy Policy">
+      Policy
+    </a> |
+    <a class="link" href="/terms.html" title="Terms and Conditions">
+      Terms
+    </a> |
+    <a class="link" href="/partners.html" title="Partners">
+      Partners
+    </a> |
+    <button class="link_btn" onclick="_cm_open()">
+      How to play Agario
+    </button>
+  </div>
+</div>
+                              <div id="shop" onclick="if (event.target === this) this.hide()">
+  <div id="shop-area">
+    <div id="shop-header">
+      <div id="shop-header-title">Skins</div>
+      <div id="shop-header-buttons">
+        <div class="coins">
+          <div class="coins-num">
+            <span class="coins-value">0</span>
+            <img class="coins-num__coin" alt="Coin" title="Coin" width="20" height="20"
+              src="https://one.sigmally.com/assets/images/icon/coin.svg" loading="lazy" />
+          </div>
+          <button class="plus" onclick="this.setCategory('coins')"></button>
+          <button class="close-btn" onclick="shop.hide()">
+            <img src="https://one.sigmally.com/assets/images/icon/close.svg" loading="lazy" width="16" height="16" alt="Close"
+              title="Close" />
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="shop-content">
+      <div id="shop-nav">
+        <button id="shop-nav-skins" onclick="this.setCategory('skins')">
+          <picture>
+            <source srcset="https://one.sigmally.com/assets/images/icon/skins.webp" type="image/webp" />
+            <img width="20" height="20" class="coins-num__coin" src="https://one.sigmally.com/assets/images/icon/skins.png" loading="lazy" alt="Skins" title="Skins" />
+          </picture>
+          Skins
+        </button>
+        <button id="shop-nav-coins" onclick="this.setCategory('coins')">
+          <img class="coins-num__coin" alt="Coin" title="Coin" width="20" height="20"
+            src="https://one.sigmally.com/assets/images/icon/coin.svg" loading="lazy" />
+          Coins
+        </button>
+        <button id="shop-nav-chests" onclick="this.setCategory('chests')">
+          <picture>
+            <source srcset="https://one.sigmally.com/assets/images/icon/chest-of-coins.webp" type="image/webp" />
+            <img width="20" height="20" class="coins-num__coin" src="https://one.sigmally.com/assets/images/icon/chest-of-coins.png" loading="lazy" alt="Chest of Coins" title="Chest of Coins" />
+          </picture>
+          Chests
+        </button>
+        <button id="shop-nav-boosts" onclick="this.setCategory('boosts')">
+          <img class="coins-num__coin" alt="Boost" title="Boost" width="20" height="20"
+            src="https://one.sigmally.com/assets/images/icon/boost.svg" loading="lazy" />
+          XP Boost
+        </button>
+        <button id="shop-nav-sub" onclick="this.setCategory('sub')">
+          <img class="coins-num__coin" alt="Gem" title="Gem" width="20" height="20"
+            src="https://one.sigmally.com/assets/images/icon/sub.svg" loading="lazy" />
+          Sigma Pass
+        </button>
+        <button id="shop-nav-challenge" onclick="this.setCategory('challenge')">
+          <img class="coins-num__coin" alt="Challenge" title="Challenge" width="20" height="20"
+            src="https://one.sigmally.com/assets/images/icon/challenge.svg" loading="lazy" />
+          Daily Challeges
+        </button>
+      </div>
+      <div id="shop-tab-body">
+        <div id="skins-tab">
+          <div id="shop-skins-buttons">
+            <button id="shop-buttons-free" onclick="this.changeTab('free')">
+              Free
+            </button>
+            <button id="shop-buttons-premium" onclick="this.changeTab('premium')">
+              Premium
+            </button>
+            <button id="shop-buttons-clan" onclick="this.changeTab('clan')">
+              Clan
+            </button>
+            <button id="shop-buttons-level" onclick="this.changeTab('level')">
+              Level
+            </button>
+            <button id="shop-buttons-owned" onclick="this.changeTab('owned')">
+              Owned
+            </button>
+          </div>
+          <div class="shop-scrollbar-wrap">
+            <div id="free-tab" class="tab-content"></div>
+            <div id="premium-tab" class="tab-content"></div>
+            <div id="clan-tab" class="tab-content"></div>
+            <div id="level-tab" class="tab-content"></div>
+            <div id="owned-tab" class="tab-content"></div>
+          </div>
+        </div>
+        <div id="coins-tab"></div>
+        <div id="chests-tab"></div>
+        <div id="boosts-tab"></div>
+        <div id="sub-tab">
+          <div id="sub-content">
+            <div id="sub-tags">
+              <div class="sub-text">
+                <p><strong>Diamond Subscription</strong></p>
+                <p>Sign up for our unique subscription and get super benefits</p>
+              </div>
+              <div class="tags">
+                <div>Create Clans</div>
+                <div>Sigma Pass</div>
+                <div>Gold Nickname</div>
+              </div>
+            </div>
+            <div id="sub-date">
+              <div id="without_sub">You have no active subscription</div>
+              <div id="with_sub">The subscription is valid until <b id="sub-valid"></b></div>
+            </div>
+            <div id="sub-options">
+
+
+              <div class="card sub-1m sub-card">
+                <div class="card-area">
+                  <div class="card-body">
+                    <div class="card-body-content">
+                      <div class="month">
+                        <div>
+                          <p>1</p>
+                          <p>month</p>
+                        </div>
+                        <div>
+                          <div>
+                            <div class="sub-price"><span>$4.99</span><span>$9.99</span></div>
+                          </div>
+                        </div>
+                      </div>
+                      <button class="card-buy-button" onclick="if (event.target === this) this.payment('sub', 1)">
+                        <div class="layer-1 layers"></div>
+                        <div class="layer-2 layers"></div>
+                        <div class="layer-3 layers"></div>
+                        <div class="layer-4 layers"></div>
+                        <div class="text">Buy</div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card sub-6m sub-card">
+                <div class="card-area">
+                  <div class="card-body">
+                    <div class="card-body-content">
+                      <div class="month">
+                        <div>
+                          <p>6</p>
+                          <p>months</p>
+                        </div>
+                        <div>
+                          <div>
+                            <div class="sub-price"><span>$14.99</span><span>$29.99</span></div>
+                          </div>
+                          <div class="sub-save">SAVE 50%</div>
+                        </div>
+                      </div>
+                      <button class="card-buy-button" onclick="if (event.target === this) this.payment('sub', 6)">
+                        <div class="layer-1 layers"></div>
+                        <div class="layer-2 layers"></div>
+                        <div class="layer-3 layers"></div>
+                        <div class="layer-4 layers"></div>
+                        <div class="text">Buy</div>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-header">
+                    <div class="card-header-underline"></div>
+                    <div class="card-header-main-bg"></div>
+                    <div class="card-header-center-bg"></div>
+                    <div class="card-header-left-bg"></div>
+                    <div class="card-header-right-bg"></div>
+                    <div class="card-rarity-title">
+                      Most popular
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card sub-12m sub-card">
+                <div class="card-area">
+                  <div class="card-body">
+                    <div class="card-body-content">
+                      <div class="month">
+                        <div>
+                          <p>12</p>
+                          <p>months</p>
+                        </div>
+                        <div>
+                          <div>
+                            <div class="sub-price"><span>$19.99</span><span>$39.99</span></div>
+                          </div>
+                          <div class="sub-save">SAVE 67%</div>
+                        </div>
+                      </div>
+                      <button class="card-buy-button" onclick="if (event.target === this) this.payment('sub', 12)">
+                        <div class="layer-1 layers"></div>
+                        <div class="layer-2 layers"></div>
+                        <div class="layer-3 layers"></div>
+                        <div class="layer-4 layers"></div>
+                        <div class="text">Buy</div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="challenge-tab"></div>
+      </div>
+    </div>
+  </div>
+</div>
+                                <div id="updates-wrap">
+  <div id="updates">
+    <div id="updates-header">
+      Game Updates
+        <i onclick="closeUpdateModal()" class="fas fa-times"></i>
+    </div>
+    <div id="updates-scroll">
+      <div id="updates-feed">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function closeUpdateModal() {
+    const scroll = document.getElementById('updates-scroll');
+    if (scroll) scroll.style.maxHeight = '0px';
+
+    setTimeout(() => document.querySelector("#updates-wrap").hide(), 250)
+  }
+  {
+    const el = document.querySelector("#updates-wrap");
+    if (el) {
+      el.style.opacity = 0;
+      el.style.display = 'none';
+    }
+  }
+</script>
+                                  <div id="payments-modal" class="hide" onclick="if (event.target === this) this.hide()">
+  <div>
+    <div id="payments-modal-header">
+      <h3>
+        Buy with
+      </h3>
+      <div class="close-connecting-button">
+        <i onclick="closePaymentsModal()" class="fas fa-times"></i>
+      </div>
+    </div>
+    <div id="payments-modal-buttons">
+      <button id="paypal_btn">
+        <img
+          src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAxcHgiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAxMDEgMzIiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaW5ZTWluIG1lZXQiIHhtbG5zPSJodHRwOiYjeDJGOyYjeDJGO3d3dy53My5vcmcmI3gyRjsyMDAwJiN4MkY7c3ZnIj48cGF0aCBmaWxsPSIjMDAzMDg3IiBkPSJNIDEyLjIzNyAyLjggTCA0LjQzNyAyLjggQyAzLjkzNyAyLjggMy40MzcgMy4yIDMuMzM3IDMuNyBMIDAuMjM3IDIzLjcgQyAwLjEzNyAyNC4xIDAuNDM3IDI0LjQgMC44MzcgMjQuNCBMIDQuNTM3IDI0LjQgQyA1LjAzNyAyNC40IDUuNTM3IDI0IDUuNjM3IDIzLjUgTCA2LjQzNyAxOC4xIEMgNi41MzcgMTcuNiA2LjkzNyAxNy4yIDcuNTM3IDE3LjIgTCAxMC4wMzcgMTcuMiBDIDE1LjEzNyAxNy4yIDE4LjEzNyAxNC43IDE4LjkzNyA5LjggQyAxOS4yMzcgNy43IDE4LjkzNyA2IDE3LjkzNyA0LjggQyAxNi44MzcgMy41IDE0LjgzNyAyLjggMTIuMjM3IDIuOCBaIE0gMTMuMTM3IDEwLjEgQyAxMi43MzcgMTIuOSAxMC41MzcgMTIuOSA4LjUzNyAxMi45IEwgNy4zMzcgMTIuOSBMIDguMTM3IDcuNyBDIDguMTM3IDcuNCA4LjQzNyA3LjIgOC43MzcgNy4yIEwgOS4yMzcgNy4yIEMgMTAuNjM3IDcuMiAxMS45MzcgNy4yIDEyLjYzNyA4IEMgMTMuMTM3IDguNCAxMy4zMzcgOS4xIDEzLjEzNyAxMC4xIFoiPjwvcGF0aD48cGF0aCBmaWxsPSIjMDAzMDg3IiBkPSJNIDM1LjQzNyAxMCBMIDMxLjczNyAxMCBDIDMxLjQzNyAxMCAzMS4xMzcgMTAuMiAzMS4xMzcgMTAuNSBMIDMwLjkzNyAxMS41IEwgMzAuNjM3IDExLjEgQyAyOS44MzcgOS45IDI4LjAzNyA5LjUgMjYuMjM3IDkuNSBDIDIyLjEzNyA5LjUgMTguNjM3IDEyLjYgMTcuOTM3IDE3IEMgMTcuNTM3IDE5LjIgMTguMDM3IDIxLjMgMTkuMzM3IDIyLjcgQyAyMC40MzcgMjQgMjIuMTM3IDI0LjYgMjQuMDM3IDI0LjYgQyAyNy4zMzcgMjQuNiAyOS4yMzcgMjIuNSAyOS4yMzcgMjIuNSBMIDI5LjAzNyAyMy41IEMgMjguOTM3IDIzLjkgMjkuMjM3IDI0LjMgMjkuNjM3IDI0LjMgTCAzMy4wMzcgMjQuMyBDIDMzLjUzNyAyNC4zIDM0LjAzNyAyMy45IDM0LjEzNyAyMy40IEwgMzYuMTM3IDEwLjYgQyAzNi4yMzcgMTAuNCAzNS44MzcgMTAgMzUuNDM3IDEwIFogTSAzMC4zMzcgMTcuMiBDIDI5LjkzNyAxOS4zIDI4LjMzNyAyMC44IDI2LjEzNyAyMC44IEMgMjUuMDM3IDIwLjggMjQuMjM3IDIwLjUgMjMuNjM3IDE5LjggQyAyMy4wMzcgMTkuMSAyMi44MzcgMTguMiAyMy4wMzcgMTcuMiBDIDIzLjMzNyAxNS4xIDI1LjEzNyAxMy42IDI3LjIzNyAxMy42IEMgMjguMzM3IDEzLjYgMjkuMTM3IDE0IDI5LjczNyAxNC42IEMgMzAuMjM3IDE1LjMgMzAuNDM3IDE2LjIgMzAuMzM3IDE3LjIgWiI+PC9wYXRoPjxwYXRoIGZpbGw9IiMwMDMwODciIGQ9Ik0gNTUuMzM3IDEwIEwgNTEuNjM3IDEwIEMgNTEuMjM3IDEwIDUwLjkzNyAxMC4yIDUwLjczNyAxMC41IEwgNDUuNTM3IDE4LjEgTCA0My4zMzcgMTAuOCBDIDQzLjIzNyAxMC4zIDQyLjczNyAxMCA0Mi4zMzcgMTAgTCAzOC42MzcgMTAgQyAzOC4yMzcgMTAgMzcuODM3IDEwLjQgMzguMDM3IDEwLjkgTCA0Mi4xMzcgMjMgTCAzOC4yMzcgMjguNCBDIDM3LjkzNyAyOC44IDM4LjIzNyAyOS40IDM4LjczNyAyOS40IEwgNDIuNDM3IDI5LjQgQyA0Mi44MzcgMjkuNCA0My4xMzcgMjkuMiA0My4zMzcgMjguOSBMIDU1LjgzNyAxMC45IEMgNTYuMTM3IDEwLjYgNTUuODM3IDEwIDU1LjMzNyAxMCBaIj48L3BhdGg+PHBhdGggZmlsbD0iIzAwOWNkZSIgZD0iTSA2Ny43MzcgMi44IEwgNTkuOTM3IDIuOCBDIDU5LjQzNyAyLjggNTguOTM3IDMuMiA1OC44MzcgMy43IEwgNTUuNzM3IDIzLjYgQyA1NS42MzcgMjQgNTUuOTM3IDI0LjMgNTYuMzM3IDI0LjMgTCA2MC4zMzcgMjQuMyBDIDYwLjczNyAyNC4zIDYxLjAzNyAyNCA2MS4wMzcgMjMuNyBMIDYxLjkzNyAxOCBDIDYyLjAzNyAxNy41IDYyLjQzNyAxNy4xIDYzLjAzNyAxNy4xIEwgNjUuNTM3IDE3LjEgQyA3MC42MzcgMTcuMSA3My42MzcgMTQuNiA3NC40MzcgOS43IEMgNzQuNzM3IDcuNiA3NC40MzcgNS45IDczLjQzNyA0LjcgQyA3Mi4yMzcgMy41IDcwLjMzNyAyLjggNjcuNzM3IDIuOCBaIE0gNjguNjM3IDEwLjEgQyA2OC4yMzcgMTIuOSA2Ni4wMzcgMTIuOSA2NC4wMzcgMTIuOSBMIDYyLjgzNyAxMi45IEwgNjMuNjM3IDcuNyBDIDYzLjYzNyA3LjQgNjMuOTM3IDcuMiA2NC4yMzcgNy4yIEwgNjQuNzM3IDcuMiBDIDY2LjEzNyA3LjIgNjcuNDM3IDcuMiA2OC4xMzcgOCBDIDY4LjYzNyA4LjQgNjguNzM3IDkuMSA2OC42MzcgMTAuMSBaIj48L3BhdGg+PHBhdGggZmlsbD0iIzAwOWNkZSIgZD0iTSA5MC45MzcgMTAgTCA4Ny4yMzcgMTAgQyA4Ni45MzcgMTAgODYuNjM3IDEwLjIgODYuNjM3IDEwLjUgTCA4Ni40MzcgMTEuNSBMIDg2LjEzNyAxMS4xIEMgODUuMzM3IDkuOSA4My41MzcgOS41IDgxLjczNyA5LjUgQyA3Ny42MzcgOS41IDc0LjEzNyAxMi42IDczLjQzNyAxNyBDIDczLjAzNyAxOS4yIDczLjUzNyAyMS4zIDc0LjgzNyAyMi43IEMgNzUuOTM3IDI0IDc3LjYzNyAyNC42IDc5LjUzNyAyNC42IEMgODIuODM3IDI0LjYgODQuNzM3IDIyLjUgODQuNzM3IDIyLjUgTCA4NC41MzcgMjMuNSBDIDg0LjQzNyAyMy45IDg0LjczNyAyNC4zIDg1LjEzNyAyNC4zIEwgODguNTM3IDI0LjMgQyA4OS4wMzcgMjQuMyA4OS41MzcgMjMuOSA4OS42MzcgMjMuNCBMIDkxLjYzNyAxMC42IEMgOTEuNjM3IDEwLjQgOTEuMzM3IDEwIDkwLjkzNyAxMCBaIE0gODUuNzM3IDE3LjIgQyA4NS4zMzcgMTkuMyA4My43MzcgMjAuOCA4MS41MzcgMjAuOCBDIDgwLjQzNyAyMC44IDc5LjYzNyAyMC41IDc5LjAzNyAxOS44IEMgNzguNDM3IDE5LjEgNzguMjM3IDE4LjIgNzguNDM3IDE3LjIgQyA3OC43MzcgMTUuMSA4MC41MzcgMTMuNiA4Mi42MzcgMTMuNiBDIDgzLjczNyAxMy42IDg0LjUzNyAxNCA4NS4xMzcgMTQuNiBDIDg1LjczNyAxNS4zIDg1LjkzNyAxNi4yIDg1LjczNyAxNy4yIFoiPjwvcGF0aD48cGF0aCBmaWxsPSIjMDA5Y2RlIiBkPSJNIDk1LjMzNyAzLjMgTCA5Mi4xMzcgMjMuNiBDIDkyLjAzNyAyNCA5Mi4zMzcgMjQuMyA5Mi43MzcgMjQuMyBMIDk1LjkzNyAyNC4zIEMgOTYuNDM3IDI0LjMgOTYuOTM3IDIzLjkgOTcuMDM3IDIzLjQgTCAxMDAuMjM3IDMuNSBDIDEwMC4zMzcgMy4xIDEwMC4wMzcgMi44IDk5LjYzNyAyLjggTCA5Ni4wMzcgMi44IEMgOTUuNjM3IDIuOCA5NS40MzcgMyA5NS4zMzcgMy4zIFoiPjwvcGF0aD48L3N2Zz4"
+          loading="lazy"
+          alt="PayPal">
+      </button>
+      <button id="payop_btn">
+        <img
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='36' viewBox='0 0 100 36' fill='none' style='&%2310;'%3E%3Cg clip-path='url(%23clip0_4_5019)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M54.2687 5.41693V13.8418C54.271 14.7563 54.0722 15.66 53.6863 16.4891C53.3504 17.2512 52.8098 17.9053 52.1245 18.3785C51.4106 18.8322 50.5776 19.0626 49.732 19.0404C48.2826 19.0404 47.2138 18.5804 46.4957 17.6936C45.7777 16.8067 45.3707 15.5824 45.3707 14.0768V5.41693H41.5354V14.2455C41.502 15.7513 41.7814 17.2477 42.3561 18.64C42.9099 19.8658 43.8121 20.9015 44.9504 21.6181C46.2709 22.383 47.7801 22.7603 49.3051 22.7068C50.444 22.7403 51.5716 22.4733 52.5745 21.9325C53.2366 21.5411 53.8137 21.0213 54.272 20.4037V20.9298C54.2951 21.9822 54.0955 23.0275 53.6863 23.9973C53.3433 24.8534 52.7536 25.5883 51.9921 26.1085C51.1639 26.6435 50.1911 26.9104 49.2059 26.8729C48.2074 26.896 47.2203 26.6564 46.3435 26.178C45.5154 25.7165 44.8368 25.0276 44.3879 24.1926L44.2654 23.9543L41.0325 25.7048L41.145 25.9298C41.8534 27.3847 43.0019 28.5795 44.4276 29.3448C45.9287 30.1171 47.5973 30.5069 49.2853 30.4798C50.9455 30.5226 52.5842 30.0972 54.0139 29.2521C55.3529 28.4482 56.4211 27.2625 57.0814 25.8471C57.826 24.3006 58.1923 22.5994 58.1503 20.8835V5.41693H54.2687Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37.5447 9.36135C36.7708 8.0313 35.6544 6.93315 34.3117 6.18133C32.215 4.97778 29.7293 4.64603 27.3903 5.25755C25.0513 5.86907 23.0461 7.37492 21.8067 9.45069C21.015 10.794 20.6075 12.329 20.6287 13.8882C20.6122 15.4635 20.9947 17.0173 21.7406 18.405C22.1016 19.0661 22.5465 19.6778 23.0642 20.225C23.576 20.7613 24.1491 21.2355 24.7717 21.638C26.0958 22.4603 27.6273 22.8874 29.186 22.869C30.5594 22.9042 31.916 22.5607 33.1072 21.8762C33.8625 21.4228 34.5296 20.8365 35.0761 20.1456V22.869H38.7624V13.9345C38.7865 12.3347 38.3661 10.7595 37.548 9.38451L37.5447 9.36135ZM34.2191 16.5817C33.5107 17.7826 32.3573 18.6557 31.0092 19.0113C29.661 19.3669 28.227 19.1764 27.0185 18.4811C26.2513 18.008 25.6098 17.3564 25.1489 16.5817C24.7036 15.7772 24.4755 14.8705 24.4871 13.951C24.4726 13.0259 24.7008 12.1132 25.1489 11.3038C25.6023 10.5256 26.2427 9.87278 27.0119 9.40437C27.8128 8.9277 28.7271 8.67512 29.6592 8.67306C30.5907 8.67879 31.5041 8.93112 32.3064 9.40437C33.0825 9.85936 33.726 10.5097 34.1727 11.2905C34.6235 12.0989 34.8518 13.0124 34.8345 13.9378C34.8436 14.8622 34.6158 15.7736 34.1727 16.585L34.2191 16.5817Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.9325 9.46061C16.1609 8.11313 15.0438 6.99595 13.6963 6.22435C12.2968 5.40278 10.6995 4.9794 9.07681 4.99999C7.4595 4.97916 5.86593 5.3904 4.46067 6.19125C3.11129 6.94236 1.98365 8.03576 1.19131 9.36134C0.386208 10.7408 -0.0257786 12.3143 4.48815e-05 13.9113V26.3799H3.86503V20.7842C4.33323 21.2087 4.84578 21.5814 5.39382 21.8961C5.96658 22.2243 6.58256 22.4704 7.22374 22.6274C7.8723 22.7942 8.5395 22.8776 9.20918 22.8756C10.8157 22.9027 12.4006 22.503 13.8022 21.7174C15.1274 20.9538 16.2224 19.8473 16.9722 18.5142C17.7498 17.0957 18.1444 15.499 18.1172 13.8815C18.1403 12.3222 17.7327 10.7866 16.9392 9.44407L16.9325 9.46061ZM13.5672 16.5817C13.1158 17.3693 12.4756 18.0323 11.7042 18.5109C10.9045 18.9879 9.98798 19.2331 9.05696 19.2191C8.12667 19.2273 7.21163 18.9825 6.40971 18.5109C5.64751 18.0221 5.01056 17.3613 4.55001 16.5817C4.10251 15.7792 3.87425 14.873 3.8882 13.9543C3.8727 13.0386 4.10111 12.1352 4.55001 11.3369C5.00014 10.5551 5.64256 9.90125 6.41633 9.43745C7.21883 8.96722 8.13348 8.72255 9.06358 8.72931C9.99594 8.70414 10.9156 8.95014 11.7108 9.43745C12.4838 9.88885 13.1241 10.536 13.5672 11.3137C14.0153 12.1231 14.2435 13.0359 14.229 13.9609C14.2412 14.8774 14.013 15.781 13.5672 16.5817Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M98.7955 9.46062C98.0248 8.11245 96.9074 6.99505 95.5592 6.22435C94.1611 5.40243 92.5647 4.979 90.9431 4.99999C89.3257 4.97868 87.732 5.38996 86.3269 6.19126C84.9761 6.94046 83.848 8.03429 83.0576 9.36134C82.2556 10.7416 81.847 12.3152 81.8762 13.9113V26.3799H85.7412V20.7975C86.2104 21.2251 86.7266 21.5981 87.2799 21.9093C87.8535 22.235 88.4693 22.48 89.1098 22.6373C89.7584 22.8039 90.4256 22.8873 91.0953 22.8855C92.6977 22.9187 94.2798 22.5234 95.6783 21.7406C97.0036 20.977 98.0986 19.8705 98.8484 18.5374C99.6268 17.1187 100.025 15.5227 100.003 13.9047C100.009 12.3403 99.5939 10.8032 98.8021 9.454L98.7955 9.46062ZM95.4368 16.5817C94.9841 17.3695 94.3428 18.0324 93.5705 18.5109C92.7683 18.9748 91.8581 19.2191 90.9315 19.2191C90.0049 19.2191 89.0946 18.9748 88.2925 18.5109C87.5279 18.0229 86.8886 17.3621 86.4262 16.5817C85.9803 15.7786 85.7521 14.8729 85.7644 13.9543C85.7506 13.0388 85.9789 12.1358 86.4262 11.3369C86.8781 10.5564 87.5201 9.90297 88.2925 9.43745C89.0949 8.96692 90.0096 8.72223 90.9398 8.72931C91.8665 8.70736 92.7799 8.95324 93.5705 9.43745C94.3449 9.89352 94.987 10.5436 95.4335 11.3236C95.8796 12.1305 96.1136 13.0373 96.1136 13.9593C96.1136 14.8813 95.8796 15.7881 95.4335 16.595L95.4368 16.5817Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M77.1575 20.2217C76.1432 21.4502 74.8274 22.3942 73.3388 22.9616C71.8275 23.5225 70.1891 23.6475 68.6102 23.3223C67.0017 23.0441 65.5009 22.3285 64.272 21.2542C63.1134 20.1691 62.2279 18.8255 61.6876 17.3329C61.3492 16.3381 61.1825 15.293 61.1946 14.2422L60.2018 13.9841C60.1556 13.9671 60.1138 13.94 60.0794 13.9047C60.0599 13.8818 60.0465 13.8542 60.0408 13.8247C60.035 13.7951 60.0369 13.7646 60.0463 13.736C60.0517 13.7104 60.0625 13.6863 60.0779 13.6652C60.0933 13.6441 60.113 13.6265 60.1357 13.6135L63.7293 11.5023C63.7779 11.4762 63.8341 11.468 63.8881 11.4792C63.9137 11.4846 63.9378 11.4954 63.9589 11.5107C63.98 11.5261 63.9976 11.5458 64.0106 11.5685L65.0993 13.4117L66.135 15.1622C66.135 15.1622 66.135 15.1622 66.135 15.1853C66.135 15.2085 66.135 15.1853 66.135 15.1853C66.1394 15.2183 66.1394 15.2516 66.135 15.2846C66.1293 15.3107 66.1182 15.3353 66.1026 15.3569C66.087 15.3786 66.0671 15.3968 66.0441 15.4104C66.0212 15.4241 65.9956 15.4329 65.9692 15.4363C65.9427 15.4397 65.9158 15.4376 65.8901 15.4302L65.1026 15.2283C65.1026 15.2283 65.225 15.7578 65.3044 16.0159C65.6131 16.8695 66.1174 17.639 66.777 18.2628C67.4795 18.8772 68.3385 19.285 69.2588 19.4408C70.1627 19.63 71.102 19.5565 71.9656 19.229C72.8236 18.9078 73.5808 18.3642 74.1595 17.6539C74.7375 16.9366 75.1273 16.0864 75.2938 15.1804C75.4602 14.2744 75.3979 13.3411 75.1125 12.4653C74.8195 11.6146 74.3083 10.8558 73.63 10.2647C72.9271 9.66418 72.0786 9.25907 71.1696 9.09005C70.2606 8.92103 69.3232 8.99406 68.4513 9.3018C67.6145 9.61978 66.8698 10.1405 66.2839 10.8174C66.1023 11.0335 65.9364 11.2624 65.7875 11.5023L64.6757 9.60293C64.624 9.53585 64.5538 9.48526 64.4738 9.45733C64.3867 9.43586 64.2947 9.44766 64.2157 9.49042L61.8464 10.8736C62.1969 9.93846 62.7063 9.07086 63.3521 8.30908C64.3762 7.12783 65.6767 6.21838 67.1376 5.66183C68.661 5.12477 70.299 4.99861 71.8867 5.29604C73.4744 5.59348 74.9556 6.304 76.1813 7.35607C76.7692 7.87324 77.2895 8.46249 77.73 9.10988C78.1723 9.75958 78.5241 10.4665 78.7756 11.2111C79.3019 12.735 79.4161 14.3709 79.1065 15.953C78.8476 17.5238 78.1748 18.9972 77.1575 20.2217Z' fill='white'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_4_5019'%3E%3Crect width='100' height='25.493' fill='white' transform='translate(0 5)'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E"
+          loading="lazy"
+          crossOrigin="anonymous" alt="PayOp">
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+  function closePaymentsModal() {
+    document.querySelector("#payments-modal").hide();
+  }
+  {
+    const el = document.querySelector("#payments-modal");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                                    <div id="challenge-coins" class="connecting" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          Challenge completed!
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeChallenengeCoinsModal()" class="fas fa-times"></i>
+        </div>
+      </div>
+      <p class="mb-0">
+        Congratulation, you have earned:
+      </p>
+      <div class="free-coins-body">
+        <div>
+          <div class="reward-coins-image"></div>
+          <p>
+            <span id="challenge-coins-value">500</span>
+             coins
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function closeChallenengeCoinsModal() {
+    document.querySelector("#challenge-coins").hide();
+  }
+  {
+    const el = document.querySelector("#challenge-coins");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                                      <div id="modalfolks" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          Hello, folks!
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeChallenengeCoinsModal()" class="fas fa-times"></i>
+        </div>
+      </div>
+      
+        <p class="mb-0">
+          Sigmally is Free-to-Play and its development is mainly supported by in-game ads. Please consider turning off your adblocker to support the game.
+        </p>
+        
+        <p class="mb-0">
+          We appreciate it!
+        </p>
+        
+
+          <div class="free-coins-body">
+            <div>
+            </div>
+          </div>
+    </div>
+  </div>
+</div>
+<script>
+  function closeChallenengeCoinsModal() {
+    document.querySelector("#modalfolks").hide();
+  }
+  {
+    const el = document.querySelector("#modalfolks");
+    if (el) el.style.display = 'none';
+  }
+</script>
+                                        <div id="loginrequired" class="connecting hide" onclick="if (event.target === this) this.hide()">
+  <div class="connecting__content">
+    <div class="alert alert-danger mb-0" role="alert">
+      <div class="connecting-header">
+        <h4 class="alert-heading">
+          Login Required
+        </h4>
+        <div class="close-connecting-button">
+          <i onclick="closeLoginRequiredModal()" class="fas fa-times"></i>
+        </div>
+      </div>
+      Please log in to continue playing.
+    </div>
+  </div>
+</div>
+<script>
+  function closeLoginRequiredModal() {
+    document.querySelector("#loginrequired").hide();
+  }
+  {
+    const el = document.querySelector("#loginrequired");
+    if (el) el.style.display = 'none';
+  }
+</script>
+  </body>
+
+</html>

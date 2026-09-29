@@ -582,4 +582,4 @@
     });
     warmUpStartPageMouse(app.resources);
     app.start();
-})();
+

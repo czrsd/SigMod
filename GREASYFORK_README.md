@@ -1,8 +1,6 @@
 # Sigmally Mod | SigMod Client 🚀
 
-**SigMod** is the ultimate free **Sigmally Mod** and userscript. It enhances **Sigmally.com** (a popular Agar.io private server) with powerful macros, a live party minimap, custom themes, skins, and advanced quality-of-life features.
-
-Whether you're looking for an auto-feed macro, custom UI themes, or a way to play and chat with your friends using a live minimap, SigMod is the #1 extension for Sigmally.
+**SigMod** is the ultimate free userscript and mod for **Sigmally.com**. It enhances the game with powerful macros, a live party minimap, custom themes, skins, and advanced quality-of-life features.
 
 > **Note:** Sigmally is an Agar.io private server. SigMod is developed exclusively for Sigmally and does not work on the official Agar.io game.
 
@@ -39,18 +37,6 @@ Completely overhaul the Sigmally client to match your style:
 
 ---
 
-## 🚀 Installation Guide
-
-Installing the **Sigmally Mod** takes less than a minute. You will need a standard userscript manager extension for your browser.
-
-1. Install **[Tampermonkey](https://tampermonkey.net/)** (Recommended) or **[Violentmonkey](https://violentmonkey.github.io/)**.
-2. **[Install SigMod on Greasy Fork](https://greasyfork.org/scripts/454648)**. The script will automatically update when new features are released.
-3. Open [Sigmally.com](https://sigmally.com) and the mod will load automatically!
-
-> 📖 **Need help?** Check out the complete **[SigMod Installation Guide](https://sigmally.xyz/guide)** for step-by-step browser instructions and Tampermonkey Developer Mode setup.
-
----
-
 ## ⚙️ How to Use SigMod
 
 Once installed, you can open the extensive SigMod configuration menu by:
@@ -59,45 +45,21 @@ Once installed, you can open the extensive SigMod configuration menu by:
 
 From here, you can customize your macros, visual settings, name presets, themes, gallery, and friend list.
 
-![SigMod Client menu](https://czrsd.com/static/sigmod/advertising/sigmod_menu.png)
-
 ---
 
 ## 🤝 Compatibility with Sigmally Fixes
 
 **SigMod** is 100% compatible with **Sigmally Fixes**, a separate performance-focused userscript that optimizes rendering and adds one-tab multiboxing. You can run both extensions at the same time for the ultimate Sigmally experience!
 
-- **[Install Sigmally Fixes](https://greasyfork.org/scripts/483587-sigmally-fixes-v2)**
-- **[Sigmally Fixes on GitHub](https://github.com/8y8x/sigmally-fixes)**
-
----
-
-## ❓ Frequently Asked Questions (FAQ)
-
-### What is SigMod?
-SigMod is a third-party modification (userscript) for Sigmally.com. It acts as an all-in-one client that provides advanced macros, a live minimap, cosmetic customizations, and social features to enhance your browser game experience.
-
-### Is SigMod a Sigmally bot or hack?
-No. SigMod does not provide bots, invincibility, or server-side hacks. It is a client-side enhancement script that adds UI improvements, macros (like rapid feed/split), and custom visuals.
-
-### Does SigMod work with Tampermonkey?
-Yes! Tampermonkey is the recommended extension to run SigMod. See the **[installation guide](https://sigmally.xyz/guide)** if you need help enabling Developer Mode in your browser.
-
-### Is this an Agar.io mod?
-No. While Sigmally is an Agar.io private server, SigMod's code is specifically engineered for Sigmally's custom engine. It will not load on Agar.io.
-
-### Is SigMod free?
-Absolutely. SigMod is 100% free and open-source. The code is publicly available on GitHub under the MIT license.
+- [Install Sigmally Fixes on GreasyFork](https://greasyfork.org/scripts/483587-sigmally-fixes-v2)
 
 ---
 
 ## 🔗 Official Links
 
-- **[Install SigMod (Greasy Fork)](https://greasyfork.org/scripts/454648)**
 - **[Official SigMod Website](https://sigmally.xyz/)**
 - **[Installation Guide](https://sigmally.xyz/guide)**
 - **[Source Code (GitHub)](https://github.com/czrsd/SigMod)**
 - **[Sigmally Modz Discord](https://discord.gg/QyUhvUC8AD)**
-- **[Cursed on YouTube](https://www.youtube.com/@sigmallyCursed?sub_confirmation=1)**
 
 Need help configuring your macros or themes? Join the community Discord server!

@@ -8,6 +8,10 @@
         productionCssUrl: 'https://czrsd.com/static/sigmod/v11/sigmod.css',
         localeUrl: 'http://localhost:8787/locales',
         productionLocaleUrl: 'https://czrsd.com/static/sigmod/v11/locales',
+        apiUrl: 'http://localhost:3001/api/v5',
+        productionApiUrl: 'https://mod.czrsd.com/api/v5',
+        socketUrl: 'ws://localhost:3001/ws',
+        productionSocketUrl: 'wss://mod.czrsd.com/ws',
     };
     const BUILD = {
         version: 11,
@@ -34,12 +38,12 @@
         localization: 'SigModClient-localization',
     };
     const ENDPOINTS = {
-        app: 'https://mod.czrsd.com/api/v5',
-        socket: 'wss://mod.czrsd.com/ws',
+        app: SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl,
+        socket: SIGMOD_DEV.enabled ? SIGMOD_DEV.socketUrl : SIGMOD_DEV.productionSocketUrl,
         blockedChat: 'https://mod.czrsd.com/spam.json',
         headerAnimation: 'https://czrsd.com/static/sigmod/sigmodclient.gif',
         discordAuth:
-            'https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=https%3A%2F%2Fmod.czrsd.com%2Fapi%2Fv5%2Fdiscord%2Fcallback&scope=identify',
+            `https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=${encodeURIComponent((SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl) + '/discord/callback')}&scope=identify`,
     };
     const LIBRARIES = {
         chart: {

@@ -241,7 +241,7 @@
 }
 
 .mod_nav_group.is-expanded > .mod_nav_children {
-    max-height: 168px;
+    max-height: 300px;
     margin-top: 4px;
     opacity: 1;
     transform: translateY(0);

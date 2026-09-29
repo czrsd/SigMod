@@ -1290,21 +1290,6 @@
                     event.stopPropagation();
                     const value = tagInput.value.trim() || null;
                     this.app.settingsStore.set('settings.tag', value, true);
-                    this.app.backend.send('update-tag', value);
-                    updateTagText(value);
-                    const minimap = this.app.features.get('minimap');
-                    if (minimap) minimap.clear();
-                    this.lastScore = null;
-                    this.sentPositionNull = false;
-                    this.lastPositionKey = null;
-                    this.syncPublishTimers();
-                    this.members.clear();
-                    if (value) {
-                        this.ensurePanel();
-                        this.render();
-                    } else {
-                        this.closePanel();
-                    }
                 });
             }
             if (nicknameInput instanceof HTMLInputElement) {
@@ -1314,6 +1299,55 @@
                     this.app.backend.send('update-nick', this.app.state.nickname);
                 });
             }
+            
+            this.resources.add(
+                this.app.settingsStore.onChange((settings, changes) => {
+                    if (changes.settings?.tag !== undefined) {
+                        const value = settings.settings.tag || null;
+                        if (tagInput instanceof HTMLInputElement && tagInput.value !== (value || '')) {
+                            tagInput.value = value || '';
+                        }
+                        this.app.backend.send('update-tag', value);
+                        updateTagText(value);
+                        const minimap = this.app.features.get('minimap');
+                        if (minimap) minimap.clear();
+                        this.lastScore = null;
+                        this.sentPositionNull = false;
+                        this.lastPositionKey = null;
+                        this.syncPublishTimers();
+                        this.members.clear();
+                        if (value && settings.settings.showPartyPanel) {
+                            this.ensurePanel();
+                            this.render();
+                        } else {
+                            this.closePanel();
+                        }
+                    }
+                    if (changes.settings?.showPartyPanel !== undefined) {
+                        if (settings.settings.showPartyPanel && settings.settings.tag) {
+                            this.render();
+                        } else {
+                            this.closePanel();
+                        }
+                    }
+                    if (changes.settings?.partyOpacity !== undefined || changes.settings?.partyScale !== undefined || changes.settings?.partyBgColor !== undefined || changes.settings?.partyTextColor !== undefined) {
+                        this.updateStyles();
+                    }
+                })
+            );
+            
+            // Initial style apply
+            this.updateStyles();
+        }
+        
+        updateStyles() {
+            if (!this.panel) return;
+            const settings = this.app.settings.settings;
+            this.panel.style.opacity = settings.partyOpacity ?? 1;
+            this.panel.style.transform = `scale(${settings.partyScale ?? 1})`;
+            this.panel.style.transformOrigin = 'top left';
+            this.panel.style.backgroundColor = settings.partyBgColor ?? '#00000080';
+            this.panel.style.color = settings.partyTextColor ?? '#fafafa';
         }
         closePanel() {
             this.members.clear();
@@ -1394,6 +1428,7 @@
             panel.style.top = `${this.app.settings.settings.partyPanel.y ?? 300}px`;
             document.body.append(panel);
             this.panel = panel;
+            this.updateStyles();
             this.resources.listen(header, 'pointerdown', (event) => {
                 this.drag = {
                     pointerId: event.pointerId,

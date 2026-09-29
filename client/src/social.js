@@ -21,10 +21,23 @@
         }
         /** Perform a credentialed request against the SigMod application API. */
         async request(path, init = {}) {
+            const token = localStorage.getItem('mod_accessToken');
+            const refreshToken = localStorage.getItem('mod_refreshToken');
+            const headers = new Headers(init.headers || {});
+            if (token) headers.set('Authorization', `Bearer ${token}`);
+            if (refreshToken) headers.set('x-refresh-token', refreshToken);
+            
             const response = await fetch(`${ENDPOINTS.app}${path}`, {
-                credentials: 'include',
+                credentials: 'omit',
                 ...init,
+                headers
             });
+            
+            const newAccessToken = response.headers.get('x-new-access-token');
+            if (newAccessToken) {
+                localStorage.setItem('mod_accessToken', newAccessToken);
+            }
+            
             let payload = null;
             try {
                 payload = await response.json();
@@ -372,7 +385,7 @@
             body.append(header, form);
             this.modal?.open('profile-editor', body, {
                 className: 'signIn-wrapper',
-                closeOnBackdrop: false,
+                closeOnBackdrop: true,
             });
             const scope = this.modal?.modals.get('profile-editor')?.scope;
             scope?.listen(close, 'click', () => this.modal.close('profile-editor'));
@@ -531,7 +544,7 @@
             body.append(header, form);
             this.modal?.open('mod-account', body, {
                 className: 'signIn-wrapper',
-                closeOnBackdrop: false,
+                closeOnBackdrop: true,
             });
             const scope = this.modal?.modals.get('mod-account')?.scope;
             scope?.listen(close, 'click', () => this.modal.close('mod-account'));
@@ -545,9 +558,22 @@
                     status.textContent = 'The Discord login popup was blocked by your browser.';
                     return;
                 }
+                
+                const messageHandler = (event) => {
+                    if (event.source !== popup) return;
+                    if (event.data && event.data.type === 'SIGMOD_AUTH_SUCCESS') {
+                        const { accessToken, refreshToken } = event.data.payload || {};
+                        if (accessToken) localStorage.setItem('mod_accessToken', accessToken);
+                        if (refreshToken) localStorage.setItem('mod_refreshToken', refreshToken);
+                        this.app.settingsStore.set('modAccount.authorized', true, true);
+                    }
+                };
+                window.addEventListener('message', messageHandler);
+
                 const interval = window.setInterval(() => {
                     if (!popup.closed) return;
                     window.clearInterval(interval);
+                    window.removeEventListener('message', messageHandler);
                     this.resources.timeout(() => location.reload(), 1_500);
                 }, 1_000);
                 scope?.add(() => window.clearInterval(interval));

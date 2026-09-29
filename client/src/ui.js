@@ -587,6 +587,7 @@
                                         <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_themes" data-nav-managed>Themes</button>
                                         <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_settings_interface" data-nav-managed>Interface</button>
                                         <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_chat_settings" data-nav-managed>Chat</button>
+                                        <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_party" data-nav-managed>Party</button>
                                     </div>
                                 </div>
 
@@ -971,6 +972,67 @@
                                 <div id="friends-content" class="w-100"></div>
                             </section>
 
+                            <section class="mod_tab scroll" id="mod_party" data-mod-panel>
+                                <div class="settings-page">
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Party panel</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2">
+                                                    <span class="text">Show party panel</span>
+                                                    <span class="modDescText">Display the in-game overlay showing party members and scores.</span>
+                                                </div>
+                                                ${this.checkboxHtml('showPartyPanel', 'settings.showPartyPanel')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2">
+                                                    <span class="text">Blur party tag</span>
+                                                    <span class="modDescText">Blur the 3-letter party tag in chat and on-screen for privacy.</span>
+                                                </div>
+                                                ${this.checkboxHtml('party-blurTag', 'chat.blurTag')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2">
+                                                    <span class="text">Panel opacity</span>
+                                                    <span class="modDescText">Transparency of the party overlay panel.</span>
+                                                </div>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyOpacityText">100%</span>
+                                                    <input type="range" class="modSlider" id="partyOpacity" min="0.1" max="1" step="0.05" data-setting="settings.partyOpacity" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2">
+                                                    <span class="text">Panel scale</span>
+                                                    <span class="modDescText">Resize the on-screen party panel.</span>
+                                                </div>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyScaleText">1.00x</span>
+                                                    <input type="range" class="modSlider" id="partyScale" min="0.5" max="2" step="0.05" data-setting="settings.partyScale" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Colors</div>
+                                        <div class="chat-menu-colors">
+                                            <div class="chat-menu-color">
+                                                <span>Background</span>
+                                                <div>
+                                                    <input type="color" id="partyBgColor" class="colorInput" data-setting="settings.partyBgColor">
+                                                </div>
+                                            </div>
+                                            <div class="chat-menu-color">
+                                                <span>Text</span>
+                                                <div>
+                                                    <input type="color" id="partyTextColor" class="colorInput" data-setting="settings.partyTextColor">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </section>
+
                             <section class="mod_tab scroll f-column g-5 text-center" id="mod_info" data-mod-panel>
                                 <div class="brand_wrapper">
                                     <img src="https://czrsd.com/static/sigmod/info_bg_2.jpeg" alt="Info background" class="brand_img" />
@@ -1121,6 +1183,11 @@
                             id: 'mod_chat_settings',
                             title: 'Chat',
                             description: 'Chat behavior, keybinds, appearance and message preferences.',
+                        },
+                        {
+                            id: 'mod_party',
+                            title: 'Party',
+                            description: 'Party panel overlay visibility, opacity, scale and colors.',
                         },
                     ],
                 },
@@ -1970,6 +2037,9 @@
         }
         updateMacroSpeedLabel() {
             return this.settingsIO.updateMacroSpeedLabel();
+        }
+        updatePartySliderLabels() {
+            return this.settingsIO.updatePartySliderLabels();
         }
         open() {
             if (!this.root) return;
@@ -3253,6 +3323,8 @@
             this.app.settingsStore.set(path, value);
             if (input.classList.contains('keybinding')) input.value = value ?? '';
             if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
+            if (input.id === 'partyOpacity') this.updatePartySliderLabels();
+            if (input.id === 'partyScale') this.updatePartySliderLabels();
             this.root?.dispatchEvent(
                 new CustomEvent('sigmod:settingchange', {
                     bubbles: true,
@@ -3305,6 +3377,7 @@
             }
             this.root.querySelector('#welcomeUser').textContent = `Welcome ${this.app.state.nickname || 'Guest'}, to the SigMod Client!`;
             this.updateMacroSpeedLabel();
+            this.updatePartySliderLabels();
             this.updateKeybindingConflicts();
             this.renderMouseBindingEditor();
         }
@@ -3315,6 +3388,18 @@
         updateMacroSpeedLabel() {
             const label = this.root?.querySelector('#macroSpeedText');
             if (label) label.textContent = `${this.app.settingsStore.get('macros.feedSpeed')}ms`;
+        }
+        updatePartySliderLabels() {
+            const opacityLabel = this.root?.querySelector('#partyOpacityText');
+            if (opacityLabel) {
+                const v = this.app.settingsStore.get('settings.partyOpacity') ?? 1;
+                opacityLabel.textContent = `${Math.round(Number(v) * 100)}%`;
+            }
+            const scaleLabel = this.root?.querySelector('#partyScaleText');
+            if (scaleLabel) {
+                const v = this.app.settingsStore.get('settings.partyScale') ?? 1;
+                scaleLabel.textContent = `${Number(v).toFixed(2)}x`;
+            }
         }
     }
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3688,7 +3773,7 @@
             fragment.append(header, body);
             this.modal.open('game-image-setting', fragment, {
                 className: 'default-modal',
-                closeOnBackdrop: false,
+                closeOnBackdrop: true,
             });
             const scope = this.modal.modals.get('game-image-setting')?.scope;
             if (!scope) return;

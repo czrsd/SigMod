@@ -30,6 +30,7 @@ const SetupMiddleware = (app: Application) => {
     app.use(cookieParser());
     app.use(
         helmet({
+            crossOriginOpenerPolicy: false,
             crossOriginResourcePolicy: false,
             contentSecurityPolicy: {
                 directives: {

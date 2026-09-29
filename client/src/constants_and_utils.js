@@ -444,6 +444,11 @@
         settings: {
             tag: null,
             partyPanel: { x: 4, y: 300 },
+            showPartyPanel: true,
+            partyOpacity: 1,
+            partyScale: 1,
+            partyBgColor: '#00000080',
+            partyTextColor: '#fafafa',
             pingDuration: 2_000,
             savedNames: [],
             autoRespawn: false,

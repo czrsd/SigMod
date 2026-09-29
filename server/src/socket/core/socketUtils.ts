@@ -38,7 +38,19 @@ const onServerChange = (serverName: string, socket: socket) => {
 
 const updateTag = (tag: string, socket: socket) => {
     if (!tag) {
+        const previousTag = socket.tag;
         socket.tag = null;
+        if (previousTag && socket.server) {
+            const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
+            for (const s of prevSockets) {
+                s.send({
+                    type: 'leave-tag',
+                    content: {
+                        id: socket.sid,
+                    },
+                });
+            }
+        }
         return;
     }
     if (typeof tag !== 'string' || tag.trim().length > 3 || !socket.server)

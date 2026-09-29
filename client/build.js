@@ -5,7 +5,11 @@ const esbuild = require('esbuild');
 async function build() {
     console.log('Building SigMod Client...');
 
-    const meta = fs.readFileSync(path.join('src', 'meta.js'), 'utf8');
+    const releaseMeta = fs.readFileSync(path.join(__dirname, 'src', 'meta.js'), 'utf8');
+
+    const devMeta = releaseMeta
+        .replace(/(@name(?::\S+)?\s+SigMod)(\s+-)/g, '$1 DEV$2')
+        .replace(/(@version\s+\S+)/g, '$1-dev');
 
     const files = [
         'constants_and_utils.js',
@@ -18,34 +22,50 @@ async function build() {
         'app.js',
     ];
 
-    let combinedCode = '(() => {\n"use strict";\n';
-
+    let sourceCode = '';
     for (const file of files) {
-        combinedCode += fs.readFileSync(path.join('src', file), 'utf8') + '\n';
+        sourceCode += fs.readFileSync(path.join(__dirname, 'src', file), 'utf8') + '\n';
     }
 
-    combinedCode += '\n})();\n';
+    const buildVariant = async (outfile, banner, isDev) => {
+        const codeForVariant = sourceCode.replace(
+            /(const SIGMOD_DEV = \{[\s\S]*?enabled:\s*)(true|false)/,
+            `$1${isDev}`
+        );
 
-    const tempJs = path.join('src', '_temp_bundle.js');
-    fs.writeFileSync(tempJs, combinedCode, 'utf8');
+        const combined = `(() => {\n"use strict";\n${codeForVariant}\n})();\n`;
+        const tempJs = path.join(__dirname, 'src', `_temp_${isDev ? 'dev' : 'rel'}.js`);
+        fs.writeFileSync(tempJs, combined, 'utf8');
 
-    const result = await esbuild.build({
-        entryPoints: [tempJs],
-        bundle: false,
-        outfile: 'script.user.js',
-        target: 'es2020',
-        minify: false,
-        banner: {
-            js: meta,
-        },
-    });
+        await esbuild.build({
+            entryPoints: [tempJs],
+            bundle: false,
+            outfile,
+            target: 'es2020',
+            minify: false,
+            banner: { js: banner },
+        });
 
-    fs.unlinkSync(tempJs);
+        fs.unlinkSync(tempJs);
+        console.log(`Saved: ${outfile}`);
+    };
 
-    console.log('Build complete! Output saved to script.user.js');
+    await buildVariant(path.join(__dirname, 'script.user.js'), releaseMeta, false);
+
+    const devServerDir = path.resolve(__dirname, '..', 'dev-server');
+    if (fs.existsSync(devServerDir)) {
+        await buildVariant(path.join(devServerDir, 'SigMod.dev.user.js'), devMeta, true);
+        const releaseDir = path.join(devServerDir, 'release');
+        if (fs.existsSync(releaseDir)) {
+            await buildVariant(path.join(releaseDir, 'SigMod.user.js'), releaseMeta, false);
+        }
+    }
+
+    console.log('Build complete!');
 }
 
 build().catch((err) => {
     console.error(err);
     process.exit(1);
 });
+

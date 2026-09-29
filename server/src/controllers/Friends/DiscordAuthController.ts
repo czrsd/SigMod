@@ -142,9 +142,27 @@ class DiscordAuthController {
                 sameSite: 'none',
             });
 
-            return res.redirect(
-                `${process.env.DISCORD_REDIRECT_URL || 'https://one.sigmally.com'}?discord_login=success`
-            );
+            return res.send(`
+                <!DOCTYPE html>
+                <html>
+                <head><title>Login Complete</title></head>
+                <body>
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({
+                                type: 'SIGMOD_AUTH_SUCCESS',
+                                payload: {
+                                    accessToken: '${accessToken}',
+                                    refreshToken: '${refreshToken}'
+                                }
+                            }, '*');
+                        }
+                        window.close();
+                    </script>
+                    Login complete. You can close this window.
+                </body>
+                </html>
+            `);
         } catch (e) {
             console.error(e);
             return res.status(500).json({

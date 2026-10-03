@@ -22,16 +22,74 @@
             const fillRect = function (x, y, width, height) {
                 if (!isGameContext(this)) return originalFillRect.call(this, x, y, width, height);
                 if (visual.isBackgroundRect(this.canvas, x, y, width, height)) {
+                    visual.onFrameStart();
                     this.fillStyle = visual.getMapFill(this);
                 }
                 return originalFillRect.call(this, x, y, width, height);
             };
+            let cameraCaptureStage = 0;
+            let pendingScale = 1;
+            const originalTranslate = prototype.translate;
+            const originalScale = prototype.scale;
+
+            const updateCameraState = (cw, ch, scaleVal, camX, camY, offsetX, offsetY) => {
+                visual.app.state.camera = {
+                    x: camX,
+                    y: camY,
+                    scale: scaleVal,
+                    offsetX: offsetX,
+                    offsetY: offsetY,
+                    cw: cw,
+                    ch: ch
+                };
+                const smartPing = visual.app.features?.controllers?.get?.('smartPing') || visual.app.features?.get?.('smartPing');
+                if (smartPing && smartPing.activePings?.size > 0) {
+                    smartPing.drawPings();
+                }
+            };
+
+            const translate = function (x, y) {
+                if (isGameContext(this)) {
+                    const cw = this.canvas.width;
+                    const ch = this.canvas.height;
+                    // Sigmally S(t) Step 1: t.translate(e.width / 2, e.height / 2)
+                    if (Math.abs(x - cw / 2) < 2 && Math.abs(y - ch / 2) < 2) {
+                        cameraCaptureStage = 1;
+                    } else if (cameraCaptureStage === 2) {
+                        // Sigmally S(t) Step 3: t.translate(-s.x, -s.y)
+                        cameraCaptureStage = 0;
+                        visual.awaitingGridStroke = false;
+                        const camX = -x;
+                        const camY = -y;
+                        const scaleVal = pendingScale;
+                        const offsetX = cw / 2 - camX * scaleVal;
+                        const offsetY = ch / 2 - camY * scaleVal;
+                        updateCameraState(cw, ch, scaleVal, camX, camY, offsetX, offsetY);
+                        const res = originalTranslate.call(this, x, y);
+                        visual.maybeDrawProperGrid(this, cw, ch, scaleVal, camX, camY);
+                        return res;
+                    } else {
+                        cameraCaptureStage = 0;
+                    }
+                }
+                return originalTranslate.call(this, x, y);
+            };
+
+            const scale = function (sx, sy) {
+                if (isGameContext(this)) {
+                    // Sigmally S(t) Step 2: x(t) -> t.scale(e.scale, e.scale)
+                    if (cameraCaptureStage === 1 && sx === sy && sx > 0) {
+                        cameraCaptureStage = 2;
+                        pendingScale = sx;
+                    } else {
+                        cameraCaptureStage = 0;
+                    }
+                }
+                return originalScale.call(this, sx, sy);
+            };
+
             const arc = function (x, y, radius, startAngle, endAngle, counterclockwise) {
                 if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
-                const transform = this.getTransform();
-                if (transform && transform.a > 0 && (transform.e !== 0 || transform.f !== 0)) {
-                    visual.app.state.camera = { scale: transform.a, offsetX: transform.e, offsetY: transform.f };
-                }
                 visual.applyCellColor(this, radius);
                 if (nativeFoodHidden()) {
                     let state = paths.get(this);
@@ -79,7 +137,19 @@
                     else originalFill.call(this, state.pending);
                     state.pending = null;
                 }
-                if (isGameContext(this)) visual.applyBorderColor(this);
+                if (isGameContext(this)) {
+                    if (visual.awaitingGridStroke) {
+                        visual.awaitingGridStroke = false;
+                        if (!document.getElementById('sf-canvas')) {
+                            visual.nativeGridWantedThisFrame = true;
+                            const strokeStyle = String(this.strokeStyle).toLowerCase();
+                            visual.lastGridStrokeWasDark = strokeStyle.includes('aaa') || strokeStyle.includes('170') || strokeStyle.includes('#fff');
+                            this.beginPath();
+                            return;
+                        }
+                    }
+                    visual.applyBorderColor(this);
+                }
                 return path === undefined ? originalStroke.call(this) : originalStroke.call(this, path);
             };
             const drawImage = function (image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
@@ -111,20 +181,24 @@
                 }
             };
             this.resources.patch(prototype, 'fillRect', fillRect);
+            this.resources.patch(prototype, 'translate', translate);
+            this.resources.patch(prototype, 'scale', scale);
             this.resources.patch(prototype, 'arc', arc);
             this.resources.patch(prototype, 'fillText', fillText);
             this.resources.patch(prototype, 'strokeText', strokeText);
             this.resources.patch(prototype, 'stroke', stroke);
             this.resources.patch(prototype, 'drawImage', drawImage);
             this.resources.patch(prototype, 'beginPath', function () {
-                if (isGameContext(this) && nativeFoodHidden()) {
-                    let state = paths.get(this);
-                    if (state) {
-                        state.small = false;
-                        state.pending = null;
-                        state.polygon = true;
-                    } else {
-                        paths.set(this, { small: false, pending: null, polygon: true });
+                if (isGameContext(this)) {
+                    if (nativeFoodHidden()) {
+                        let state = paths.get(this);
+                        if (state) {
+                            state.small = false;
+                            state.pending = null;
+                            state.polygon = true;
+                        } else {
+                            paths.set(this, { small: false, pending: null, polygon: true });
+                        }
                     }
                 } else {
                     paths.delete(this);
@@ -169,6 +243,10 @@
                 skin: { source: null, image: null, loading: false },
             };
             this.mapPatterns = new WeakMap();
+            this.awaitingGridStroke = false;
+            this.gridDrawnThisFrame = false;
+            this.nativeGridWantedThisFrame = false;
+            this.lastGridStrokeWasDark = null;
             this.loadingPlaceholder = null;
             this.fontFamily = null;
             this.fontLink = null;
@@ -577,6 +655,10 @@
                 asset.loading = false;
             }
             this.mapPatterns = new WeakMap();
+            this.awaitingGridStroke = false;
+            this.gridDrawnThisFrame = false;
+            this.nativeGridWantedThisFrame = false;
+            this.lastGridStrokeWasDark = null;
             this.fontCache.clear();
             this.fontLink?.remove();
             this.fontLink = null;
@@ -623,6 +705,117 @@
                 if (pattern) return pattern;
             }
             return config.mapColor || '#111111';
+        }
+        onFrameStart() {
+            this.awaitingGridStroke = true;
+            this.gridDrawnThisFrame = false;
+            this.nativeGridWantedThisFrame = false;
+        }
+        /** @param {string} color */
+        isColorDark(color) {
+            if (!color || typeof color !== 'string') return null;
+            const hex = color.trim().toLowerCase();
+            const hex6 = hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/);
+            if (hex6) {
+                const r = parseInt(hex6[1], 16);
+                const g = parseInt(hex6[2], 16);
+                const b = parseInt(hex6[3], 16);
+                return r * 0.299 + g * 0.587 + b * 0.114 < 128;
+            }
+            const hex3 = hex.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/);
+            if (hex3) {
+                const r = parseInt(hex3[1] + hex3[1], 16);
+                const g = parseInt(hex3[2] + hex3[2], 16);
+                const b = parseInt(hex3[3] + hex3[3], 16);
+                return r * 0.299 + g * 0.587 + b * 0.114 < 128;
+            }
+            const rgb = hex.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (rgb) {
+                const r = Number(rgb[1]);
+                const g = Number(rgb[2]);
+                const b = Number(rgb[3]);
+                return r * 0.299 + g * 0.587 + b * 0.114 < 128;
+            }
+            return null;
+        }
+        /**
+         * Renders a proper 50x50 world grid similar to SigFixes,
+         * locked in world coordinates and unaffected by camera scaling/shifting.
+         * @param {CanvasRenderingContext2D} context
+         * @param {number} cw
+         * @param {number} ch
+         * @param {number} scaleVal
+         * @param {number} camX
+         * @param {number} camY
+         */
+        maybeDrawProperGrid(context, cw, ch, scaleVal, camX, camY) {
+            if (document.getElementById('sf-canvas')) return;
+            if (this.gridDrawnThisFrame) return;
+
+            const showGrid = this.nativeGridWantedThisFrame || Boolean(this.app.settings.game?.showGrid ?? true);
+            if (!showGrid) return;
+            this.gridDrawnThisFrame = true;
+
+            if (
+                !Number.isFinite(scaleVal) ||
+                scaleVal <= 0 ||
+                scaleVal * 50 < 1.5 ||
+                !Number.isFinite(camX) ||
+                !Number.isFinite(camY) ||
+                !Number.isFinite(cw) ||
+                !Number.isFinite(ch) ||
+                cw <= 0 ||
+                ch <= 0
+            )
+                return;
+
+            let isDark = true;
+            const customMapColor = this.renderConfig?.mapColor;
+            const mapDark = this.isColorDark(customMapColor);
+            if (mapDark !== null) {
+                isDark = mapDark;
+            } else if (this.lastGridStrokeWasDark !== null) {
+                isDark = this.lastGridStrokeWasDark;
+            } else {
+                isDark = Boolean(this.app.settings.game?.darkTheme ?? true);
+            }
+
+            const halfW = cw / 2 / scaleVal;
+            const halfH = ch / 2 / scaleVal;
+            const minX = camX - halfW;
+            const maxX = camX + halfW;
+            const minY = camY - halfH;
+            const maxY = camY + halfH;
+
+            const startX = Math.floor(minX / 50) * 50;
+            const endX = Math.ceil(maxX / 50) * 50;
+            const startY = Math.floor(minY / 50) * 50;
+            const endY = Math.ceil(maxY / 50) * 50;
+
+            // Dynamically scale grid opacity based on zoom level:
+            // When zooming out completely, fade the grid down to avoid harsh brightness/clutter,
+            // while keeping a subtle minimum floor so it remains gently visible.
+            const baseAlpha = 0.098;
+            const minAlpha = 0.028;
+            const zoomRatio = Math.max(0, Math.min(1, scaleVal));
+            const alpha = (minAlpha + (baseAlpha - minAlpha) * zoomRatio).toFixed(3);
+
+            context.save();
+            context.lineWidth = 1 / scaleVal;
+            context.strokeStyle = isDark ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`;
+            context.beginPath();
+
+            for (let x = startX; x <= endX; x += 50) {
+                context.moveTo(x, minY);
+                context.lineTo(x, maxY);
+            }
+            for (let y = startY; y <= endY; y += 50) {
+                context.moveTo(minX, y);
+                context.lineTo(maxX, y);
+            }
+
+            context.stroke();
+            context.restore();
         }
         /** @param {CanvasRenderingContext2D} context @param {number} radius */
         applyCellColor(context, radius) {

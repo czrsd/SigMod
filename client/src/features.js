@@ -4588,3 +4588,255 @@ class SmartPingController extends FeatureController {
         });
     }
 }
+
+class MergeTimerController extends FeatureController {
+    constructor(app, name) {
+        super(app, name);
+        /** @type {Map<number, { id: number, birthTime: number, readyNotified: boolean, fadeUntil: number }>} */
+        this.trackedCells = new Map();
+        this.canvas = null;
+        this.frameId = null;
+    }
+
+    async mount() {
+        const canvas = createElement('canvas', {
+            className: 'sigmod-merge-timer-canvas',
+        });
+        canvas.style.position = 'fixed';
+        canvas.style.left = '0';
+        canvas.style.top = '0';
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = '2';
+        document.body.append(canvas);
+        this.canvas = canvas;
+
+        this.resources.add(() => canvas.remove());
+        this.resources.listen(window, 'resize', () => this.resize());
+        this.resize();
+
+        const bindHost = (adapter) => {
+            this.resources.child('merge-host-events')?.dispose();
+            this.trackedCells.clear();
+            if (!adapter) return;
+            const events = this.resources.child('merge-host-events');
+            events.add(adapter.on('owned-cell', ({ id, split }) => this.onOwnedCell(id, split)));
+            events.add(
+                adapter.on('play-state', (playing) => {
+                    if (!playing) this.trackedCells.clear();
+                })
+            );
+        };
+
+        this.resources.listen(this.app.host, 'adapter', bindHost);
+        bindHost(this.app.host.adapter);
+
+        const loop = () => {
+            this.draw();
+            this.frameId = requestAnimationFrame(loop);
+        };
+        this.frameId = requestAnimationFrame(loop);
+        this.resources.add(() => {
+            if (this.frameId) cancelAnimationFrame(this.frameId);
+        });
+    }
+
+    resize() {
+        if (!this.canvas) return;
+        const ratio = devicePixelRatio || 1;
+        this.canvas.width = Math.round(window.innerWidth * ratio);
+        this.canvas.height = Math.round(window.innerHeight * ratio);
+    }
+
+    onOwnedCell(id, split) {
+        const now = performance.now();
+        if (split) {
+            this.trackedCells.set(id, {
+                id,
+                birthTime: now,
+                readyNotified: false,
+                fadeUntil: 0,
+            });
+        }
+    }
+
+    getCamera() {
+        if (this.app.state.camera && this.app.state.camera.scale > 0) {
+            const { scale, x, y, offsetX, offsetY, cw, ch } = this.app.state.camera;
+            const canvasW = cw > 0 ? cw : window.innerWidth;
+            const canvasH = ch > 0 ? ch : window.innerHeight;
+            return {
+                x: x !== undefined ? x : (canvasW / 2 - offsetX) / scale,
+                y: y !== undefined ? y : (canvasH / 2 - offsetY) / scale,
+                scale: scale * (window.innerWidth / canvasW),
+            };
+        }
+        const position = this.app.host.adapter?.snapshot().position;
+        if (position) {
+            return {
+                x: position.x,
+                y: position.y,
+                scale: (window.innerHeight / 1080) * 0.25,
+            };
+        }
+        return null;
+    }
+
+    getOwnedCells(adapter) {
+        const result = [];
+        if (!adapter || adapter.kind !== 'native') return result;
+        const protocol = adapter.protocol;
+        if (!protocol) return result;
+
+        const now = performance.now();
+        for (const id of protocol.owned) {
+            const cell = protocol.cells.get(id);
+            if (!cell) continue;
+
+            let cx = cell.x;
+            let cy = cell.y;
+            let cr = cell.radius;
+            if (cell.updatedAt) {
+                const elapsed = Math.max(0, Math.min(120, now - cell.updatedAt));
+                const progress = elapsed / 120;
+                cx = cell.ox + (cell.nx - cell.ox) * progress;
+                cy = cell.oy + (cell.ny - cell.oy) * progress;
+                cr = cell.os + (cell.ns - cell.os) * progress;
+            }
+
+            result.push({
+                id,
+                x: cx,
+                y: cy,
+                radius: cr,
+            });
+        }
+        return result;
+    }
+
+    draw() {
+        const canvas = this.canvas;
+        if (!canvas) return;
+        const context = canvas.getContext('2d');
+        if (!context) return;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (window.sigfix || this.app.host.adapter?.kind === 'sigfix' || document.getElementById('sf-canvas')) return;
+        if (!this.app.settings.settings.mergeTimer) return;
+        if (!isMenuClosed() || isDeadScreenVisible()) return;
+
+        const adapter = this.app.host.adapter;
+        if (!adapter || adapter.kind !== 'native') return;
+
+        const ownedCells = this.getOwnedCells(adapter);
+        if (ownedCells.length <= 1) {
+            if (this.trackedCells.size > 0 && ownedCells.length === 1) {
+                this.trackedCells.clear();
+            }
+            return;
+        }
+
+        const cam = this.getCamera();
+        if (!cam || !cam.scale) return;
+
+        const now = performance.now();
+        const currentIds = new Set(ownedCells.map((c) => c.id));
+
+        for (const id of this.trackedCells.keys()) {
+            if (!currentIds.has(id)) {
+                this.trackedCells.delete(id);
+            }
+        }
+
+        for (const cell of ownedCells) {
+            if (!this.trackedCells.has(cell.id)) {
+                this.trackedCells.set(cell.id, {
+                    id: cell.id,
+                    birthTime: now,
+                    readyNotified: false,
+                    fadeUntil: 0,
+                });
+            }
+        }
+
+        const ratio = devicePixelRatio || 1;
+        context.save();
+        context.scale(ratio, ratio);
+
+        const hw = window.innerWidth / 2;
+        const hh = window.innerHeight / 2;
+        const showMass = Boolean(
+            document.getElementById('showMass')?.checked ?? readLocalJson(STORAGE.gameSettings, {})?.showMass ?? false
+        );
+
+        for (const cell of ownedCells) {
+            const info = this.trackedCells.get(cell.id);
+            if (!info) continue;
+
+            const cooldownMs = (30 + 0.02 * Math.max(0, cell.radius)) * 1000;
+            const ageMs = now - info.birthTime;
+            const timeLeft = Math.max(0, (cooldownMs - ageMs) / 1000);
+
+            if (timeLeft <= 0) {
+                if (!info.readyNotified) {
+                    info.readyNotified = true;
+                    info.fadeUntil = now + 1500;
+                }
+                if (now > info.fadeUntil) {
+                    continue;
+                }
+            }
+
+            const sx = (cell.x - cam.x) * cam.scale + hw;
+            const sy = (cell.y - cam.y) * cam.scale + hh;
+            const sr = cell.radius * cam.scale;
+
+            if (sx + sr < 0 || sx - sr > window.innerWidth || sy + sr < 0 || sy - sr > window.innerHeight) {
+                continue;
+            }
+
+            let text;
+            let fillStyle;
+            let alpha = 1;
+
+            if (timeLeft > 0) {
+                if (timeLeft < 5.0) {
+                    text = `${timeLeft.toFixed(1)}s`;
+                    fillStyle = '#ffcc00';
+                } else {
+                    text = `${Math.ceil(timeLeft)}s`;
+                    fillStyle = '#ffffff';
+                }
+            } else {
+                text = 'READY';
+                fillStyle = '#00ff88';
+                alpha = Math.max(0, (info.fadeUntil - now) / 1500);
+            }
+
+            context.globalAlpha = alpha;
+            const fontSize = Math.max(10, Math.min(24, Math.round(sr * 0.16)));
+            context.font = `600 ${fontSize}px ${this.app.settings.game.font || 'Ubuntu'}, sans-serif`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            const yOffset = showMass ? sr * 0.48 : sr * 0.32;
+            const timerY = sy + yOffset;
+
+            context.lineWidth = Math.max(2, fontSize * 0.2);
+            context.strokeStyle = '#000000';
+            context.strokeText(text, sx, timerY);
+
+            context.fillStyle = fillStyle;
+            context.fillText(text, sx, timerY);
+        }
+
+        context.restore();
+    }
+
+    destroy() {
+        this.trackedCells.clear();
+        this.canvas = null;
+        super.destroy();
+    }
+}

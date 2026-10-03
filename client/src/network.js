@@ -474,6 +474,7 @@ class NativeProtocol extends Emitter {
             this.owned.delete(killedId);
         }
         let cellCount = 0;
+        const now = performance.now();
         while (true) {
             const id = reader.uint32LE();
             if (id === 0) break;
@@ -493,8 +494,25 @@ class NativeProtocol extends Emitter {
             if (flags & 0x08) name = reader.utf8z();
             const eject = Boolean(flags & 0x20);
             const pellet = radius <= 40 && !eject;
+            let ox = x;
+            let oy = y;
+            let os = radius;
+            if (existing && existing.updatedAt) {
+                const elapsed = Math.max(0, Math.min(120, now - existing.updatedAt));
+                const progress = elapsed / 120;
+                ox = existing.ox + (existing.nx - existing.ox) * progress;
+                oy = existing.oy + (existing.ny - existing.oy) * progress;
+                os = existing.os + (existing.ns - existing.os) * progress;
+            }
             this.cells.set(id, {
                 id,
+                ox,
+                oy,
+                os,
+                nx: x,
+                ny: y,
+                ns: radius,
+                updatedAt: now,
                 x,
                 y,
                 radius,

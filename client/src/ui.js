@@ -849,6 +849,7 @@ class MenuController extends FeatureController {
                                         <div class="justify-sb w-100 rounded" style="padding: 5px 10px;"><span class="text">Death screen Position</span><select id="deathScreenPos" class="form-control" data-setting="settings.deathScreenPos" style="width: 30%"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option><option value="top">Top</option><option value="bottom">Bottom</option></select></div>
                                         <div class="justify-sb w-100 accent_row p-10 rounded">${this.checkRowInline('Play timer', 'playTimerToggle', 'settings.playTimer')}</div>
                                         <div class="justify-sb w-100 p-10 rounded">${this.checkRowInline('Mouse tracker', 'mouseTrackerToggle', 'settings.mouseTracker')}</div>
+                                        <div class="justify-sb w-100 accent_row p-10 rounded">${this.checkRowInline('Merge timer', 'mergeTimerToggle', 'settings.mergeTimer')}</div>
                                     </div>
                                     <div class="settings-actions" id="settingsActions">
                                         <div class="settings-actions-heading"><span class="settings-actions-title">Settings</span></div>
@@ -1341,7 +1342,9 @@ class MenuController extends FeatureController {
                 : [];
         const interfaceHudRows =
             gamePanel instanceof HTMLElement
-                ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle'].map((selector) => row(gamePanel, selector)).filter(Boolean)
+                ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle', '#mergeTimerToggle']
+                      .map((selector) => row(gamePanel, selector))
+                      .filter(Boolean)
                 : [];
         let screenshotRow = null;
         if (galleryPanel instanceof HTMLElement) screenshotRow = row(galleryPanel, '#modinput17');

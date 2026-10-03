@@ -2801,6 +2801,7 @@ const FEATURE_PHASES = [
         ['session', SessionController],
         ['macros', MacroController],
         ['smartPing', SmartPingController],
+        ['mergeTimer', MergeTimerController],
     ],
     [
         ['chat', ChatController],

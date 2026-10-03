@@ -359,6 +359,7 @@ const STANDARD_MOUSE_BUTTONS = [
  * @property {boolean} autoRespawn
  * @property {boolean} playTimer
  * @property {boolean} mouseTracker
+ * @property {boolean} mergeTimer
  * @property {boolean} autoClaimCoins
  * @property {boolean} showChallenges
  * @property {'center'|'left'|'right'|'top'|'bottom'} deathScreenPos
@@ -471,6 +472,7 @@ const DEFAULT_SETTINGS = {
         autoRespawn: false,
         playTimer: false,
         mouseTracker: false,
+        mergeTimer: true,
         autoClaimCoins: false,
         showChallenges: false,
         deathScreenPos: 'center',

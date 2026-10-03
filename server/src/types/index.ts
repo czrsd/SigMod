@@ -12,5 +12,4 @@ export * from './auth';
 export * from './discord';
 export * from './friends';
 export * from './socket';
-export * from './tournament';
 export * from './alert';

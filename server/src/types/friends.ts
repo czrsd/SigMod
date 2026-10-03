@@ -11,6 +11,7 @@ export type modAccount = {
     _id?: ObjectId | string;
     username: string;
     password?: string;
+    discord_id?: string;
     imageURL: string;
     role: string | Role;
     bio?: string;

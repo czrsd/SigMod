@@ -1,7 +1,6 @@
 import fs from 'fs';
 
-export const readFile = (path: string) =>
-    fs.readFileSync(path, { encoding: 'utf8' }).trim();
+export const readFile = (path: string) => fs.readFileSync(path, { encoding: 'utf8' }).trim();
 
 export const noXSS = (text: string | any) => {
     const xssChars = /[&<>"']/g;
@@ -54,15 +53,7 @@ export function getRemainingTime(string: string) {
 
     const [targetHours, targetMinutes] = string.split(':').map(Number);
 
-    const targetDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        targetHours,
-        targetMinutes,
-        0,
-        0
-    );
+    const targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), targetHours, targetMinutes, 0, 0);
 
     return targetDate.getTime() - now.getTime() - 3600000;
 }

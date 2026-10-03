@@ -134,9 +134,9 @@ class PublicUserController {
 
         try {
             // check if the targeted user exists
-            const userExists = await AccountModel.find({ _id: req_id });
+            const userExists = await AccountModel.findById(req_id);
             if (!userExists) {
-                return res.status(400).json({
+                return res.status(404).json({
                     success: false,
                     message: 'User does not exist.',
                 });
@@ -146,10 +146,7 @@ class PublicUserController {
             const targetUserSettings = await UserSettingsModel.findOne({
                 target: req_id,
             });
-            if (
-                !targetUserSettings ||
-                targetUserSettings.accept_requests == false
-            ) {
+            if (!targetUserSettings || targetUserSettings.accept_requests == false) {
                 return res.status(400).json({
                     success: false,
                     message: "User doesn't accept friend requests.",

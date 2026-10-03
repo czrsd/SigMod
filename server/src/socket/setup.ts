@@ -7,9 +7,23 @@ const wss = new WebSocketServer({ noServer: true });
 
 wss.on('connection', (ws: WebSocket, req: Request) => {
     const socket = new Socket(ws, req);
-    wsHandler.sockets.set(socket.sid, socket);
-
     socket.init();
+});
+
+// Periodic heartbeat to clean up dead/zombie sockets
+const heartbeatInterval = setInterval(() => {
+    for (const socket of wsHandler.sockets.values()) {
+        if (!socket.isAlive) {
+            socket.ws.terminate();
+            continue;
+        }
+        socket.isAlive = false;
+        socket.ws.ping();
+    }
+}, 30000);
+
+wss.on('close', () => {
+    clearInterval(heartbeatInterval);
 });
 
 export { wsHandler, wss as wsServer };

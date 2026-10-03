@@ -1,14 +1,7 @@
 import { Request, Response } from 'express';
-import {
-    validatePassword,
-    validatePasswordMatch,
-    validateUsername,
-} from '../../utils/validation';
+import { validatePassword, validatePasswordMatch, validateUsername } from '../../utils/validation';
 import bcrypt from 'bcryptjs';
-import {
-    generateAccessToken,
-    generateRefreshToken,
-} from '../../utils/jwtUtils';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwtUtils';
 import UserSettingsModel from '../../models/UserSettingsModel';
 import AccountModel, { IAccount } from '../../models/AccountModel';
 import { noXSS } from '../../utils/helpers';
@@ -61,16 +54,11 @@ class AccountController {
 
                 if (typeof validationResult === 'string') {
                     errors.push({ fieldName, message: validationResult });
-                } else if (
-                    validationResult &&
-                    typeof validationResult === 'object' &&
-                    'success' in validationResult
-                ) {
+                } else if (validationResult && typeof validationResult === 'object' && 'success' in validationResult) {
                     if (!validationResult.success) {
                         errors.push({
                             fieldName,
-                            message:
-                                validationResult.message || 'Validation failed',
+                            message: validationResult.message || 'Validation failed',
                         });
                     }
                 }
@@ -104,8 +92,7 @@ class AccountController {
             const newUser = new AccountModel({
                 username,
                 password: hashedPassword,
-                imageURL:
-                    'https://czrsd.com/static/sigmod/SigMod25-rounded.png',
+                imageURL: 'https://czrsd.com/static/sigmod/SigMod25-rounded.png',
                 role: 'Member',
                 online: true,
                 visible: true,
@@ -123,8 +110,7 @@ class AccountController {
                     errors: [
                         {
                             fieldName: 'Unknown Error',
-                            message:
-                                'An unknown error has occurred. Please try again.',
+                            message: 'An unknown error has occurred. Please try again.',
                         },
                     ],
                 });
@@ -169,8 +155,7 @@ class AccountController {
             console.error('Error registering user:', err);
             return res.json({
                 success: false,
-                message:
-                    'An error occurred while registering. Please try again later.',
+                message: 'An error occurred while registering. Please try again later.',
             });
         }
     }
@@ -194,12 +179,8 @@ class AccountController {
                         });
                     }
 
-                    const accessToken = generateAccessToken(
-                        user.user._id?.toString() as string
-                    );
-                    const refreshToken = generateRefreshToken(
-                        user.user._id?.toString() as string
-                    );
+                    const accessToken = generateAccessToken(user.user._id?.toString() as string);
+                    const refreshToken = generateRefreshToken(user.user._id?.toString() as string);
 
                     res.cookie('mod_accessToken', accessToken, {
                         maxAge: 300000, // 5 minutes
@@ -227,10 +208,7 @@ class AccountController {
                     }
 
                     if (userSettings.static_status === 'online') {
-                        await AccountModel.updateOne(
-                            { _id: user.user._id?.toString() },
-                            { $set: { online: true, lastOnline: null } }
-                        );
+                        await AccountModel.updateOne({ _id: user.user._id?.toString() }, { $set: { online: true, lastOnline: null } });
                     }
 
                     return res.status(200).json({
@@ -245,8 +223,7 @@ class AccountController {
             logger.error('An error occurred while logging in: ', e);
             return res.status(400).json({
                 success: false,
-                message:
-                    'An error occurred while logging in. Please try again.',
+                message: 'An error occurred while logging in. Please try again.',
             });
         }
     }
@@ -257,9 +234,7 @@ class AccountController {
         const { sid } = req.query;
 
         if (!user?.userId) {
-            return res
-                .status(401)
-                .json({ success: false, message: 'User not found.' });
+            return res.status(401).json({ success: false, message: 'User not found.' });
         }
 
         const fullUser = await AccountModel.findOne({
@@ -267,9 +242,7 @@ class AccountController {
         }).select('-password');
 
         if (!fullUser) {
-            return res
-                .status(401)
-                .json({ success: false, message: 'User not found.' });
+            return res.status(401).json({ success: false, message: 'User not found.' });
         }
 
         const userSettings = await UserSettingsModel.findOne({
@@ -284,10 +257,7 @@ class AccountController {
         }
 
         if (userSettings.static_status === 'online') {
-            await AccountModel.updateOne(
-                { _id: user?.userId },
-                { $set: { online: true, lastOnline: null } }
-            );
+            await AccountModel.updateOne({ _id: user?.userId }, { $set: { online: true, lastOnline: null } });
         }
 
         if (sid && typeof sid === 'string') {
@@ -301,6 +271,7 @@ class AccountController {
             }
 
             socket.modUser = fullUser;
+            wsHandler.setSocketUser(socket, fullUser._id.toString());
         }
 
         return res.status(200).json({
@@ -348,8 +319,7 @@ class AccountController {
             logger.error('Error logging out user:', e);
             return res.status(400).send({
                 success: false,
-                message:
-                    'An error occurred while logging out. Please try again later.',
+                message: 'An error occurred while logging out. Please try again later.',
             });
         }
     }

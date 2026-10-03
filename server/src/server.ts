@@ -4,16 +4,11 @@ import logger from './utils/logger';
 import setupExitHandlers from './utils/exitHandler';
 
 const loadEnvironment = () => {
-    const envFile =
-        process.env.NODE_ENV === 'production'
-            ? '.env.production'
-            : '.env.development';
+    const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
     try {
         expandConfig(loadConfig());
         expandConfig(loadConfig({ path: envFile }));
-        logger.info(
-            `Loaded ${process.env.NODE_ENV || 'development'} environment.`
-        );
+        logger.info(`Loaded ${process.env.NODE_ENV || 'development'} environment.`);
     } catch (err) {
         logger.error('Failed to load environment variables.', err);
         process.exit(1);
@@ -21,7 +16,6 @@ const loadEnvironment = () => {
 };
 
 loadEnvironment();
-setupExitHandlers();
 
 import express, { Application } from 'express';
 import './config/passport';
@@ -36,20 +30,19 @@ const PORT = process.env.PORT || 3001;
     try {
         await connectDB();
     } catch (err) {
+        logger.error('Failed to initialize database connection. Exiting.', err);
         process.exit(1);
     }
 })();
 
 setupMiddleware(app);
 
-const server = app.listen(PORT, () =>
-    logger.info(`Server running on port ${PORT}.`)
-);
+const server = app.listen(PORT, () => logger.info(`Server running on port ${PORT}.`));
+
+setupExitHandlers(server, wsServer);
 
 server.on('upgrade', (req, socket, head) => {
     if (req.url === '/ws') {
-        wsServer.handleUpgrade(req, socket, head, (ws) =>
-            wsServer.emit('connection', ws, req)
-        );
+        wsServer.handleUpgrade(req, socket, head, (ws) => wsServer.emit('connection', ws, req));
     }
 });

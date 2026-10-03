@@ -1,17 +1,11 @@
 import { Request, Response } from 'express';
-import AnnouncementModel, {
-    AnnouncementDocument,
-    AnnouncementPreview,
-} from '../models/AnnouncementModel';
+import AnnouncementModel, { AnnouncementDocument, AnnouncementPreview } from '../models/AnnouncementModel';
 import logger from '../utils/logger';
 
 class AnnouncementController {
     async getAnnouncements(req: Request, res: Response) {
         try {
-            const announcements = await AnnouncementModel.find(
-                {},
-                { preview: 1 }
-            );
+            const announcements = await AnnouncementModel.find({}, { preview: 1 });
 
             if (!announcements) {
                 res.status(400).json({

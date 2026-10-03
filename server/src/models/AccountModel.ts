@@ -4,6 +4,7 @@ export type IAccount = Document & {
     _id: string;
     username: string;
     password?: string;
+    discord_id?: string;
     imageURL: string;
     role: string;
     bio?: string;
@@ -15,15 +16,16 @@ export type IAccount = Document & {
 };
 
 const modAccountSchema: Schema<IAccount> = new mongoose.Schema({
-    username: { type: String, required: true },
+    username: { type: String, required: true, unique: true, index: true },
     password: { type: String, required: false },
+    discord_id: { type: String, required: false, unique: true, sparse: true, index: true },
     imageURL: { type: String, required: true },
-    role: { type: String, required: true },
+    role: { type: String, required: true, default: 'Member' },
     bio: { type: String, required: false },
-    badges: { type: [String], required: true },
-    online: { type: Boolean, required: true },
+    badges: { type: [String], required: true, default: [] },
+    online: { type: Boolean, required: true, default: false, index: true },
     lastOnline: { type: Date, default: Date.now },
-    visible: { type: Boolean, required: true },
+    visible: { type: Boolean, required: true, default: true, index: true },
     create_time: { type: Date, default: Date.now },
 });
 

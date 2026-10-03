@@ -2,7 +2,8 @@ type alert = {
     title: string;
     description: string;
     enabled: boolean;
-    password: string | null;
+    link?: string | null;
+    buttonText?: string | null;
 };
 
 export { alert };

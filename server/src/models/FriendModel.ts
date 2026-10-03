@@ -12,9 +12,9 @@ const friendsSchema = new Schema<Friend>({
     timestamp: { type: Date, default: Date.now },
 });
 
-const friendsModel: Model<Friend> = mongoose.model<Friend>(
-    'friend',
-    friendsSchema
-);
+friendsSchema.index({ user_id: 1, friend_id: 1 }, { unique: true });
+friendsSchema.index({ friend_id: 1 });
+
+const friendsModel: Model<Friend> = mongoose.model<Friend>('friend', friendsSchema);
 
 export default friendsModel;

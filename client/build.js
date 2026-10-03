@@ -7,20 +7,9 @@ async function build() {
 
     const releaseMeta = fs.readFileSync(path.join(__dirname, 'src', 'meta.js'), 'utf8');
 
-    const devMeta = releaseMeta
-        .replace(/(@name(?::\S+)?\s+SigMod)(\s+-)/g, '$1 DEV$2')
-        .replace(/(@version\s+\S+)/g, '$1-dev');
+    const devMeta = releaseMeta.replace(/(@name(?::\S+)?\s+SigMod)(\s+-)/g, '$1 DEV$2').replace(/(@version\s+\S+)/g, '$1-dev');
 
-    const files = [
-        'constants_and_utils.js',
-        'core.js',
-        'network.js',
-        'ui.js',
-        'render.js',
-        'features.js',
-        'social.js',
-        'app.js',
-    ];
+    const files = ['constants_and_utils.js', 'core.js', 'network.js', 'ui.js', 'render.js', 'features.js', 'social.js', 'app.js'];
 
     let sourceCode = '';
     for (const file of files) {
@@ -28,10 +17,7 @@ async function build() {
     }
 
     const buildVariant = async (outfile, banner, isDev) => {
-        const codeForVariant = sourceCode.replace(
-            /(const SIGMOD_DEV = \{[\s\S]*?enabled:\s*)(true|false)/,
-            `$1${isDev}`
-        );
+        const codeForVariant = sourceCode.replace(/(const SIGMOD_DEV = \{[\s\S]*?enabled:\s*)(true|false)/, `$1${isDev}`);
 
         const combined = `(() => {\n"use strict";\n${codeForVariant}\n})();\n`;
         const tempJs = path.join(__dirname, 'src', `_temp_${isDev ? 'dev' : 'rel'}.js`);
@@ -47,6 +33,24 @@ async function build() {
         });
 
         fs.unlinkSync(tempJs);
+
+        try {
+            const prettier = require('prettier');
+            const rootPrettierrc = path.resolve(__dirname, '..', '.prettierrc');
+            let prettierConfig = {};
+            if (fs.existsSync(rootPrettierrc)) {
+                prettierConfig = JSON.parse(fs.readFileSync(rootPrettierrc, 'utf8'));
+            }
+            const builtContent = fs.readFileSync(outfile, 'utf8');
+            const formatted = await prettier.format(builtContent, {
+                ...prettierConfig,
+                filepath: outfile,
+            });
+            fs.writeFileSync(outfile, formatted, 'utf8');
+        } catch (formatErr) {
+            console.warn(`[build] Prettier formatting skipped for ${outfile}:`, formatErr.message);
+        }
+
         console.log(`Saved: ${outfile}`);
     };
 
@@ -68,4 +72,3 @@ build().catch((err) => {
     console.error(err);
     process.exit(1);
 });
-

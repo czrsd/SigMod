@@ -26,20 +26,14 @@ const updateNick = (nick: string, socket: socket) => {
 const onServerChange = (serverName: string, socket: socket) => {
     if (!serverName) throw new Error('No server specified');
 
-    socket.server = noXSS(serverName);
-
-    if (wsHandler.tournamentOverlay && socket.server === 'Tourney') {
-        socket.send({
-            type: 'tournament-overlay',
-            content: wsHandler.tournamentOverlay,
-        });
-    }
+    const sanitizedServer = noXSS(serverName);
+    wsHandler.setSocketServer(socket, sanitizedServer);
 };
 
 const updateTag = (tag: string, socket: socket) => {
     if (!tag) {
         const previousTag = socket.tag;
-        socket.tag = null;
+        wsHandler.setSocketTag(socket, null);
         if (previousTag && socket.server) {
             const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
             for (const s of prevSockets) {
@@ -53,8 +47,7 @@ const updateTag = (tag: string, socket: socket) => {
         }
         return;
     }
-    if (typeof tag !== 'string' || tag.trim().length > 3 || !socket.server)
-        return;
+    if (typeof tag !== 'string' || tag.trim().length > 3 || !socket.server) return;
 
     const previousTag = socket.tag;
 
@@ -62,7 +55,7 @@ const updateTag = (tag: string, socket: socket) => {
         return;
     }
 
-    socket.tag = tag;
+    wsHandler.setSocketTag(socket, tag);
 
     const tagSockets = wsHandler.getTagMembersOnServer(tag, socket.server);
     tagSockets.forEach((s, i) => (s.tagIndex = i + 1));
@@ -90,10 +83,7 @@ const updateTag = (tag: string, socket: socket) => {
     });
 
     if (previousTag && previousTag !== tag) {
-        const prevSockets = wsHandler.getTagMembersOnServer(
-            previousTag,
-            socket.server
-        );
+        const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
         for (const s of prevSockets) {
             s.send({
                 type: 'leave-tag',
@@ -121,7 +111,7 @@ const sendPing = (data: PingData, socket: socket) => {
                 i: socket.tagIndex,
                 x,
                 y,
-                t
+                t,
             },
         });
     }
@@ -139,11 +129,7 @@ const updateMinimap = (data: minimapData, socket: socket) => {
         y,
     };
 
-    const sockets = wsHandler.getTagMembersOnServer(
-        socket.tag,
-        socket.server,
-        socket.sid
-    );
+    const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server, socket.sid);
 
     for (const s of sockets) {
         s.send({
@@ -159,13 +145,7 @@ const updateMinimap = (data: minimapData, socket: socket) => {
 };
 
 const updateScore = (score: number, socket: socket) => {
-    if (
-        !socket.tag ||
-        !socket.server ||
-        typeof score !== 'number' ||
-        score > 9_999_999_999
-    )
-        return;
+    if (!socket.tag || !socket.server || typeof score !== 'number' || score > 9_999_999_999) return;
 
     socket.score = score;
 
@@ -184,8 +164,7 @@ const updateScore = (score: number, socket: socket) => {
 
 const onPartyChatMessage = (data: { message: string }, socket: socket) => {
     const message = noXSS(data.message.slice(0, 250));
-    if (!socket.tag || !socket.server || !message)
-        throw new Error('Invalid chat message.');
+    if (!socket.tag || !socket.server || !message) throw new Error('Invalid chat message.');
 
     const { modUser, nick } = socket;
 
@@ -215,10 +194,7 @@ const onPartyChatMessage = (data: { message: string }, socket: socket) => {
     });
 };
 
-const handlePrivateMessage = async (
-    data: { text: string; target: string },
-    socket: socket
-) => {
+const handlePrivateMessage = async (data: { text: string; target: string }, socket: socket) => {
     const user = socket.modUser;
     if (!user) {
         throw new Error('Not authorized.');
@@ -227,8 +203,7 @@ const handlePrivateMessage = async (
     const { target } = data;
     const text = noXSS(data.text);
 
-    if (!text || text.length > 200 || !target || !user._id)
-        throw new Error('Invalid private message.');
+    if (!text || text.length > 200 || !target || !user._id) throw new Error('Invalid private message.');
 
     const timestamp = Date.now();
 
@@ -247,12 +222,7 @@ const handlePrivateMessage = async (
     }
 };
 
-const sendToUser = (
-    userId: string,
-    targetId: string,
-    text: string,
-    timestamp: number
-) => {
+const sendToUser = (userId: string, targetId: string, text: string, timestamp: number) => {
     wsHandler.sendToUser(userId, {
         type: 'private-message',
         content: {
@@ -292,9 +262,7 @@ const onGoogleAuth = async (user: extended_user, socket: socket) => {
     socket.user = user as google_user;
 
     try {
-        const ip =
-            socket.req.headers['x-forwarded-for'] ||
-            socket.req.socket.remoteAddress;
+        const ip = socket.req.headers['x-forwarded-for'] || socket.req.socket.remoteAddress;
 
         const userAgentString = Array.isArray(socket.req.headers['user-agent'])
             ? socket.req.headers['user-agent'][0]
@@ -303,14 +271,7 @@ const onGoogleAuth = async (user: extended_user, socket: socket) => {
 
         const { browser, platform, version, source } = agent;
 
-        if (
-            !user ||
-            typeof user !== 'object' ||
-            !user._id ||
-            !user.email ||
-            !agent ||
-            typeof ip !== 'string'
-        ) {
+        if (!user || typeof user !== 'object' || !user._id || !user.email || !agent || typeof ip !== 'string') {
             logger.info('Something went wrong.');
             return;
         }
@@ -325,9 +286,7 @@ const onGoogleAuth = async (user: extended_user, socket: socket) => {
             source: source || '',
         };
 
-        logger.info(
-            `[User manager] User authorized: ${user.fullName || 'Unnamed'} on ${formatDate(new Date())}`
-        );
+        logger.info(`[User manager] User authorized: ${user.fullName || 'Unnamed'} on ${formatDate(new Date())}`);
 
         const usersCollection = db.collection('users');
         const userDoc = await usersCollection.findOne({ _id: user._id });
@@ -336,11 +295,10 @@ const onGoogleAuth = async (user: extended_user, socket: socket) => {
             await usersCollection.insertOne(user);
         } else {
             const updates: Record<string, any> = { ...user, ip };
-            await usersCollection.updateOne(
-                { _id: user._id },
-                { $set: updates }
-            );
+            await usersCollection.updateOne({ _id: user._id }, { $set: updates });
         }
+
+        wsHandler.setSocketUser(socket, user._id.toString());
     } catch (e) {
         logger.error(e);
     }

@@ -21,9 +21,7 @@ passport.use(
                     user = new AccountModel({
                         _id: profile.id,
                         username: profile.username,
-                        imageURL: profile.avatar
-                            ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
-                            : '',
+                        imageURL: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : '',
                         role: 'Member',
                         badges: [],
                         online: false,

@@ -12,12 +12,11 @@ const SetupMiddleware = (app: Application) => {
     app.use(
         cors({
             origin: [
+                'https://sigmally.com',
                 'https://beta.sigmally.com',
                 'https://one.sigmally.com',
                 'http://localhost:5173',
                 'http://localhost:3001',
-                'https://tournament.czrsd.com',
-                'http://localhost:3003', // tournament dev page
             ],
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
             credentials: true,

@@ -24,8 +24,7 @@ const AnnouncementSchema = new mongoose.Schema({
         icon: {
             type: String,
             required: false,
-            default:
-                'https://czrsd.com/static/sigmod/announcements/default.svg',
+            default: 'https://czrsd.com/static/sigmod/announcements/default.svg',
         },
         pinned: { type: Boolean, required: false, default: false },
     },
@@ -37,9 +36,6 @@ const AnnouncementSchema = new mongoose.Schema({
     date: { type: Date, required: true, default: new Date().toISOString() },
 });
 
-const AnnouncementModel = mongoose.model<AnnouncementDocument>(
-    'Announcement',
-    AnnouncementSchema
-);
+const AnnouncementModel = mongoose.model<AnnouncementDocument>('Announcement', AnnouncementSchema);
 
 export default AnnouncementModel;

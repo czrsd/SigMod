@@ -18,9 +18,6 @@ const sessionSchema = new Schema<ISession>({
     valid: { type: Boolean, default: true },
 });
 
-const Session: Model<ISession> = mongoose.model<ISession>(
-    'Session',
-    sessionSchema
-);
+const Session: Model<ISession> = mongoose.model<ISession>('Session', sessionSchema);
 
 export default Session;

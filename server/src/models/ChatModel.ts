@@ -14,6 +14,9 @@ const chatSchema: Schema<IChat> = new Schema({
     timestamp: { type: Date, default: Date.now },
 });
 
+chatSchema.index({ sender_id: 1, target_id: 1, timestamp: -1 });
+chatSchema.index({ target_id: 1, sender_id: 1, timestamp: -1 });
+
 const ChatModel: Model<IChat> = mongoose.model<IChat>('message', chatSchema);
 
 export default ChatModel;

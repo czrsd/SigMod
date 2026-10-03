@@ -2,3 +2,5 @@ node_modules
 server/dist
 dist
 references
+package-lock.json
+server/package-lock.json

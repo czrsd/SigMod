@@ -7,10 +7,7 @@ import { generateAccessToken, generateRefreshToken } from '../utils/jwtUtils';
 passport.use(
     new LocalStrategy(async (username, password, done) => {
         const user = await AccountModel.findOne({ username });
-        if (
-            !user ||
-            (user.password && !(await bcrypt.compare(password, user.password)))
-        ) {
+        if (!user || (user.password && !(await bcrypt.compare(password, user.password)))) {
             return done(null, false);
         }
 

@@ -6,7 +6,6 @@ import AccountModel from '../../models/AccountModel';
 import logger from '../../utils/logger';
 import { google_user, modAccount, socketMessageData } from '../../types';
 import messageHandler from './messageHandler';
-import TournamentController from './tournaments/TournamentController';
 
 class Socket {
     ws: WebSocket;
@@ -24,7 +23,7 @@ class Socket {
         x: number | null;
         y: number | null;
     };
-    tournamentId: null | string = null;
+    isAlive: boolean = true;
 
     constructor(ws: WebSocket, req: Request) {
         this.ws = ws;
@@ -38,38 +37,33 @@ class Socket {
     }
 
     public send(data: socketMessageData): void {
-        if (!data) return;
-        const json = JSON.stringify(data);
-        const encoder = new TextEncoder();
-        const binaryData = encoder.encode(json);
-
-        this.ws.send(binaryData);
-    }
-
-    onError(e: Error): void {
-        console.error(e);
-    }
-
-    private async updateUserStatus() {
-        if (this.modUser) {
-            await AccountModel.updateOne(
-                { _id: this.modUser._id },
-                { $set: { online: false, lastOnline: new Date() } }
-            );
+        if (!data || this.ws.readyState !== WebSocket.OPEN) return;
+        try {
+            const json = JSON.stringify(data);
+            const encoder = new TextEncoder();
+            const binaryData = encoder.encode(json);
+            this.ws.send(binaryData);
+        } catch (err) {
+            logger.error(`[WS] Error sending message to SID ${this.sid}:`, err);
         }
     }
 
-    private updateTournamentLobby() {
-        if (
-            this.user &&
-            TournamentController.getLobbyByEmail(this.user.email)
-        ) {
-            TournamentController.disconnectPlayer(this);
+    onError(e: Error): void {
+        logger.error(`[WS] Socket error on SID ${this.sid}:`, e);
+    }
+
+    private async updateUserStatus() {
+        if (this.modUser?._id) {
+            try {
+                await AccountModel.updateOne({ _id: this.modUser._id }, { $set: { online: false, lastOnline: new Date() } });
+            } catch (err) {
+                logger.error(`[WS] Error updating user offline status:`, err);
+            }
         }
     }
 
     private clearMinimap() {
-        if (!this.tag) return;
+        if (!this.tag || !this.server) return;
 
         wsHandler.sendToTag(
             {
@@ -81,13 +75,15 @@ class Socket {
                     sid: this.sid,
                 },
             },
-            this.tag
+            this.tag,
+            undefined,
+            this.server
         );
     }
 
     private clearTagMember() {
         if (!this.tag || !this.server) return;
-        const sockets = wsHandler.getTagMembersOnServer(this.tag, this.server);
+        const sockets = wsHandler.getTagMembersOnServer(this.tag, this.server, this.sid);
 
         for (const s of sockets) {
             s.send({
@@ -100,20 +96,24 @@ class Socket {
     }
 
     async onClose() {
-        this.updateUserStatus();
-        this.updateTournamentLobby();
+        await this.updateUserStatus();
         this.clearMinimap();
         this.clearTagMember();
 
-        wsHandler.sockets.delete(this.sid);
+        wsHandler.removeSocket(this);
     }
 
     init(): void {
+        wsHandler.registerSocket(this);
+
         this.ws.on('message', async (message: ArrayBuffer) => {
             await messageHandler(message, this);
         });
         this.ws.on('error', (e: any) => this.onError(e));
         this.ws.on('close', () => this.onClose());
+        this.ws.on('pong', () => {
+            this.isAlive = true;
+        });
 
         // assign socket id to client
         this.send({

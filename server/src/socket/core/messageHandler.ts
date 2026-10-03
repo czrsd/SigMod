@@ -12,7 +12,6 @@ import {
     sendPing,
 } from './socketUtils';
 import { socketMessageData } from '../../types';
-import TournamentController from './tournaments/TournamentController';
 
 const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
     if (raw.byteLength > 100 * 1024) {
@@ -68,14 +67,7 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
                 await handlePrivateMessage(content, socket);
                 break;
             case 'user':
-                onGoogleAuth(content, socket);
-                break;
-            // Tournaments
-            case 'ready':
-                await TournamentController.playerReady(socket);
-                break;
-            case 'result':
-                await TournamentController.handleResult(content, socket);
+                await onGoogleAuth(content, socket);
                 break;
             default:
                 socket.send({
@@ -85,8 +77,7 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
                 return;
         }
     } catch (e) {
-        const errorMessage =
-            e instanceof Error ? e.message : 'An unknown error occurred';
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
 
         socket.send({
             type: 'error',

@@ -16,9 +16,6 @@ const userSettingsSchema = new Schema<UserSettings>({
     highlight_color: { type: String, required: true },
 });
 
-const userSettingsModel: Model<UserSettings> = mongoose.model<UserSettings>(
-    'user_setting',
-    userSettingsSchema
-);
+const userSettingsModel: Model<UserSettings> = mongoose.model<UserSettings>('user_setting', userSettingsSchema);
 
 export default userSettingsModel;

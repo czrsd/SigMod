@@ -1,8 +1,20 @@
 import { Request, Response } from 'express';
 import { wsHandler } from '../socket/setup';
-import { readFile } from '../utils/helpers';
-import getTournamentPassword from '../utils/tournamentPassword';
+import crypto from 'crypto';
 import logger from '../utils/logger';
+
+const isAuthorizedAdmin = (key: unknown): boolean => {
+    const adminKey = process.env.ADMIN_API_KEY;
+    if (!adminKey || typeof key !== 'string' || !key) return false;
+    try {
+        const keyBuf = Buffer.from(key);
+        const adminBuf = Buffer.from(adminKey);
+        if (keyBuf.length !== adminBuf.length) return false;
+        return crypto.timingSafeEqual(keyBuf, adminBuf);
+    } catch {
+        return false;
+    }
+};
 
 class AlertController {
     async getAlert(req: Request, res: Response) {
@@ -14,11 +26,8 @@ class AlertController {
 
     async setAlert(req: Request, res: Response) {
         try {
-            const { key, title, description, enabled } = req.body;
-            if (
-                !key ||
-                key !== readFile(process.env.TOURNAMENT_KEY_PATH || '')
-            ) {
+            const { key, title, description, enabled, link, buttonText } = req.body;
+            if (!isAuthorizedAdmin(key)) {
                 res.status(401).json({
                     success: false,
                     message: 'Unauthorized.',
@@ -26,15 +35,13 @@ class AlertController {
                 return;
             }
 
-            wsHandler.alert.title = title;
-            wsHandler.alert.description = description;
-            wsHandler.alert.enabled = enabled;
-
-            if (enabled) {
-                wsHandler.alert.password = await getTournamentPassword();
-            } else {
-                wsHandler.alert.password = null;
-            }
+            wsHandler.alert = {
+                title: String(title ?? ''),
+                description: String(description ?? ''),
+                enabled: Boolean(enabled),
+                link: link ? String(link) : null,
+                buttonText: buttonText ? String(buttonText) : null,
+            };
 
             wsHandler.sendToAll({
                 type: 'alert',
@@ -46,8 +53,8 @@ class AlertController {
                 data: wsHandler.alert,
             });
         } catch (e) {
-            logger.error(e);
-            res.status(400).json({
+            logger.error('Error updating alert:', e);
+            res.status(500).json({
                 success: false,
                 message: 'Something went wrong. Please try again.',
             });

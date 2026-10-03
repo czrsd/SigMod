@@ -10,9 +10,9 @@ const requestSchema = new Schema<Request>({
     target_id: { type: Schema.Types.ObjectId, required: true },
 });
 
-const requestModel: Model<Request> = mongoose.model<Request>(
-    'request',
-    requestSchema
-);
+requestSchema.index({ req_id: 1, target_id: 1 }, { unique: true });
+requestSchema.index({ target_id: 1 });
+
+const requestModel: Model<Request> = mongoose.model<Request>('request', requestSchema);
 
 export default requestModel;

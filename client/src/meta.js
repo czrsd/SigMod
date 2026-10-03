@@ -69,4 +69,4 @@
 // @homepageURL  https://sigmally.xyz/
 // @updateURL    none
 // @downloadURL  none
-// ==/UserScript==
+// ==/UserScript==

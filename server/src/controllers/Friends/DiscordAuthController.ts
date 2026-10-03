@@ -4,10 +4,8 @@ import axios from 'axios';
 import AccountModel from '../../models/AccountModel';
 import { ObjectId } from 'mongodb';
 import UserSettingsModel from '../../models/UserSettingsModel';
-import {
-    generateAccessToken,
-    generateRefreshToken,
-} from '../../utils/jwtUtils';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwtUtils';
+import logger from '../../utils/logger';
 
 class DiscordAuthController {
     async callback(req: Request, res: Response) {
@@ -38,60 +36,53 @@ class DiscordAuthController {
         };
 
         try {
-            const response = await axios.post(
-                'https://discord.com/api/oauth2/token',
-                searchParams,
-                { headers }
-            );
+            const response = await axios.post('https://discord.com/api/oauth2/token', searchParams, { headers });
 
-            const userResponse = await axios.get(
-                'https://discordapp.com/api/users/@me',
-                {
-                    headers: {
-                        Authorization: `Bearer ${response.data.access_token}`,
-                        ...headers,
-                    },
-                }
-            );
+            const userResponse = await axios.get('https://discordapp.com/api/users/@me', {
+                headers: {
+                    Authorization: `Bearer ${response.data.access_token}`,
+                    ...headers,
+                },
+            });
 
             const { username, avatar, id } = userResponse.data;
-            const imageURL = `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`;
+            const imageURL = avatar
+                ? `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`
+                : 'https://czrsd.com/static/sigmod/SigMod25-rounded.png';
 
-            let user: modAccount | null = await AccountModel.findOne({
-                username,
-            });
-            let insertedUserId: ObjectId | null = null;
+            // Secure lookup: match exclusively by unique Discord ID to prevent account takeover
+            let user = await AccountModel.findOne({ discord_id: id });
+            let userId: string | ObjectId;
 
             if (user) {
-                await AccountModel.updateOne(
-                    {
-                        username,
-                    },
-                    {
-                        $set: {
-                            username,
-                            imageURL,
-                            online: true,
-                            lastOnline: null,
-                        },
-                    }
-                );
-
-                user = (await AccountModel.findOne({ username })) as modAccount;
+                user.imageURL = imageURL;
+                user.online = true;
+                user.lastOnline = new Date();
+                await user.save();
+                userId = user._id;
             } else {
-                user = new AccountModel({
-                    username,
+                // Ensure unique username
+                let targetUsername = username;
+                const existingWithName = await AccountModel.findOne({ username: targetUsername });
+                if (existingWithName) {
+                    targetUsername = `${username}_${String(id).slice(-4)}`;
+                }
+
+                const newUser = new AccountModel({
+                    username: targetUsername,
+                    discord_id: id,
                     imageURL,
                     role: Role.Member,
-                    create_time: new Date().toISOString(),
+                    create_time: new Date(),
                     online: true,
                     visible: true,
-                }) as modAccount;
+                });
 
-                const savedUser = await user.save();
-                insertedUserId = savedUser.id;
+                const savedUser = await newUser.save();
+                userId = savedUser._id;
 
                 const defaultSettings = {
+                    target: userId,
                     static_status: 'online',
                     accept_requests: true,
                     highlight_friends: true,
@@ -99,30 +90,12 @@ class DiscordAuthController {
                     visible: true,
                 };
 
-                await UserSettingsModel.create({
-                    target: insertedUserId,
-                    ...defaultSettings,
-                });
+                await UserSettingsModel.create(defaultSettings);
             }
 
-            const userId = insertedUserId || user?._id;
-
-            if (!userId) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'User ID is missing after user creation/update.',
-                });
-            }
-
-            const userSettings = await UserSettingsModel.findOne({
-                target: userId,
-            });
-
+            const userSettings = await UserSettingsModel.findOne({ target: userId });
             if (userSettings?.static_status === 'online') {
-                await AccountModel.updateOne(
-                    { _id: new ObjectId(userId) },
-                    { $set: { online: true, lastOnline: null } }
-                );
+                await AccountModel.updateOne({ _id: userId }, { $set: { online: true, lastOnline: null } });
             }
 
             const accessToken = generateAccessToken(userId.toString());
@@ -142,6 +115,7 @@ class DiscordAuthController {
                 sameSite: 'none',
             });
 
+            // Target allowed origins for postMessage security
             return res.send(`
                 <!DOCTYPE html>
                 <html>
@@ -149,13 +123,24 @@ class DiscordAuthController {
                 <body>
                     <script>
                         if (window.opener) {
-                            window.opener.postMessage({
+                            const message = {
                                 type: 'SIGMOD_AUTH_SUCCESS',
                                 payload: {
                                     accessToken: '${accessToken}',
                                     refreshToken: '${refreshToken}'
                                 }
-                            }, '*');
+                            };
+                            const allowedOrigins = [
+                                'https://sigmally.com',
+                                'https://beta.sigmally.com',
+                                'https://one.sigmally.com',
+                                'http://localhost:5173'
+                            ];
+                            for (const origin of allowedOrigins) {
+                                try {
+                                    window.opener.postMessage(message, origin);
+                                } catch (_) {}
+                            }
                         }
                         window.close();
                     </script>
@@ -164,10 +149,10 @@ class DiscordAuthController {
                 </html>
             `);
         } catch (e) {
-            console.error(e);
+            logger.error('Error during Discord OAuth callback:', e);
             return res.status(500).json({
                 success: false,
-                message: 'Internal server error.',
+                message: 'Internal server error during authentication.',
             });
         }
     }

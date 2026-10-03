@@ -1874,6 +1874,13 @@
         handleMouseDown(event) {
             this.pointerPosition.x = event.clientX;
             this.pointerPosition.y = event.clientY;
+            
+            const smartPing = this.app.features.get('smartPing');
+            if (smartPing && smartPing.wheelOpen) {
+                // If wheel is open, let SmartPingController handle the click to cancel it
+                return;
+            }
+            
             if (!this.isGamePointerEvent(event) || isTyping()) return;
             document.dispatchEvent(
                 new CustomEvent('sigmod:mousebuttondetected', {
@@ -1896,6 +1903,9 @@
         }
         /** @param {MouseEvent} event */
         handleMouseUp(event) {
+            const smartPing = this.app.features.get('smartPing');
+            if (smartPing && smartPing.wheelOpen) return;
+            
             if (event.button !== 0 && this.isGamePointerEvent(event) && this.mouseBinding(event.button)) event.preventDefault();
             if (event.button === this.pointerFeedButton) this.stopPointerFeed();
         }
@@ -4949,6 +4959,7 @@
             this.wheelCenter = { x: 0, y: 0 };
             
             this.pingTypes = [
+                { id: 'default', name: 'Ping', icon: 'mapPin', color: '#f1c40f' },
                 { id: 'danger', name: 'Danger', icon: 'warning', color: '#ff3b3b' },
                 { id: 'attack', name: 'Attack', icon: 'sword', color: '#ffa500' },
                 { id: 'virus', name: 'Shoot Virus', icon: 'crosshair', color: '#4CAF50' },
@@ -4971,6 +4982,12 @@
             this.resources.listen(documentRoot, 'mouseup', (event) => this.handleMouseUp(event));
             this.resources.listen(documentRoot, 'keydown', (event) => this.handleKeyDown(event));
             this.resources.listen(documentRoot, 'keyup', (event) => this.handleKeyUp(event));
+            this.resources.listen(documentRoot, 'contextmenu', (event) => {
+                if (this.wheelOpen || (Date.now() - (this.lastCancelTime || 0) < 100)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            });
 
             // Listen to backend pings
             this.resources.add(this.app.backend.on('tag-ping', (data) => this.receivePing(data)));
@@ -4992,15 +5009,18 @@
                 return macros.matches(event, this.app.settings.macros.keys.ping);
             } else if (event instanceof MouseEvent && macros) {
                 const action = macros.mouseBinding(event.button);
-                return action === 'ping' || (event.button === 1 && !action);
+                return action === 'ping';
             }
             return false;
         }
 
         handleKeyDown(event) {
+            if (event.repeat) return; // Prevent browser auto-repeat from immediately reopening cancelled wheel
+            
             if (this.isPingInput(event) && !this.wheelOpen) {
                 event.preventDefault();
                 this.openWheel();
+                this.wheelCancelled = false;
             }
         }
         
@@ -5008,14 +5028,25 @@
             if (this.isPingInput(event) && this.wheelOpen) {
                 event.preventDefault();
                 this.closeWheel();
-                this.sendPing(this.hoveredPing || 'default');
+                if (!this.wheelCancelled) {
+                    this.sendPing(this.hoveredPing || 'default');
+                }
             }
         }
 
         handleMouseDown(event) {
+            if (this.wheelOpen && (event.button === 0 || event.button === 2)) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeWheel();
+                this.wheelCancelled = true;
+                this.lastCancelTime = Date.now();
+                return;
+            }
             if (this.isPingInput(event) && !this.wheelOpen) {
                 event.preventDefault();
                 this.openWheel();
+                this.wheelCancelled = false;
             }
         }
 
@@ -5023,14 +5054,27 @@
             if (this.isPingInput(event) && this.wheelOpen) {
                 event.preventDefault();
                 this.closeWheel();
-                this.sendPing(this.hoveredPing || 'default');
+                if (!this.wheelCancelled) {
+                    this.sendPing(this.hoveredPing || 'default');
+                }
             }
         }
 
         openWheel() {
             this.wheelOpen = true;
+            this.wheelCancelled = false;
             this.wheelCenter = { x: this.pointerPosition.x, y: this.pointerPosition.y };
             
+            const cam = this.getCamera();
+            if (cam && cam.scale) {
+                this.wheelWorldPos = {
+                    x: (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x,
+                    y: (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y
+                };
+            } else {
+                this.wheelWorldPos = null;
+            }
+
             if (this.wheelElement) this.wheelElement.remove();
             
             this.wheelElement = createElement('div', {
@@ -5042,15 +5086,22 @@
             this.wheelSlices = [];
             
             this.pingTypes.forEach((type, i) => {
-                const angle = (i * 90) - 90; // Top, Right, Bottom, Left
+                const isCenter = i === 0;
+                // Subtract 1 from i for the outer slices to keep Top, Right, Bottom, Left
+                const angle = ((i - 1) * 90) - 90;
+                
                 const slice = createElement('div', {
-                    className: 'ping-wheel-slice',
+                    className: 'ping-wheel-slice' + (isCenter ? ' center-slice' : ''),
                     attributes: { 'data-id': type.id }
                 });
                 
                 const rad = angle * Math.PI / 180;
-                const dist = 60;
-                slice.style.transform = `translate(${Math.cos(rad) * dist}px, ${Math.sin(rad) * dist}px)`;
+                const dist = isCenter ? 0 : 60;
+                
+                slice.style.setProperty('--tx', `${Math.cos(rad) * dist}px`);
+                slice.style.setProperty('--ty', `${Math.sin(rad) * dist}px`);
+                slice.style.setProperty('--ping-color', type.color || '#fff');
+                slice.style.transform = `translate(var(--tx), var(--ty))`;
                 
                 const iconEl = createElement('div', {
                     className: 'ping-wheel-icon',
@@ -5132,12 +5183,13 @@
                 }
             }
             if (this.app.state.camera && this.app.state.camera.scale > 0) {
-                const { scale, offsetX, offsetY } = this.app.state.camera;
-                const dpr = window.devicePixelRatio || 1;
+                const { scale, x, y, offsetX, offsetY, cw, ch } = this.app.state.camera;
+                const canvasW = cw > 0 ? cw : window.innerWidth;
+                const canvasH = ch > 0 ? ch : window.innerHeight;
                 return {
-                    x: (window.innerWidth * dpr / 2 - offsetX) / scale,
-                    y: (window.innerHeight * dpr / 2 - offsetY) / scale,
-                    scale: scale / dpr
+                    x: x !== undefined ? x : (canvasW / 2 - offsetX) / scale,
+                    y: y !== undefined ? y : (canvasH / 2 - offsetY) / scale,
+                    scale: scale * (window.innerWidth / canvasW)
                 };
             }
             const position = this.app.host.adapter?.snapshot().position;
@@ -5152,11 +5204,17 @@
         }
 
         sendPing(type) {
-            const cam = this.getCamera();
-            if (!cam || !cam.scale) return; 
+            let worldX, worldY;
+            if (this.wheelWorldPos) {
+                worldX = this.wheelWorldPos.x;
+                worldY = this.wheelWorldPos.y;
+            } else {
+                const cam = this.getCamera();
+                if (!cam || !cam.scale) return; 
 
-            const worldX = (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x;
-            const worldY = (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y;
+                worldX = (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x;
+                worldY = (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y;
+            }
 
             this.app.backend.send('tag-ping', { x: worldX, y: worldY, t: type });
         }
@@ -5218,19 +5276,6 @@
                 return;
             }
             
-            if (!this._debugLogTimer || Date.now() - this._debugLogTimer > 1000) {
-                this._debugLogTimer = Date.now();
-                const hasSigfix = !!(window.sigfix && window.sigfix.world);
-                const hasNativeCam = !!(this.app.state.camera && this.app.state.camera.scale > 0);
-                const branch = hasSigfix ? 'sigfixes' : hasNativeCam ? 'native' : 'fallback';
-                console.log('[PING DEBUG] branch:', branch, 'cam:', JSON.stringify(cam));
-                this.activePings.forEach((ping) => {
-                    const sx = (ping.x - cam.x) * cam.scale + window.innerWidth / 2;
-                    const sy = (ping.y - cam.y) * cam.scale + window.innerHeight / 2;
-                    console.log('[PING DEBUG] world:', ping.x.toFixed(1), ping.y.toFixed(1), 'screen:', sx.toFixed(1), sy.toFixed(1));
-                });
-            }
-            
             const scale = cam.scale;
             const hw = window.innerWidth / 2;
             const hh = window.innerHeight / 2;
@@ -5249,7 +5294,8 @@
                     sy = Math.max(margin, Math.min(sy, window.innerHeight - margin));
                 }
                 
-                ping.element.style.transform = `translate(${sx}px, ${sy}px)`;
+                ping.element.style.transition = 'none';
+                ping.element.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
                 
                 if (isOffscreen) {
                     ping.element.classList.add('is-offscreen');

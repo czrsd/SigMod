@@ -13882,7 +13882,7 @@
             canvas.style.width = '100vw';
             canvas.style.height = '100vh';
             canvas.style.pointerEvents = 'none';
-            canvas.style.zIndex = '2';
+            canvas.style.zIndex = '20';
             document.body.append(canvas);
             this.canvas = canvas;
             this.resources.add(() => canvas.remove());
@@ -13893,15 +13893,14 @@
                 this.trackedCells.clear();
                 if (!adapter) return;
                 const events = this.resources.child('merge-host-events');
-                events.add(adapter.on('owned-cell', ({ id, split }) => this.onOwnedCell(id, split)));
                 events.add(
                     adapter.on('play-state', (playing) => {
                         if (!playing) this.trackedCells.clear();
                     })
                 );
             };
-            this.resources.listen(this.app.host, 'adapter', bindHost);
-            bindHost(this.app.host.adapter);
+            this.resources.add(this.app.host.on('change', (adapter) => bindHost(adapter)));
+            if (this.app.host.adapter) bindHost(this.app.host.adapter);
             const loop = () => {
                 this.draw();
                 this.frameId = requestAnimationFrame(loop);
@@ -13917,18 +13916,19 @@
             this.canvas.width = Math.round(window.innerWidth * ratio);
             this.canvas.height = Math.round(window.innerHeight * ratio);
         }
-        onOwnedCell(id, split) {
-            const now = performance.now();
-            if (split) {
-                this.trackedCells.set(id, {
-                    id,
-                    birthTime: now,
-                    readyNotified: false,
-                    fadeUntil: 0,
-                });
-            }
-        }
         getCamera() {
+            const sigfixApi = window.sigfix ?? this.app.host.adapter?.api;
+            if (sigfixApi?.world) {
+                const selected = sigfixApi.world.selected;
+                const vision = sigfixApi.world.views?.get(selected);
+                if (vision && vision.camera && vision.camera.scale > 0) {
+                    return {
+                        x: vision.camera.x,
+                        y: vision.camera.y,
+                        scale: (window.innerHeight / 1080) * vision.camera.scale,
+                    };
+                }
+            }
             if (this.app.state.camera && this.app.state.camera.scale > 0) {
                 const { scale, x, y, offsetX, offsetY, cw, ch } = this.app.state.camera;
                 const canvasW = cw > 0 ? cw : window.innerWidth;
@@ -13951,43 +13951,86 @@
         }
         getOwnedCells(adapter) {
             const result = [];
-            if (!adapter || adapter.kind !== 'native') return result;
-            const protocol = adapter.protocol;
-            if (!protocol) return result;
+            if (!adapter) return result;
             const now = performance.now();
-            for (const id of protocol.owned) {
-                const cell = protocol.cells.get(id);
-                if (!cell) continue;
-                let cx = cell.x;
-                let cy = cell.y;
-                let cr = cell.radius;
-                if (cell.updatedAt) {
-                    const elapsed = Math.max(0, Math.min(120, now - cell.updatedAt));
-                    const progress = elapsed / 120;
-                    cx = cell.ox + (cell.nx - cell.ox) * progress;
-                    cy = cell.oy + (cell.ny - cell.oy) * progress;
-                    cr = cell.os + (cell.ns - cell.os) * progress;
+            const sigfixApi = window.sigfix ?? (adapter.kind === 'sigfix' ? adapter.api : null);
+            if (sigfixApi?.world) {
+                const selected = sigfixApi.world.selected;
+                const vision = sigfixApi.world.views?.get(selected);
+                const owned = vision?.owned;
+                if (owned && owned.size > 0) {
+                    for (const id of owned) {
+                        const cell = sigfixApi.world.cells?.get(id);
+                        if (!cell || cell.deadAt) continue;
+                        let x = 0;
+                        let y = 0;
+                        let radius = 0;
+                        if (typeof sigfixApi.world.xyr === 'function') {
+                            const xyr = sigfixApi.world.xyr(cell, void 0, now);
+                            x = xyr.x;
+                            y = xyr.y;
+                            radius = xyr.r;
+                        } else {
+                            const pos = adapter.cellPosition ? adapter.cellPosition(selected, cell) : null;
+                            x = pos ? pos.x : Number(cell.tx ?? cell.x ?? 0);
+                            y = pos ? pos.y : Number(cell.ty ?? cell.y ?? 0);
+                            radius = Number(cell.s ?? cell.radius ?? cell.tr ?? cell.size ?? 0);
+                        }
+                        if (Number.isFinite(x) && Number.isFinite(y) && radius > 0) {
+                            result.push({
+                                id,
+                                x,
+                                y,
+                                radius,
+                            });
+                        }
+                    }
+                    return result;
                 }
-                result.push({
-                    id,
-                    x: cx,
-                    y: cy,
-                    radius: cr,
-                });
+            }
+            const protocol = adapter.protocol ?? (adapter.kind === 'native' ? adapter.protocol : null);
+            if (protocol?.owned) {
+                for (const id of protocol.owned) {
+                    const cell = protocol.cells.get(id);
+                    if (!cell) continue;
+                    let cx = cell.x;
+                    let cy = cell.y;
+                    let cr = cell.radius;
+                    if (cell.updatedAt) {
+                        const elapsed = Math.max(0, Math.min(120, now - cell.updatedAt));
+                        const progress = elapsed / 120;
+                        cx = cell.ox + (cell.nx - cell.ox) * progress;
+                        cy = cell.oy + (cell.ny - cell.oy) * progress;
+                        cr = cell.os + (cell.ns - cell.os) * progress;
+                    }
+                    if (Number.isFinite(cx) && Number.isFinite(cy) && cr > 0) {
+                        result.push({
+                            id,
+                            x: cx,
+                            y: cy,
+                            radius: cr,
+                        });
+                    }
+                }
             }
             return result;
         }
         draw() {
             const canvas = this.canvas;
             if (!canvas) return;
+            const ratio = devicePixelRatio || 1;
+            const targetW = Math.round(window.innerWidth * ratio);
+            const targetH = Math.round(window.innerHeight * ratio);
+            if (canvas.width !== targetW || canvas.height !== targetH) {
+                canvas.width = targetW;
+                canvas.height = targetH;
+            }
             const context = canvas.getContext('2d');
             if (!context) return;
             context.clearRect(0, 0, canvas.width, canvas.height);
-            if (window.sigfix || this.app.host.adapter?.kind === 'sigfix' || document.getElementById('sf-canvas')) return;
             if (!this.app.settings.settings.mergeTimer) return;
-            if (!isMenuClosed() || isDeadScreenVisible()) return;
             const adapter = this.app.host.adapter;
-            if (!adapter || adapter.kind !== 'native') return;
+            if (!adapter) return;
             const ownedCells = this.getOwnedCells(adapter);
             if (ownedCells.length <= 1) {
                 if (this.trackedCells.size > 0 && ownedCells.length === 1) {
@@ -14005,16 +14048,23 @@
                 }
             }
             for (const cell of ownedCells) {
-                if (!this.trackedCells.has(cell.id)) {
-                    this.trackedCells.set(cell.id, {
+                let info = this.trackedCells.get(cell.id);
+                if (!info) {
+                    info = {
                         id: cell.id,
                         birthTime: now,
+                        lastRadius: cell.radius,
                         readyNotified: false,
                         fadeUntil: 0,
-                    });
+                    };
+                    this.trackedCells.set(cell.id, info);
+                } else if (info.lastRadius && cell.radius < info.lastRadius * 0.8) {
+                    info.birthTime = now;
+                    info.readyNotified = false;
+                    info.fadeUntil = 0;
                 }
+                info.lastRadius = cell.radius;
             }
-            const ratio = devicePixelRatio || 1;
             context.save();
             context.scale(ratio, ratio);
             const hw = window.innerWidth / 2;
@@ -14060,7 +14110,7 @@
                     alpha = Math.max(0, (info.fadeUntil - now) / 1500);
                 }
                 context.globalAlpha = alpha;
-                const fontSize = Math.max(10, Math.min(24, Math.round(sr * 0.16)));
+                const fontSize = Math.max(10, Math.min(22, Math.round(sr * 0.16)));
                 context.font = `600 ${fontSize}px ${this.app.settings.game.font || 'Ubuntu'}, sans-serif`;
                 context.textAlign = 'center';
                 context.textBaseline = 'middle';

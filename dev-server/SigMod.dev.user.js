@@ -8201,16 +8201,67 @@
       const fillRect = function(x, y, width, height) {
         if (!isGameContext(this)) return originalFillRect.call(this, x, y, width, height);
         if (visual.isBackgroundRect(this.canvas, x, y, width, height)) {
+          visual.onFrameStart();
           this.fillStyle = visual.getMapFill(this);
         }
         return originalFillRect.call(this, x, y, width, height);
       };
+      let cameraCaptureStage = 0;
+      let pendingScale = 1;
+      const originalTranslate = prototype.translate;
+      const originalScale = prototype.scale;
+      const updateCameraState = (cw, ch, scaleVal, camX, camY, offsetX, offsetY) => {
+        visual.app.state.camera = {
+          x: camX,
+          y: camY,
+          scale: scaleVal,
+          offsetX,
+          offsetY,
+          cw,
+          ch
+        };
+        const smartPing = visual.app.features?.controllers?.get?.("smartPing") || visual.app.features?.get?.("smartPing");
+        if (smartPing && smartPing.activePings?.size > 0) {
+          smartPing.drawPings();
+        }
+      };
+      const translate = function(x, y) {
+        if (isGameContext(this)) {
+          const cw = this.canvas.width;
+          const ch = this.canvas.height;
+          if (Math.abs(x - cw / 2) < 2 && Math.abs(y - ch / 2) < 2) {
+            cameraCaptureStage = 1;
+          } else if (cameraCaptureStage === 2) {
+            cameraCaptureStage = 0;
+            visual.awaitingGridStroke = false;
+            const camX = -x;
+            const camY = -y;
+            const scaleVal = pendingScale;
+            const offsetX = cw / 2 - camX * scaleVal;
+            const offsetY = ch / 2 - camY * scaleVal;
+            updateCameraState(cw, ch, scaleVal, camX, camY, offsetX, offsetY);
+            const res = originalTranslate.call(this, x, y);
+            visual.maybeDrawProperGrid(this, cw, ch, scaleVal, camX, camY);
+            return res;
+          } else {
+            cameraCaptureStage = 0;
+          }
+        }
+        return originalTranslate.call(this, x, y);
+      };
+      const scale = function(sx, sy) {
+        if (isGameContext(this)) {
+          if (cameraCaptureStage === 1 && sx === sy && sx > 0) {
+            cameraCaptureStage = 2;
+            pendingScale = sx;
+          } else {
+            cameraCaptureStage = 0;
+          }
+        }
+        return originalScale.call(this, sx, sy);
+      };
       const arc = function(x, y, radius, startAngle, endAngle, counterclockwise) {
         if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
-        const transform = this.getTransform();
-        if (transform && transform.a > 0 && (transform.e !== 0 || transform.f !== 0)) {
-          visual.app.state.camera = { scale: transform.a, offsetX: transform.e, offsetY: transform.f };
-        }
         visual.applyCellColor(this, radius);
         if (nativeFoodHidden()) {
           let state = paths.get(this);
@@ -8250,7 +8301,19 @@
           else originalFill.call(this, state.pending);
           state.pending = null;
         }
-        if (isGameContext(this)) visual.applyBorderColor(this);
+        if (isGameContext(this)) {
+          if (visual.awaitingGridStroke) {
+            visual.awaitingGridStroke = false;
+            if (!document.getElementById("sf-canvas")) {
+              visual.nativeGridWantedThisFrame = true;
+              const strokeStyle = String(this.strokeStyle).toLowerCase();
+              visual.lastGridStrokeWasDark = strokeStyle.includes("aaa") || strokeStyle.includes("170") || strokeStyle.includes("#fff");
+              this.beginPath();
+              return;
+            }
+          }
+          visual.applyBorderColor(this);
+        }
         return path === void 0 ? originalStroke.call(this) : originalStroke.call(this, path);
       };
       const drawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
@@ -8282,20 +8345,24 @@
         }
       };
       this.resources.patch(prototype, "fillRect", fillRect);
+      this.resources.patch(prototype, "translate", translate);
+      this.resources.patch(prototype, "scale", scale);
       this.resources.patch(prototype, "arc", arc);
       this.resources.patch(prototype, "fillText", fillText);
       this.resources.patch(prototype, "strokeText", strokeText);
       this.resources.patch(prototype, "stroke", stroke);
       this.resources.patch(prototype, "drawImage", drawImage);
       this.resources.patch(prototype, "beginPath", function() {
-        if (isGameContext(this) && nativeFoodHidden()) {
-          let state = paths.get(this);
-          if (state) {
-            state.small = false;
-            state.pending = null;
-            state.polygon = true;
-          } else {
-            paths.set(this, { small: false, pending: null, polygon: true });
+        if (isGameContext(this)) {
+          if (nativeFoodHidden()) {
+            let state = paths.get(this);
+            if (state) {
+              state.small = false;
+              state.pending = null;
+              state.polygon = true;
+            } else {
+              paths.set(this, { small: false, pending: null, polygon: true });
+            }
           }
         } else {
           paths.delete(this);
@@ -8340,6 +8407,10 @@
         skin: { source: null, image: null, loading: false }
       };
       this.mapPatterns = /* @__PURE__ */ new WeakMap();
+      this.awaitingGridStroke = false;
+      this.gridDrawnThisFrame = false;
+      this.nativeGridWantedThisFrame = false;
+      this.lastGridStrokeWasDark = null;
       this.loadingPlaceholder = null;
       this.fontFamily = null;
       this.fontLink = null;
@@ -8719,6 +8790,10 @@
         asset.loading = false;
       }
       this.mapPatterns = /* @__PURE__ */ new WeakMap();
+      this.awaitingGridStroke = false;
+      this.gridDrawnThisFrame = false;
+      this.nativeGridWantedThisFrame = false;
+      this.lastGridStrokeWasDark = null;
       this.fontCache.clear();
       this.fontLink?.remove();
       this.fontLink = null;
@@ -8762,6 +8837,95 @@
         if (pattern) return pattern;
       }
       return config.mapColor || "#111111";
+    }
+    onFrameStart() {
+      this.awaitingGridStroke = true;
+      this.gridDrawnThisFrame = false;
+      this.nativeGridWantedThisFrame = false;
+    }
+    /** @param {string} color */
+    isColorDark(color) {
+      if (!color || typeof color !== "string") return null;
+      const hex = color.trim().toLowerCase();
+      const hex6 = hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/);
+      if (hex6) {
+        const r = parseInt(hex6[1], 16);
+        const g = parseInt(hex6[2], 16);
+        const b = parseInt(hex6[3], 16);
+        return r * 0.299 + g * 0.587 + b * 0.114 < 128;
+      }
+      const hex3 = hex.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/);
+      if (hex3) {
+        const r = parseInt(hex3[1] + hex3[1], 16);
+        const g = parseInt(hex3[2] + hex3[2], 16);
+        const b = parseInt(hex3[3] + hex3[3], 16);
+        return r * 0.299 + g * 0.587 + b * 0.114 < 128;
+      }
+      const rgb = hex.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (rgb) {
+        const r = Number(rgb[1]);
+        const g = Number(rgb[2]);
+        const b = Number(rgb[3]);
+        return r * 0.299 + g * 0.587 + b * 0.114 < 128;
+      }
+      return null;
+    }
+    /**
+     * Renders a proper 50x50 world grid similar to SigFixes,
+     * locked in world coordinates and unaffected by camera scaling/shifting.
+     * @param {CanvasRenderingContext2D} context
+     * @param {number} cw
+     * @param {number} ch
+     * @param {number} scaleVal
+     * @param {number} camX
+     * @param {number} camY
+     */
+    maybeDrawProperGrid(context, cw, ch, scaleVal, camX, camY) {
+      if (document.getElementById("sf-canvas")) return;
+      if (this.gridDrawnThisFrame) return;
+      const showGrid = this.nativeGridWantedThisFrame || Boolean(this.app.settings.game?.showGrid ?? true);
+      if (!showGrid) return;
+      this.gridDrawnThisFrame = true;
+      if (!Number.isFinite(scaleVal) || scaleVal <= 0 || scaleVal * 50 < 1.5 || !Number.isFinite(camX) || !Number.isFinite(camY) || !Number.isFinite(cw) || !Number.isFinite(ch) || cw <= 0 || ch <= 0)
+        return;
+      let isDark = true;
+      const customMapColor = this.renderConfig?.mapColor;
+      const mapDark = this.isColorDark(customMapColor);
+      if (mapDark !== null) {
+        isDark = mapDark;
+      } else if (this.lastGridStrokeWasDark !== null) {
+        isDark = this.lastGridStrokeWasDark;
+      } else {
+        isDark = Boolean(this.app.settings.game?.darkTheme ?? true);
+      }
+      const halfW = cw / 2 / scaleVal;
+      const halfH = ch / 2 / scaleVal;
+      const minX = camX - halfW;
+      const maxX = camX + halfW;
+      const minY = camY - halfH;
+      const maxY = camY + halfH;
+      const startX = Math.floor(minX / 50) * 50;
+      const endX = Math.ceil(maxX / 50) * 50;
+      const startY = Math.floor(minY / 50) * 50;
+      const endY = Math.ceil(maxY / 50) * 50;
+      const baseAlpha = 0.098;
+      const minAlpha = 0.028;
+      const zoomRatio = Math.max(0, Math.min(1, scaleVal));
+      const alpha = (minAlpha + (baseAlpha - minAlpha) * zoomRatio).toFixed(3);
+      context.save();
+      context.lineWidth = 1 / scaleVal;
+      context.strokeStyle = isDark ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`;
+      context.beginPath();
+      for (let x = startX; x <= endX; x += 50) {
+        context.moveTo(x, minY);
+        context.lineTo(x, maxY);
+      }
+      for (let y = startY; y <= endY; y += 50) {
+        context.moveTo(minX, y);
+        context.lineTo(maxX, y);
+      }
+      context.stroke();
+      context.restore();
     }
     /** @param {CanvasRenderingContext2D} context @param {number} radius */
     applyCellColor(context, radius) {
@@ -10710,6 +10874,10 @@
     handleMouseDown(event) {
       this.pointerPosition.x = event.clientX;
       this.pointerPosition.y = event.clientY;
+      const smartPing = this.app.features.get("smartPing");
+      if (smartPing && smartPing.wheelOpen) {
+        return;
+      }
       if (!this.isGamePointerEvent(event) || isTyping()) return;
       document.dispatchEvent(
         new CustomEvent("sigmod:mousebuttondetected", {
@@ -10732,6 +10900,8 @@
     }
     /** @param {MouseEvent} event */
     handleMouseUp(event) {
+      const smartPing = this.app.features.get("smartPing");
+      if (smartPing && smartPing.wheelOpen) return;
       if (event.button !== 0 && this.isGamePointerEvent(event) && this.mouseBinding(event.button)) event.preventDefault();
       if (event.button === this.pointerFeedButton) this.stopPointerFeed();
     }
@@ -13676,6 +13846,7 @@
       this.pointerPosition = { x: 0, y: 0 };
       this.wheelCenter = { x: 0, y: 0 };
       this.pingTypes = [
+        { id: "default", name: "Ping", icon: "mapPin", color: "#f1c40f" },
         { id: "danger", name: "Danger", icon: "warning", color: "#ff3b3b" },
         { id: "attack", name: "Attack", icon: "sword", color: "#ffa500" },
         { id: "virus", name: "Shoot Virus", icon: "crosshair", color: "#4CAF50" },
@@ -13695,6 +13866,12 @@
       this.resources.listen(documentRoot, "mouseup", (event) => this.handleMouseUp(event));
       this.resources.listen(documentRoot, "keydown", (event) => this.handleKeyDown(event));
       this.resources.listen(documentRoot, "keyup", (event) => this.handleKeyUp(event));
+      this.resources.listen(documentRoot, "contextmenu", (event) => {
+        if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 100) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      });
       this.resources.add(this.app.backend.on("tag-ping", (data) => this.receivePing(data)));
       const loop = () => {
         this.drawPings();
@@ -13711,39 +13888,64 @@
         return macros.matches(event, this.app.settings.macros.keys.ping);
       } else if (event instanceof MouseEvent && macros) {
         const action = macros.mouseBinding(event.button);
-        return action === "ping" || event.button === 1 && !action;
+        return action === "ping";
       }
       return false;
     }
     handleKeyDown(event) {
+      if (event.repeat) return;
       if (this.isPingInput(event) && !this.wheelOpen) {
         event.preventDefault();
         this.openWheel();
+        this.wheelCancelled = false;
       }
     }
     handleKeyUp(event) {
       if (this.isPingInput(event) && this.wheelOpen) {
         event.preventDefault();
         this.closeWheel();
-        this.sendPing(this.hoveredPing || "default");
+        if (!this.wheelCancelled) {
+          this.sendPing(this.hoveredPing || "default");
+        }
       }
     }
     handleMouseDown(event) {
+      if (this.wheelOpen && (event.button === 0 || event.button === 2)) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeWheel();
+        this.wheelCancelled = true;
+        this.lastCancelTime = Date.now();
+        return;
+      }
       if (this.isPingInput(event) && !this.wheelOpen) {
         event.preventDefault();
         this.openWheel();
+        this.wheelCancelled = false;
       }
     }
     handleMouseUp(event) {
       if (this.isPingInput(event) && this.wheelOpen) {
         event.preventDefault();
         this.closeWheel();
-        this.sendPing(this.hoveredPing || "default");
+        if (!this.wheelCancelled) {
+          this.sendPing(this.hoveredPing || "default");
+        }
       }
     }
     openWheel() {
       this.wheelOpen = true;
+      this.wheelCancelled = false;
       this.wheelCenter = { x: this.pointerPosition.x, y: this.pointerPosition.y };
+      const cam = this.getCamera();
+      if (cam && cam.scale) {
+        this.wheelWorldPos = {
+          x: (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x,
+          y: (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y
+        };
+      } else {
+        this.wheelWorldPos = null;
+      }
       if (this.wheelElement) this.wheelElement.remove();
       this.wheelElement = createElement("div", {
         className: "ping-wheel-container"
@@ -13752,14 +13954,18 @@
       this.wheelElement.style.top = `${this.wheelCenter.y}px`;
       this.wheelSlices = [];
       this.pingTypes.forEach((type, i) => {
-        const angle = i * 90 - 90;
+        const isCenter = i === 0;
+        const angle = (i - 1) * 90 - 90;
         const slice = createElement("div", {
-          className: "ping-wheel-slice",
+          className: "ping-wheel-slice" + (isCenter ? " center-slice" : ""),
           attributes: { "data-id": type.id }
         });
         const rad = angle * Math.PI / 180;
-        const dist = 60;
-        slice.style.transform = `translate(${Math.cos(rad) * dist}px, ${Math.sin(rad) * dist}px)`;
+        const dist = isCenter ? 0 : 60;
+        slice.style.setProperty("--tx", `${Math.cos(rad) * dist}px`);
+        slice.style.setProperty("--ty", `${Math.sin(rad) * dist}px`);
+        slice.style.setProperty("--ping-color", type.color || "#fff");
+        slice.style.transform = `translate(var(--tx), var(--ty))`;
         const iconEl = createElement("div", {
           className: "ping-wheel-icon",
           icon: type.icon
@@ -13826,12 +14032,13 @@
         }
       }
       if (this.app.state.camera && this.app.state.camera.scale > 0) {
-        const { scale, offsetX, offsetY } = this.app.state.camera;
-        const dpr = window.devicePixelRatio || 1;
+        const { scale, x, y, offsetX, offsetY, cw, ch } = this.app.state.camera;
+        const canvasW = cw > 0 ? cw : window.innerWidth;
+        const canvasH = ch > 0 ? ch : window.innerHeight;
         return {
-          x: (window.innerWidth * dpr / 2 - offsetX) / scale,
-          y: (window.innerHeight * dpr / 2 - offsetY) / scale,
-          scale: scale / dpr
+          x: x !== void 0 ? x : (canvasW / 2 - offsetX) / scale,
+          y: y !== void 0 ? y : (canvasH / 2 - offsetY) / scale,
+          scale: scale * (window.innerWidth / canvasW)
         };
       }
       const position = this.app.host.adapter?.snapshot().position;
@@ -13846,10 +14053,16 @@
       return null;
     }
     sendPing(type) {
-      const cam = this.getCamera();
-      if (!cam || !cam.scale) return;
-      const worldX = (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x;
-      const worldY = (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y;
+      let worldX, worldY;
+      if (this.wheelWorldPos) {
+        worldX = this.wheelWorldPos.x;
+        worldY = this.wheelWorldPos.y;
+      } else {
+        const cam = this.getCamera();
+        if (!cam || !cam.scale) return;
+        worldX = (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x;
+        worldY = (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y;
+      }
       this.app.backend.send("tag-ping", { x: worldX, y: worldY, t: type });
     }
     receivePing(data) {
@@ -13901,18 +14114,6 @@
         this.activePings.forEach((p) => p.element.style.display = "none");
         return;
       }
-      if (!this._debugLogTimer || Date.now() - this._debugLogTimer > 1e3) {
-        this._debugLogTimer = Date.now();
-        const hasSigfix = !!(window.sigfix && window.sigfix.world);
-        const hasNativeCam = !!(this.app.state.camera && this.app.state.camera.scale > 0);
-        const branch = hasSigfix ? "sigfixes" : hasNativeCam ? "native" : "fallback";
-        console.log("[PING DEBUG] branch:", branch, "cam:", JSON.stringify(cam));
-        this.activePings.forEach((ping) => {
-          const sx = (ping.x - cam.x) * cam.scale + window.innerWidth / 2;
-          const sy = (ping.y - cam.y) * cam.scale + window.innerHeight / 2;
-          console.log("[PING DEBUG] world:", ping.x.toFixed(1), ping.y.toFixed(1), "screen:", sx.toFixed(1), sy.toFixed(1));
-        });
-      }
       const scale = cam.scale;
       const hw = window.innerWidth / 2;
       const hh = window.innerHeight / 2;
@@ -13927,7 +14128,8 @@
           sx = Math.max(margin, Math.min(sx, window.innerWidth - margin));
           sy = Math.max(margin, Math.min(sy, window.innerHeight - margin));
         }
-        ping.element.style.transform = `translate(${sx}px, ${sy}px)`;
+        ping.element.style.transition = "none";
+        ping.element.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
         if (isOffscreen) {
           ping.element.classList.add("is-offscreen");
           const angle = Math.atan2((ping.y - cam.y) * scale, (ping.x - cam.x) * scale) * 180 / Math.PI;

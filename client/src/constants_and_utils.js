@@ -2,7 +2,7 @@
 // ~ Shared configuration, contracts and default settings                              ~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 const SIGMOD_DEV = {
-    enabled: true,
+    enabled: false,
     cssUrl: 'http://localhost:8787/sigmod.css',
     productionCssUrl: 'https://czrsd.com/static/sigmod/v11/sigmod.css',
     localeUrl: 'http://localhost:8787/locales',

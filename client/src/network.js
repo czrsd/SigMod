@@ -673,7 +673,7 @@
                 'kill',
                 'world-update',
                 'password-required',
-                'stats',
+                'stats'
             ]) {
                 scope.add(
                     this.protocol.on(type, (payload) => {

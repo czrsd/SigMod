@@ -561,6 +561,29 @@
             style.textContent = `${SELECTORS.chatBlock} { display: none !important; visibility: hidden !important; pointer-events: none !important; }`;
             (document.head || document.documentElement).append(style);
             this.resources.add(() => style.remove());
+
+            setTimeout(() => {
+                const showChat = document.querySelector('#showChat');
+                if (showChat instanceof HTMLInputElement && showChat.checked) {
+                    showChat.click();
+                }
+                if (showChat) {
+                    const li = showChat.closest('li');
+                    if (li) li.style.display = 'none';
+                }
+            }, 1000);
+
+            this.resources.listen(window, 'beforeunload', () => {
+                try {
+                    const settingsStr = localStorage.getItem('settings');
+                    if (settingsStr) {
+                        const settings = JSON.parse(settingsStr);
+                        settings.showChat = true;
+                        localStorage.setItem('settings', JSON.stringify(settings));
+                    }
+                } catch (e) {}
+            });
+
             const sync = () => {
                 this.nativeChatSyncQueued = false;
                 const chatBlock = document.querySelector(SELECTORS.chatBlock);
@@ -1510,15 +1533,31 @@
             const members = [...this.members.values()].sort((a, b) => a.tagIndex - b.tagIndex);
             for (const member of members) {
                 const row = createElement('div', { className: 'flex g-2' });
+                
+                const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
+                const skinName = skinMatch ? skinMatch[1].replace(/\.png$/i, '') : null;
+                const displayName = skinMatch ? skinMatch[2] : member.nick;
+
+                const nameContainer = createElement('span', { className: 'tag-member-nick centerY', attributes: { style: 'gap: 4px;' } });
+                if (skinName) {
+                    nameContainer.append(
+                        createElement('img', {
+                            attributes: { 
+                                src: `https://sigmally.com/static/skins/${skinName}.png`,
+                                style: 'width: 14px; height: 14px; border-radius: 50%; object-fit: cover;',
+                                onerror: "this.style.display='none'"
+                            }
+                        })
+                    );
+                }
+                nameContainer.append(document.createTextNode(displayName));
+
                 row.append(
                     createElement('span', {
                         className: 'tag-member-index',
                         text: member.tagIndex,
                     }),
-                    createElement('span', {
-                        className: 'tag-member-nick',
-                        text: member.nick,
-                    }),
+                    nameContainer,
                     createElement('span', {
                         text: member.score > 0 ? this.formatScore(member.score) : '',
                     })
@@ -1556,7 +1595,6 @@
             this.resources.add(() => container.remove());
             this.resources.listen(window, 'resize', () => this.resize());
             this.resources.add(this.app.backend.on('minimap-data', (data) => this.updatePlayer(data)));
-            this.resources.add(this.app.backend.on('tag-ping', (data) => this.renderPing(data)));
             const bindHost = (adapter) => {
                 this.resources.child('host-events').dispose();
                 const events = this.resources.child('host-events');
@@ -1635,34 +1673,6 @@
                 const yOffset = y <= 16 * ratio ? 5 * ratio : -10 * ratio;
                 context.fillText(player.nick, x, y + yOffset);
             }
-        }
-        renderPing(data) {
-            if (!isObject(data)) return;
-            const x = Number(data.x);
-            const y = Number(data.y);
-            const senderWidth = Number(data.sW);
-            const senderHeight = Number(data.sH);
-            if (![x, y, senderWidth, senderHeight].every(Number.isFinite) || senderWidth <= 0 || senderHeight <= 0) return;
-            const index = data.i ?? '';
-            const id = `ping-${index}`;
-            document.getElementById(id)?.remove();
-            const marker = createElement('div', {
-                className: 'tag-ping-container',
-                attributes: { id },
-            });
-            const fontSize = Number(index) >= 10 ? '10px' : '14px';
-            marker.innerHTML = icon('mapPin', 24);
-            const label = createElement('span', { text: index });
-            label.style.fontSize = fontSize;
-            marker.append(label);
-            marker.style.left = `${(x / senderWidth) * innerWidth}px`;
-            marker.style.top = `${(y / senderHeight) * innerHeight}px`;
-            document.body.append(marker);
-            const duration = this.app.settings.settings.pingDuration;
-            this.resources.timeout(() => {
-                marker.style.opacity = '0';
-                this.resources.timeout(() => marker.remove(), 100);
-            }, duration);
         }
         destroy() {
             this.players.clear();
@@ -1847,7 +1857,6 @@
             else if (this.matches(event, keys.line.vertical) && isMenuClosed()) this.toggleLock('vertical');
             else if (this.matches(event, keys.line.fixed) && isMenuClosed()) this.toggleLock('fixed');
             else if (this.matches(event, keys.location)) this.sendLocation();
-            else if (this.matches(event, keys.ping)) this.sendPing();
             else if (this.matches(event, keys.toggle.chat)) this.toggleChat();
             else if (this.matches(event, keys.toggle.names)) this.toggleSetting('showNames');
             else if (this.matches(event, keys.toggle.skins)) this.toggleSetting('showSkins');
@@ -1884,7 +1893,6 @@
             else if (action === 'freeze') this.toggleLock('horizontal');
             else if (action === 'dTrick') this.trickSplit(2);
             else if (action === 'sTrick') this.trickSplit(4);
-            else if (action === 'ping') this.sendPing();
         }
         /** @param {MouseEvent} event */
         handleMouseUp(event) {
@@ -1982,15 +1990,7 @@
             const template = this.app.settings.chat.locationText || '{pos}';
             this.app.sendChat(template.replace('{pos}', field));
         }
-        sendPing() {
-            if (!this.app.settings.settings.tag || !this.app.state.backend.connected) return;
-            this.app.backend.send('tag-ping', {
-                x: this.pointerPosition.x,
-                y: this.pointerPosition.y,
-                sW: window.innerWidth,
-                sH: window.innerHeight,
-            });
-        }
+
         /** @param {'showNames'|'showSkins'|'autoRespawn'} setting */
         toggleSetting(setting) {
             const input = document.querySelector(`input#${setting}, input#mod-${setting}`);
@@ -4934,4 +4934,332 @@
             return `${Math.floor(safe / 60)}m ${safe % 60}s`;
         }
     }
-    /** Owns the authenticated SigMod profile and account-facing dialogs. */
+    /** Owns the authenticated SigMod profile and account-facing dialogs. */
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ~ Smart Ping System                                                                 ~
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    class SmartPingController extends FeatureController {
+        constructor(app, name) {
+            super(app, name);
+            this.activePings = new Map();
+            this.wheelOpen = false;
+            this.wheelElement = null;
+            this.wheelSlices = [];
+            this.pointerPosition = { x: 0, y: 0 };
+            this.wheelCenter = { x: 0, y: 0 };
+            
+            this.pingTypes = [
+                { id: 'danger', name: 'Danger', icon: 'warning', color: '#ff3b3b' },
+                { id: 'attack', name: 'Attack', icon: 'sword', color: '#ffa500' },
+                { id: 'virus', name: 'Shoot Virus', icon: 'crosshair', color: '#4CAF50' },
+                { id: 'defend', name: 'Defend', icon: 'shield', color: '#2196F3' }
+            ];
+            this.hoveredPing = null;
+            this.frameId = null;
+        }
+
+        async mount() {
+            const documentRoot = document;
+            
+            this.resources.listen(documentRoot, 'pointermove', (event) => {
+                this.pointerPosition.x = event.clientX;
+                this.pointerPosition.y = event.clientY;
+                if (this.wheelOpen) this.updateWheelHover();
+            }, { passive: true });
+
+            this.resources.listen(documentRoot, 'mousedown', (event) => this.handleMouseDown(event));
+            this.resources.listen(documentRoot, 'mouseup', (event) => this.handleMouseUp(event));
+            this.resources.listen(documentRoot, 'keydown', (event) => this.handleKeyDown(event));
+            this.resources.listen(documentRoot, 'keyup', (event) => this.handleKeyUp(event));
+
+            // Listen to backend pings
+            this.resources.add(this.app.backend.on('tag-ping', (data) => this.receivePing(data)));
+            
+            // Loop for drawing in-world pings
+            const loop = () => {
+                this.drawPings();
+                this.frameId = requestAnimationFrame(loop);
+            };
+            this.frameId = requestAnimationFrame(loop);
+            this.resources.add(() => cancelAnimationFrame(this.frameId));
+        }
+
+        isPingInput(event) {
+            if (isTyping() || !this.app.settings.settings.tag || !this.app.state.backend.connected) return false;
+            const macros = this.app.features.get('macros');
+            if (event instanceof KeyboardEvent && macros) {
+                if (event.ctrlKey || event.metaKey) return false;
+                return macros.matches(event, this.app.settings.macros.keys.ping);
+            } else if (event instanceof MouseEvent && macros) {
+                const action = macros.mouseBinding(event.button);
+                return action === 'ping' || (event.button === 1 && !action);
+            }
+            return false;
+        }
+
+        handleKeyDown(event) {
+            if (this.isPingInput(event) && !this.wheelOpen) {
+                event.preventDefault();
+                this.openWheel();
+            }
+        }
+        
+        handleKeyUp(event) {
+            if (this.isPingInput(event) && this.wheelOpen) {
+                event.preventDefault();
+                this.closeWheel();
+                this.sendPing(this.hoveredPing || 'default');
+            }
+        }
+
+        handleMouseDown(event) {
+            if (this.isPingInput(event) && !this.wheelOpen) {
+                event.preventDefault();
+                this.openWheel();
+            }
+        }
+
+        handleMouseUp(event) {
+            if (this.isPingInput(event) && this.wheelOpen) {
+                event.preventDefault();
+                this.closeWheel();
+                this.sendPing(this.hoveredPing || 'default');
+            }
+        }
+
+        openWheel() {
+            this.wheelOpen = true;
+            this.wheelCenter = { x: this.pointerPosition.x, y: this.pointerPosition.y };
+            
+            if (this.wheelElement) this.wheelElement.remove();
+            
+            this.wheelElement = createElement('div', {
+                className: 'ping-wheel-container',
+            });
+            this.wheelElement.style.left = `${this.wheelCenter.x}px`;
+            this.wheelElement.style.top = `${this.wheelCenter.y}px`;
+            
+            this.wheelSlices = [];
+            
+            this.pingTypes.forEach((type, i) => {
+                const angle = (i * 90) - 90; // Top, Right, Bottom, Left
+                const slice = createElement('div', {
+                    className: 'ping-wheel-slice',
+                    attributes: { 'data-id': type.id }
+                });
+                
+                const rad = angle * Math.PI / 180;
+                const dist = 60;
+                slice.style.transform = `translate(${Math.cos(rad) * dist}px, ${Math.sin(rad) * dist}px)`;
+                
+                const iconEl = createElement('div', {
+                    className: 'ping-wheel-icon',
+                    icon: type.icon
+                });
+                iconEl.style.color = type.color;
+                
+                const translatedName = this.app.i18n?.message(type.name) ?? type.name;
+                const label = createElement('span', { text: translatedName });
+                
+                slice.append(iconEl, label);
+                this.wheelElement.append(slice);
+                this.wheelSlices.push({ element: slice, id: type.id, angle: angle });
+            });
+            
+            // Add center default ping
+            const centerSlice = createElement('div', {
+                className: 'ping-wheel-slice',
+                attributes: { 'data-id': 'default' }
+            });
+            centerSlice.style.transform = `translate(0px, 0px)`;
+            
+            const centerIconEl = createElement('div', {
+                className: 'ping-wheel-icon',
+                icon: 'mapPin'
+            });
+            centerIconEl.style.color = '#ffeb3b';
+            
+            const centerLabel = createElement('span', { text: 'Ping' });
+            
+            centerSlice.append(centerIconEl, centerLabel);
+            this.wheelElement.append(centerSlice);
+            this.wheelSlices.push({ element: centerSlice, id: 'default', angle: 0 });
+            
+            document.body.append(this.wheelElement);
+            this.updateWheelHover();
+        }
+
+        closeWheel() {
+            this.wheelOpen = false;
+            if (this.wheelElement) {
+                this.wheelElement.remove();
+                this.wheelElement = null;
+            }
+        }
+
+        updateWheelHover() {
+            if (!this.wheelElement) return;
+            const dx = this.pointerPosition.x - this.wheelCenter.x;
+            const dy = this.pointerPosition.y - this.wheelCenter.y;
+            const dist = Math.hypot(dx, dy);
+            
+            this.wheelSlices.forEach(s => s.element.classList.remove('active'));
+            this.hoveredPing = null;
+            
+            if (dist > 25) {
+                let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                if (angle < -45 && angle >= -135) this.hoveredPing = 'danger';
+                else if (angle >= -45 && angle < 45) this.hoveredPing = 'attack';
+                else if (angle >= 45 && angle < 135) this.hoveredPing = 'virus';
+                else this.hoveredPing = 'defend';
+            } else {
+                this.hoveredPing = 'default';
+            }
+            
+            const activeSlice = this.wheelSlices.find(s => s.id === this.hoveredPing);
+            if (activeSlice) activeSlice.element.classList.add('active');
+        }
+        
+        getCamera() {
+            if (window.sigfix && window.sigfix.world) {
+                const vision = window.sigfix.world.views?.get(window.sigfix.world.selected);
+                if (vision && vision.camera) {
+                    return {
+                        x: vision.camera.x,
+                        y: vision.camera.y,
+                        scale: (window.innerHeight / 1080) * vision.camera.scale
+                    };
+                }
+            }
+            if (this.app.state.camera && this.app.state.camera.scale > 0) {
+                const { scale, offsetX, offsetY } = this.app.state.camera;
+                const dpr = window.devicePixelRatio || 1;
+                return {
+                    x: (window.innerWidth * dpr / 2 - offsetX) / scale,
+                    y: (window.innerHeight * dpr / 2 - offsetY) / scale,
+                    scale: scale / dpr
+                };
+            }
+            const position = this.app.host.adapter?.snapshot().position;
+            if (position) {
+                return {
+                    x: position.x,
+                    y: position.y,
+                    scale: (window.innerHeight / 1080) * 0.25 // Default scale fallback
+                };
+            }
+            return null;
+        }
+
+        sendPing(type) {
+            const cam = this.getCamera();
+            if (!cam || !cam.scale) return; 
+
+            const worldX = (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x;
+            const worldY = (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y;
+
+            this.app.backend.send('tag-ping', { x: worldX, y: worldY, t: type });
+        }
+
+        receivePing(data) {
+            if (!isObject(data)) return;
+            const { x, y, t, i } = data;
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+            
+            const id = `ping-${i}-${Date.now()}`;
+            const typeConfig = this.pingTypes.find(p => p.id === t) || { id: 'default', icon: 'mapPin', color: '#ffeb3b' };
+            
+            const element = createElement('div', {
+                className: 'world-ping-marker',
+                attributes: { id }
+            });
+            
+            const animatorEl = createElement('div', {
+                className: 'world-ping-animator'
+            });
+            animatorEl.style.color = typeConfig.color;
+            
+            const iconEl = createElement('div', {
+                className: 'world-ping-icon',
+                icon: typeConfig.icon
+            });
+            
+            animatorEl.append(iconEl);
+            
+            if (i !== undefined) {
+                const badgeEl = createElement('div', {
+                    className: 'world-ping-badge',
+                    text: i
+                });
+                badgeEl.style.backgroundColor = typeConfig.color;
+                animatorEl.append(badgeEl);
+            }
+            
+            element.append(animatorEl);
+            document.body.append(element);
+            
+            this.activePings.set(id, {
+                x, y, type: typeConfig, element, createdAt: Date.now()
+            });
+            
+            const duration = this.app.settings.settings.pingDuration ?? 2000;
+            
+            setTimeout(() => {
+                element.remove();
+                this.activePings.delete(id);
+            }, duration);
+        }
+
+        drawPings() {
+            if (this.activePings.size === 0) return;
+            const cam = this.getCamera();
+            if (!cam || !cam.scale) {
+                this.activePings.forEach(p => p.element.style.display = 'none');
+                return;
+            }
+            
+            if (!this._debugLogTimer || Date.now() - this._debugLogTimer > 1000) {
+                this._debugLogTimer = Date.now();
+                const hasSigfix = !!(window.sigfix && window.sigfix.world);
+                const hasNativeCam = !!(this.app.state.camera && this.app.state.camera.scale > 0);
+                const branch = hasSigfix ? 'sigfixes' : hasNativeCam ? 'native' : 'fallback';
+                console.log('[PING DEBUG] branch:', branch, 'cam:', JSON.stringify(cam));
+                this.activePings.forEach((ping) => {
+                    const sx = (ping.x - cam.x) * cam.scale + window.innerWidth / 2;
+                    const sy = (ping.y - cam.y) * cam.scale + window.innerHeight / 2;
+                    console.log('[PING DEBUG] world:', ping.x.toFixed(1), ping.y.toFixed(1), 'screen:', sx.toFixed(1), sy.toFixed(1));
+                });
+            }
+            
+            const scale = cam.scale;
+            const hw = window.innerWidth / 2;
+            const hh = window.innerHeight / 2;
+            
+            this.activePings.forEach((ping) => {
+                ping.element.style.display = 'flex';
+                let sx = (ping.x - cam.x) * scale + hw;
+                let sy = (ping.y - cam.y) * scale + hh;
+                
+                const margin = 30;
+                let isOffscreen = false;
+                
+                if (sx < margin || sx > window.innerWidth - margin || sy < margin || sy > window.innerHeight - margin) {
+                    isOffscreen = true;
+                    sx = Math.max(margin, Math.min(sx, window.innerWidth - margin));
+                    sy = Math.max(margin, Math.min(sy, window.innerHeight - margin));
+                }
+                
+                ping.element.style.transform = `translate(${sx}px, ${sy}px)`;
+                
+                if (isOffscreen) {
+                    ping.element.classList.add('is-offscreen');
+                    const angle = Math.atan2((ping.y - cam.y) * scale, (ping.x - cam.x) * scale) * 180 / Math.PI;
+                    ping.element.style.setProperty('--arrow-angle', `${angle}deg`);
+                } else {
+                    ping.element.classList.remove('is-offscreen');
+                    ping.element.style.setProperty('--arrow-angle', `0deg`);
+                }
+            });
+        }
+    }
+

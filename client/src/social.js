@@ -2807,6 +2807,7 @@
             ['matchStatistics', MatchStatisticsController],
             ['session', SessionController],
             ['macros', MacroController],
+            ['smartPing', SmartPingController],
         ],
         [
             ['chat', ChatController],

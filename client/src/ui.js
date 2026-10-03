@@ -978,37 +978,32 @@
                                         <div class="settings-section-title">Party panel</div>
                                         <div class="settings-grid">
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Show party panel</span>
-                                                    <span class="modDescText">Display the in-game overlay showing party members and scores.</span>
-                                                </div>
+                                                <span class="text">Show party panel</span>
                                                 ${this.checkboxHtml('showPartyPanel', 'settings.showPartyPanel')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Blur party tag</span>
-                                                    <span class="modDescText">Blur the 3-letter party tag in chat and on-screen for privacy.</span>
-                                                </div>
+                                                <span class="text">Blur party tag</span>
                                                 ${this.checkboxHtml('party-blurTag', 'chat.blurTag')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Panel opacity</span>
-                                                    <span class="modDescText">Transparency of the party overlay panel.</span>
-                                                </div>
+                                                <span class="text">Panel opacity</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyOpacityText">100%</span>
                                                     <input type="range" class="modSlider" id="partyOpacity" min="0.1" max="1" step="0.05" data-setting="settings.partyOpacity" data-number style="width: 120px;">
                                                 </div>
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Panel scale</span>
-                                                    <span class="modDescText">Resize the on-screen party panel.</span>
-                                                </div>
+                                                <span class="text">Panel scale</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyScaleText">1.00x</span>
                                                     <input type="range" class="modSlider" id="partyScale" min="0.5" max="2" step="0.05" data-setting="settings.partyScale" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Ping duration</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="pingDurationText">2.0s</span>
+                                                    <input type="range" class="modSlider" id="pingDuration" min="500" max="15000" step="500" data-setting="settings.pingDuration" data-number style="width: 120px;">
                                                 </div>
                                             </div>
                                         </div>
@@ -3325,6 +3320,7 @@
             if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
             if (input.id === 'partyOpacity') this.updatePartySliderLabels();
             if (input.id === 'partyScale') this.updatePartySliderLabels();
+            if (input.id === 'pingDuration') this.updatePartySliderLabels();
             this.root?.dispatchEvent(
                 new CustomEvent('sigmod:settingchange', {
                     bubbles: true,
@@ -3399,6 +3395,11 @@
             if (scaleLabel) {
                 const v = this.app.settingsStore.get('settings.partyScale') ?? 1;
                 scaleLabel.textContent = `${Number(v).toFixed(2)}x`;
+            }
+            const pingLabel = this.root?.querySelector('#pingDurationText');
+            if (pingLabel) {
+                const v = this.app.settingsStore.get('settings.pingDuration') ?? 2000;
+                pingLabel.textContent = `${(Number(v) / 1000).toFixed(1)}s`;
             }
         }
     }

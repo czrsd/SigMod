@@ -110,7 +110,7 @@ const sendPing = (data: PingData, socket: socket) => {
 
     if (Date.now() - socket.lastPingSent < wsHandler.PING_COOLDOWN) return;
 
-    const { x, y, sW, sH } = data;
+    const { x, y, t } = data;
 
     const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
 
@@ -121,8 +121,7 @@ const sendPing = (data: PingData, socket: socket) => {
                 i: socket.tagIndex,
                 x,
                 y,
-                sW,
-                sH,
+                t
             },
         });
     }

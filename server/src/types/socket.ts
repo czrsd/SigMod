@@ -6,8 +6,7 @@ export type socketMessageData = {
 export type PingData = {
     x: number;
     y: number;
-    sW: number; // Screen width
-    sH: number; // Screen height
+    t: string;
 };
 
 export type minimapData = {

@@ -241,6 +241,22 @@
     pushPin: {
       viewBox: "0 0 512 512",
       content: '<path fill="currentColor" d="M98.715,369.376l-97.028,97.02L0,512l45.603-1.688l97.02-97.02c-7.614-6.725-15.196-13.783-22.665-21.252 C112.49,384.572,105.425,376.991,98.715,369.376z"></path><path fill="currentColor" d="M446.021,65.979C387.878,7.853,317.914-16.443,289.735,11.744c-15.688,15.672-15.074,44.312-1.477,76.625 l-88.3,76.56c-55.728-31.15-107.774-37.642-133.911-11.506c-39.168,39.168-5.426,136.398,75.349,217.18 c80.782,80.775,178.013,114.517,217.173,75.357c26.144-26.144,19.653-78.19-11.498-133.911l76.576-88.3 c32.305,13.589,60.936,14.194,76.608-1.478C528.442,194.085,504.155,124.121,446.021,65.979z"></path>'
+    },
+    warning: {
+      viewBox: "0 0 24 24",
+      content: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>'
+    },
+    shield: {
+      viewBox: "0 0 24 24",
+      content: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'
+    },
+    sword: {
+      viewBox: "0 0 24 24",
+      content: '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M14.5 17.5L3 6V3h3l11.5 11.5"/><line x1="13" y1="19" x2="19" y2="13" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="20" y2="20" stroke="currentColor" stroke-width="2"/><line x1="19" y1="21" x2="21" y2="19" stroke="currentColor" stroke-width="2"/>'
+    },
+    crosshair: {
+      viewBox: "0 0 24 24",
+      content: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="22" y1="12" x2="18" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="6" y1="12" x2="2" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="12" y1="6" x2="12" y2="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="12" y1="22" x2="12" y2="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line>'
     }
   };
   ICONS.camera.content = ICONS.camera.content.replace("<path fill=", '<path transform="translate(-258 -467)" fill=');
@@ -3948,37 +3964,32 @@
                                         <div class="settings-section-title">Party panel</div>
                                         <div class="settings-grid">
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Show party panel</span>
-                                                    <span class="modDescText">Display the in-game overlay showing party members and scores.</span>
-                                                </div>
+                                                <span class="text">Show party panel</span>
                                                 ${this.checkboxHtml("showPartyPanel", "settings.showPartyPanel")}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Blur party tag</span>
-                                                    <span class="modDescText">Blur the 3-letter party tag in chat and on-screen for privacy.</span>
-                                                </div>
+                                                <span class="text">Blur party tag</span>
                                                 ${this.checkboxHtml("party-blurTag", "chat.blurTag")}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Panel opacity</span>
-                                                    <span class="modDescText">Transparency of the party overlay panel.</span>
-                                                </div>
+                                                <span class="text">Panel opacity</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyOpacityText">100%</span>
                                                     <input type="range" class="modSlider" id="partyOpacity" min="0.1" max="1" step="0.05" data-setting="settings.partyOpacity" data-number style="width: 120px;">
                                                 </div>
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <div class="f-column g-2">
-                                                    <span class="text">Panel scale</span>
-                                                    <span class="modDescText">Resize the on-screen party panel.</span>
-                                                </div>
+                                                <span class="text">Panel scale</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyScaleText">1.00x</span>
                                                     <input type="range" class="modSlider" id="partyScale" min="0.5" max="2" step="0.05" data-setting="settings.partyScale" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Ping duration</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="pingDurationText">2.0s</span>
+                                                    <input type="range" class="modSlider" id="pingDuration" min="500" max="15000" step="500" data-setting="settings.pingDuration" data-number style="width: 120px;">
                                                 </div>
                                             </div>
                                         </div>
@@ -6187,6 +6198,7 @@
       if (input.id === "macroSpeed") this.updateMacroSpeedLabel();
       if (input.id === "partyOpacity") this.updatePartySliderLabels();
       if (input.id === "partyScale") this.updatePartySliderLabels();
+      if (input.id === "pingDuration") this.updatePartySliderLabels();
       this.root?.dispatchEvent(
         new CustomEvent("sigmod:settingchange", {
           bubbles: true,
@@ -6261,6 +6273,11 @@
       if (scaleLabel) {
         const v = this.app.settingsStore.get("settings.partyScale") ?? 1;
         scaleLabel.textContent = `${Number(v).toFixed(2)}x`;
+      }
+      const pingLabel = this.root?.querySelector("#pingDurationText");
+      if (pingLabel) {
+        const v = this.app.settingsStore.get("settings.pingDuration") ?? 2e3;
+        pingLabel.textContent = `${(Number(v) / 1e3).toFixed(1)}s`;
       }
     }
   }
@@ -8190,6 +8207,10 @@
       };
       const arc = function(x, y, radius, startAngle, endAngle, counterclockwise) {
         if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
+        const transform = this.getTransform();
+        if (transform && transform.a > 0 && (transform.e !== 0 || transform.f !== 0)) {
+          visual.app.state.camera = { scale: transform.a, offsetX: transform.e, offsetY: transform.f };
+        }
         visual.applyCellColor(this, radius);
         if (nativeFoodHidden()) {
           let state = paths.get(this);
@@ -9419,6 +9440,27 @@
       style.textContent = `${SELECTORS.chatBlock} { display: none !important; visibility: hidden !important; pointer-events: none !important; }`;
       (document.head || document.documentElement).append(style);
       this.resources.add(() => style.remove());
+      setTimeout(() => {
+        const showChat = document.querySelector("#showChat");
+        if (showChat instanceof HTMLInputElement && showChat.checked) {
+          showChat.click();
+        }
+        if (showChat) {
+          const li = showChat.closest("li");
+          if (li) li.style.display = "none";
+        }
+      }, 1e3);
+      this.resources.listen(window, "beforeunload", () => {
+        try {
+          const settingsStr = localStorage.getItem("settings");
+          if (settingsStr) {
+            const settings = JSON.parse(settingsStr);
+            settings.showChat = true;
+            localStorage.setItem("settings", JSON.stringify(settings));
+          }
+        } catch (e) {
+        }
+      });
       const sync = () => {
         this.nativeChatSyncQueued = false;
         const chatBlock = document.querySelector(SELECTORS.chatBlock);
@@ -10337,15 +10379,28 @@
       const members = [...this.members.values()].sort((a, b) => a.tagIndex - b.tagIndex);
       for (const member of members) {
         const row = createElement("div", { className: "flex g-2" });
+        const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
+        const skinName = skinMatch ? skinMatch[1].replace(/\.png$/i, "") : null;
+        const displayName = skinMatch ? skinMatch[2] : member.nick;
+        const nameContainer = createElement("span", { className: "tag-member-nick centerY", attributes: { style: "gap: 4px;" } });
+        if (skinName) {
+          nameContainer.append(
+            createElement("img", {
+              attributes: {
+                src: `https://sigmally.com/static/skins/${skinName}.png`,
+                style: "width: 14px; height: 14px; border-radius: 50%; object-fit: cover;",
+                onerror: "this.style.display='none'"
+              }
+            })
+          );
+        }
+        nameContainer.append(document.createTextNode(displayName));
         row.append(
           createElement("span", {
             className: "tag-member-index",
             text: member.tagIndex
           }),
-          createElement("span", {
-            className: "tag-member-nick",
-            text: member.nick
-          }),
+          nameContainer,
           createElement("span", {
             text: member.score > 0 ? this.formatScore(member.score) : ""
           })
@@ -10383,7 +10438,6 @@
       this.resources.add(() => container.remove());
       this.resources.listen(window, "resize", () => this.resize());
       this.resources.add(this.app.backend.on("minimap-data", (data) => this.updatePlayer(data)));
-      this.resources.add(this.app.backend.on("tag-ping", (data) => this.renderPing(data)));
       const bindHost = (adapter) => {
         this.resources.child("host-events").dispose();
         const events = this.resources.child("host-events");
@@ -10462,34 +10516,6 @@
         const yOffset = y <= 16 * ratio ? 5 * ratio : -10 * ratio;
         context.fillText(player.nick, x, y + yOffset);
       }
-    }
-    renderPing(data) {
-      if (!isObject(data)) return;
-      const x = Number(data.x);
-      const y = Number(data.y);
-      const senderWidth = Number(data.sW);
-      const senderHeight = Number(data.sH);
-      if (![x, y, senderWidth, senderHeight].every(Number.isFinite) || senderWidth <= 0 || senderHeight <= 0) return;
-      const index = data.i ?? "";
-      const id = `ping-${index}`;
-      document.getElementById(id)?.remove();
-      const marker = createElement("div", {
-        className: "tag-ping-container",
-        attributes: { id }
-      });
-      const fontSize = Number(index) >= 10 ? "10px" : "14px";
-      marker.innerHTML = icon("mapPin", 24);
-      const label = createElement("span", { text: index });
-      label.style.fontSize = fontSize;
-      marker.append(label);
-      marker.style.left = `${x / senderWidth * innerWidth}px`;
-      marker.style.top = `${y / senderHeight * innerHeight}px`;
-      document.body.append(marker);
-      const duration = this.app.settings.settings.pingDuration;
-      this.resources.timeout(() => {
-        marker.style.opacity = "0";
-        this.resources.timeout(() => marker.remove(), 100);
-      }, duration);
     }
     destroy() {
       this.players.clear();
@@ -10667,7 +10693,6 @@
       else if (this.matches(event, keys.line.vertical) && isMenuClosed()) this.toggleLock("vertical");
       else if (this.matches(event, keys.line.fixed) && isMenuClosed()) this.toggleLock("fixed");
       else if (this.matches(event, keys.location)) this.sendLocation();
-      else if (this.matches(event, keys.ping)) this.sendPing();
       else if (this.matches(event, keys.toggle.chat)) this.toggleChat();
       else if (this.matches(event, keys.toggle.names)) this.toggleSetting("showNames");
       else if (this.matches(event, keys.toggle.skins)) this.toggleSetting("showSkins");
@@ -10704,7 +10729,6 @@
       else if (action === "freeze") this.toggleLock("horizontal");
       else if (action === "dTrick") this.trickSplit(2);
       else if (action === "sTrick") this.trickSplit(4);
-      else if (action === "ping") this.sendPing();
     }
     /** @param {MouseEvent} event */
     handleMouseUp(event) {
@@ -10798,15 +10822,6 @@
       const field = `${String.fromCharCode(65 + column)}${row + 1}`;
       const template = this.app.settings.chat.locationText || "{pos}";
       this.app.sendChat(template.replace("{pos}", field));
-    }
-    sendPing() {
-      if (!this.app.settings.settings.tag || !this.app.state.backend.connected) return;
-      this.app.backend.send("tag-ping", {
-        x: this.pointerPosition.x,
-        y: this.pointerPosition.y,
-        sW: window.innerWidth,
-        sH: window.innerHeight
-      });
     }
     /** @param {'showNames'|'showSkins'|'autoRespawn'} setting */
     toggleSetting(setting) {
@@ -13651,6 +13666,279 @@
       return `${Math.floor(safe / 60)}m ${safe % 60}s`;
     }
   }
+  class SmartPingController extends FeatureController {
+    constructor(app2, name) {
+      super(app2, name);
+      this.activePings = /* @__PURE__ */ new Map();
+      this.wheelOpen = false;
+      this.wheelElement = null;
+      this.wheelSlices = [];
+      this.pointerPosition = { x: 0, y: 0 };
+      this.wheelCenter = { x: 0, y: 0 };
+      this.pingTypes = [
+        { id: "danger", name: "Danger", icon: "warning", color: "#ff3b3b" },
+        { id: "attack", name: "Attack", icon: "sword", color: "#ffa500" },
+        { id: "virus", name: "Shoot Virus", icon: "crosshair", color: "#4CAF50" },
+        { id: "defend", name: "Defend", icon: "shield", color: "#2196F3" }
+      ];
+      this.hoveredPing = null;
+      this.frameId = null;
+    }
+    async mount() {
+      const documentRoot = document;
+      this.resources.listen(documentRoot, "pointermove", (event) => {
+        this.pointerPosition.x = event.clientX;
+        this.pointerPosition.y = event.clientY;
+        if (this.wheelOpen) this.updateWheelHover();
+      }, { passive: true });
+      this.resources.listen(documentRoot, "mousedown", (event) => this.handleMouseDown(event));
+      this.resources.listen(documentRoot, "mouseup", (event) => this.handleMouseUp(event));
+      this.resources.listen(documentRoot, "keydown", (event) => this.handleKeyDown(event));
+      this.resources.listen(documentRoot, "keyup", (event) => this.handleKeyUp(event));
+      this.resources.add(this.app.backend.on("tag-ping", (data) => this.receivePing(data)));
+      const loop = () => {
+        this.drawPings();
+        this.frameId = requestAnimationFrame(loop);
+      };
+      this.frameId = requestAnimationFrame(loop);
+      this.resources.add(() => cancelAnimationFrame(this.frameId));
+    }
+    isPingInput(event) {
+      if (isTyping() || !this.app.settings.settings.tag || !this.app.state.backend.connected) return false;
+      const macros = this.app.features.get("macros");
+      if (event instanceof KeyboardEvent && macros) {
+        if (event.ctrlKey || event.metaKey) return false;
+        return macros.matches(event, this.app.settings.macros.keys.ping);
+      } else if (event instanceof MouseEvent && macros) {
+        const action = macros.mouseBinding(event.button);
+        return action === "ping" || event.button === 1 && !action;
+      }
+      return false;
+    }
+    handleKeyDown(event) {
+      if (this.isPingInput(event) && !this.wheelOpen) {
+        event.preventDefault();
+        this.openWheel();
+      }
+    }
+    handleKeyUp(event) {
+      if (this.isPingInput(event) && this.wheelOpen) {
+        event.preventDefault();
+        this.closeWheel();
+        this.sendPing(this.hoveredPing || "default");
+      }
+    }
+    handleMouseDown(event) {
+      if (this.isPingInput(event) && !this.wheelOpen) {
+        event.preventDefault();
+        this.openWheel();
+      }
+    }
+    handleMouseUp(event) {
+      if (this.isPingInput(event) && this.wheelOpen) {
+        event.preventDefault();
+        this.closeWheel();
+        this.sendPing(this.hoveredPing || "default");
+      }
+    }
+    openWheel() {
+      this.wheelOpen = true;
+      this.wheelCenter = { x: this.pointerPosition.x, y: this.pointerPosition.y };
+      if (this.wheelElement) this.wheelElement.remove();
+      this.wheelElement = createElement("div", {
+        className: "ping-wheel-container"
+      });
+      this.wheelElement.style.left = `${this.wheelCenter.x}px`;
+      this.wheelElement.style.top = `${this.wheelCenter.y}px`;
+      this.wheelSlices = [];
+      this.pingTypes.forEach((type, i) => {
+        const angle = i * 90 - 90;
+        const slice = createElement("div", {
+          className: "ping-wheel-slice",
+          attributes: { "data-id": type.id }
+        });
+        const rad = angle * Math.PI / 180;
+        const dist = 60;
+        slice.style.transform = `translate(${Math.cos(rad) * dist}px, ${Math.sin(rad) * dist}px)`;
+        const iconEl = createElement("div", {
+          className: "ping-wheel-icon",
+          icon: type.icon
+        });
+        iconEl.style.color = type.color;
+        const translatedName = this.app.i18n?.message(type.name) ?? type.name;
+        const label = createElement("span", { text: translatedName });
+        slice.append(iconEl, label);
+        this.wheelElement.append(slice);
+        this.wheelSlices.push({ element: slice, id: type.id, angle });
+      });
+      const centerSlice = createElement("div", {
+        className: "ping-wheel-slice",
+        attributes: { "data-id": "default" }
+      });
+      centerSlice.style.transform = `translate(0px, 0px)`;
+      const centerIconEl = createElement("div", {
+        className: "ping-wheel-icon",
+        icon: "mapPin"
+      });
+      centerIconEl.style.color = "#ffeb3b";
+      const centerLabel = createElement("span", { text: "Ping" });
+      centerSlice.append(centerIconEl, centerLabel);
+      this.wheelElement.append(centerSlice);
+      this.wheelSlices.push({ element: centerSlice, id: "default", angle: 0 });
+      document.body.append(this.wheelElement);
+      this.updateWheelHover();
+    }
+    closeWheel() {
+      this.wheelOpen = false;
+      if (this.wheelElement) {
+        this.wheelElement.remove();
+        this.wheelElement = null;
+      }
+    }
+    updateWheelHover() {
+      if (!this.wheelElement) return;
+      const dx = this.pointerPosition.x - this.wheelCenter.x;
+      const dy = this.pointerPosition.y - this.wheelCenter.y;
+      const dist = Math.hypot(dx, dy);
+      this.wheelSlices.forEach((s) => s.element.classList.remove("active"));
+      this.hoveredPing = null;
+      if (dist > 25) {
+        let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        if (angle < -45 && angle >= -135) this.hoveredPing = "danger";
+        else if (angle >= -45 && angle < 45) this.hoveredPing = "attack";
+        else if (angle >= 45 && angle < 135) this.hoveredPing = "virus";
+        else this.hoveredPing = "defend";
+      } else {
+        this.hoveredPing = "default";
+      }
+      const activeSlice = this.wheelSlices.find((s) => s.id === this.hoveredPing);
+      if (activeSlice) activeSlice.element.classList.add("active");
+    }
+    getCamera() {
+      if (window.sigfix && window.sigfix.world) {
+        const vision = window.sigfix.world.views?.get(window.sigfix.world.selected);
+        if (vision && vision.camera) {
+          return {
+            x: vision.camera.x,
+            y: vision.camera.y,
+            scale: window.innerHeight / 1080 * vision.camera.scale
+          };
+        }
+      }
+      if (this.app.state.camera && this.app.state.camera.scale > 0) {
+        const { scale, offsetX, offsetY } = this.app.state.camera;
+        const dpr = window.devicePixelRatio || 1;
+        return {
+          x: (window.innerWidth * dpr / 2 - offsetX) / scale,
+          y: (window.innerHeight * dpr / 2 - offsetY) / scale,
+          scale: scale / dpr
+        };
+      }
+      const position = this.app.host.adapter?.snapshot().position;
+      if (position) {
+        return {
+          x: position.x,
+          y: position.y,
+          scale: window.innerHeight / 1080 * 0.25
+          // Default scale fallback
+        };
+      }
+      return null;
+    }
+    sendPing(type) {
+      const cam = this.getCamera();
+      if (!cam || !cam.scale) return;
+      const worldX = (this.wheelCenter.x - window.innerWidth / 2) / cam.scale + cam.x;
+      const worldY = (this.wheelCenter.y - window.innerHeight / 2) / cam.scale + cam.y;
+      this.app.backend.send("tag-ping", { x: worldX, y: worldY, t: type });
+    }
+    receivePing(data) {
+      if (!isObject(data)) return;
+      const { x, y, t, i } = data;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      const id = `ping-${i}-${Date.now()}`;
+      const typeConfig = this.pingTypes.find((p) => p.id === t) || { id: "default", icon: "mapPin", color: "#ffeb3b" };
+      const element = createElement("div", {
+        className: "world-ping-marker",
+        attributes: { id }
+      });
+      const animatorEl = createElement("div", {
+        className: "world-ping-animator"
+      });
+      animatorEl.style.color = typeConfig.color;
+      const iconEl = createElement("div", {
+        className: "world-ping-icon",
+        icon: typeConfig.icon
+      });
+      animatorEl.append(iconEl);
+      if (i !== void 0) {
+        const badgeEl = createElement("div", {
+          className: "world-ping-badge",
+          text: i
+        });
+        badgeEl.style.backgroundColor = typeConfig.color;
+        animatorEl.append(badgeEl);
+      }
+      element.append(animatorEl);
+      document.body.append(element);
+      this.activePings.set(id, {
+        x,
+        y,
+        type: typeConfig,
+        element,
+        createdAt: Date.now()
+      });
+      const duration = this.app.settings.settings.pingDuration ?? 2e3;
+      setTimeout(() => {
+        element.remove();
+        this.activePings.delete(id);
+      }, duration);
+    }
+    drawPings() {
+      if (this.activePings.size === 0) return;
+      const cam = this.getCamera();
+      if (!cam || !cam.scale) {
+        this.activePings.forEach((p) => p.element.style.display = "none");
+        return;
+      }
+      if (!this._debugLogTimer || Date.now() - this._debugLogTimer > 1e3) {
+        this._debugLogTimer = Date.now();
+        const hasSigfix = !!(window.sigfix && window.sigfix.world);
+        const hasNativeCam = !!(this.app.state.camera && this.app.state.camera.scale > 0);
+        const branch = hasSigfix ? "sigfixes" : hasNativeCam ? "native" : "fallback";
+        console.log("[PING DEBUG] branch:", branch, "cam:", JSON.stringify(cam));
+        this.activePings.forEach((ping) => {
+          const sx = (ping.x - cam.x) * cam.scale + window.innerWidth / 2;
+          const sy = (ping.y - cam.y) * cam.scale + window.innerHeight / 2;
+          console.log("[PING DEBUG] world:", ping.x.toFixed(1), ping.y.toFixed(1), "screen:", sx.toFixed(1), sy.toFixed(1));
+        });
+      }
+      const scale = cam.scale;
+      const hw = window.innerWidth / 2;
+      const hh = window.innerHeight / 2;
+      this.activePings.forEach((ping) => {
+        ping.element.style.display = "flex";
+        let sx = (ping.x - cam.x) * scale + hw;
+        let sy = (ping.y - cam.y) * scale + hh;
+        const margin = 30;
+        let isOffscreen = false;
+        if (sx < margin || sx > window.innerWidth - margin || sy < margin || sy > window.innerHeight - margin) {
+          isOffscreen = true;
+          sx = Math.max(margin, Math.min(sx, window.innerWidth - margin));
+          sy = Math.max(margin, Math.min(sy, window.innerHeight - margin));
+        }
+        ping.element.style.transform = `translate(${sx}px, ${sy}px)`;
+        if (isOffscreen) {
+          ping.element.classList.add("is-offscreen");
+          const angle = Math.atan2((ping.y - cam.y) * scale, (ping.x - cam.x) * scale) * 180 / Math.PI;
+          ping.element.style.setProperty("--arrow-angle", `${angle}deg`);
+        } else {
+          ping.element.classList.remove("is-offscreen");
+          ping.element.style.setProperty("--arrow-angle", `0deg`);
+        }
+      });
+    }
+  }
   class ProfileController extends FeatureController {
     constructor(app2, name) {
       super(app2, name);
@@ -16382,7 +16670,8 @@
     [
       ["matchStatistics", MatchStatisticsController],
       ["session", SessionController],
-      ["macros", MacroController]
+      ["macros", MacroController],
+      ["smartPing", SmartPingController]
     ],
     [
       ["chat", ChatController],

@@ -28,6 +28,10 @@
             };
             const arc = function (x, y, radius, startAngle, endAngle, counterclockwise) {
                 if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
+                const transform = this.getTransform();
+                if (transform && transform.a > 0 && (transform.e !== 0 || transform.f !== 0)) {
+                    visual.app.state.camera = { scale: transform.a, offsetX: transform.e, offsetY: transform.f };
+                }
                 visual.applyCellColor(this, radius);
                 if (nativeFoodHidden()) {
                     let state = paths.get(this);

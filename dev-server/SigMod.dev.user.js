@@ -2561,6 +2561,34 @@
             this.seenSockets.add(socket);
             this.protocol?.destroy();
             this.socket = socket;
+            const onMessageDesc = Object.getOwnPropertyDescriptor(WebSocket.prototype, 'onmessage');
+            let activeOnMessage = null;
+            Object.defineProperty(socket, 'onmessage', {
+                configurable: true,
+                enumerable: true,
+                get() {
+                    return activeOnMessage;
+                },
+                set(handler) {
+                    if (typeof handler === 'function') {
+                        activeOnMessage = function (event) {
+                            try {
+                                return handler.call(this, event);
+                            } catch (error) {
+                                if (error instanceof TypeError && error.message?.includes('destroy')) {
+                                    return;
+                                }
+                                throw error;
+                            }
+                        };
+                    } else {
+                        activeOnMessage = handler;
+                    }
+                    if (onMessageDesc?.set) {
+                        onMessageDesc.set.call(socket, activeOnMessage);
+                    }
+                },
+            });
             const generation = ++this.socketGeneration;
             const scope = this.resources.child(`socket-${generation}`);
             this.protocol = new NativeProtocol(socket, scope, this.logger);

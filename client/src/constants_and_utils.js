@@ -399,6 +399,10 @@ const STANDARD_MOUSE_BUTTONS = [
  * @typedef {Object} GeneralSettings
  * @property {string|null} tag
  * @property {{x: number, y: number}} partyPanel
+ * @property {boolean} showPartyPanel
+ * @property {number} partyScale
+ * @property {string} partyBgColor
+ * @property {string} partyTextColor
  * @property {number} pingDuration
  * @property {string[]} savedNames
  * @property {boolean} autoRespawn
@@ -508,7 +512,6 @@ const DEFAULT_SETTINGS = {
         tag: null,
         partyPanel: { x: 4, y: 300 },
         showPartyPanel: true,
-        partyOpacity: 1,
         partyScale: 1,
         partyBgColor: '#00000080',
         partyTextColor: '#fafafa',

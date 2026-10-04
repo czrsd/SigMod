@@ -483,7 +483,6 @@
             tag: null,
             partyPanel: { x: 4, y: 300 },
             showPartyPanel: true,
-            partyOpacity: 1,
             partyScale: 1,
             partyBgColor: '#00000080',
             partyTextColor: '#fafafa',
@@ -1654,6 +1653,9 @@
             value.settings.savedNames = [...new Set(value.settings.savedNames.filter((name) => typeof name === 'string'))];
             value.settings.partyPanel.x = Number.isFinite(Number(value.settings.partyPanel.x)) ? Number(value.settings.partyPanel.x) : 0;
             value.settings.partyPanel.y = Number.isFinite(Number(value.settings.partyPanel.y)) ? Number(value.settings.partyPanel.y) : 0;
+            value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
+            value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : '#00000080';
+            value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
             value.settings.tag = normalizeNullableString(value.settings.tag);
             if (!['center', 'left', 'right', 'top', 'bottom'].includes(value.settings.deathScreenPos)) {
                 value.settings.deathScreenPos = 'center';
@@ -1716,10 +1718,21 @@
             for (const key of ['showFood', 'showLeaderboard', 'hideOwnName', 'botSkinsOnly', 'showOwnSkinWithBots']) {
                 value.game[key] = normalizeBoolean(value.game[key], this.defaults.game[key]);
             }
-            for (const key of ['autoRespawn', 'playTimer', 'mouseTracker', 'autoClaimCoins', 'showChallenges', 'removeShopPopup']) {
+            for (const key of [
+                'autoRespawn',
+                'playTimer',
+                'mouseTracker',
+                'autoClaimCoins',
+                'showChallenges',
+                'removeShopPopup',
+                'showPartyPanel',
+                'mergeTimer',
+            ]) {
                 value.settings[key] = normalizeBoolean(value.settings[key], this.defaults.settings[key]);
             }
-            value.chat.enabled = normalizeBoolean(value.chat.enabled, this.defaults.chat.enabled);
+            for (const key of ['enabled', 'blurTag']) {
+                value.chat[key] = normalizeBoolean(value.chat[key], this.defaults.chat[key]);
+            }
             return value;
         }
         get(path) {
@@ -4161,6 +4174,14 @@
             root.innerHTML = this.template();
             document.body.append(root);
             this.root = root;
+            const navStyle = createElement('style', {
+                text: `
+                .mod_nav_group.is-expanded > .mod_nav_children { max-height: 500px !important; }
+                .mod-category-panel { overflow-y: auto !important; }
+            `,
+            });
+            document.head.append(navStyle);
+            this.resources.add(() => navStyle.remove());
             const header = root.querySelector('#sigmod-header-image');
             if (header instanceof HTMLImageElement) header.src = ENDPOINTS.headerAnimation;
             const version = root.querySelector('#sigmod-version');
@@ -4679,13 +4700,6 @@
                                                 ${this.checkboxHtml('party-blurTag', 'chat.blurTag')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <span class="text">Panel opacity</span>
-                                                <div class="centerXY g-10" style="min-width: 170px;">
-                                                    <span class="mod_badge" id="partyOpacityText">100%</span>
-                                                    <input type="range" class="modSlider" id="partyOpacity" min="0.1" max="1" step="0.05" data-setting="settings.partyOpacity" data-number style="width: 120px;">
-                                                </div>
-                                            </div>
-                                            <div class="settings-item chat-menu-row">
                                                 <span class="text">Panel scale</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyScaleText">1.00x</span>
@@ -4706,15 +4720,11 @@
                                         <div class="chat-menu-colors">
                                             <div class="chat-menu-color">
                                                 <span>Background</span>
-                                                <div>
-                                                    <input type="color" id="partyBgColor" class="colorInput" data-setting="settings.partyBgColor">
-                                                </div>
+                                                <div id="partyBgColor"></div>
                                             </div>
                                             <div class="chat-menu-color">
                                                 <span>Text</span>
-                                                <div>
-                                                    <input type="color" id="partyTextColor" class="colorInput" data-setting="settings.partyTextColor">
-                                                </div>
+                                                <div id="partyTextColor"></div>
                                             </div>
                                         </div>
                                     </section>
@@ -7002,7 +7012,6 @@
             this.app.settingsStore.set(path, value);
             if (input.classList.contains('keybinding')) input.value = value ?? '';
             if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
-            if (input.id === 'partyOpacity') this.updatePartySliderLabels();
             if (input.id === 'partyScale') this.updatePartySliderLabels();
             if (input.id === 'pingDuration') this.updatePartySliderLabels();
             this.root?.dispatchEvent(
@@ -7070,11 +7079,6 @@
             if (label) label.textContent = `${this.app.settingsStore.get('macros.feedSpeed')}ms`;
         }
         updatePartySliderLabels() {
-            const opacityLabel = this.root?.querySelector('#partyOpacityText');
-            if (opacityLabel) {
-                const v = this.app.settingsStore.get('settings.partyOpacity') ?? 1;
-                opacityLabel.textContent = `${Math.round(Number(v) * 100)}%`;
-            }
             const scaleLabel = this.root?.querySelector('#partyScaleText');
             if (scaleLabel) {
                 const v = this.app.settingsStore.get('settings.partyScale') ?? 1;
@@ -7175,6 +7179,8 @@
                 ['borderColor', 'game.borderColor', '#0000ff'],
                 ['foodColor', 'game.foodColor', '#ffffff'],
                 ['cellColor', 'game.cellColor', '#ffffff'],
+                ['partyBgColor', 'settings.partyBgColor', '#00000080'],
+                ['partyTextColor', 'settings.partyTextColor', '#fafafa'],
             ];
             for (const [id, path, fallback] of definitions) {
                 const container = this.root.querySelector(`#${id}`);
@@ -7189,15 +7195,16 @@
                     attributes: { type: 'button', 'aria-label': `Reset ${id}` },
                 });
                 const current = this.app.settingsStore.get(path);
-                input.value = /^#[0-9a-f]{6}$/i.test(current) ? current : fallback;
+                input.value = /^#[0-9a-f]{6}/i.test(current) ? current.slice(0, 7) : fallback.slice(0, 7);
                 container.replaceChildren(input, reset);
                 this.resources.listen(input, 'input', () => {
                     if (path.includes('gradient')) this.set('game.name.gradient.enabled', true);
                     this.set(path, input.value);
                 });
                 this.resources.listen(reset, 'click', () => {
-                    this.set(path, null);
-                    input.value = fallback;
+                    const next = id.startsWith('party') ? fallback : null;
+                    this.set(path, next);
+                    input.value = fallback.slice(0, 7);
                 });
             }
             for (const [id, path] of [
@@ -7260,6 +7267,22 @@
                     opacity: true,
                     fallback: '#ffffff',
                     reset: null,
+                    container: true,
+                },
+                {
+                    id: 'partyBgColor',
+                    path: 'settings.partyBgColor',
+                    opacity: true,
+                    fallback: '#00000080',
+                    reset: '#00000080',
+                    container: true,
+                },
+                {
+                    id: 'partyTextColor',
+                    path: 'settings.partyTextColor',
+                    opacity: false,
+                    fallback: '#fafafa',
+                    reset: '#fafafa',
                     container: true,
                 },
                 {
@@ -10527,6 +10550,14 @@
             this.applyChatPreferences();
             this.applyColors();
             this.updateInputAvailability();
+            this.resources.add(
+                this.app.settingsStore.onChange((path) => {
+                    if (!path || path.startsWith('chat.')) {
+                        this.applyChatPreferences();
+                        this.applyColors();
+                    }
+                })
+            );
             this.resources.add(this.app.backend.on('sigmally-user', () => this.updateInputAvailability()));
             this.resources.listen(main, 'click', () => this.setMode('main'));
             this.resources.listen(party, 'click', () => this.setMode('party'));
@@ -11263,6 +11294,9 @@
             );
             this.bindIdentityInputs();
             this.syncPublishTimers();
+            if (this.app.settings.settings.showPartyPanel && this.app.settings.settings.tag) {
+                this.ensurePanel();
+            }
         }
         syncPublishTimers() {
             const enabled = Boolean(this.app.settings.settings.tag);
@@ -11304,6 +11338,7 @@
             };
             if (tagInput instanceof HTMLInputElement) {
                 tagInput.value = urlTag ?? this.app.settings.settings.tag ?? '';
+                tagInput.classList.toggle('blur', Boolean(this.app.settings.chat?.blurTag));
                 updateTagText(tagInput.value);
                 this.resources.listen(tagInput, 'input', (event) => {
                     event.stopPropagation();
@@ -11319,9 +11354,10 @@
                 });
             }
             this.resources.add(
-                this.app.settingsStore.onChange((settings, changes) => {
-                    if (changes.settings?.tag !== void 0) {
-                        const value = settings.settings.tag || null;
+                this.app.settingsStore.onChange((path) => {
+                    const settings = this.app.settings.settings;
+                    if (!path || path === 'settings.tag') {
+                        const value = settings.tag || null;
                         if (tagInput instanceof HTMLInputElement && tagInput.value !== (value || '')) {
                             tagInput.value = value || '';
                         }
@@ -11334,27 +11370,28 @@
                         this.lastPositionKey = null;
                         this.syncPublishTimers();
                         this.members.clear();
-                        if (value && settings.settings.showPartyPanel) {
+                        if (value && settings.showPartyPanel) {
                             this.ensurePanel();
                             this.render();
                         } else {
                             this.closePanel();
                         }
                     }
-                    if (changes.settings?.showPartyPanel !== void 0) {
-                        if (settings.settings.showPartyPanel && settings.settings.tag) {
+                    if (!path || path === 'settings.showPartyPanel') {
+                        if (settings.showPartyPanel && settings.tag) {
+                            this.ensurePanel();
                             this.render();
                         } else {
                             this.closePanel();
                         }
                     }
-                    if (
-                        changes.settings?.partyOpacity !== void 0 ||
-                        changes.settings?.partyScale !== void 0 ||
-                        changes.settings?.partyBgColor !== void 0 ||
-                        changes.settings?.partyTextColor !== void 0
-                    ) {
+                    if (!path || path.startsWith('settings.party')) {
                         this.updateStyles();
+                    }
+                    if (!path || path === 'chat.blurTag') {
+                        if (tagInput instanceof HTMLInputElement) {
+                            tagInput.classList.toggle('blur', Boolean(this.app.settings.chat?.blurTag));
+                        }
                     }
                 })
             );
@@ -11363,11 +11400,12 @@
         updateStyles() {
             if (!this.panel) return;
             const settings = this.app.settings.settings;
-            this.panel.style.opacity = settings.partyOpacity ?? 1;
             this.panel.style.transform = `scale(${settings.partyScale ?? 1})`;
             this.panel.style.transformOrigin = 'top left';
             this.panel.style.backgroundColor = settings.partyBgColor ?? '#00000080';
             this.panel.style.color = settings.partyTextColor ?? '#fafafa';
+            this.panel.style.setProperty('--party-bg-color', settings.partyBgColor ?? '#00000080');
+            this.panel.style.setProperty('--party-text-color', settings.partyTextColor ?? '#fafafa');
         }
         closePanel() {
             this.members.clear();

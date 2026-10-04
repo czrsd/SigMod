@@ -471,6 +471,14 @@ class MenuController extends FeatureController {
         root.innerHTML = this.template();
         document.body.append(root);
         this.root = root;
+        const navStyle = createElement('style', {
+            text: `
+                .mod_nav_group.is-expanded > .mod_nav_children { max-height: 500px !important; }
+                .mod-category-panel { overflow-y: auto !important; }
+            `,
+        });
+        document.head.append(navStyle);
+        this.resources.add(() => navStyle.remove());
         const header = root.querySelector('#sigmod-header-image');
         if (header instanceof HTMLImageElement) header.src = ENDPOINTS.headerAnimation;
         const version = root.querySelector('#sigmod-version');
@@ -991,13 +999,6 @@ class MenuController extends FeatureController {
                                                 ${this.checkboxHtml('party-blurTag', 'chat.blurTag')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <span class="text">Panel opacity</span>
-                                                <div class="centerXY g-10" style="min-width: 170px;">
-                                                    <span class="mod_badge" id="partyOpacityText">100%</span>
-                                                    <input type="range" class="modSlider" id="partyOpacity" min="0.1" max="1" step="0.05" data-setting="settings.partyOpacity" data-number style="width: 120px;">
-                                                </div>
-                                            </div>
-                                            <div class="settings-item chat-menu-row">
                                                 <span class="text">Panel scale</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyScaleText">1.00x</span>
@@ -1018,15 +1019,11 @@ class MenuController extends FeatureController {
                                         <div class="chat-menu-colors">
                                             <div class="chat-menu-color">
                                                 <span>Background</span>
-                                                <div>
-                                                    <input type="color" id="partyBgColor" class="colorInput" data-setting="settings.partyBgColor">
-                                                </div>
+                                                <div id="partyBgColor"></div>
                                             </div>
                                             <div class="chat-menu-color">
                                                 <span>Text</span>
-                                                <div>
-                                                    <input type="color" id="partyTextColor" class="colorInput" data-setting="settings.partyTextColor">
-                                                </div>
+                                                <div id="partyTextColor"></div>
                                             </div>
                                         </div>
                                     </section>
@@ -3314,7 +3311,6 @@ class SettingsPorter {
         this.app.settingsStore.set(path, value);
         if (input.classList.contains('keybinding')) input.value = value ?? '';
         if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
-        if (input.id === 'partyOpacity') this.updatePartySliderLabels();
         if (input.id === 'partyScale') this.updatePartySliderLabels();
         if (input.id === 'pingDuration') this.updatePartySliderLabels();
         this.root?.dispatchEvent(
@@ -3382,11 +3378,6 @@ class SettingsPorter {
         if (label) label.textContent = `${this.app.settingsStore.get('macros.feedSpeed')}ms`;
     }
     updatePartySliderLabels() {
-        const opacityLabel = this.root?.querySelector('#partyOpacityText');
-        if (opacityLabel) {
-            const v = this.app.settingsStore.get('settings.partyOpacity') ?? 1;
-            opacityLabel.textContent = `${Math.round(Number(v) * 100)}%`;
-        }
         const scaleLabel = this.root?.querySelector('#partyScaleText');
         if (scaleLabel) {
             const v = this.app.settingsStore.get('settings.partyScale') ?? 1;
@@ -3490,6 +3481,8 @@ class GameSettingsController extends FeatureController {
             ['borderColor', 'game.borderColor', '#0000ff'],
             ['foodColor', 'game.foodColor', '#ffffff'],
             ['cellColor', 'game.cellColor', '#ffffff'],
+            ['partyBgColor', 'settings.partyBgColor', '#00000080'],
+            ['partyTextColor', 'settings.partyTextColor', '#fafafa'],
         ];
         for (const [id, path, fallback] of definitions) {
             const container = this.root.querySelector(`#${id}`);
@@ -3504,15 +3497,16 @@ class GameSettingsController extends FeatureController {
                 attributes: { type: 'button', 'aria-label': `Reset ${id}` },
             });
             const current = this.app.settingsStore.get(path);
-            input.value = /^#[0-9a-f]{6}$/i.test(current) ? current : fallback;
+            input.value = /^#[0-9a-f]{6}/i.test(current) ? current.slice(0, 7) : fallback.slice(0, 7);
             container.replaceChildren(input, reset);
             this.resources.listen(input, 'input', () => {
                 if (path.includes('gradient')) this.set('game.name.gradient.enabled', true);
                 this.set(path, input.value);
             });
             this.resources.listen(reset, 'click', () => {
-                this.set(path, null);
-                input.value = fallback;
+                const next = id.startsWith('party') ? fallback : null;
+                this.set(path, next);
+                input.value = fallback.slice(0, 7);
             });
         }
         for (const [id, path] of [
@@ -3575,6 +3569,22 @@ class GameSettingsController extends FeatureController {
                 opacity: true,
                 fallback: '#ffffff',
                 reset: null,
+                container: true,
+            },
+            {
+                id: 'partyBgColor',
+                path: 'settings.partyBgColor',
+                opacity: true,
+                fallback: '#00000080',
+                reset: '#00000080',
+                container: true,
+            },
+            {
+                id: 'partyTextColor',
+                path: 'settings.partyTextColor',
+                opacity: false,
+                fallback: '#fafafa',
+                reset: '#fafafa',
                 container: true,
             },
             {

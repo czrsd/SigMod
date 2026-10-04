@@ -241,7 +241,7 @@
 }
 
 .mod_nav_group.is-expanded > .mod_nav_children {
-    max-height: 300px;
+    max-height: 500px;
     margin-top: 4px;
     opacity: 1;
     transform: translateY(0);
@@ -2422,8 +2422,8 @@ button:focus {
 .party_panel {
     position: absolute;
     padding: 4px;
-    color: #fafafa;
-    background-color: rgba(0, 0, 0, 0.5);
+    color: var(--party-text-color, #fafafa);
+    background-color: var(--party-bg-color, rgba(0, 0, 0, 0.5));
     border-radius: 6px;
     z-index: 3;
 }
@@ -2437,7 +2437,7 @@ button:focus {
 }
 
 .tag-member-index {
-    color: #c6c6c6;
+    color: currentColor;
     font-size: 12px;
 }
 
@@ -2488,6 +2488,7 @@ button:focus {
 .blur {
     color: transparent !important;
     text-shadow: 0 0 6px hsl(0deg 0% 90% / 70%);
+    filter: blur(4px);
     transition: all 0.2s;
 }
 
@@ -4299,10 +4300,10 @@ html.sigmod-hide-ads #ad_bottom,
 html.sigmod-hide-ads .ad-block,
 html.sigmod-hide-ads .ad-block-left,
 html.sigmod-hide-ads .ad-block-right,
-html.sigmod-hide-ads [id^="div-gpt-ad"],
-html.sigmod-hide-ads iframe[id^="google_ads"],
-html.sigmod-hide-ads iframe[src*="doubleclick.net"],
-html.sigmod-hide-ads iframe[src*="googletagmanager.com"],
+html.sigmod-hide-ads [id^='div-gpt-ad'],
+html.sigmod-hide-ads iframe[id^='google_ads'],
+html.sigmod-hide-ads iframe[src*='doubleclick.net'],
+html.sigmod-hide-ads iframe[src*='googletagmanager.com'],
 html.sigmod-hide-ads ins.adsbygoogle,
 html.sigmod-hide-ads #modalfolks {
     display: none !important;
@@ -6660,8 +6661,14 @@ html.sigmod-hide-ads #modalfolks {
 }
 
 @keyframes ping-wheel-pop {
-    0% { transform: scale(0.7); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .ping-wheel-slice {
@@ -6694,7 +6701,7 @@ html.sigmod-hide-ads #modalfolks {
 }
 
 .ping-wheel-slice.active {
-    background: color-mix(in srgb, var(--ping-color) 25%, rgba(0,0,0,0.5));
+    background: color-mix(in srgb, var(--ping-color) 25%, rgba(0, 0, 0, 0.5));
     color: #fff;
     transform: translate(var(--tx), var(--ty)) scale(1.15) !important;
     z-index: 2;
@@ -6729,7 +6736,7 @@ html.sigmod-hide-ads #modalfolks {
     background: rgba(15, 15, 15, 0.85);
     border: 2px solid currentColor;
     border-radius: 50%;
-    filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
     animation: ping-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 .world-ping-badge {
@@ -6766,9 +6773,16 @@ html.sigmod-hide-ads #modalfolks {
     border-left: 14px solid currentColor;
 }
 @keyframes ping-bounce {
-    0% { transform: scale(0); opacity: 0; }
-    80% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    80% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
-
-

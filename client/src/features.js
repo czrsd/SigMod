@@ -526,6 +526,14 @@ class ChatController extends FeatureController {
         this.applyChatPreferences();
         this.applyColors();
         this.updateInputAvailability();
+        this.resources.add(
+            this.app.settingsStore.onChange((path) => {
+                if (!path || path.startsWith('chat.')) {
+                    this.applyChatPreferences();
+                    this.applyColors();
+                }
+            })
+        );
         this.resources.add(this.app.backend.on('sigmally-user', () => this.updateInputAvailability()));
         this.resources.listen(main, 'click', () => this.setMode('main'));
         this.resources.listen(party, 'click', () => this.setMode('party'));
@@ -1265,6 +1273,9 @@ class PartyController extends FeatureController {
         );
         this.bindIdentityInputs();
         this.syncPublishTimers();
+        if (this.app.settings.settings.showPartyPanel && this.app.settings.settings.tag) {
+            this.ensurePanel();
+        }
     }
     syncPublishTimers() {
         const enabled = Boolean(this.app.settings.settings.tag);
@@ -1306,6 +1317,7 @@ class PartyController extends FeatureController {
         };
         if (tagInput instanceof HTMLInputElement) {
             tagInput.value = urlTag ?? this.app.settings.settings.tag ?? '';
+            tagInput.classList.toggle('blur', Boolean(this.app.settings.chat?.blurTag));
             updateTagText(tagInput.value);
             this.resources.listen(tagInput, 'input', (event) => {
                 event.stopPropagation();
@@ -1322,9 +1334,10 @@ class PartyController extends FeatureController {
         }
 
         this.resources.add(
-            this.app.settingsStore.onChange((settings, changes) => {
-                if (changes.settings?.tag !== undefined) {
-                    const value = settings.settings.tag || null;
+            this.app.settingsStore.onChange((path) => {
+                const settings = this.app.settings.settings;
+                if (!path || path === 'settings.tag') {
+                    const value = settings.tag || null;
                     if (tagInput instanceof HTMLInputElement && tagInput.value !== (value || '')) {
                         tagInput.value = value || '';
                     }
@@ -1337,43 +1350,44 @@ class PartyController extends FeatureController {
                     this.lastPositionKey = null;
                     this.syncPublishTimers();
                     this.members.clear();
-                    if (value && settings.settings.showPartyPanel) {
+                    if (value && settings.showPartyPanel) {
                         this.ensurePanel();
                         this.render();
                     } else {
                         this.closePanel();
                     }
                 }
-                if (changes.settings?.showPartyPanel !== undefined) {
-                    if (settings.settings.showPartyPanel && settings.settings.tag) {
+                if (!path || path === 'settings.showPartyPanel') {
+                    if (settings.showPartyPanel && settings.tag) {
+                        this.ensurePanel();
                         this.render();
                     } else {
                         this.closePanel();
                     }
                 }
-                if (
-                    changes.settings?.partyOpacity !== undefined ||
-                    changes.settings?.partyScale !== undefined ||
-                    changes.settings?.partyBgColor !== undefined ||
-                    changes.settings?.partyTextColor !== undefined
-                ) {
+                if (!path || path.startsWith('settings.party')) {
                     this.updateStyles();
+                }
+                if (!path || path === 'chat.blurTag') {
+                    if (tagInput instanceof HTMLInputElement) {
+                        tagInput.classList.toggle('blur', Boolean(this.app.settings.chat?.blurTag));
+                    }
                 }
             })
         );
 
-        // Initial style apply
         this.updateStyles();
     }
 
     updateStyles() {
         if (!this.panel) return;
         const settings = this.app.settings.settings;
-        this.panel.style.opacity = settings.partyOpacity ?? 1;
         this.panel.style.transform = `scale(${settings.partyScale ?? 1})`;
         this.panel.style.transformOrigin = 'top left';
         this.panel.style.backgroundColor = settings.partyBgColor ?? '#00000080';
         this.panel.style.color = settings.partyTextColor ?? '#fafafa';
+        this.panel.style.setProperty('--party-bg-color', settings.partyBgColor ?? '#00000080');
+        this.panel.style.setProperty('--party-text-color', settings.partyTextColor ?? '#fafafa');
     }
     closePanel() {
         this.members.clear();

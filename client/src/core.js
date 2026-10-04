@@ -974,6 +974,9 @@ class SettingsStore {
         value.settings.savedNames = [...new Set(value.settings.savedNames.filter((name) => typeof name === 'string'))];
         value.settings.partyPanel.x = Number.isFinite(Number(value.settings.partyPanel.x)) ? Number(value.settings.partyPanel.x) : 0;
         value.settings.partyPanel.y = Number.isFinite(Number(value.settings.partyPanel.y)) ? Number(value.settings.partyPanel.y) : 0;
+        value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
+        value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : '#00000080';
+        value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
         value.settings.tag = normalizeNullableString(value.settings.tag);
         if (!['center', 'left', 'right', 'top', 'bottom'].includes(value.settings.deathScreenPos)) {
             value.settings.deathScreenPos = 'center';
@@ -1036,10 +1039,12 @@ class SettingsStore {
         for (const key of ['showFood', 'showLeaderboard', 'hideOwnName', 'botSkinsOnly', 'showOwnSkinWithBots']) {
             value.game[key] = normalizeBoolean(value.game[key], this.defaults.game[key]);
         }
-        for (const key of ['autoRespawn', 'playTimer', 'mouseTracker', 'autoClaimCoins', 'showChallenges', 'removeShopPopup']) {
+        for (const key of ['autoRespawn', 'playTimer', 'mouseTracker', 'autoClaimCoins', 'showChallenges', 'removeShopPopup', 'showPartyPanel', 'mergeTimer']) {
             value.settings[key] = normalizeBoolean(value.settings[key], this.defaults.settings[key]);
         }
-        value.chat.enabled = normalizeBoolean(value.chat.enabled, this.defaults.chat.enabled);
+        for (const key of ['enabled', 'blurTag']) {
+            value.chat[key] = normalizeBoolean(value.chat[key], this.defaults.chat[key]);
+        }
         return value;
     }
     get(path) {

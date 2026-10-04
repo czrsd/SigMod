@@ -7,7 +7,8 @@
         "dev": "nodemon",
         "start": "node ./dist",
         "lint": "npx eslint .",
-        "prettier": "npx prettier . --write"
+        "prettier": "npx prettier . --write",
+        "deploy": "ssh sigmod-deploy \"cd /var/www/sigmod_v5/server && git pull && npm ci && npm run build && sudo pm2 reload sigmod-v5\""
     },
     "keywords": [],
     "author": "",

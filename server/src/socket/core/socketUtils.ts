@@ -9,7 +9,7 @@ import { ObjectId } from 'mongodb';
 import useragent from 'express-useragent';
 
 const checkVersion = (version: string, socket: socket) => {
-    if (version === wsHandler.version) return;
+    if (version === wsHandler.version || version.startsWith('4.')) return;
 
     socket.send({
         type: 'update-available',

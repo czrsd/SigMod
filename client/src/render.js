@@ -7,6 +7,8 @@ class CanvasHooks extends FeatureController {
         const originalArc = prototype.arc;
         const originalFillText = prototype.fillText;
         const originalStrokeText = prototype.strokeText;
+        visual.originalFillText = originalFillText;
+        visual.originalStrokeText = originalStrokeText;
         const originalStroke = prototype.stroke;
         const originalDrawImage = prototype.drawImage;
         const leaderboardCanvases = new WeakSet();
@@ -21,6 +23,8 @@ class CanvasHooks extends FeatureController {
         const fillRect = function (x, y, width, height) {
             if (!isGameContext(this)) return originalFillRect.call(this, x, y, width, height);
             if (visual.isBackgroundRect(this.canvas, x, y, width, height)) {
+                cameraCaptureStage = 0;
+                inWorldSpace = false;
                 visual.onFrameStart();
                 this.fillStyle = visual.getMapFill(this);
             }
@@ -28,6 +32,9 @@ class CanvasHooks extends FeatureController {
         };
         let cameraCaptureStage = 0;
         let pendingScale = 1;
+        let inWorldSpace = false;
+        let currentCamX = 0;
+        let currentCamY = 0;
         const originalTranslate = prototype.translate;
         const originalScale = prototype.scale;
 
@@ -57,6 +64,9 @@ class CanvasHooks extends FeatureController {
                 } else if (cameraCaptureStage === 2) {
                     // Sigmally S(t) Step 3: t.translate(-s.x, -s.y)
                     cameraCaptureStage = 0;
+                    inWorldSpace = true;
+                    currentCamX = -x;
+                    currentCamY = -y;
                     visual.awaitingGridStroke = false;
                     const camX = -x;
                     const camY = -y;
@@ -68,6 +78,10 @@ class CanvasHooks extends FeatureController {
                     visual.maybeDrawProperGrid(this, cw, ch, scaleVal, camX, camY);
                     return res;
                 } else {
+                    if (inWorldSpace && Math.abs(x - currentCamX) < 1e-3 && Math.abs(y - currentCamY) < 1e-3) {
+                        inWorldSpace = false;
+                        visual.drawMergeTimers(this);
+                    }
                     cameraCaptureStage = 0;
                 }
             }
@@ -230,11 +244,18 @@ class CanvasHooks extends FeatureController {
         });
         this.resources.patch(prototype, 'restore', function () {
             paths.delete(this);
+            inWorldSpace = false;
             return originalRestore.call(this);
         });
     }
 }
 class VisualController extends FeatureController {
+    drawMergeTimers(context) {
+        const mergeTimer = this.app.features.get('mergeTimer');
+        if (mergeTimer && typeof mergeTimer.drawOnContext === 'function') {
+            mergeTimer.drawOnContext(context, this.originalFillText, this.originalStrokeText);
+        }
+    }
     constructor(app, name) {
         super(app, name);
         this.assets = {

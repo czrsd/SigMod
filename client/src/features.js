@@ -4593,28 +4593,9 @@ class MergeTimerController extends FeatureController {
     constructor(app, name) {
         super(app, name);
         this.trackedCells = new Map();
-        this.canvas = null;
-        this.frameId = null;
     }
 
     async mount() {
-        const canvas = createElement('canvas', {
-            className: 'sigmod-merge-timer-canvas',
-        });
-        canvas.style.position = 'fixed';
-        canvas.style.left = '0';
-        canvas.style.top = '0';
-        canvas.style.width = '100vw';
-        canvas.style.height = '100vh';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.zIndex = '20';
-        document.body.append(canvas);
-        this.canvas = canvas;
-
-        this.resources.add(() => canvas.remove());
-        this.resources.listen(window, 'resize', () => this.resize());
-        this.resize();
-
         const bindHost = (adapter) => {
             this.resources.child('merge-host-events')?.dispose();
             this.trackedCells.clear();
@@ -4625,271 +4606,146 @@ class MergeTimerController extends FeatureController {
                     if (!playing) this.trackedCells.clear();
                 })
             );
+            events.add(
+                adapter.on('owned-cell', ({ id, split }) => {
+                    if (split) {
+                        this.trackedCells.set(id, {
+                            id,
+                            splitAt: performance.now(),
+                            lastRadius: 0,
+                            readyNotified: false,
+                            fadeUntil: 0,
+                        });
+                    }
+                })
+            );
         };
 
         this.resources.add(this.app.host.on('change', (adapter) => bindHost(adapter)));
         if (this.app.host.adapter) bindHost(this.app.host.adapter);
-
-        const loop = () => {
-            this.draw();
-            this.frameId = requestAnimationFrame(loop);
-        };
-        this.frameId = requestAnimationFrame(loop);
-        this.resources.add(() => {
-            if (this.frameId) cancelAnimationFrame(this.frameId);
-        });
     }
 
-    resize() {
-        if (!this.canvas) return;
-        const ratio = devicePixelRatio || 1;
-        this.canvas.width = Math.round(window.innerWidth * ratio);
-        this.canvas.height = Math.round(window.innerHeight * ratio);
+    isSigFixActive() {
+        return Boolean(window.sigfix || this.app.host.adapter?.kind === 'sigfix' || document.getElementById('sf-canvas'));
     }
 
-    getCamera() {
-        const sigfixApi = window.sigfix ?? this.app.host.adapter?.api;
-        if (sigfixApi?.world) {
-            const selected = sigfixApi.world.selected;
-            const vision = sigfixApi.world.views?.get(selected);
-            if (vision && vision.camera && vision.camera.scale > 0) {
-                return {
-                    x: vision.camera.x,
-                    y: vision.camera.y,
-                    scale: (window.innerHeight / 1080) * vision.camera.scale,
-                };
-            }
-        }
-        if (this.app.state.camera && this.app.state.camera.scale > 0) {
-            const { scale, x, y, offsetX, offsetY, cw, ch } = this.app.state.camera;
-            const canvasW = cw > 0 ? cw : window.innerWidth;
-            const canvasH = ch > 0 ? ch : window.innerHeight;
-            return {
-                x: x !== undefined ? x : (canvasW / 2 - offsetX) / scale,
-                y: y !== undefined ? y : (canvasH / 2 - offsetY) / scale,
-                scale: scale * (window.innerWidth / canvasW),
-            };
-        }
-        const position = this.app.host.adapter?.snapshot().position;
-        if (position) {
-            return {
-                x: position.x,
-                y: position.y,
-                scale: (window.innerHeight / 1080) * 0.25,
-            };
-        }
-        return null;
-    }
-
-    getOwnedCells(adapter) {
-        const result = [];
-        if (!adapter) return result;
-        const now = performance.now();
-
-        const sigfixApi = window.sigfix ?? (adapter.kind === 'sigfix' ? adapter.api : null);
-        if (sigfixApi?.world) {
-            const selected = sigfixApi.world.selected;
-            const vision = sigfixApi.world.views?.get(selected);
-            const owned = vision?.owned;
-            if (owned && owned.size > 0) {
-                for (const id of owned) {
-                    const cell = sigfixApi.world.cells?.get(id);
-                    if (!cell || cell.deadAt) continue;
-
-                    let x = 0;
-                    let y = 0;
-                    let radius = 0;
-                    if (typeof sigfixApi.world.xyr === 'function') {
-                        const xyr = sigfixApi.world.xyr(cell, undefined, now);
-                        x = xyr.x;
-                        y = xyr.y;
-                        radius = xyr.r;
-                    } else {
-                        const pos = adapter.cellPosition ? adapter.cellPosition(selected, cell) : null;
-                        x = pos ? pos.x : Number(cell.tx ?? cell.x ?? 0);
-                        y = pos ? pos.y : Number(cell.ty ?? cell.y ?? 0);
-                        radius = Number(cell.s ?? cell.radius ?? cell.tr ?? cell.size ?? 0);
-                    }
-
-                    if (Number.isFinite(x) && Number.isFinite(y) && radius > 0) {
-                        result.push({
-                            id,
-                            x,
-                            y,
-                            radius,
-                        });
-                    }
-                }
-                return result;
-            }
-        }
-
-        const protocol = adapter.protocol ?? (adapter.kind === 'native' ? adapter.protocol : null);
-        if (protocol?.owned) {
-            for (const id of protocol.owned) {
-                const cell = protocol.cells.get(id);
-                if (!cell) continue;
-
-                let cx = cell.x;
-                let cy = cell.y;
-                let cr = cell.radius;
-                if (cell.updatedAt) {
-                    const elapsed = Math.max(0, Math.min(120, now - cell.updatedAt));
-                    const progress = elapsed / 120;
-                    cx = cell.ox + (cell.nx - cell.ox) * progress;
-                    cy = cell.oy + (cell.ny - cell.oy) * progress;
-                    cr = cell.os + (cell.ns - cell.os) * progress;
-                }
-
-                if (Number.isFinite(cx) && Number.isFinite(cy) && cr > 0) {
-                    result.push({
-                        id,
-                        x: cx,
-                        y: cy,
-                        radius: cr,
-                    });
-                }
-            }
-        }
-
-        return result;
-    }
-
-    draw() {
-        const canvas = this.canvas;
-        if (!canvas) return;
-        const ratio = devicePixelRatio || 1;
-        const targetW = Math.round(window.innerWidth * ratio);
-        const targetH = Math.round(window.innerHeight * ratio);
-        if (canvas.width !== targetW || canvas.height !== targetH) {
-            canvas.width = targetW;
-            canvas.height = targetH;
-        }
-
-        const context = canvas.getContext('2d');
-        if (!context) return;
-        context.clearRect(0, 0, canvas.width, canvas.height);
-
+    drawOnContext(context, fillTextFn, strokeTextFn) {
         if (!this.app.settings.settings.mergeTimer) return;
+        if (this.isSigFixActive()) return;
 
         const adapter = this.app.host.adapter;
-        if (!adapter) return;
+        if (!adapter || adapter.kind !== 'native') return;
 
-        const ownedCells = this.getOwnedCells(adapter);
-        if (ownedCells.length <= 1) {
-            if (this.trackedCells.size > 0 && ownedCells.length === 1) {
-                this.trackedCells.clear();
-            }
+        const protocol = adapter.protocol;
+        if (!protocol || !protocol.owned) return;
+
+        if (protocol.owned.size <= 1) {
+            if (this.trackedCells.size > 0) this.trackedCells.clear();
             return;
         }
 
-        const cam = this.getCamera();
-        if (!cam || !cam.scale) return;
-
         const now = performance.now();
-        const currentIds = new Set(ownedCells.map((c) => c.id));
-
         for (const id of this.trackedCells.keys()) {
-            if (!currentIds.has(id)) {
+            if (!protocol.owned.has(id)) {
                 this.trackedCells.delete(id);
             }
         }
 
-        for (const cell of ownedCells) {
-            let info = this.trackedCells.get(cell.id);
+        const showNames =
+            document.getElementById('showNames')?.checked ??
+            this.app.settings.game?.showNames ??
+            readLocalJson(STORAGE.gameSettings, {})?.showNames !== false;
+        const showMass = Boolean(
+            document.getElementById('showMass')?.checked ??
+            this.app.settings.game?.showMass ??
+            readLocalJson(STORAGE.gameSettings, {})?.showMass
+        );
+        const fontName = this.app.settings.game?.font || 'Ubuntu';
+        const fill = fillTextFn ?? context.fillText;
+        const stroke = strokeTextFn ?? context.strokeText;
+
+        for (const id of protocol.owned) {
+            const cell = protocol.cells.get(id);
+            if (!cell) continue;
+
+            let cx = cell.x;
+            let cy = cell.y;
+            let cr = cell.radius;
+            if (cell.updatedAt) {
+                const elapsed = Math.max(0, Math.min(120, now - cell.updatedAt));
+                const progress = elapsed / 120;
+                cx = cell.ox + (cell.nx - cell.ox) * progress;
+                cy = cell.oy + (cell.ny - cell.oy) * progress;
+                cr = cell.os + (cell.ns - cell.os) * progress;
+            }
+
+            if (!Number.isFinite(cx) || !Number.isFinite(cy) || cr <= 0) continue;
+
+            let info = this.trackedCells.get(id);
             if (!info) {
                 info = {
-                    id: cell.id,
-                    birthTime: now,
-                    lastRadius: cell.radius,
+                    id,
+                    splitAt: now,
+                    lastRadius: cr,
                     readyNotified: false,
                     fadeUntil: 0,
                 };
-                this.trackedCells.set(cell.id, info);
-            } else if (info.lastRadius && cell.radius < info.lastRadius * 0.8) {
-                info.birthTime = now;
+                this.trackedCells.set(id, info);
+            } else if (info.lastRadius && cr < info.lastRadius * 0.82) {
+                info.splitAt = now;
                 info.readyNotified = false;
                 info.fadeUntil = 0;
             }
-            info.lastRadius = cell.radius;
-        }
+            info.lastRadius = cr;
 
-        context.save();
-        context.scale(ratio, ratio);
-
-        const hw = window.innerWidth / 2;
-        const hh = window.innerHeight / 2;
-        const showMass = Boolean(
-            document.getElementById('showMass')?.checked ?? readLocalJson(STORAGE.gameSettings, {})?.showMass ?? false
-        );
-
-        for (const cell of ownedCells) {
-            const info = this.trackedCells.get(cell.id);
-            if (!info) continue;
-
-            const cooldownMs = (30 + 0.02 * Math.max(0, cell.radius)) * 1000;
-            const ageMs = now - info.birthTime;
-            const timeLeft = Math.max(0, (cooldownMs - ageMs) / 1000);
-
-            if (timeLeft <= 0) {
-                if (!info.readyNotified) {
-                    info.readyNotified = true;
-                    info.fadeUntil = now + 1500;
-                }
-                if (now > info.fadeUntil) {
-                    continue;
-                }
-            }
-
-            const sx = (cell.x - cam.x) * cam.scale + hw;
-            const sy = (cell.y - cam.y) * cam.scale + hh;
-            const sr = cell.radius * cam.scale;
-
-            if (sx + sr < 0 || sx - sr > window.innerWidth || sy + sr < 0 || sy - sr > window.innerHeight) {
-                continue;
-            }
+            const cooldownMs = (30 + 0.02 * Math.max(0, cr)) * 1000;
+            const elapsedMs = now - info.splitAt;
+            const remaining = Math.max(0, (cooldownMs - elapsedMs) / 1000);
 
             let text;
             let fillStyle;
             let alpha = 1;
 
-            if (timeLeft > 0) {
-                if (timeLeft < 5.0) {
-                    text = `${timeLeft.toFixed(1)}s`;
+            if (remaining > 0) {
+                if (remaining < 5.0) {
+                    text = `${remaining.toFixed(1)}s`;
                     fillStyle = '#ffcc00';
                 } else {
-                    text = `${Math.ceil(timeLeft)}s`;
+                    text = `${Math.ceil(remaining)}s`;
                     fillStyle = '#ffffff';
                 }
             } else {
+                if (!info.readyNotified) {
+                    info.readyNotified = true;
+                    info.fadeUntil = now + 1500;
+                }
+                if (now > info.fadeUntil) continue;
                 text = 'READY';
                 fillStyle = '#00ff88';
                 alpha = Math.max(0, (info.fadeUntil - now) / 1500);
             }
 
-            context.globalAlpha = alpha;
-            const fontSize = Math.max(10, Math.min(22, Math.round(sr * 0.16)));
-            context.font = `600 ${fontSize}px ${this.app.settings.game.font || 'Ubuntu'}, sans-serif`;
+            const fontSize = Math.max(14, Math.round(cr * 0.18));
+            const timerY = cy + (showNames && showMass ? cr * 0.44 : showNames || showMass ? cr * 0.32 : 0);
+
+            context.save();
             context.textAlign = 'center';
             context.textBaseline = 'middle';
-
-            const yOffset = showMass ? sr * 0.48 : sr * 0.32;
-            const timerY = sy + yOffset;
-
-            context.lineWidth = Math.max(2, fontSize * 0.2);
+            context.font = `500 ${fontSize}px ${fontName}, sans-serif`;
+            context.globalAlpha = alpha;
+            context.shadowBlur = 0;
+            context.shadowColor = 'transparent';
+            context.lineWidth = Math.max(2, fontSize * 0.16);
             context.strokeStyle = '#000000';
-            context.strokeText(text, sx, timerY);
-
             context.fillStyle = fillStyle;
-            context.fillText(text, sx, timerY);
+            stroke.call(context, text, cx, timerY);
+            fill.call(context, text, cx, timerY);
+            context.restore();
         }
-
-        context.restore();
     }
 
     destroy() {
         this.trackedCells.clear();
-        this.canvas = null;
         super.destroy();
     }
 }

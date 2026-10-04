@@ -42,7 +42,7 @@ const server = app.listen(PORT, () => logger.info(`Server running on port ${PORT
 setupExitHandlers(server, wsServer);
 
 server.on('upgrade', (req, socket, head) => {
-    if (req.url === '/ws') {
+    if (req.url === '/ws' || req.url === '/ws/v5' || req.url?.startsWith('/ws')) {
         wsServer.handleUpgrade(req, socket, head, (ws) => wsServer.emit('connection', ws, req));
     }
 });

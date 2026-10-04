@@ -81,8 +81,8 @@
         productionLocaleUrl: 'https://czrsd.com/static/sigmod/v11/locales',
         apiUrl: 'http://localhost:3001/api/v5',
         productionApiUrl: 'https://mod.czrsd.com/api/v5',
-        socketUrl: 'ws://localhost:3001/ws',
-        productionSocketUrl: 'wss://mod.czrsd.com/ws',
+        socketUrl: 'ws://localhost:3001/ws/v5',
+        productionSocketUrl: 'wss://mod.czrsd.com/ws/v5',
     };
     const BUILD = {
         version: 11,

@@ -33,8 +33,6 @@ class CanvasHooks extends FeatureController {
         let cameraCaptureStage = 0;
         let pendingScale = 1;
         let inWorldSpace = false;
-        let currentCamX = 0;
-        let currentCamY = 0;
         const originalTranslate = prototype.translate;
         const originalScale = prototype.scale;
 
@@ -60,13 +58,15 @@ class CanvasHooks extends FeatureController {
                 const ch = this.canvas.height;
                 // Sigmally S(t) Step 1: t.translate(e.width / 2, e.height / 2)
                 if (Math.abs(x - cw / 2) < 2 && Math.abs(y - ch / 2) < 2) {
+                    if (inWorldSpace) {
+                        inWorldSpace = false;
+                        visual.drawMergeTimers(this);
+                    }
                     cameraCaptureStage = 1;
                 } else if (cameraCaptureStage === 2) {
                     // Sigmally S(t) Step 3: t.translate(-s.x, -s.y)
                     cameraCaptureStage = 0;
                     inWorldSpace = true;
-                    currentCamX = -x;
-                    currentCamY = -y;
                     visual.awaitingGridStroke = false;
                     const camX = -x;
                     const camY = -y;
@@ -78,7 +78,7 @@ class CanvasHooks extends FeatureController {
                     visual.maybeDrawProperGrid(this, cw, ch, scaleVal, camX, camY);
                     return res;
                 } else {
-                    if (inWorldSpace && Math.abs(x - currentCamX) < 1e-3 && Math.abs(y - currentCamY) < 1e-3) {
+                    if (inWorldSpace) {
                         inWorldSpace = false;
                         visual.drawMergeTimers(this);
                     }
@@ -244,7 +244,6 @@ class CanvasHooks extends FeatureController {
         });
         this.resources.patch(prototype, 'restore', function () {
             paths.delete(this);
-            inWorldSpace = false;
             return originalRestore.call(this);
         });
     }

@@ -4637,16 +4637,28 @@ class MergeTimerController extends FeatureController {
         if (!adapter || adapter.kind !== 'native') return;
 
         const protocol = adapter.protocol;
-        if (!protocol || !protocol.owned) return;
+        if (!protocol || !protocol.cells) return;
 
-        if (protocol.owned.size <= 1) {
+        const nickname = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
+        const playedName = nickname instanceof HTMLInputElement ? nickname.value.trim() : '';
+
+        const myCellIds = new Set(protocol.owned || []);
+        if (playedName) {
+            for (const [id, cell] of protocol.cells) {
+                if (cell && cell.name === playedName && !cell.pellet && !cell.eject) {
+                    myCellIds.add(id);
+                }
+            }
+        }
+
+        if (myCellIds.size <= 1) {
             if (this.trackedCells.size > 0) this.trackedCells.clear();
             return;
         }
 
         const now = performance.now();
         for (const id of this.trackedCells.keys()) {
-            if (!protocol.owned.has(id)) {
+            if (!myCellIds.has(id)) {
                 this.trackedCells.delete(id);
             }
         }
@@ -4664,7 +4676,7 @@ class MergeTimerController extends FeatureController {
         const fill = fillTextFn ?? context.fillText;
         const stroke = strokeTextFn ?? context.strokeText;
 
-        for (const id of protocol.owned) {
+        for (const id of myCellIds) {
             const cell = protocol.cells.get(id);
             if (!cell) continue;
 

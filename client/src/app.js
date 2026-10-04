@@ -18,6 +18,9 @@ class SigModApp {
         this.started = false;
         this.destroyed = false;
         this.installNativeChatVisibility();
+        this.installAdBlockingStyles();
+        this.adProtection = adTrackerProtector;
+        this.adProtection.bindApp(this);
         this.resources.listen(document, 'sigmod:settingchange', (event) => {
             if (event.detail?.path === 'chat.enabled') void this.syncChatFeature(Boolean(event.detail.value));
         });
@@ -29,6 +32,16 @@ class SigModApp {
             },
         });
         style.textContent = `${SELECTORS.chatBlock} { display: none !important; visibility: hidden !important; pointer-events: none !important; }`;
+        (document.head || document.documentElement).append(style);
+        this.resources.add(() => style.remove());
+    }
+    installAdBlockingStyles() {
+        const style = createElement('style', {
+            attributes: {
+                'data-sigmod-ad-blocker': BUILD.release,
+            },
+        });
+        style.textContent = `${SELECTORS.adContainers} { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; }`;
         (document.head || document.documentElement).append(style);
         this.resources.add(() => style.remove());
     }
@@ -168,6 +181,10 @@ class SigModApp {
             debug: {
                 resources: () => app.resources.snapshot(),
                 destroy: () => app.destroy(),
+            },
+            privacy: {
+                getStatus: () => app.adProtection?.getStatus() ?? { enabled: false },
+                getStats: () => app.adProtection?.stats ?? { totalBlocked: 0 },
             },
         };
         Object.defineProperties(sigmodFacade, {

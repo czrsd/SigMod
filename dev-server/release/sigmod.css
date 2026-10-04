@@ -4302,8 +4302,18 @@ html.sigmod-hide-ads #left_ad_block,
 html.sigmod-hide-ads #ad_bottom,
 html.sigmod-hide-ads .ad-block,
 html.sigmod-hide-ads .ad-block-left,
-html.sigmod-hide-ads .ad-block-right {
+html.sigmod-hide-ads .ad-block-right,
+html.sigmod-hide-ads [id^="div-gpt-ad"],
+html.sigmod-hide-ads iframe[id^="google_ads"],
+html.sigmod-hide-ads iframe[src*="doubleclick.net"],
+html.sigmod-hide-ads iframe[src*="googletagmanager.com"],
+html.sigmod-hide-ads ins.adsbygoogle,
+html.sigmod-hide-ads #modalfolks {
     display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 /* Refined navigation sub-pages */
@@ -5855,7 +5865,7 @@ html.sigmod-hide-ads .ad-block-right {
 .ping-wheel-container {
     position: fixed;
     pointer-events: none;
-    z-index: 10000;
+    z-index: 2147483647;
     width: 200px;
     height: 200px;
     margin-left: -100px;
@@ -5907,7 +5917,7 @@ html.sigmod-hide-ads .ad-block-right {
     top: 0;
     left: 0;
     pointer-events: none;
-    z-index: 50;
+    z-index: 2147483640;
     width: 36px;
     height: 36px;
     margin-left: -18px;

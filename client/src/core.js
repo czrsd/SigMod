@@ -1255,6 +1255,569 @@ class InputOwnership extends Emitter {
         return false;
     }
 }
+
+class AdTrackerProtector {
+    constructor(logger = null) {
+        this.logger = logger;
+        this.resources = new Disposables('ad-tracker-protector', logger);
+        this.enabled = this.resolveInitialSetting();
+        this.stats = {
+            scripts: 0,
+            iframes: 0,
+            networkRequests: 0,
+            totalBlocked: 0,
+        };
+        this.app = null;
+        this.initialized = false;
+    }
+
+    resolveInitialSetting() {
+        try {
+            const raw = localStorage.getItem(STORAGE.settings);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed?.themes?.hideAds === false) return false;
+            }
+        } catch {}
+        return true;
+    }
+
+    initializeEarly() {
+        if (this.initialized) return;
+        this.initialized = true;
+
+        this.installGlobalFlags();
+        this.installApiStubs();
+        this.installDomGuard();
+        this.installNetworkGuard();
+        this.installAntiAdblockShield();
+        this.installDomSanitizer();
+    }
+
+    installGlobalFlags() {
+        const defineFlag = (name) => {
+            try {
+                Object.defineProperty(window, name, {
+                    value: true,
+                    writable: false,
+                    configurable: true,
+                    enumerable: true,
+                });
+            } catch {
+                window[name] = true;
+            }
+        };
+
+        defineFlag('gtmDidInit');
+        defineFlag('anlDidInit');
+        defineFlag('adsDidInit');
+    }
+
+    installApiStubs() {
+        const noop = () => {};
+        const createDummySlot = () => {
+            const slot = {
+                addService: () => slot,
+                clearCategoryExclusions: () => slot,
+                clearTargeting: () => slot,
+                defineSizeMapping: () => slot,
+                get: () => null,
+                getAttributeKeys: () => [],
+                getCategoryExclusions: () => [],
+                getResponseInformation: () => null,
+                getSlotElementId: () => '',
+                getTargeting: () => [],
+                getTargetingKeys: () => [],
+                set: () => slot,
+                setCategoryExclusion: () => slot,
+                setClickUrl: () => slot,
+                setCollapseEmptyDiv: () => slot,
+                setForceSafeFrame: () => slot,
+                setSafeFrameConfig: () => slot,
+                setTargeting: () => slot,
+            };
+            return slot;
+        };
+
+        const dummyPubAds = {
+            addEventListener: noop,
+            clear: noop,
+            clearCategoryExclusions: noop,
+            clearTagging: noop,
+            clearTargeting: noop,
+            collapseEmptyDivs: noop,
+            disableInitialLoad: noop,
+            display: noop,
+            enableAsyncRendering: noop,
+            enableLazyLoad: noop,
+            enableSingleRequest: noop,
+            enableSyncRendering: noop,
+            enableVideoAds: noop,
+            get: () => null,
+            getAttributeKeys: () => [],
+            getTargeting: () => [],
+            getTargetingKeys: () => [],
+            refresh: noop,
+            set: noop,
+            setCategoryExclusion: noop,
+            setCentering: noop,
+            setCookieOptions: noop,
+            setForceSafeFrame: noop,
+            setLocation: noop,
+            setPrivacySettings: noop,
+            setPublisherProvidedId: noop,
+            setRequestNonPersonalizedAds: noop,
+            setSafeFrameConfig: noop,
+            setTagForChildDirectedTreatment: noop,
+            setTagForUnderAgeOfConsent: noop,
+            setTargeting: noop,
+            setVideoContent: noop,
+            updateCorrelator: noop,
+        };
+
+        const dummyGoogletag = {
+            apiReady: true,
+            cmd: {
+                push: (fn) => {
+                    if (typeof fn === 'function') {
+                        try {
+                            fn();
+                        } catch {}
+                    }
+                    return 1;
+                },
+            },
+            defineSlot: () => createDummySlot(),
+            defineOutOfPageSlot: () => createDummySlot(),
+            destroySlots: noop,
+            disablePublisherConsole: noop,
+            display: noop,
+            enableServices: noop,
+            getVersion: () => '1.0.0-sigmod-stub',
+            openConsole: noop,
+            pubads: () => dummyPubAds,
+            pubadsReady: true,
+            setAdIframeTitle: noop,
+            sizeMapping: () => ({ addSize: () => createDummySlot(), build: () => [] }),
+        };
+
+        if (!window.googletag || !window.googletag.apiReady) {
+            window.googletag = dummyGoogletag;
+        }
+
+        for (let i = 1; i <= 6; i += 1) {
+            const slotName = `adSlot${i}`;
+            if (!window[slotName]) {
+                window[slotName] = createDummySlot();
+            }
+        }
+
+        if (typeof window.gtag !== 'function') {
+            window.gtag = noop;
+        }
+
+        if (!Array.isArray(window.dataLayer)) {
+            window.dataLayer = [];
+        }
+    }
+
+    installDomGuard() {
+        const protector = this;
+
+        const isBlockedNode = (node) => {
+            if (!protector.enabled || !(node instanceof Element)) return false;
+            const tag = node.tagName?.toLowerCase();
+            if (tag === 'script') {
+                const src = node.getAttribute('src') || node.src || '';
+                return isBlockedAdOrTrackerUrl(src);
+            }
+            if (tag === 'iframe' || tag === 'embed' || tag === 'object') {
+                const src = node.getAttribute('src') || node.src || node.getAttribute('data') || '';
+                return isBlockedAdOrTrackerUrl(src);
+            }
+            if (tag === 'link') {
+                const href = node.getAttribute('href') || node.href || '';
+                return isBlockedAdOrTrackerUrl(href);
+            }
+            return false;
+        };
+
+        const disarmNode = (node) => {
+            if (!(node instanceof Element)) return;
+            const tag = node.tagName?.toLowerCase();
+            try {
+                if (tag === 'script') {
+                    protector.stats.scripts += 1;
+                    protector.stats.totalBlocked += 1;
+                    node.type = 'text/plain';
+                    node.src = '';
+                    node.removeAttribute('src');
+                    if (typeof node.onload === 'function') {
+                        const handler = node.onload;
+                        queueMicrotask(() => {
+                            try {
+                                handler.call(node, new Event('load'));
+                            } catch {}
+                        });
+                    }
+                } else if (tag === 'iframe' || tag === 'embed' || tag === 'object') {
+                    protector.stats.iframes += 1;
+                    protector.stats.totalBlocked += 1;
+                    node.src = 'about:blank';
+                    node.removeAttribute('src');
+                }
+            } catch {}
+        };
+
+        const sanitizeTree = (node) => {
+            if (!protector.enabled || !(node instanceof Element)) return;
+            if (isBlockedNode(node)) {
+                disarmNode(node);
+                return true;
+            }
+            const children = node.querySelectorAll ? node.querySelectorAll('script, iframe, embed, object') : [];
+            for (let i = 0; i < children.length; i += 1) {
+                const child = children[i];
+                if (isBlockedNode(child)) {
+                    disarmNode(child);
+                    child.remove();
+                }
+            }
+            return false;
+        };
+
+        const originalAppendChild = Node.prototype.appendChild;
+        Node.prototype.appendChild = function (child) {
+            if (child instanceof Node) {
+                if (isBlockedNode(child)) {
+                    disarmNode(child);
+                    return child;
+                }
+                sanitizeTree(child);
+            }
+            return originalAppendChild.call(this, child);
+        };
+        this.resources.add(() => {
+            Node.prototype.appendChild = originalAppendChild;
+        });
+
+        const originalInsertBefore = Node.prototype.insertBefore;
+        Node.prototype.insertBefore = function (newNode, referenceNode) {
+            if (newNode instanceof Node) {
+                if (isBlockedNode(newNode)) {
+                    disarmNode(newNode);
+                    return newNode;
+                }
+                sanitizeTree(newNode);
+            }
+            return originalInsertBefore.call(this, newNode, referenceNode);
+        };
+        this.resources.add(() => {
+            Node.prototype.insertBefore = originalInsertBefore;
+        });
+
+        const originalReplaceChild = Node.prototype.replaceChild;
+        Node.prototype.replaceChild = function (newChild, oldChild) {
+            if (newChild instanceof Node) {
+                if (isBlockedNode(newChild)) {
+                    disarmNode(newChild);
+                    return newChild;
+                }
+                sanitizeTree(newChild);
+            }
+            return originalReplaceChild.call(this, newChild, oldChild);
+        };
+        this.resources.add(() => {
+            Node.prototype.replaceChild = originalReplaceChild;
+        });
+
+        const originalAppend = Element.prototype.append;
+        Element.prototype.append = function (...nodes) {
+            const filtered = nodes.filter((node) => {
+                if (node instanceof Node) {
+                    if (isBlockedNode(node)) {
+                        disarmNode(node);
+                        return false;
+                    }
+                    sanitizeTree(node);
+                }
+                return true;
+            });
+            return originalAppend.apply(this, filtered);
+        };
+        this.resources.add(() => {
+            Element.prototype.append = originalAppend;
+        });
+
+        const originalPrepend = Element.prototype.prepend;
+        Element.prototype.prepend = function (...nodes) {
+            const filtered = nodes.filter((node) => {
+                if (node instanceof Node) {
+                    if (isBlockedNode(node)) {
+                        disarmNode(node);
+                        return false;
+                    }
+                    sanitizeTree(node);
+                }
+                return true;
+            });
+            return originalPrepend.apply(this, filtered);
+        };
+        this.resources.add(() => {
+            Element.prototype.prepend = originalPrepend;
+        });
+
+        const scriptDescriptor = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+        if (scriptDescriptor && scriptDescriptor.set) {
+            const originalSet = scriptDescriptor.set;
+            Object.defineProperty(HTMLScriptElement.prototype, 'src', {
+                set(value) {
+                    if (protector.enabled && isBlockedAdOrTrackerUrl(String(value))) {
+                        disarmNode(this);
+                        return;
+                    }
+                    return originalSet.call(this, value);
+                },
+                get: scriptDescriptor.get,
+                configurable: true,
+                enumerable: true,
+            });
+            this.resources.add(() => {
+                Object.defineProperty(HTMLScriptElement.prototype, 'src', scriptDescriptor);
+            });
+        }
+    }
+
+    installNetworkGuard() {
+        const protector = this;
+
+        if (typeof navigator.sendBeacon === 'function') {
+            const originalSendBeacon = navigator.sendBeacon.bind(navigator);
+            navigator.sendBeacon = function (url, data) {
+                const targetUrl = typeof url === 'string' ? url : url?.href || '';
+                if (protector.enabled && isBlockedAdOrTrackerUrl(targetUrl)) {
+                    protector.stats.networkRequests += 1;
+                    protector.stats.totalBlocked += 1;
+                    return true;
+                }
+                return originalSendBeacon(url, data);
+            };
+            this.resources.add(() => {
+                navigator.sendBeacon = originalSendBeacon;
+            });
+        }
+
+        if (typeof XMLHttpRequest !== 'undefined') {
+            const originalOpen = XMLHttpRequest.prototype.open;
+            const originalSend = XMLHttpRequest.prototype.send;
+
+            XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+                const targetUrl = typeof url === 'string' ? url : String(url || '');
+                this.__sigmod_blocked = protector.enabled && isBlockedAdOrTrackerUrl(targetUrl);
+                if (this.__sigmod_blocked) {
+                    this.__sigmod_url = targetUrl;
+                    protector.stats.networkRequests += 1;
+                    protector.stats.totalBlocked += 1;
+                    return;
+                }
+                return originalOpen.call(this, method, url, ...rest);
+            };
+
+            XMLHttpRequest.prototype.send = function (body) {
+                if (this.__sigmod_blocked) {
+                    Object.defineProperty(this, 'readyState', { value: 4, configurable: true });
+                    Object.defineProperty(this, 'status', { value: 204, configurable: true });
+                    Object.defineProperty(this, 'statusText', { value: 'No Content', configurable: true });
+                    Object.defineProperty(this, 'responseText', { value: '', configurable: true });
+                    queueMicrotask(() => {
+                        this.dispatchEvent(new Event('readystatechange'));
+                        this.dispatchEvent(new Event('load'));
+                        this.dispatchEvent(new Event('loadend'));
+                    });
+                    return;
+                }
+                return originalSend.call(this, body);
+            };
+
+            this.resources.add(() => {
+                XMLHttpRequest.prototype.open = originalOpen;
+                XMLHttpRequest.prototype.send = originalSend;
+            });
+        }
+
+        if (typeof window.fetch === 'function') {
+            const originalFetch = window.fetch;
+            const fetchWrapper = function (input, init) {
+                const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url || '';
+                if (protector.enabled && isBlockedAdOrTrackerUrl(url)) {
+                    protector.stats.networkRequests += 1;
+                    protector.stats.totalBlocked += 1;
+                    return Promise.resolve(
+                        new Response('{}', {
+                            status: 200,
+                            statusText: 'OK',
+                            headers: { 'Content-Type': 'application/json' },
+                        })
+                    );
+                }
+                return originalFetch.call(this, input, init);
+            };
+            window.fetch = fetchWrapper;
+            this.resources.add(() => {
+                if (window.fetch === fetchWrapper) window.fetch = originalFetch;
+            });
+        }
+    }
+
+    installAntiAdblockShield() {
+        const protector = this;
+
+        const neutralizeModalfolks = (element) => {
+            if (!(element instanceof HTMLElement) || element.id !== 'modalfolks') return;
+            element.style.display = 'none';
+            element.classList.add('hide');
+            element.show = () => {
+                element.style.display = 'none';
+                element.classList.add('hide');
+            };
+        };
+
+        const existingModal = document.querySelector('#modalfolks');
+        if (existingModal) neutralizeModalfolks(existingModal);
+
+        let rawHourly = Element.prototype.hourly;
+        Object.defineProperty(Element.prototype, 'hourly', {
+            configurable: true,
+            enumerable: true,
+            get() {
+                return rawHourly;
+            },
+            set(fn) {
+                if (typeof fn === 'function') {
+                    rawHourly = function (...args) {
+                        if (!protector.enabled) return fn.apply(this, args);
+                        const adSelectors = [
+                            '#ad_bottom',
+                            '#div-gpt-ad-1622841396282-0',
+                            '#div-gpt-ad-1622632389350-0',
+                            '#div-gpt-ad-1622841482467-0',
+                        ];
+                        const adElements = adSelectors.map((s) => document.querySelector(s)).filter((el) => el instanceof HTMLElement);
+                        const prevStyles = adElements.map((el) => ({
+                            element: el,
+                            value: el.style.getPropertyValue('display'),
+                            priority: el.style.getPropertyPriority('display'),
+                        }));
+                        const markers = [...document.querySelectorAll('.settings-menu-holder')];
+                        for (let i = 0; i < markers.length; i += 1) markers[i].classList.remove('settings-menu-holder');
+                        for (let i = 0; i < adElements.length; i += 1) adElements[i].style.setProperty('display', 'block', 'important');
+                        try {
+                            return fn.apply(this, args);
+                        } finally {
+                            for (let i = 0; i < prevStyles.length; i += 1) {
+                                const { element, value, priority } = prevStyles[i];
+                                if (value) element.style.setProperty('display', value, priority);
+                                else element.style.removeProperty('display');
+                            }
+                            for (let i = 0; i < markers.length; i += 1) markers[i].classList.add('settings-menu-holder');
+                        }
+                    };
+                } else {
+                    rawHourly = fn;
+                }
+            },
+        });
+    }
+
+    installDomSanitizer() {
+        const protector = this;
+
+        this.cleanupAdDom();
+
+        const observer = new MutationObserver((mutations) => {
+            if (!protector.enabled) return;
+            for (let m = 0; m < mutations.length; m += 1) {
+                const added = mutations[m].addedNodes;
+                for (let i = 0; i < added.length; i += 1) {
+                    const node = added[i];
+                    if (node instanceof Element) {
+                        if (node.id === 'modalfolks') {
+                            node.style.display = 'none';
+                            node.classList.add('hide');
+                            node.show = () => {
+                                node.style.display = 'none';
+                                node.classList.add('hide');
+                            };
+                        }
+                        if (
+                            node.matches?.(
+                                'script[src*="googletagmanager"], script[src*="doubleclick"], script[src*="google-analytics"], iframe[src*="googletagmanager"], iframe[src*="doubleclick"], iframe[id^="google_ads"], ins.adsbygoogle'
+                            )
+                        ) {
+                            node.remove();
+                        }
+                    }
+                }
+            }
+        });
+
+        if (document.documentElement) {
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+            this.resources.add(() => observer.disconnect());
+        }
+    }
+
+    cleanupAdDom() {
+        if (!this.enabled || typeof document === 'undefined') return;
+        const selector =
+            '#left_ad_block, #ad_bottom, .ad-block, .ad-block-left, .ad-block-right, [id^="div-gpt-ad"], iframe[id^="google_ads"], iframe[src*="doubleclick.net"], iframe[src*="googletagmanager.com"], ins.adsbygoogle';
+        const elements = document.querySelectorAll(selector);
+        for (let i = 0; i < elements.length; i += 1) {
+            const el = elements[i];
+            el.replaceChildren();
+            el.style.setProperty('display', 'none', 'important');
+        }
+        const noscripts = document.querySelectorAll('noscript');
+        for (let i = 0; i < noscripts.length; i += 1) {
+            if (noscripts[i].innerHTML?.includes('googletagmanager')) {
+                noscripts[i].remove();
+            }
+        }
+    }
+
+    bindApp(app) {
+        this.app = app;
+        const enabled = app.settings?.themes?.hideAds !== false;
+        this.setEnabled(enabled);
+
+        app.resources.listen(document, 'sigmod:settingchange', (event) => {
+            if (event.detail?.path === 'themes.hideAds') {
+                this.setEnabled(Boolean(event.detail.value));
+            }
+        });
+
+        app.resources.add(() => {
+            this.resources.dispose();
+        });
+    }
+
+    setEnabled(enabled) {
+        this.enabled = Boolean(enabled);
+        if (this.enabled) {
+            this.cleanupAdDom();
+        }
+    }
+
+    getStatus() {
+        return {
+            enabled: this.enabled,
+            stats: { ...this.stats },
+        };
+    }
+}
+
+const adTrackerProtector = new AdTrackerProtector();
+adTrackerProtector.initializeEarly();
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~ Host integration: packet protocol, native capture and SigFix adapter              ~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

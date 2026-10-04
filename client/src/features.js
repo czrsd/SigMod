@@ -7,6 +7,18 @@ class AuthController extends FeatureController {
         const controller = this;
         const originalFetch = window.fetch;
         const fetchFacade = function (...args) {
+            const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0]?.url || '';
+            if (controller.app.adProtection?.enabled && isBlockedAdOrTrackerUrl(url)) {
+                controller.app.adProtection.stats.networkRequests += 1;
+                controller.app.adProtection.stats.totalBlocked += 1;
+                return Promise.resolve(
+                    new Response('{}', {
+                        status: 200,
+                        statusText: 'OK',
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+                );
+            }
             return originalFetch.apply(this, args).then((response) => {
                 controller.inspectResponse(args[0], response);
                 return response;
@@ -4002,7 +4014,7 @@ class MainMenuController extends FeatureController {
             }),
             createElement('span', {
                 attributes: { id: 'bycursed' },
-                text: 'SigMod by ',
+                text: `SigMod v${BUILD.release} by `,
             })
         );
         const authorLink = createElement('a', {
@@ -4241,40 +4253,202 @@ class SmartPingController extends FeatureController {
     }
 
     async mount() {
-        const documentRoot = document;
+        const style = createElement('style', {
+            attributes: { 'data-sigmod-smart-ping': BUILD.release },
+        });
+        style.textContent = `
+            .ping-wheel-container {
+                position: fixed !important;
+                pointer-events: none !important;
+                z-index: 2147483647 !important;
+                width: 200px !important;
+                height: 200px !important;
+                margin-left: -100px !important;
+                margin-top: -100px !important;
+                background: rgba(14, 14, 17, 0.75) !important;
+                backdrop-filter: blur(6px) !important;
+                -webkit-backdrop-filter: blur(6px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                animation: sigmod-ping-wheel-pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+                transform-origin: center !important;
+                user-select: none !important;
+            }
+            @keyframes sigmod-ping-wheel-pop {
+                0% { transform: scale(0.7); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .ping-wheel-slice {
+                position: absolute !important;
+                top: 50% !important;
+                left: 50% !important;
+                width: 58px !important;
+                height: 58px !important;
+                margin-left: -29px !important;
+                margin-top: -29px !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                gap: 2px !important;
+                transition: transform 0.12s ease-out, background 0.12s ease-out, border-color 0.12s ease-out !important;
+                color: rgba(255, 255, 255, 0.8) !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                line-height: 1 !important;
+                box-sizing: border-box !important;
+            }
+            .ping-wheel-slice.center-slice {
+                width: 48px !important;
+                height: 48px !important;
+                margin-left: -24px !important;
+                margin-top: -24px !important;
+            }
+            .ping-wheel-slice.active {
+                background: rgba(255, 255, 255, 0.22) !important;
+                border-color: var(--ping-color, #fff) !important;
+                color: #fff !important;
+                transform: translate(var(--tx), var(--ty)) scale(1.18) !important;
+                box-shadow: 0 0 12px var(--ping-color, rgba(255, 255, 255, 0.5)) !important;
+                z-index: 2 !important;
+            }
+            .ping-wheel-icon {
+                width: 22px !important;
+                height: 22px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            .ping-wheel-icon svg {
+                width: 18px !important;
+                height: 18px !important;
+            }
+            .world-ping-marker {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                pointer-events: none !important;
+                z-index: 2147483640 !important;
+                width: 36px !important;
+                height: 36px !important;
+                margin-left: -18px !important;
+                margin-top: -36px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                user-select: none !important;
+                will-change: transform !important;
+            }
+            .world-ping-animator {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 32px !important;
+                height: 32px !important;
+                background: rgba(15, 15, 15, 0.9) !important;
+                border: 2px solid currentColor !important;
+                border-radius: 50% !important;
+                filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) !important;
+                animation: sigmod-ping-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+            }
+            .world-ping-icon {
+                width: 20px !important;
+                height: 20px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            .world-ping-icon svg {
+                width: 18px !important;
+                height: 18px !important;
+            }
+            .world-ping-badge {
+                position: absolute !important;
+                top: -6px !important;
+                right: -6px !important;
+                color: #1a1a1a !important;
+                font-size: 11px !important;
+                font-weight: 900 !important;
+                width: 16px !important;
+                height: 16px !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                border: 2px solid rgba(15, 15, 15, 0.9) !important;
+            }
+            .world-ping-marker.is-offscreen {
+                margin-top: -18px !important;
+            }
+            .world-ping-marker.is-offscreen .world-ping-icon {
+                transform: rotate(var(--arrow-angle, 0deg)) !important;
+            }
+            .world-ping-marker.is-offscreen .world-ping-icon svg {
+                display: none !important;
+            }
+            .world-ping-marker.is-offscreen .world-ping-icon::before {
+                content: '' !important;
+                display: block !important;
+                width: 0 !important;
+                height: 0 !important;
+                border-top: 8px solid transparent !important;
+                border-bottom: 8px solid transparent !important;
+                border-left: 12px solid currentColor !important;
+            }
+            @keyframes sigmod-ping-bounce {
+                0% { transform: scale(0); opacity: 0; }
+                80% { transform: scale(1.2); opacity: 1; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        `;
+        (document.head || document.documentElement).append(style);
+        this.resources.add(() => style.remove());
 
+        const onMove = (event) => {
+            this.pointerPosition.x = event.clientX;
+            this.pointerPosition.y = event.clientY;
+            if (this.wheelOpen) this.updateWheelHover();
+        };
+
+        this.resources.listen(window, 'pointermove', onMove, { capture: true, passive: true });
+        this.resources.listen(window, 'mousemove', onMove, { capture: true, passive: true });
+        this.resources.listen(window, 'mousedown', (event) => this.handleMouseDown(event), { capture: true });
+        this.resources.listen(window, 'mouseup', (event) => this.handleMouseUp(event), { capture: true });
+        this.resources.listen(window, 'keydown', (event) => this.handleKeyDown(event), { capture: true });
+        this.resources.listen(window, 'keyup', (event) => this.handleKeyUp(event), { capture: true });
+        this.resources.listen(window, 'blur', () => this.closeWheel());
         this.resources.listen(
-            documentRoot,
-            'pointermove',
+            window,
+            'contextmenu',
             (event) => {
-                this.pointerPosition.x = event.clientX;
-                this.pointerPosition.y = event.clientY;
-                if (this.wheelOpen) this.updateWheelHover();
+                if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 100) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
             },
-            { passive: true }
+            { capture: true }
         );
 
-        this.resources.listen(documentRoot, 'mousedown', (event) => this.handleMouseDown(event));
-        this.resources.listen(documentRoot, 'mouseup', (event) => this.handleMouseUp(event));
-        this.resources.listen(documentRoot, 'keydown', (event) => this.handleKeyDown(event));
-        this.resources.listen(documentRoot, 'keyup', (event) => this.handleKeyUp(event));
-        this.resources.listen(documentRoot, 'contextmenu', (event) => {
-            if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 100) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-        });
-
-        // Listen to backend pings
         this.resources.add(this.app.backend.on('tag-ping', (data) => this.receivePing(data)));
 
-        // Loop for drawing in-world pings
         const loop = () => {
             this.drawPings();
             this.frameId = requestAnimationFrame(loop);
         };
         this.frameId = requestAnimationFrame(loop);
         this.resources.add(() => cancelAnimationFrame(this.frameId));
+        this.resources.add(() => this.closeWheel());
+        this.resources.add(() => {
+            this.activePings.forEach((p) => p.element.remove());
+            this.activePings.clear();
+        });
     }
 
     isPingInput(event) {
@@ -4291,7 +4465,7 @@ class SmartPingController extends FeatureController {
     }
 
     handleKeyDown(event) {
-        if (event.repeat) return; // Prevent browser auto-repeat from immediately reopening cancelled wheel
+        if (event.repeat) return;
 
         if (this.isPingInput(event) && !this.wheelOpen) {
             event.preventDefault();
@@ -4339,7 +4513,23 @@ class SmartPingController extends FeatureController {
     openWheel() {
         this.wheelOpen = true;
         this.wheelCancelled = false;
-        this.wheelCenter = { x: this.pointerPosition.x, y: this.pointerPosition.y };
+
+        let cx = this.pointerPosition.x;
+        let cy = this.pointerPosition.y;
+        if ((!cx && !cy) || (cx === 0 && cy === 0)) {
+            const macros = this.app.features.get('macros');
+            if (macros?.pointerPosition?.x || macros?.pointerPosition?.y) {
+                cx = macros.pointerPosition.x;
+                cy = macros.pointerPosition.y;
+            } else if (window.sigfix?.input?.current) {
+                cx = ((window.sigfix.input.current[0] + 1) / 2) * window.innerWidth;
+                cy = ((window.sigfix.input.current[1] + 1) / 2) * window.innerHeight;
+            } else {
+                cx = window.innerWidth / 2;
+                cy = window.innerHeight / 2;
+            }
+        }
+        this.wheelCenter = { x: cx, y: cy };
 
         const cam = this.getCamera();
         if (cam && cam.scale) {
@@ -4356,23 +4546,29 @@ class SmartPingController extends FeatureController {
         this.wheelElement = createElement('div', {
             className: 'ping-wheel-container',
         });
+        this.wheelElement.style.position = 'fixed';
+        this.wheelElement.style.pointerEvents = 'none';
+        this.wheelElement.style.zIndex = '2147483647';
         this.wheelElement.style.left = `${this.wheelCenter.x}px`;
         this.wheelElement.style.top = `${this.wheelCenter.y}px`;
 
         this.wheelSlices = [];
 
-        this.pingTypes.forEach((type, i) => {
-            const isCenter = i === 0;
-            // Subtract 1 from i for the outer slices to keep Top, Right, Bottom, Left
-            const angle = (i - 1) * 90 - 90;
+        const outerTypes = [
+            { id: 'danger', name: 'Danger', icon: 'warning', color: '#ff3b3b', angle: -90 },
+            { id: 'attack', name: 'Attack', icon: 'sword', color: '#ffa500', angle: 0 },
+            { id: 'virus', name: 'Shoot Virus', icon: 'crosshair', color: '#4CAF50', angle: 90 },
+            { id: 'defend', name: 'Defend', icon: 'shield', color: '#2196F3', angle: 180 },
+        ];
 
+        outerTypes.forEach((type) => {
             const slice = createElement('div', {
-                className: 'ping-wheel-slice' + (isCenter ? ' center-slice' : ''),
+                className: 'ping-wheel-slice',
                 attributes: { 'data-id': type.id },
             });
 
-            const rad = (angle * Math.PI) / 180;
-            const dist = isCenter ? 0 : 60;
+            const rad = (type.angle * Math.PI) / 180;
+            const dist = 60;
 
             slice.style.setProperty('--tx', `${Math.cos(rad) * dist}px`);
             slice.style.setProperty('--ty', `${Math.sin(rad) * dist}px`);
@@ -4390,23 +4586,27 @@ class SmartPingController extends FeatureController {
 
             slice.append(iconEl, label);
             this.wheelElement.append(slice);
-            this.wheelSlices.push({ element: slice, id: type.id, angle: angle });
+            this.wheelSlices.push({ element: slice, id: type.id, angle: type.angle });
         });
 
-        // Add center default ping
+        const centerType = { id: 'default', name: 'Ping', icon: 'mapPin', color: '#f1c40f' };
         const centerSlice = createElement('div', {
-            className: 'ping-wheel-slice',
+            className: 'ping-wheel-slice center-slice',
             attributes: { 'data-id': 'default' },
         });
-        centerSlice.style.transform = `translate(0px, 0px)`;
+        centerSlice.style.setProperty('--tx', '0px');
+        centerSlice.style.setProperty('--ty', '0px');
+        centerSlice.style.setProperty('--ping-color', centerType.color);
+        centerSlice.style.transform = 'translate(0px, 0px)';
 
         const centerIconEl = createElement('div', {
             className: 'ping-wheel-icon',
-            icon: 'mapPin',
+            icon: centerType.icon,
         });
-        centerIconEl.style.color = '#ffeb3b';
+        centerIconEl.style.color = centerType.color;
 
-        const centerLabel = createElement('span', { text: 'Ping' });
+        const centerTranslatedName = this.app.i18n?.message(centerType.name) ?? centerType.name;
+        const centerLabel = createElement('span', { text: centerTranslatedName });
 
         centerSlice.append(centerIconEl, centerLabel);
         this.wheelElement.append(centerSlice);
@@ -4434,7 +4634,7 @@ class SmartPingController extends FeatureController {
         this.hoveredPing = null;
 
         if (dist > 25) {
-            let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+            const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
             if (angle < -45 && angle >= -135) this.hoveredPing = 'danger';
             else if (angle >= -45 && angle < 45) this.hoveredPing = 'attack';
             else if (angle >= 45 && angle < 135) this.hoveredPing = 'virus';
@@ -4449,12 +4649,14 @@ class SmartPingController extends FeatureController {
 
     getCamera() {
         if (window.sigfix && window.sigfix.world) {
-            const vision = window.sigfix.world.views?.get(window.sigfix.world.selected);
+            const world = window.sigfix.world;
+            const vision = (world.views instanceof Map && (world.views.get(world.selected) || world.views.values()?.next()?.value)) || null;
             if (vision && vision.camera) {
+                const camScale = vision.camera.scale > 0 ? vision.camera.scale : 1;
                 return {
                     x: vision.camera.x,
                     y: vision.camera.y,
-                    scale: (window.innerHeight / 1080) * vision.camera.scale,
+                    scale: (window.innerHeight / 1080) * camScale,
                 };
             }
         }
@@ -4473,7 +4675,7 @@ class SmartPingController extends FeatureController {
             return {
                 x: position.x,
                 y: position.y,
-                scale: (window.innerHeight / 1080) * 0.25, // Default scale fallback
+                scale: (window.innerHeight / 1080) * 0.25,
             };
         }
         return null;
@@ -4497,16 +4699,26 @@ class SmartPingController extends FeatureController {
 
     receivePing(data) {
         if (!isObject(data)) return;
-        const { x, y, t, i } = data;
+        const payload = isObject(data?.content) ? data.content : data;
+        const x = Number(payload?.x);
+        const y = Number(payload?.y);
+        const t = payload?.t || 'default';
+        const i = payload?.i;
         if (!Number.isFinite(x) || !Number.isFinite(y)) return;
 
-        const id = `ping-${i}-${Date.now()}`;
-        const typeConfig = this.pingTypes.find((p) => p.id === t) || { id: 'default', icon: 'mapPin', color: '#ffeb3b' };
+        const id = `ping-${i !== undefined ? i : '0'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const typeConfig = this.pingTypes.find((p) => p.id === t) || { id: 'default', icon: 'mapPin', color: '#f1c40f' };
 
         const element = createElement('div', {
             className: 'world-ping-marker',
             attributes: { id },
         });
+        element.style.position = 'fixed';
+        element.style.top = '0px';
+        element.style.left = '0px';
+        element.style.pointerEvents = 'none';
+        element.style.zIndex = '2147483640';
+        element.style.display = 'flex';
 
         const animatorEl = createElement('div', {
             className: 'world-ping-animator',
@@ -4539,6 +4751,8 @@ class SmartPingController extends FeatureController {
             element,
             createdAt: Date.now(),
         });
+
+        this.drawPings();
 
         const duration = this.app.settings.settings.pingDuration ?? 2000;
 

@@ -322,7 +322,52 @@
         deathScreen: '#__line2',
         continueButton: '#continue_button',
         overlays: '#overlays',
+        adContainers:
+            '#text-block, #left_ad_block, #ad_bottom, .ad-block, .ad-block-left, .ad-block-right, [id^="div-gpt-ad"], iframe[id^="google_ads"], iframe[src*="doubleclick.net"], iframe[src*="googletagmanager.com"], ins.adsbygoogle, #modalfolks',
     };
+    const BLOCKED_AD_TRACKER_HOSTS = [
+        'googletagmanager.com',
+        'google-analytics.com',
+        'analytics.google.com',
+        'securepubads.g.doubleclick.net',
+        'doubleclick.net',
+        'pagead2.googlesyndication.com',
+        'adservice.google.com',
+        'googleads.g.doubleclick.net',
+        'tpc.googlesyndication.com',
+        'adnxs.com',
+        'cpmstar.com',
+        'adinplay.com',
+        'freestar.io',
+    ];
+    const BLOCKED_AD_TRACKER_PATTERNS = ['/gtm.js', '/gtag/js', '/gpt.js', 'adsbygoogle', 'scorecardresearch.com'];
+    const ALLOWED_HOST_EXCLUSIONS = [
+        'accounts.google.com',
+        'apis.google.com',
+        'fonts.googleapis.com',
+        'fonts.gstatic.com',
+        'challenges.cloudflare.com',
+        'sigmally.com',
+        'czrsd.com',
+        'discord.com',
+        'discord.gg',
+        'i.imgur.com',
+    ];
+    function isBlockedAdOrTrackerUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        const lower = url.toLowerCase().trim();
+        if (!lower || lower.startsWith('blob:') || lower.startsWith('data:')) return false;
+        for (let index = 0; index < ALLOWED_HOST_EXCLUSIONS.length; index += 1) {
+            if (lower.includes(ALLOWED_HOST_EXCLUSIONS[index])) return false;
+        }
+        for (let index = 0; index < BLOCKED_AD_TRACKER_HOSTS.length; index += 1) {
+            if (lower.includes(BLOCKED_AD_TRACKER_HOSTS[index])) return true;
+        }
+        for (let index = 0; index < BLOCKED_AD_TRACKER_PATTERNS.length; index += 1) {
+            if (lower.includes(BLOCKED_AD_TRACKER_PATTERNS[index])) return true;
+        }
+        return false;
+    }
     const TIMING = {
         hostReadyTimeout: 15e3,
         backendReconnectBase: 1500,
@@ -1888,6 +1933,524 @@
             return false;
         }
     }
+    class AdTrackerProtector {
+        constructor(logger = null) {
+            this.logger = logger;
+            this.resources = new Disposables('ad-tracker-protector', logger);
+            this.enabled = this.resolveInitialSetting();
+            this.stats = {
+                scripts: 0,
+                iframes: 0,
+                networkRequests: 0,
+                totalBlocked: 0,
+            };
+            this.app = null;
+            this.initialized = false;
+        }
+        resolveInitialSetting() {
+            try {
+                const raw = localStorage.getItem(STORAGE.settings);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed?.themes?.hideAds === false) return false;
+                }
+            } catch {}
+            return true;
+        }
+        initializeEarly() {
+            if (this.initialized) return;
+            this.initialized = true;
+            this.installGlobalFlags();
+            this.installApiStubs();
+            this.installDomGuard();
+            this.installNetworkGuard();
+            this.installAntiAdblockShield();
+            this.installDomSanitizer();
+        }
+        installGlobalFlags() {
+            const defineFlag = (name) => {
+                try {
+                    Object.defineProperty(window, name, {
+                        value: true,
+                        writable: false,
+                        configurable: true,
+                        enumerable: true,
+                    });
+                } catch {
+                    window[name] = true;
+                }
+            };
+            defineFlag('gtmDidInit');
+            defineFlag('anlDidInit');
+            defineFlag('adsDidInit');
+        }
+        installApiStubs() {
+            const noop = () => {};
+            const createDummySlot = () => {
+                const slot = {
+                    addService: () => slot,
+                    clearCategoryExclusions: () => slot,
+                    clearTargeting: () => slot,
+                    defineSizeMapping: () => slot,
+                    get: () => null,
+                    getAttributeKeys: () => [],
+                    getCategoryExclusions: () => [],
+                    getResponseInformation: () => null,
+                    getSlotElementId: () => '',
+                    getTargeting: () => [],
+                    getTargetingKeys: () => [],
+                    set: () => slot,
+                    setCategoryExclusion: () => slot,
+                    setClickUrl: () => slot,
+                    setCollapseEmptyDiv: () => slot,
+                    setForceSafeFrame: () => slot,
+                    setSafeFrameConfig: () => slot,
+                    setTargeting: () => slot,
+                };
+                return slot;
+            };
+            const dummyPubAds = {
+                addEventListener: noop,
+                clear: noop,
+                clearCategoryExclusions: noop,
+                clearTagging: noop,
+                clearTargeting: noop,
+                collapseEmptyDivs: noop,
+                disableInitialLoad: noop,
+                display: noop,
+                enableAsyncRendering: noop,
+                enableLazyLoad: noop,
+                enableSingleRequest: noop,
+                enableSyncRendering: noop,
+                enableVideoAds: noop,
+                get: () => null,
+                getAttributeKeys: () => [],
+                getTargeting: () => [],
+                getTargetingKeys: () => [],
+                refresh: noop,
+                set: noop,
+                setCategoryExclusion: noop,
+                setCentering: noop,
+                setCookieOptions: noop,
+                setForceSafeFrame: noop,
+                setLocation: noop,
+                setPrivacySettings: noop,
+                setPublisherProvidedId: noop,
+                setRequestNonPersonalizedAds: noop,
+                setSafeFrameConfig: noop,
+                setTagForChildDirectedTreatment: noop,
+                setTagForUnderAgeOfConsent: noop,
+                setTargeting: noop,
+                setVideoContent: noop,
+                updateCorrelator: noop,
+            };
+            const dummyGoogletag = {
+                apiReady: true,
+                cmd: {
+                    push: (fn) => {
+                        if (typeof fn === 'function') {
+                            try {
+                                fn();
+                            } catch {}
+                        }
+                        return 1;
+                    },
+                },
+                defineSlot: () => createDummySlot(),
+                defineOutOfPageSlot: () => createDummySlot(),
+                destroySlots: noop,
+                disablePublisherConsole: noop,
+                display: noop,
+                enableServices: noop,
+                getVersion: () => '1.0.0-sigmod-stub',
+                openConsole: noop,
+                pubads: () => dummyPubAds,
+                pubadsReady: true,
+                setAdIframeTitle: noop,
+                sizeMapping: () => ({ addSize: () => createDummySlot(), build: () => [] }),
+            };
+            if (!window.googletag || !window.googletag.apiReady) {
+                window.googletag = dummyGoogletag;
+            }
+            for (let i = 1; i <= 6; i += 1) {
+                const slotName = `adSlot${i}`;
+                if (!window[slotName]) {
+                    window[slotName] = createDummySlot();
+                }
+            }
+            if (typeof window.gtag !== 'function') {
+                window.gtag = noop;
+            }
+            if (!Array.isArray(window.dataLayer)) {
+                window.dataLayer = [];
+            }
+        }
+        installDomGuard() {
+            const protector = this;
+            const isBlockedNode = (node) => {
+                if (!protector.enabled || !(node instanceof Element)) return false;
+                const tag = node.tagName?.toLowerCase();
+                if (tag === 'script') {
+                    const src = node.getAttribute('src') || node.src || '';
+                    return isBlockedAdOrTrackerUrl(src);
+                }
+                if (tag === 'iframe' || tag === 'embed' || tag === 'object') {
+                    const src = node.getAttribute('src') || node.src || node.getAttribute('data') || '';
+                    return isBlockedAdOrTrackerUrl(src);
+                }
+                if (tag === 'link') {
+                    const href = node.getAttribute('href') || node.href || '';
+                    return isBlockedAdOrTrackerUrl(href);
+                }
+                return false;
+            };
+            const disarmNode = (node) => {
+                if (!(node instanceof Element)) return;
+                const tag = node.tagName?.toLowerCase();
+                try {
+                    if (tag === 'script') {
+                        protector.stats.scripts += 1;
+                        protector.stats.totalBlocked += 1;
+                        node.type = 'text/plain';
+                        node.src = '';
+                        node.removeAttribute('src');
+                        if (typeof node.onload === 'function') {
+                            const handler = node.onload;
+                            queueMicrotask(() => {
+                                try {
+                                    handler.call(node, new Event('load'));
+                                } catch {}
+                            });
+                        }
+                    } else if (tag === 'iframe' || tag === 'embed' || tag === 'object') {
+                        protector.stats.iframes += 1;
+                        protector.stats.totalBlocked += 1;
+                        node.src = 'about:blank';
+                        node.removeAttribute('src');
+                    }
+                } catch {}
+            };
+            const sanitizeTree = (node) => {
+                if (!protector.enabled || !(node instanceof Element)) return;
+                if (isBlockedNode(node)) {
+                    disarmNode(node);
+                    return true;
+                }
+                const children = node.querySelectorAll ? node.querySelectorAll('script, iframe, embed, object') : [];
+                for (let i = 0; i < children.length; i += 1) {
+                    const child = children[i];
+                    if (isBlockedNode(child)) {
+                        disarmNode(child);
+                        child.remove();
+                    }
+                }
+                return false;
+            };
+            const originalAppendChild = Node.prototype.appendChild;
+            Node.prototype.appendChild = function (child) {
+                if (child instanceof Node) {
+                    if (isBlockedNode(child)) {
+                        disarmNode(child);
+                        return child;
+                    }
+                    sanitizeTree(child);
+                }
+                return originalAppendChild.call(this, child);
+            };
+            this.resources.add(() => {
+                Node.prototype.appendChild = originalAppendChild;
+            });
+            const originalInsertBefore = Node.prototype.insertBefore;
+            Node.prototype.insertBefore = function (newNode, referenceNode) {
+                if (newNode instanceof Node) {
+                    if (isBlockedNode(newNode)) {
+                        disarmNode(newNode);
+                        return newNode;
+                    }
+                    sanitizeTree(newNode);
+                }
+                return originalInsertBefore.call(this, newNode, referenceNode);
+            };
+            this.resources.add(() => {
+                Node.prototype.insertBefore = originalInsertBefore;
+            });
+            const originalReplaceChild = Node.prototype.replaceChild;
+            Node.prototype.replaceChild = function (newChild, oldChild) {
+                if (newChild instanceof Node) {
+                    if (isBlockedNode(newChild)) {
+                        disarmNode(newChild);
+                        return newChild;
+                    }
+                    sanitizeTree(newChild);
+                }
+                return originalReplaceChild.call(this, newChild, oldChild);
+            };
+            this.resources.add(() => {
+                Node.prototype.replaceChild = originalReplaceChild;
+            });
+            const originalAppend = Element.prototype.append;
+            Element.prototype.append = function (...nodes) {
+                const filtered = nodes.filter((node) => {
+                    if (node instanceof Node) {
+                        if (isBlockedNode(node)) {
+                            disarmNode(node);
+                            return false;
+                        }
+                        sanitizeTree(node);
+                    }
+                    return true;
+                });
+                return originalAppend.apply(this, filtered);
+            };
+            this.resources.add(() => {
+                Element.prototype.append = originalAppend;
+            });
+            const originalPrepend = Element.prototype.prepend;
+            Element.prototype.prepend = function (...nodes) {
+                const filtered = nodes.filter((node) => {
+                    if (node instanceof Node) {
+                        if (isBlockedNode(node)) {
+                            disarmNode(node);
+                            return false;
+                        }
+                        sanitizeTree(node);
+                    }
+                    return true;
+                });
+                return originalPrepend.apply(this, filtered);
+            };
+            this.resources.add(() => {
+                Element.prototype.prepend = originalPrepend;
+            });
+            const scriptDescriptor = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+            if (scriptDescriptor && scriptDescriptor.set) {
+                const originalSet = scriptDescriptor.set;
+                Object.defineProperty(HTMLScriptElement.prototype, 'src', {
+                    set(value) {
+                        if (protector.enabled && isBlockedAdOrTrackerUrl(String(value))) {
+                            disarmNode(this);
+                            return;
+                        }
+                        return originalSet.call(this, value);
+                    },
+                    get: scriptDescriptor.get,
+                    configurable: true,
+                    enumerable: true,
+                });
+                this.resources.add(() => {
+                    Object.defineProperty(HTMLScriptElement.prototype, 'src', scriptDescriptor);
+                });
+            }
+        }
+        installNetworkGuard() {
+            const protector = this;
+            if (typeof navigator.sendBeacon === 'function') {
+                const originalSendBeacon = navigator.sendBeacon.bind(navigator);
+                navigator.sendBeacon = function (url, data) {
+                    const targetUrl = typeof url === 'string' ? url : url?.href || '';
+                    if (protector.enabled && isBlockedAdOrTrackerUrl(targetUrl)) {
+                        protector.stats.networkRequests += 1;
+                        protector.stats.totalBlocked += 1;
+                        return true;
+                    }
+                    return originalSendBeacon(url, data);
+                };
+                this.resources.add(() => {
+                    navigator.sendBeacon = originalSendBeacon;
+                });
+            }
+            if (typeof XMLHttpRequest !== 'undefined') {
+                const originalOpen = XMLHttpRequest.prototype.open;
+                const originalSend = XMLHttpRequest.prototype.send;
+                XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+                    const targetUrl = typeof url === 'string' ? url : String(url || '');
+                    this.__sigmod_blocked = protector.enabled && isBlockedAdOrTrackerUrl(targetUrl);
+                    if (this.__sigmod_blocked) {
+                        this.__sigmod_url = targetUrl;
+                        protector.stats.networkRequests += 1;
+                        protector.stats.totalBlocked += 1;
+                        return;
+                    }
+                    return originalOpen.call(this, method, url, ...rest);
+                };
+                XMLHttpRequest.prototype.send = function (body) {
+                    if (this.__sigmod_blocked) {
+                        Object.defineProperty(this, 'readyState', { value: 4, configurable: true });
+                        Object.defineProperty(this, 'status', { value: 204, configurable: true });
+                        Object.defineProperty(this, 'statusText', { value: 'No Content', configurable: true });
+                        Object.defineProperty(this, 'responseText', { value: '', configurable: true });
+                        queueMicrotask(() => {
+                            this.dispatchEvent(new Event('readystatechange'));
+                            this.dispatchEvent(new Event('load'));
+                            this.dispatchEvent(new Event('loadend'));
+                        });
+                        return;
+                    }
+                    return originalSend.call(this, body);
+                };
+                this.resources.add(() => {
+                    XMLHttpRequest.prototype.open = originalOpen;
+                    XMLHttpRequest.prototype.send = originalSend;
+                });
+            }
+            if (typeof window.fetch === 'function') {
+                const originalFetch = window.fetch;
+                const fetchWrapper = function (input, init) {
+                    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url || '';
+                    if (protector.enabled && isBlockedAdOrTrackerUrl(url)) {
+                        protector.stats.networkRequests += 1;
+                        protector.stats.totalBlocked += 1;
+                        return Promise.resolve(
+                            new Response('{}', {
+                                status: 200,
+                                statusText: 'OK',
+                                headers: { 'Content-Type': 'application/json' },
+                            })
+                        );
+                    }
+                    return originalFetch.call(this, input, init);
+                };
+                window.fetch = fetchWrapper;
+                this.resources.add(() => {
+                    if (window.fetch === fetchWrapper) window.fetch = originalFetch;
+                });
+            }
+        }
+        installAntiAdblockShield() {
+            const protector = this;
+            const neutralizeModalfolks = (element) => {
+                if (!(element instanceof HTMLElement) || element.id !== 'modalfolks') return;
+                element.style.display = 'none';
+                element.classList.add('hide');
+                element.show = () => {
+                    element.style.display = 'none';
+                    element.classList.add('hide');
+                };
+            };
+            const existingModal = document.querySelector('#modalfolks');
+            if (existingModal) neutralizeModalfolks(existingModal);
+            let rawHourly = Element.prototype.hourly;
+            Object.defineProperty(Element.prototype, 'hourly', {
+                configurable: true,
+                enumerable: true,
+                get() {
+                    return rawHourly;
+                },
+                set(fn) {
+                    if (typeof fn === 'function') {
+                        rawHourly = function (...args) {
+                            if (!protector.enabled) return fn.apply(this, args);
+                            const adSelectors = [
+                                '#ad_bottom',
+                                '#div-gpt-ad-1622841396282-0',
+                                '#div-gpt-ad-1622632389350-0',
+                                '#div-gpt-ad-1622841482467-0',
+                            ];
+                            const adElements = adSelectors.map((s) => document.querySelector(s)).filter((el) => el instanceof HTMLElement);
+                            const prevStyles = adElements.map((el) => ({
+                                element: el,
+                                value: el.style.getPropertyValue('display'),
+                                priority: el.style.getPropertyPriority('display'),
+                            }));
+                            const markers = [...document.querySelectorAll('.settings-menu-holder')];
+                            for (let i = 0; i < markers.length; i += 1) markers[i].classList.remove('settings-menu-holder');
+                            for (let i = 0; i < adElements.length; i += 1) adElements[i].style.setProperty('display', 'block', 'important');
+                            try {
+                                return fn.apply(this, args);
+                            } finally {
+                                for (let i = 0; i < prevStyles.length; i += 1) {
+                                    const { element, value, priority } = prevStyles[i];
+                                    if (value) element.style.setProperty('display', value, priority);
+                                    else element.style.removeProperty('display');
+                                }
+                                for (let i = 0; i < markers.length; i += 1) markers[i].classList.add('settings-menu-holder');
+                            }
+                        };
+                    } else {
+                        rawHourly = fn;
+                    }
+                },
+            });
+        }
+        installDomSanitizer() {
+            const protector = this;
+            this.cleanupAdDom();
+            const observer = new MutationObserver((mutations) => {
+                if (!protector.enabled) return;
+                for (let m = 0; m < mutations.length; m += 1) {
+                    const added = mutations[m].addedNodes;
+                    for (let i = 0; i < added.length; i += 1) {
+                        const node = added[i];
+                        if (node instanceof Element) {
+                            if (node.id === 'modalfolks') {
+                                node.style.display = 'none';
+                                node.classList.add('hide');
+                                node.show = () => {
+                                    node.style.display = 'none';
+                                    node.classList.add('hide');
+                                };
+                            }
+                            if (
+                                node.matches?.(
+                                    'script[src*="googletagmanager"], script[src*="doubleclick"], script[src*="google-analytics"], iframe[src*="googletagmanager"], iframe[src*="doubleclick"], iframe[id^="google_ads"], ins.adsbygoogle'
+                                )
+                            ) {
+                                node.remove();
+                            }
+                        }
+                    }
+                }
+            });
+            if (document.documentElement) {
+                observer.observe(document.documentElement, { childList: true, subtree: true });
+                this.resources.add(() => observer.disconnect());
+            }
+        }
+        cleanupAdDom() {
+            if (!this.enabled || typeof document === 'undefined') return;
+            const selector =
+                '#left_ad_block, #ad_bottom, .ad-block, .ad-block-left, .ad-block-right, [id^="div-gpt-ad"], iframe[id^="google_ads"], iframe[src*="doubleclick.net"], iframe[src*="googletagmanager.com"], ins.adsbygoogle';
+            const elements = document.querySelectorAll(selector);
+            for (let i = 0; i < elements.length; i += 1) {
+                const el = elements[i];
+                el.replaceChildren();
+                el.style.setProperty('display', 'none', 'important');
+            }
+            const noscripts = document.querySelectorAll('noscript');
+            for (let i = 0; i < noscripts.length; i += 1) {
+                if (noscripts[i].innerHTML?.includes('googletagmanager')) {
+                    noscripts[i].remove();
+                }
+            }
+        }
+        bindApp(app2) {
+            this.app = app2;
+            const enabled = app2.settings?.themes?.hideAds !== false;
+            this.setEnabled(enabled);
+            app2.resources.listen(document, 'sigmod:settingchange', (event) => {
+                if (event.detail?.path === 'themes.hideAds') {
+                    this.setEnabled(Boolean(event.detail.value));
+                }
+            });
+            app2.resources.add(() => {
+                this.resources.dispose();
+            });
+        }
+        setEnabled(enabled) {
+            this.enabled = Boolean(enabled);
+            if (this.enabled) {
+                this.cleanupAdDom();
+            }
+        }
+        getStatus() {
+            return {
+                enabled: this.enabled,
+                stats: { ...this.stats },
+            };
+        }
+    }
+    const adTrackerProtector = new AdTrackerProtector();
+    adTrackerProtector.initializeEarly();
     class PacketReader {
         constructor(buffer) {
             if (buffer instanceof DataView) this.view = buffer;
@@ -4072,7 +4635,7 @@
                                     <div class="justify-sb w-100 p-10"><span>Remove shop popup</span>${this.checkboxHtml('removeShopPopup', 'settings.removeShopPopup')}</div>
                                     <div class="justify-sb w-100 p-10 accent_row rounded"><span>Hide Discord Button</span>${this.checkboxHtml('hideDiscordBtns', 'themes.hideDiscordBtns')}</div>
                                     <div class="justify-sb w-100 p-10"><span>Hide Language Buttons</span>${this.checkboxHtml('hideLangs', 'themes.hideLangs')}</div>
-                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span>Hide Ads</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
+                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span title="Blocks Google Ads, DoubleClick, Tag Manager & Analytics">Hide Ads & Trackers</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
                                     <div class="justify-sb w-100 p-10"><span>Show Zig popup</span>${this.checkboxHtml('showZigPopup', 'themes.showZigPopup')}</div>
                                 </div>
                             </section>
@@ -8335,6 +8898,7 @@
             if (discord) this.setHidden(discord, hideDiscord);
             if (languages) this.setHidden(languages, hideLanguages);
             document.documentElement.classList.toggle('sigmod-hide-ads', hideAds);
+            this.app.adProtection?.setEnabled(hideAds);
             if (!zigAdEnabled || hasZigGlobal()) removeZigAd();
             else insertZigAd(this.resources);
         }
@@ -9453,6 +10017,18 @@
             const controller = this;
             const originalFetch = window.fetch;
             const fetchFacade = function (...args) {
+                const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0]?.url || '';
+                if (controller.app.adProtection?.enabled && isBlockedAdOrTrackerUrl(url)) {
+                    controller.app.adProtection.stats.networkRequests += 1;
+                    controller.app.adProtection.stats.totalBlocked += 1;
+                    return Promise.resolve(
+                        new Response('{}', {
+                            status: 200,
+                            statusText: 'OK',
+                            headers: { 'Content-Type': 'application/json' },
+                        })
+                    );
+                }
                 return originalFetch.apply(this, args).then((response) => {
                     controller.inspectResponse(args[0], response);
                     return response;
@@ -13389,7 +13965,7 @@
                 }),
                 createElement('span', {
                     attributes: { id: 'bycursed' },
-                    text: 'SigMod by ',
+                    text: `SigMod v${BUILD.release} by `,
                 })
             );
             const authorLink = createElement('a', {
@@ -13623,27 +14199,186 @@
             this.frameId = null;
         }
         async mount() {
-            const documentRoot = document;
-            this.resources.listen(
-                documentRoot,
-                'pointermove',
-                (event) => {
-                    this.pointerPosition.x = event.clientX;
-                    this.pointerPosition.y = event.clientY;
-                    if (this.wheelOpen) this.updateWheelHover();
-                },
-                { passive: true }
-            );
-            this.resources.listen(documentRoot, 'mousedown', (event) => this.handleMouseDown(event));
-            this.resources.listen(documentRoot, 'mouseup', (event) => this.handleMouseUp(event));
-            this.resources.listen(documentRoot, 'keydown', (event) => this.handleKeyDown(event));
-            this.resources.listen(documentRoot, 'keyup', (event) => this.handleKeyUp(event));
-            this.resources.listen(documentRoot, 'contextmenu', (event) => {
-                if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 100) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
+            const style = createElement('style', {
+                attributes: { 'data-sigmod-smart-ping': BUILD.release },
             });
+            style.textContent = `
+            .ping-wheel-container {
+                position: fixed !important;
+                pointer-events: none !important;
+                z-index: 2147483647 !important;
+                width: 200px !important;
+                height: 200px !important;
+                margin-left: -100px !important;
+                margin-top: -100px !important;
+                background: rgba(14, 14, 17, 0.75) !important;
+                backdrop-filter: blur(6px) !important;
+                -webkit-backdrop-filter: blur(6px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                animation: sigmod-ping-wheel-pop 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+                transform-origin: center !important;
+                user-select: none !important;
+            }
+            @keyframes sigmod-ping-wheel-pop {
+                0% { transform: scale(0.7); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .ping-wheel-slice {
+                position: absolute !important;
+                top: 50% !important;
+                left: 50% !important;
+                width: 58px !important;
+                height: 58px !important;
+                margin-left: -29px !important;
+                margin-top: -29px !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                gap: 2px !important;
+                transition: transform 0.12s ease-out, background 0.12s ease-out, border-color 0.12s ease-out !important;
+                color: rgba(255, 255, 255, 0.8) !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                line-height: 1 !important;
+                box-sizing: border-box !important;
+            }
+            .ping-wheel-slice.center-slice {
+                width: 48px !important;
+                height: 48px !important;
+                margin-left: -24px !important;
+                margin-top: -24px !important;
+            }
+            .ping-wheel-slice.active {
+                background: rgba(255, 255, 255, 0.22) !important;
+                border-color: var(--ping-color, #fff) !important;
+                color: #fff !important;
+                transform: translate(var(--tx), var(--ty)) scale(1.18) !important;
+                box-shadow: 0 0 12px var(--ping-color, rgba(255, 255, 255, 0.5)) !important;
+                z-index: 2 !important;
+            }
+            .ping-wheel-icon {
+                width: 22px !important;
+                height: 22px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            .ping-wheel-icon svg {
+                width: 18px !important;
+                height: 18px !important;
+            }
+            .world-ping-marker {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                pointer-events: none !important;
+                z-index: 2147483640 !important;
+                width: 36px !important;
+                height: 36px !important;
+                margin-left: -18px !important;
+                margin-top: -36px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                user-select: none !important;
+                will-change: transform !important;
+            }
+            .world-ping-animator {
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 32px !important;
+                height: 32px !important;
+                background: rgba(15, 15, 15, 0.9) !important;
+                border: 2px solid currentColor !important;
+                border-radius: 50% !important;
+                filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8)) !important;
+                animation: sigmod-ping-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+            }
+            .world-ping-icon {
+                width: 20px !important;
+                height: 20px !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+            }
+            .world-ping-icon svg {
+                width: 18px !important;
+                height: 18px !important;
+            }
+            .world-ping-badge {
+                position: absolute !important;
+                top: -6px !important;
+                right: -6px !important;
+                color: #1a1a1a !important;
+                font-size: 11px !important;
+                font-weight: 900 !important;
+                width: 16px !important;
+                height: 16px !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                border: 2px solid rgba(15, 15, 15, 0.9) !important;
+            }
+            .world-ping-marker.is-offscreen {
+                margin-top: -18px !important;
+            }
+            .world-ping-marker.is-offscreen .world-ping-icon {
+                transform: rotate(var(--arrow-angle, 0deg)) !important;
+            }
+            .world-ping-marker.is-offscreen .world-ping-icon svg {
+                display: none !important;
+            }
+            .world-ping-marker.is-offscreen .world-ping-icon::before {
+                content: '' !important;
+                display: block !important;
+                width: 0 !important;
+                height: 0 !important;
+                border-top: 8px solid transparent !important;
+                border-bottom: 8px solid transparent !important;
+                border-left: 12px solid currentColor !important;
+            }
+            @keyframes sigmod-ping-bounce {
+                0% { transform: scale(0); opacity: 0; }
+                80% { transform: scale(1.2); opacity: 1; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        `;
+            (document.head || document.documentElement).append(style);
+            this.resources.add(() => style.remove());
+            const onMove = (event) => {
+                this.pointerPosition.x = event.clientX;
+                this.pointerPosition.y = event.clientY;
+                if (this.wheelOpen) this.updateWheelHover();
+            };
+            this.resources.listen(window, 'pointermove', onMove, { capture: true, passive: true });
+            this.resources.listen(window, 'mousemove', onMove, { capture: true, passive: true });
+            this.resources.listen(window, 'mousedown', (event) => this.handleMouseDown(event), { capture: true });
+            this.resources.listen(window, 'mouseup', (event) => this.handleMouseUp(event), { capture: true });
+            this.resources.listen(window, 'keydown', (event) => this.handleKeyDown(event), { capture: true });
+            this.resources.listen(window, 'keyup', (event) => this.handleKeyUp(event), { capture: true });
+            this.resources.listen(window, 'blur', () => this.closeWheel());
+            this.resources.listen(
+                window,
+                'contextmenu',
+                (event) => {
+                    if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 100) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                },
+                { capture: true }
+            );
             this.resources.add(this.app.backend.on('tag-ping', (data) => this.receivePing(data)));
             const loop = () => {
                 this.drawPings();
@@ -13651,6 +14386,11 @@
             };
             this.frameId = requestAnimationFrame(loop);
             this.resources.add(() => cancelAnimationFrame(this.frameId));
+            this.resources.add(() => this.closeWheel());
+            this.resources.add(() => {
+                this.activePings.forEach((p) => p.element.remove());
+                this.activePings.clear();
+            });
         }
         isPingInput(event) {
             if (isTyping() || !this.app.settings.settings.tag || !this.app.state.backend.connected) return false;
@@ -13708,7 +14448,22 @@
         openWheel() {
             this.wheelOpen = true;
             this.wheelCancelled = false;
-            this.wheelCenter = { x: this.pointerPosition.x, y: this.pointerPosition.y };
+            let cx = this.pointerPosition.x;
+            let cy = this.pointerPosition.y;
+            if ((!cx && !cy) || (cx === 0 && cy === 0)) {
+                const macros = this.app.features.get('macros');
+                if (macros?.pointerPosition?.x || macros?.pointerPosition?.y) {
+                    cx = macros.pointerPosition.x;
+                    cy = macros.pointerPosition.y;
+                } else if (window.sigfix?.input?.current) {
+                    cx = ((window.sigfix.input.current[0] + 1) / 2) * window.innerWidth;
+                    cy = ((window.sigfix.input.current[1] + 1) / 2) * window.innerHeight;
+                } else {
+                    cx = window.innerWidth / 2;
+                    cy = window.innerHeight / 2;
+                }
+            }
+            this.wheelCenter = { x: cx, y: cy };
             const cam = this.getCamera();
             if (cam && cam.scale) {
                 this.wheelWorldPos = {
@@ -13722,18 +14477,25 @@
             this.wheelElement = createElement('div', {
                 className: 'ping-wheel-container',
             });
+            this.wheelElement.style.position = 'fixed';
+            this.wheelElement.style.pointerEvents = 'none';
+            this.wheelElement.style.zIndex = '2147483647';
             this.wheelElement.style.left = `${this.wheelCenter.x}px`;
             this.wheelElement.style.top = `${this.wheelCenter.y}px`;
             this.wheelSlices = [];
-            this.pingTypes.forEach((type, i) => {
-                const isCenter = i === 0;
-                const angle = (i - 1) * 90 - 90;
+            const outerTypes = [
+                { id: 'danger', name: 'Danger', icon: 'warning', color: '#ff3b3b', angle: -90 },
+                { id: 'attack', name: 'Attack', icon: 'sword', color: '#ffa500', angle: 0 },
+                { id: 'virus', name: 'Shoot Virus', icon: 'crosshair', color: '#4CAF50', angle: 90 },
+                { id: 'defend', name: 'Defend', icon: 'shield', color: '#2196F3', angle: 180 },
+            ];
+            outerTypes.forEach((type) => {
                 const slice = createElement('div', {
-                    className: 'ping-wheel-slice' + (isCenter ? ' center-slice' : ''),
+                    className: 'ping-wheel-slice',
                     attributes: { 'data-id': type.id },
                 });
-                const rad = (angle * Math.PI) / 180;
-                const dist = isCenter ? 0 : 60;
+                const rad = (type.angle * Math.PI) / 180;
+                const dist = 60;
                 slice.style.setProperty('--tx', `${Math.cos(rad) * dist}px`);
                 slice.style.setProperty('--ty', `${Math.sin(rad) * dist}px`);
                 slice.style.setProperty('--ping-color', type.color || '#fff');
@@ -13747,19 +14509,24 @@
                 const label = createElement('span', { text: translatedName });
                 slice.append(iconEl, label);
                 this.wheelElement.append(slice);
-                this.wheelSlices.push({ element: slice, id: type.id, angle });
+                this.wheelSlices.push({ element: slice, id: type.id, angle: type.angle });
             });
+            const centerType = { id: 'default', name: 'Ping', icon: 'mapPin', color: '#f1c40f' };
             const centerSlice = createElement('div', {
-                className: 'ping-wheel-slice',
+                className: 'ping-wheel-slice center-slice',
                 attributes: { 'data-id': 'default' },
             });
-            centerSlice.style.transform = `translate(0px, 0px)`;
+            centerSlice.style.setProperty('--tx', '0px');
+            centerSlice.style.setProperty('--ty', '0px');
+            centerSlice.style.setProperty('--ping-color', centerType.color);
+            centerSlice.style.transform = 'translate(0px, 0px)';
             const centerIconEl = createElement('div', {
                 className: 'ping-wheel-icon',
-                icon: 'mapPin',
+                icon: centerType.icon,
             });
-            centerIconEl.style.color = '#ffeb3b';
-            const centerLabel = createElement('span', { text: 'Ping' });
+            centerIconEl.style.color = centerType.color;
+            const centerTranslatedName = this.app.i18n?.message(centerType.name) ?? centerType.name;
+            const centerLabel = createElement('span', { text: centerTranslatedName });
             centerSlice.append(centerIconEl, centerLabel);
             this.wheelElement.append(centerSlice);
             this.wheelSlices.push({ element: centerSlice, id: 'default', angle: 0 });
@@ -13781,7 +14548,7 @@
             this.wheelSlices.forEach((s) => s.element.classList.remove('active'));
             this.hoveredPing = null;
             if (dist > 25) {
-                let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+                const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
                 if (angle < -45 && angle >= -135) this.hoveredPing = 'danger';
                 else if (angle >= -45 && angle < 45) this.hoveredPing = 'attack';
                 else if (angle >= 45 && angle < 135) this.hoveredPing = 'virus';
@@ -13794,12 +14561,15 @@
         }
         getCamera() {
             if (window.sigfix && window.sigfix.world) {
-                const vision = window.sigfix.world.views?.get(window.sigfix.world.selected);
+                const world = window.sigfix.world;
+                const vision =
+                    (world.views instanceof Map && (world.views.get(world.selected) || world.views.values()?.next()?.value)) || null;
                 if (vision && vision.camera) {
+                    const camScale = vision.camera.scale > 0 ? vision.camera.scale : 1;
                     return {
                         x: vision.camera.x,
                         y: vision.camera.y,
-                        scale: (window.innerHeight / 1080) * vision.camera.scale,
+                        scale: (window.innerHeight / 1080) * camScale,
                     };
                 }
             }
@@ -13819,7 +14589,6 @@
                     x: position.x,
                     y: position.y,
                     scale: (window.innerHeight / 1080) * 0.25,
-                    // Default scale fallback
                 };
             }
             return null;
@@ -13839,14 +14608,24 @@
         }
         receivePing(data) {
             if (!isObject(data)) return;
-            const { x, y, t, i } = data;
+            const payload = isObject(data?.content) ? data.content : data;
+            const x = Number(payload?.x);
+            const y = Number(payload?.y);
+            const t = payload?.t || 'default';
+            const i = payload?.i;
             if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-            const id = `ping-${i}-${Date.now()}`;
-            const typeConfig = this.pingTypes.find((p) => p.id === t) || { id: 'default', icon: 'mapPin', color: '#ffeb3b' };
+            const id = `ping-${i !== void 0 ? i : '0'}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+            const typeConfig = this.pingTypes.find((p) => p.id === t) || { id: 'default', icon: 'mapPin', color: '#f1c40f' };
             const element = createElement('div', {
                 className: 'world-ping-marker',
                 attributes: { id },
             });
+            element.style.position = 'fixed';
+            element.style.top = '0px';
+            element.style.left = '0px';
+            element.style.pointerEvents = 'none';
+            element.style.zIndex = '2147483640';
+            element.style.display = 'flex';
             const animatorEl = createElement('div', {
                 className: 'world-ping-animator',
             });
@@ -13873,6 +14652,7 @@
                 element,
                 createdAt: Date.now(),
             });
+            this.drawPings();
             const duration = this.app.settings.settings.pingDuration ?? 2e3;
             setTimeout(() => {
                 element.remove();
@@ -16886,6 +17666,9 @@
             this.started = false;
             this.destroyed = false;
             this.installNativeChatVisibility();
+            this.installAdBlockingStyles();
+            this.adProtection = adTrackerProtector;
+            this.adProtection.bindApp(this);
             this.resources.listen(document, 'sigmod:settingchange', (event) => {
                 if (event.detail?.path === 'chat.enabled') void this.syncChatFeature(Boolean(event.detail.value));
             });
@@ -16897,6 +17680,16 @@
                 },
             });
             style.textContent = `${SELECTORS.chatBlock} { display: none !important; visibility: hidden !important; pointer-events: none !important; }`;
+            (document.head || document.documentElement).append(style);
+            this.resources.add(() => style.remove());
+        }
+        installAdBlockingStyles() {
+            const style = createElement('style', {
+                attributes: {
+                    'data-sigmod-ad-blocker': BUILD.release,
+                },
+            });
+            style.textContent = `${SELECTORS.adContainers} { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; }`;
             (document.head || document.documentElement).append(style);
             this.resources.add(() => style.remove());
         }
@@ -17034,6 +17827,10 @@
                 debug: {
                     resources: () => app2.resources.snapshot(),
                     destroy: () => app2.destroy(),
+                },
+                privacy: {
+                    getStatus: () => app2.adProtection?.getStatus() ?? { enabled: false },
+                    getStats: () => app2.adProtection?.stats ?? { totalBlocked: 0 },
                 },
             };
             Object.defineProperties(sigmodFacade, {

@@ -947,7 +947,7 @@ class MenuController extends FeatureController {
                                     <div class="justify-sb w-100 p-10"><span>Remove shop popup</span>${this.checkboxHtml('removeShopPopup', 'settings.removeShopPopup')}</div>
                                     <div class="justify-sb w-100 p-10 accent_row rounded"><span>Hide Discord Button</span>${this.checkboxHtml('hideDiscordBtns', 'themes.hideDiscordBtns')}</div>
                                     <div class="justify-sb w-100 p-10"><span>Hide Language Buttons</span>${this.checkboxHtml('hideLangs', 'themes.hideLangs')}</div>
-                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span>Hide Ads</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
+                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span title="Blocks Google Ads, DoubleClick, Tag Manager & Analytics">Hide Ads & Trackers</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
                                     <div class="justify-sb w-100 p-10"><span>Show Zig popup</span>${this.checkboxHtml('showZigPopup', 'themes.showZigPopup')}</div>
                                 </div>
                             </section>
@@ -5205,6 +5205,7 @@ class ThemeController extends FeatureController {
         if (discord) this.setHidden(discord, hideDiscord);
         if (languages) this.setHidden(languages, hideLanguages);
         document.documentElement.classList.toggle('sigmod-hide-ads', hideAds);
+        this.app.adProtection?.setEnabled(hideAds);
         if (!zigAdEnabled || hasZigGlobal()) removeZigAd();
         else insertZigAd(this.resources);
     }

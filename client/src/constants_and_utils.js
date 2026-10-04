@@ -258,7 +258,52 @@ const SELECTORS = {
     deathScreen: '#__line2',
     continueButton: '#continue_button',
     overlays: '#overlays',
+    adContainers:
+        '#text-block, #left_ad_block, #ad_bottom, .ad-block, .ad-block-left, .ad-block-right, [id^="div-gpt-ad"], iframe[id^="google_ads"], iframe[src*="doubleclick.net"], iframe[src*="googletagmanager.com"], ins.adsbygoogle, #modalfolks',
 };
+const BLOCKED_AD_TRACKER_HOSTS = [
+    'googletagmanager.com',
+    'google-analytics.com',
+    'analytics.google.com',
+    'securepubads.g.doubleclick.net',
+    'doubleclick.net',
+    'pagead2.googlesyndication.com',
+    'adservice.google.com',
+    'googleads.g.doubleclick.net',
+    'tpc.googlesyndication.com',
+    'adnxs.com',
+    'cpmstar.com',
+    'adinplay.com',
+    'freestar.io',
+];
+const BLOCKED_AD_TRACKER_PATTERNS = ['/gtm.js', '/gtag/js', '/gpt.js', 'adsbygoogle', 'scorecardresearch.com'];
+const ALLOWED_HOST_EXCLUSIONS = [
+    'accounts.google.com',
+    'apis.google.com',
+    'fonts.googleapis.com',
+    'fonts.gstatic.com',
+    'challenges.cloudflare.com',
+    'sigmally.com',
+    'czrsd.com',
+    'discord.com',
+    'discord.gg',
+    'i.imgur.com',
+];
+function isBlockedAdOrTrackerUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+    const lower = url.toLowerCase().trim();
+    if (!lower || lower.startsWith('blob:') || lower.startsWith('data:')) return false;
+    for (let index = 0; index < ALLOWED_HOST_EXCLUSIONS.length; index += 1) {
+        if (lower.includes(ALLOWED_HOST_EXCLUSIONS[index])) return false;
+    }
+    for (let index = 0; index < BLOCKED_AD_TRACKER_HOSTS.length; index += 1) {
+        if (lower.includes(BLOCKED_AD_TRACKER_HOSTS[index])) return true;
+    }
+    for (let index = 0; index < BLOCKED_AD_TRACKER_PATTERNS.length; index += 1) {
+        if (lower.includes(BLOCKED_AD_TRACKER_PATTERNS[index])) return true;
+    }
+    return false;
+}
 const TIMING = {
     hostReadyTimeout: 15_000,
     backendReconnectBase: 1_500,

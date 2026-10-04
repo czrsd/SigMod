@@ -11385,7 +11385,7 @@
                             this.closePanel();
                         }
                     }
-                    if (!path || path.startsWith('settings.party')) {
+                    if (!path || path === 'settings.partyScale' || path === 'settings.partyBgColor' || path === 'settings.partyTextColor') {
                         this.updateStyles();
                     }
                     if (!path || path === 'chat.blurTag') {
@@ -11511,10 +11511,8 @@
                 this.drag = null;
                 document.body.style.userSelect = '';
                 if (Number.isFinite(x) && Number.isFinite(y)) {
-                    this.app.settingsStore.update((settings) => {
-                        settings.settings.partyPanel.x = x;
-                        settings.settings.partyPanel.y = y;
-                    });
+                    this.app.settingsStore.set('settings.partyPanel.x', x);
+                    this.app.settingsStore.set('settings.partyPanel.y', y);
                 }
             });
             if (this.panelDisposer) this.resources.remove(this.panelDisposer);

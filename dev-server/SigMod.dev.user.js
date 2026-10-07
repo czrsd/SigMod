@@ -1946,6 +1946,65 @@
             return false;
         }
     }
+    function executeHourlyWithAdGuardBypass(fn, context, args = []) {
+        if (typeof fn !== 'function') return void 0;
+        const origQuerySelector = document.querySelector;
+        const origGetComputedStyle = window.getComputedStyle;
+        const dummyDiv = document.createElement('div');
+        dummyDiv.style.display = 'block';
+        const adSelectors = /* @__PURE__ */ new Set([
+            '#ad_bottom',
+            '#div-gpt-ad-1622841396282-0',
+            '#div-gpt-ad-1622632389350-0',
+            '#div-gpt-ad-1622841482467-0',
+        ]);
+        const isAdElement = (elt) =>
+            elt === dummyDiv ||
+            (elt instanceof Element && (elt.id === 'ad_bottom' || elt.id?.startsWith('div-gpt-ad') || adSelectors.has(`#${elt.id}`)));
+        document.querySelector = function (selector) {
+            if (typeof selector === 'string') {
+                if (selector.includes('.settings-menu-holder')) {
+                    return null;
+                }
+                if (adSelectors.has(selector) || selector.startsWith('#div-gpt-ad')) {
+                    const el = origQuerySelector.call(document, selector);
+                    return el || dummyDiv;
+                }
+            }
+            return origQuerySelector.apply(this, arguments);
+        };
+        window.getComputedStyle = function (elt, pseudoElt) {
+            if (isAdElement(elt)) {
+                try {
+                    const style = origGetComputedStyle.call(window, elt, pseudoElt);
+                    return new Proxy(style, {
+                        get(target, prop) {
+                            if (prop === 'display') return 'block';
+                            const val = target[prop];
+                            return typeof val === 'function' ? val.bind(target) : val;
+                        },
+                    });
+                } catch {
+                    return new Proxy(
+                        {},
+                        {
+                            get(target, prop) {
+                                if (prop === 'display') return 'block';
+                                return '';
+                            },
+                        }
+                    );
+                }
+            }
+            return origGetComputedStyle.call(window, elt, pseudoElt);
+        };
+        try {
+            return fn.apply(context, args);
+        } finally {
+            document.querySelector = origQuerySelector;
+            window.getComputedStyle = origGetComputedStyle;
+        }
+    }
     class AdTrackerProtector {
         constructor(logger = null) {
             this.logger = logger;
@@ -2330,7 +2389,6 @@
             }
         }
         installAntiAdblockShield() {
-            const protector = this;
             const neutralizeModalfolks = (element) => {
                 if (!(element instanceof HTMLElement) || element.id !== 'modalfolks') return;
                 element.style.display = 'none';
@@ -2342,7 +2400,14 @@
             };
             const existingModal = document.querySelector('#modalfolks');
             if (existingModal) neutralizeModalfolks(existingModal);
-            let rawHourly = Element.prototype.hourly;
+            const wrapHourly = (fn) => {
+                if (typeof fn !== 'function') return fn;
+                return function (...args) {
+                    return executeHourlyWithAdGuardBypass(fn, this, args);
+                };
+            };
+            let rawHourly =
+                typeof Element.prototype.hourly === 'function' ? wrapHourly(Element.prototype.hourly) : Element.prototype.hourly;
             Object.defineProperty(Element.prototype, 'hourly', {
                 configurable: true,
                 enumerable: true,
@@ -2350,38 +2415,7 @@
                     return rawHourly;
                 },
                 set(fn) {
-                    if (typeof fn === 'function') {
-                        rawHourly = function (...args) {
-                            if (!protector.enabled) return fn.apply(this, args);
-                            const adSelectors = [
-                                '#ad_bottom',
-                                '#div-gpt-ad-1622841396282-0',
-                                '#div-gpt-ad-1622632389350-0',
-                                '#div-gpt-ad-1622841482467-0',
-                            ];
-                            const adElements = adSelectors.map((s) => document.querySelector(s)).filter((el) => el instanceof HTMLElement);
-                            const prevStyles = adElements.map((el) => ({
-                                element: el,
-                                value: el.style.getPropertyValue('display'),
-                                priority: el.style.getPropertyPriority('display'),
-                            }));
-                            const markers = [...document.querySelectorAll('.settings-menu-holder')];
-                            for (let i = 0; i < markers.length; i += 1) markers[i].classList.remove('settings-menu-holder');
-                            for (let i = 0; i < adElements.length; i += 1) adElements[i].style.setProperty('display', 'block', 'important');
-                            try {
-                                return fn.apply(this, args);
-                            } finally {
-                                for (let i = 0; i < prevStyles.length; i += 1) {
-                                    const { element, value, priority } = prevStyles[i];
-                                    if (value) element.style.setProperty('display', value, priority);
-                                    else element.style.removeProperty('display');
-                                }
-                                for (let i = 0; i < markers.length; i += 1) markers[i].classList.add('settings-menu-holder');
-                            }
-                        };
-                    } else {
-                        rawHourly = fn;
-                    }
+                    rawHourly = wrapHourly(fn);
                 },
             });
         }
@@ -2523,11 +2557,16 @@
             this.offset += 8;
             return value;
         }
-        utf8z(maxBytes = this.remaining) {
+        utf8z(maxBytes = this.remaining, allowUnterminated = false) {
             const start = this.offset;
             const end = Math.min(this.view.byteLength, start + maxBytes);
             while (this.offset < end && this.view.getUint8(this.offset) !== 0) this.offset += 1;
-            if (this.offset >= end) throw new RangeError('Missing string terminator');
+            if (this.offset >= end) {
+                if (!allowUnterminated) throw new RangeError('Missing string terminator');
+                const value2 = decoder.decode(new Uint8Array(this.view.buffer, this.view.byteOffset + start, end - start));
+                this.offset = end;
+                return value2;
+            }
             const value = decoder.decode(new Uint8Array(this.view.buffer, this.view.byteOffset + start, this.offset - start));
             this.offset += 1;
             return value;
@@ -3058,8 +3097,13 @@
             this.emit('chat', readChatMessage(reader));
         }
         decodeStats(reader) {
-            const stats = JSON.parse(reader.utf8z(1e4));
-            if (Number.isFinite(stats.playing)) this.playerCount = stats.playing;
+            let stats;
+            try {
+                stats = JSON.parse(reader.utf8z(1e4, true));
+            } catch {
+                return;
+            }
+            if (Number.isFinite(stats?.playing)) this.playerCount = stats.playing;
             if (this.statsPingStarted !== null) {
                 this.latency = performance.now() - this.statsPingStarted;
                 this.statsPingStarted = null;
@@ -3346,7 +3390,12 @@
                         break;
                     case OPCODE.stats: {
                         this.invalidateSnapshot();
-                        const stats = JSON.parse(reader.utf8z(1e4));
+                        let stats;
+                        try {
+                            stats = JSON.parse(reader.utf8z(1e4, true));
+                        } catch {
+                            break;
+                        }
                         const snapshot = this.snapshot();
                         if (Number.isFinite(snapshot.latency) && snapshot.latency >= 0) {
                             stats.latency = snapshot.latency;
@@ -9415,7 +9464,6 @@
         mountGameVisibility() {
             let hookedGl = null;
             const hiddenBoards = /* @__PURE__ */ new Map();
-            const hiddenLeaderboardNames = /* @__PURE__ */ new Map();
             const sync = () => {
                 const api = window.sigfix;
                 if (api?.world?.cells instanceof Map) this.syncSigFixCellDisplays(api);
@@ -9464,54 +9512,38 @@
                             : upload.call(this, target, offset, data, srcOffset, length);
                     });
                 }
-                if (api)
-                    for (const node of document.body.children) {
-                        if (
-                            node instanceof HTMLElement &&
-                            node.style.position === 'fixed' &&
-                            node.style.top === '10px' &&
-                            node.style.right === '10px' &&
-                            node.firstElementChild?.textContent === 'Leaderboard'
-                        ) {
-                            const entries = api.world.views?.get(api.world.selected)?.leaderboard;
-                            const lines = node.children[1]?.children;
-                            if (Array.isArray(entries) && lines)
-                                entries.forEach((entry, index) => {
-                                    const line = lines[index];
-                                    if (!(line instanceof HTMLElement)) return;
-                                    const name = entry.name || 'An unnamed cell';
-                                    const visible = `${entry.place ?? index + 1}. ${name}`;
-                                    const hidden = `${entry.place ?? index + 1}. `;
-                                    if (this.app.settings.game.hideOwnName && entry.me) {
-                                        if (!hiddenLeaderboardNames.has(line)) hiddenLeaderboardNames.set(line, visible);
-                                        if (line.textContent !== hidden) line.textContent = hidden;
-                                    } else if (hiddenLeaderboardNames.has(line)) {
-                                        if (line.textContent !== visible) line.textContent = visible;
-                                        hiddenLeaderboardNames.delete(line);
-                                    }
-                                });
-                            if (!this.app.settings.game.showLeaderboard) {
-                                if (!hiddenBoards.has(node))
-                                    hiddenBoards.set(node, [
-                                        node.style.getPropertyValue('visibility'),
-                                        node.style.getPropertyPriority('visibility'),
-                                    ]);
-                                node.style.setProperty('visibility', 'hidden', 'important');
-                            } else if (hiddenBoards.has(node)) {
-                                const [value, priority] = hiddenBoards.get(node);
-                                node.style.setProperty('visibility', value, priority);
-                                hiddenBoards.delete(node);
-                            }
+                if (api) {
+                    const node =
+                        document.getElementById('sf-leaderboard') ||
+                        Array.from(document.body.children).find(
+                            (child) =>
+                                child instanceof HTMLElement &&
+                                child.style.position === 'fixed' &&
+                                child.style.top === '10px' &&
+                                child.style.right === '10px' &&
+                                child.firstElementChild?.textContent === 'Leaderboard'
+                        );
+                    if (node instanceof HTMLElement) {
+                        if (!this.app.settings.game.showLeaderboard) {
+                            if (!hiddenBoards.has(node))
+                                hiddenBoards.set(node, [
+                                    node.style.getPropertyValue('visibility'),
+                                    node.style.getPropertyPriority('visibility'),
+                                ]);
+                            node.style.setProperty('visibility', 'hidden', 'important');
+                        } else if (hiddenBoards.has(node)) {
+                            const [value, priority] = hiddenBoards.get(node);
+                            node.style.setProperty('visibility', value, priority);
+                            hiddenBoards.delete(node);
                         }
                     }
+                }
             };
             sync();
             this.resources.interval(sync, 250);
             this.resources.listen(document, 'sigmod:settingchange', sync);
             this.resources.add(() => {
                 for (const [node, [value, priority]] of hiddenBoards) node.style.setProperty('visibility', value, priority);
-                for (const [line, text] of hiddenLeaderboardNames)
-                    if (line.isConnected && line.textContent !== text) line.textContent = text;
             });
         }
         syncSigFixCellDisplays(api) {
@@ -10064,40 +10096,20 @@
         }
         handleHourlyClick(event) {
             const target = event.target instanceof Element ? event.target.closest('#free-chest-button') : null;
-            if (!(target instanceof HTMLElement) || typeof target.hourly !== 'function') return;
+            if (!(target instanceof HTMLElement)) return;
+            const hourly = typeof target.hourly === 'function' ? target.hourly : Element.prototype.hourly;
+            if (typeof hourly !== 'function') return;
             event.preventDefault();
             event.stopImmediatePropagation();
             this.runHourlyWithoutAdblockGuard(target);
         }
         runHourlyWithoutAdblockGuard(button) {
-            const hourly = button.hourly;
+            const hourly = typeof button.hourly === 'function' ? button.hourly : Element.prototype.hourly;
             if (typeof hourly !== 'function') return;
-            const root = document.documentElement;
-            const hadHideAds = root.classList.contains('sigmod-hide-ads');
-            const modMarkers = [...document.querySelectorAll('.settings-menu-holder')];
-            const adSelectors = ['#ad_bottom', '#div-gpt-ad-1622841396282-0', '#div-gpt-ad-1622632389350-0', '#div-gpt-ad-1622841482467-0'];
-            const adStyles = adSelectors
-                .map((selector) => document.querySelector(selector))
-                .filter((element) => element instanceof HTMLElement)
-                .map((element) => ({
-                    element,
-                    value: element.style.getPropertyValue('display'),
-                    priority: element.style.getPropertyPriority('display'),
-                }));
             try {
-                for (const marker of modMarkers) marker.classList.remove('settings-menu-holder');
-                root.classList.remove('sigmod-hide-ads');
-                for (const { element } of adStyles) element.style.setProperty('display', 'block', 'important');
-                hourly.call(button);
+                executeHourlyWithAdGuardBypass(hourly, button, []);
             } catch (error) {
                 this.app.logger.warnOnce('hourly-reward-bypass', 'Unable to open the daily reward directly', error);
-            } finally {
-                for (const { element, value, priority } of adStyles) {
-                    if (value) element.style.setProperty('display', value, priority);
-                    else element.style.removeProperty('display');
-                }
-                for (const marker of modMarkers) marker.classList.add('settings-menu-holder');
-                root.classList.toggle('sigmod-hide-ads', hadHideAds);
             }
         }
         inspectResponse(input, response) {
@@ -12273,7 +12285,9 @@
             }, 500);
         }
         getLeaderboardPositionFromDom() {
-            for (const root of document.querySelectorAll('div[style*="white-space: pre"]')) {
+            const sfLeaderboard = document.getElementById('sf-leaderboard');
+            const roots = sfLeaderboard ? [sfLeaderboard] : document.querySelectorAll('div[style*="white-space: pre"]');
+            for (const root of roots) {
                 for (const entry of root.querySelectorAll('div[style*="display: block"]')) {
                     const style = entry.getAttribute('style') || '';
                     if (!style.includes('rgb(255, 170, 170)')) continue;
@@ -17738,6 +17752,13 @@
                 return;
             }
             if (await this.handleDiscordLoginCallback()) {
+                this.starting = false;
+                return;
+            }
+            if (window.sigmod && typeof window.sigmod.version === 'number' && window.sigmod.version < 11) {
+                this.logger.warn(
+                    `Legacy SigMod v${window.sigmod.version} is active on the page. Aborting initialization to prevent duplicate execution.`
+                );
                 this.starting = false;
                 return;
             }

@@ -351,7 +351,6 @@ class VisualController extends FeatureController {
     mountGameVisibility() {
         let hookedGl = null;
         const hiddenBoards = new Map();
-        const hiddenLeaderboardNames = new Map();
         const sync = () => {
             const api = window.sigfix;
             if (api?.world?.cells instanceof Map) this.syncSigFixCellDisplays(api);
@@ -401,55 +400,40 @@ class VisualController extends FeatureController {
                         : upload.call(this, target, offset, data, srcOffset, length);
                 });
             }
-            // SigFixes does not export its leaderboard container. Identify its
-            // direct body child by the title and fixed top-right placement.
-            if (api)
-                for (const node of document.body.children) {
-                    if (
-                        node instanceof HTMLElement &&
-                        node.style.position === 'fixed' &&
-                        node.style.top === '10px' &&
-                        node.style.right === '10px' &&
-                        node.firstElementChild?.textContent === 'Leaderboard'
-                    ) {
-                        const entries = api.world.views?.get(api.world.selected)?.leaderboard;
-                        const lines = node.children[1]?.children;
-                        if (Array.isArray(entries) && lines)
-                            entries.forEach((entry, index) => {
-                                const line = lines[index];
-                                if (!(line instanceof HTMLElement)) return;
-                                const name = entry.name || 'An unnamed cell';
-                                const visible = `${entry.place ?? index + 1}. ${name}`;
-                                const hidden = `${entry.place ?? index + 1}. `;
-                                if (this.app.settings.game.hideOwnName && entry.me) {
-                                    if (!hiddenLeaderboardNames.has(line)) hiddenLeaderboardNames.set(line, visible);
-                                    if (line.textContent !== hidden) line.textContent = hidden;
-                                } else if (hiddenLeaderboardNames.has(line)) {
-                                    if (line.textContent !== visible) line.textContent = visible;
-                                    hiddenLeaderboardNames.delete(line);
-                                }
-                            });
-                        if (!this.app.settings.game.showLeaderboard) {
-                            if (!hiddenBoards.has(node))
-                                hiddenBoards.set(node, [
-                                    node.style.getPropertyValue('visibility'),
-                                    node.style.getPropertyPriority('visibility'),
-                                ]);
-                            node.style.setProperty('visibility', 'hidden', 'important');
-                        } else if (hiddenBoards.has(node)) {
-                            const [value, priority] = hiddenBoards.get(node);
-                            node.style.setProperty('visibility', value, priority);
-                            hiddenBoards.delete(node);
-                        }
+            // SigFixes exports its leaderboard container via #sf-leaderboard (v2.8.11+).
+            // Fall back to scanning body children for fixed top-right placement on older versions.
+            if (api) {
+                const node =
+                    document.getElementById('sf-leaderboard') ||
+                    Array.from(document.body.children).find(
+                        (child) =>
+                            child instanceof HTMLElement &&
+                            child.style.position === 'fixed' &&
+                            child.style.top === '10px' &&
+                            child.style.right === '10px' &&
+                            child.firstElementChild?.textContent === 'Leaderboard'
+                    );
+                if (node instanceof HTMLElement) {
+                    if (!this.app.settings.game.showLeaderboard) {
+                        if (!hiddenBoards.has(node))
+                            hiddenBoards.set(node, [
+                                node.style.getPropertyValue('visibility'),
+                                node.style.getPropertyPriority('visibility'),
+                            ]);
+                        node.style.setProperty('visibility', 'hidden', 'important');
+                    } else if (hiddenBoards.has(node)) {
+                        const [value, priority] = hiddenBoards.get(node);
+                        node.style.setProperty('visibility', value, priority);
+                        hiddenBoards.delete(node);
                     }
                 }
+            }
         };
         sync();
         this.resources.interval(sync, 250);
         this.resources.listen(document, 'sigmod:settingchange', sync);
         this.resources.add(() => {
             for (const [node, [value, priority]] of hiddenBoards) node.style.setProperty('visibility', value, priority);
-            for (const [line, text] of hiddenLeaderboardNames) if (line.isConnected && line.textContent !== text) line.textContent = text;
         });
     }
     syncSigFixCellDisplays(api) {

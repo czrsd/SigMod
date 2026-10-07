@@ -57,6 +57,13 @@ class SigModApp {
             this.starting = false;
             return;
         }
+        if (window.sigmod && typeof window.sigmod.version === 'number' && window.sigmod.version < 11) {
+            this.logger.warn(
+                `Legacy SigMod v${window.sigmod.version} is active on the page. Aborting initialization to prevent duplicate execution.`
+            );
+            this.starting = false;
+            return;
+        }
 
         this.exportCompatibility();
         this.createFeatureSkeleton();

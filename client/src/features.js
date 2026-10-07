@@ -31,40 +31,20 @@ class AuthController extends FeatureController {
     }
     handleHourlyClick(event) {
         const target = event.target instanceof Element ? event.target.closest('#free-chest-button') : null;
-        if (!(target instanceof HTMLElement) || typeof target.hourly !== 'function') return;
+        if (!(target instanceof HTMLElement)) return;
+        const hourly = typeof target.hourly === 'function' ? target.hourly : Element.prototype.hourly;
+        if (typeof hourly !== 'function') return;
         event.preventDefault();
         event.stopImmediatePropagation();
         this.runHourlyWithoutAdblockGuard(target);
     }
     runHourlyWithoutAdblockGuard(button) {
-        const hourly = button.hourly;
+        const hourly = typeof button.hourly === 'function' ? button.hourly : Element.prototype.hourly;
         if (typeof hourly !== 'function') return;
-        const root = document.documentElement;
-        const hadHideAds = root.classList.contains('sigmod-hide-ads');
-        const modMarkers = [...document.querySelectorAll('.settings-menu-holder')];
-        const adSelectors = ['#ad_bottom', '#div-gpt-ad-1622841396282-0', '#div-gpt-ad-1622632389350-0', '#div-gpt-ad-1622841482467-0'];
-        const adStyles = adSelectors
-            .map((selector) => document.querySelector(selector))
-            .filter((element) => element instanceof HTMLElement)
-            .map((element) => ({
-                element,
-                value: element.style.getPropertyValue('display'),
-                priority: element.style.getPropertyPriority('display'),
-            }));
         try {
-            for (const marker of modMarkers) marker.classList.remove('settings-menu-holder');
-            root.classList.remove('sigmod-hide-ads');
-            for (const { element } of adStyles) element.style.setProperty('display', 'block', 'important');
-            hourly.call(button);
+            executeHourlyWithAdGuardBypass(hourly, button, []);
         } catch (error) {
             this.app.logger.warnOnce('hourly-reward-bypass', 'Unable to open the daily reward directly', error);
-        } finally {
-            for (const { element, value, priority } of adStyles) {
-                if (value) element.style.setProperty('display', value, priority);
-                else element.style.removeProperty('display');
-            }
-            for (const marker of modMarkers) marker.classList.add('settings-menu-holder');
-            root.classList.toggle('sigmod-hide-ads', hadHideAds);
         }
     }
     inspectResponse(input, response) {
@@ -2264,7 +2244,9 @@ class SessionController extends FeatureController {
         }, 500);
     }
     getLeaderboardPositionFromDom() {
-        for (const root of document.querySelectorAll('div[style*="white-space: pre"]')) {
+        const sfLeaderboard = document.getElementById('sf-leaderboard');
+        const roots = sfLeaderboard ? [sfLeaderboard] : document.querySelectorAll('div[style*="white-space: pre"]');
+        for (const root of roots) {
             for (const entry of root.querySelectorAll('div[style*="display: block"]')) {
                 const style = entry.getAttribute('style') || '';
                 if (!style.includes('rgb(255, 170, 170)')) continue;

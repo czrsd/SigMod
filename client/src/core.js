@@ -1039,7 +1039,16 @@ class SettingsStore {
         for (const key of ['showFood', 'showLeaderboard', 'hideOwnName', 'botSkinsOnly', 'showOwnSkinWithBots']) {
             value.game[key] = normalizeBoolean(value.game[key], this.defaults.game[key]);
         }
-        for (const key of ['autoRespawn', 'playTimer', 'mouseTracker', 'autoClaimCoins', 'showChallenges', 'removeShopPopup', 'showPartyPanel', 'mergeTimer']) {
+        for (const key of [
+            'autoRespawn',
+            'playTimer',
+            'mouseTracker',
+            'autoClaimCoins',
+            'showChallenges',
+            'removeShopPopup',
+            'showPartyPanel',
+            'mergeTimer',
+        ]) {
             value.settings[key] = normalizeBoolean(value.settings[key], this.defaults.settings[key]);
         }
         for (const key of ['enabled', 'blurTag']) {
@@ -1258,6 +1267,71 @@ class InputOwnership extends Emitter {
             if (this.owns('keys', path) && keybindMatchesEvent(event, this.app.settingsStore.get(`macros.keys.${path}`))) return true;
         }
         return false;
+    }
+}
+
+function executeHourlyWithAdGuardBypass(fn, context, args = []) {
+    if (typeof fn !== 'function') return undefined;
+    const origQuerySelector = document.querySelector;
+    const origGetComputedStyle = window.getComputedStyle;
+    const dummyDiv = document.createElement('div');
+    dummyDiv.style.display = 'block';
+
+    const adSelectors = new Set([
+        '#ad_bottom',
+        '#div-gpt-ad-1622841396282-0',
+        '#div-gpt-ad-1622632389350-0',
+        '#div-gpt-ad-1622841482467-0',
+    ]);
+
+    const isAdElement = (elt) =>
+        elt === dummyDiv ||
+        (elt instanceof Element && (elt.id === 'ad_bottom' || elt.id?.startsWith('div-gpt-ad') || adSelectors.has(`#${elt.id}`)));
+
+    document.querySelector = function (selector) {
+        if (typeof selector === 'string') {
+            if (selector.includes('.settings-menu-holder')) {
+                return null;
+            }
+            if (adSelectors.has(selector) || selector.startsWith('#div-gpt-ad')) {
+                const el = origQuerySelector.call(document, selector);
+                return el || dummyDiv;
+            }
+        }
+        return origQuerySelector.apply(this, arguments);
+    };
+
+    window.getComputedStyle = function (elt, pseudoElt) {
+        if (isAdElement(elt)) {
+            try {
+                const style = origGetComputedStyle.call(window, elt, pseudoElt);
+                return new Proxy(style, {
+                    get(target, prop) {
+                        if (prop === 'display') return 'block';
+                        const val = target[prop];
+                        return typeof val === 'function' ? val.bind(target) : val;
+                    },
+                });
+            } catch {
+                return new Proxy(
+                    {},
+                    {
+                        get(target, prop) {
+                            if (prop === 'display') return 'block';
+                            return '';
+                        },
+                    }
+                );
+            }
+        }
+        return origGetComputedStyle.call(window, elt, pseudoElt);
+    };
+
+    try {
+        return fn.apply(context, args);
+    } finally {
+        document.querySelector = origQuerySelector;
+        window.getComputedStyle = origGetComputedStyle;
     }
 }
 
@@ -1675,8 +1749,6 @@ class AdTrackerProtector {
     }
 
     installAntiAdblockShield() {
-        const protector = this;
-
         const neutralizeModalfolks = (element) => {
             if (!(element instanceof HTMLElement) || element.id !== 'modalfolks') return;
             element.style.display = 'none';
@@ -1690,7 +1762,14 @@ class AdTrackerProtector {
         const existingModal = document.querySelector('#modalfolks');
         if (existingModal) neutralizeModalfolks(existingModal);
 
-        let rawHourly = Element.prototype.hourly;
+        const wrapHourly = (fn) => {
+            if (typeof fn !== 'function') return fn;
+            return function (...args) {
+                return executeHourlyWithAdGuardBypass(fn, this, args);
+            };
+        };
+
+        let rawHourly = typeof Element.prototype.hourly === 'function' ? wrapHourly(Element.prototype.hourly) : Element.prototype.hourly;
         Object.defineProperty(Element.prototype, 'hourly', {
             configurable: true,
             enumerable: true,
@@ -1698,38 +1777,7 @@ class AdTrackerProtector {
                 return rawHourly;
             },
             set(fn) {
-                if (typeof fn === 'function') {
-                    rawHourly = function (...args) {
-                        if (!protector.enabled) return fn.apply(this, args);
-                        const adSelectors = [
-                            '#ad_bottom',
-                            '#div-gpt-ad-1622841396282-0',
-                            '#div-gpt-ad-1622632389350-0',
-                            '#div-gpt-ad-1622841482467-0',
-                        ];
-                        const adElements = adSelectors.map((s) => document.querySelector(s)).filter((el) => el instanceof HTMLElement);
-                        const prevStyles = adElements.map((el) => ({
-                            element: el,
-                            value: el.style.getPropertyValue('display'),
-                            priority: el.style.getPropertyPriority('display'),
-                        }));
-                        const markers = [...document.querySelectorAll('.settings-menu-holder')];
-                        for (let i = 0; i < markers.length; i += 1) markers[i].classList.remove('settings-menu-holder');
-                        for (let i = 0; i < adElements.length; i += 1) adElements[i].style.setProperty('display', 'block', 'important');
-                        try {
-                            return fn.apply(this, args);
-                        } finally {
-                            for (let i = 0; i < prevStyles.length; i += 1) {
-                                const { element, value, priority } = prevStyles[i];
-                                if (value) element.style.setProperty('display', value, priority);
-                                else element.style.removeProperty('display');
-                            }
-                            for (let i = 0; i < markers.length; i += 1) markers[i].classList.add('settings-menu-holder');
-                        }
-                    };
-                } else {
-                    rawHourly = fn;
-                }
+                rawHourly = wrapHourly(fn);
             },
         });
     }

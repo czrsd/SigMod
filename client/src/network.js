@@ -57,11 +57,16 @@ class PacketReader {
         this.offset += 8;
         return value;
     }
-    utf8z(maxBytes = this.remaining) {
+    utf8z(maxBytes = this.remaining, allowUnterminated = false) {
         const start = this.offset;
         const end = Math.min(this.view.byteLength, start + maxBytes);
         while (this.offset < end && this.view.getUint8(this.offset) !== 0) this.offset += 1;
-        if (this.offset >= end) throw new RangeError('Missing string terminator');
+        if (this.offset >= end) {
+            if (!allowUnterminated) throw new RangeError('Missing string terminator');
+            const value = decoder.decode(new Uint8Array(this.view.buffer, this.view.byteOffset + start, end - start));
+            this.offset = end;
+            return value;
+        }
         const value = decoder.decode(new Uint8Array(this.view.buffer, this.view.byteOffset + start, this.offset - start));
         this.offset += 1;
         return value;
@@ -588,8 +593,13 @@ class NativeProtocol extends Emitter {
         this.emit('chat', readChatMessage(reader));
     }
     decodeStats(reader) {
-        const stats = JSON.parse(reader.utf8z(10_000));
-        if (Number.isFinite(stats.playing)) this.playerCount = stats.playing;
+        let stats;
+        try {
+            stats = JSON.parse(reader.utf8z(10_000, true));
+        } catch {
+            return;
+        }
+        if (Number.isFinite(stats?.playing)) this.playerCount = stats.playing;
         if (this.statsPingStarted !== null) {
             this.latency = performance.now() - this.statsPingStarted;
             this.statsPingStarted = null;
@@ -879,7 +889,12 @@ class SigFixHostAdapter extends HostAdapter {
                     break;
                 case OPCODE.stats: {
                     this.invalidateSnapshot();
-                    const stats = JSON.parse(reader.utf8z(10_000));
+                    let stats;
+                    try {
+                        stats = JSON.parse(reader.utf8z(10_000, true));
+                    } catch {
+                        break;
+                    }
                     const snapshot = this.snapshot();
                     if (Number.isFinite(snapshot.latency) && snapshot.latency >= 0) {
                         stats.latency = snapshot.latency;

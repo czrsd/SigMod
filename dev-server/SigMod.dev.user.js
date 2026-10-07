@@ -455,7 +455,6 @@
             cellColor: null,
             virusImage: '/assets/images/viruses/2.png',
             shortenNames: false,
-            showFood: true,
             showLeaderboard: true,
             hideOwnName: false,
             botSkinsOnly: false,
@@ -500,7 +499,6 @@
                 'host:showNames',
                 'host:showSkins',
                 'host:showMass',
-                'host:showFood',
                 'setting:chat.enabled',
                 'host:showMinimap',
                 'host:showBorder',
@@ -1711,11 +1709,11 @@
                 value.settings.quickAccess = [
                     ...new Set(
                         value.settings.quickAccess
-                            .filter((item) => item !== 'host:darkTheme')
+                            .filter((item) => item !== 'host:darkTheme' && item !== 'host:showFood')
                             .map((item) => (item === 'host:showChat' ? 'setting:chat.enabled' : item))
                     ),
                 ];
-            for (const key of ['showFood', 'showLeaderboard', 'hideOwnName', 'botSkinsOnly', 'showOwnSkinWithBots']) {
+            for (const key of ['showLeaderboard', 'hideOwnName', 'botSkinsOnly', 'showOwnSkinWithBots']) {
                 value.game[key] = normalizeBoolean(value.game[key], this.defaults.game[key]);
             }
             for (const key of [
@@ -9131,13 +9129,6 @@
             const originalStroke = prototype.stroke;
             const originalDrawImage = prototype.drawImage;
             const leaderboardCanvases = /* @__PURE__ */ new WeakSet();
-            const paths = /* @__PURE__ */ new WeakMap();
-            const originalBeginPath = prototype.beginPath;
-            const originalFill = prototype.fill;
-            const originalRestore = prototype.restore;
-            const originalMoveTo = prototype.moveTo;
-            const originalLineTo = prototype.lineTo;
-            const nativeFoodHidden = () => visual.app.host.adapter?.kind === 'native' && !visual.app.settings.game.showFood;
             const isGameContext = (context) =>
                 context?.canvas === this.app.dom?.canvas || context?.canvas?.id === SELECTORS.canvas.slice(1);
             const fillRect = function (x, y, width, height) {
@@ -9217,15 +9208,6 @@
             const arc = function (x, y, radius, startAngle, endAngle, counterclockwise) {
                 if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
                 visual.applyCellColor(this, radius);
-                if (nativeFoodHidden()) {
-                    let state = paths.get(this);
-                    if (state) {
-                        state.small = radius <= 40 && counterclockwise === false;
-                        state.pending = null;
-                    } else {
-                        paths.set(this, { small: radius <= 40 && counterclockwise === false, pending: null, polygon: false });
-                    }
-                }
                 return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
             };
             const fillText = function (text, x, y, maxWidth) {
@@ -9315,50 +9297,6 @@
             this.resources.patch(prototype, 'strokeText', strokeText);
             this.resources.patch(prototype, 'stroke', stroke);
             this.resources.patch(prototype, 'drawImage', drawImage);
-            this.resources.patch(prototype, 'beginPath', function () {
-                if (isGameContext(this)) {
-                    if (nativeFoodHidden()) {
-                        let state = paths.get(this);
-                        if (state) {
-                            state.small = false;
-                            state.pending = null;
-                            state.polygon = true;
-                        } else {
-                            paths.set(this, { small: false, pending: null, polygon: true });
-                        }
-                    }
-                } else {
-                    paths.delete(this);
-                }
-                return originalBeginPath.call(this);
-            });
-            const trackPoint = (context) => {
-                const state = paths.get(context);
-                if (state && state.polygon) {
-                    state.small = true;
-                    state.polygon = false;
-                }
-            };
-            this.resources.patch(prototype, 'moveTo', function (x, y) {
-                trackPoint(this);
-                return originalMoveTo.call(this, x, y);
-            });
-            this.resources.patch(prototype, 'lineTo', function (x, y) {
-                trackPoint(this);
-                return originalLineTo.call(this, x, y);
-            });
-            this.resources.patch(prototype, 'fill', function (fillRule) {
-                const state = paths.get(this);
-                if (isGameContext(this) && nativeFoodHidden() && state && state.small && this.lineWidth === 10) {
-                    state.pending = fillRule;
-                    return;
-                }
-                return fillRule === void 0 ? originalFill.call(this) : originalFill.call(this, fillRule);
-            });
-            this.resources.patch(prototype, 'restore', function () {
-                paths.delete(this);
-                return originalRestore.call(this);
-            });
         }
     }
     class VisualController extends FeatureController {
@@ -9462,56 +9400,10 @@
         }
         /** Render-only compatibility hooks; never remove pellets from the world. */
         mountGameVisibility() {
-            let hookedGl = null;
             const hiddenBoards = /* @__PURE__ */ new Map();
             const sync = () => {
                 const api = window.sigfix;
                 if (api?.world?.cells instanceof Map) this.syncSigFixCellDisplays(api);
-                const gl = api?.ui?.game?.gl;
-                if (gl && gl !== hookedGl) {
-                    hookedGl = gl;
-                    let vao = null;
-                    let arrayBuffer = null;
-                    const bindVao = gl.bindVertexArray;
-                    const bindBuffer = gl.bindBuffer;
-                    const draw = gl.drawArraysInstanced;
-                    const upload = gl.bufferSubData;
-                    this.resources.patch(gl, 'bindVertexArray', function (value) {
-                        vao = value;
-                        return bindVao.call(this, value);
-                    });
-                    this.resources.patch(gl, 'bindBuffer', function (target, value) {
-                        if (target === gl.ARRAY_BUFFER) arrayBuffer = value;
-                        return bindBuffer.call(this, target, value);
-                    });
-                    const app2 = this.app;
-                    this.resources.patch(gl, 'drawArraysInstanced', function (mode, first, count, instanceCount) {
-                        if (!app2.settings.game.showFood && vao === api.glconf.circlePelletVao) return;
-                        return draw.call(this, mode, first, count, instanceCount);
-                    });
-                    this.resources.patch(gl, 'bufferSubData', function (target, offset, data, srcOffset, length) {
-                        if (
-                            !app2.settings.game.showFood &&
-                            target === gl.ARRAY_BUFFER &&
-                            offset === 0 &&
-                            arrayBuffer === api.glconf.playerBuffer &&
-                            data instanceof Float32Array
-                        ) {
-                            let count = 0;
-                            for (const pellet of api.world.pellets.values()) if (pellet.deadTo) count++;
-                            if (count) {
-                                const copy = data.slice();
-                                for (let i = 0; i < count && i * 17 + 15 < copy.length; i++) copy[i * 17 + 15] = 0;
-                                return srcOffset === void 0
-                                    ? upload.call(this, target, offset, copy)
-                                    : upload.call(this, target, offset, copy, srcOffset, length);
-                            }
-                        }
-                        return srcOffset === void 0
-                            ? upload.call(this, target, offset, data)
-                            : upload.call(this, target, offset, data, srcOffset, length);
-                    });
-                }
                 if (api) {
                     const node =
                         document.getElementById('sf-leaderboard') ||
@@ -13569,12 +13461,11 @@
             for (const source of document.querySelectorAll('.checkbox-grid input[id], .checkbox-grid select[id]')) {
                 if (!(source instanceof HTMLInputElement || source instanceof HTMLSelectElement)) continue;
                 if (source instanceof HTMLInputElement && source.type !== 'checkbox') continue;
-                if (source.id === 'showChat' || source.id === 'darkTheme') continue;
+                if (source.id === 'showChat' || source.id === 'darkTheme' || source.id === 'showFood') continue;
                 const labels = {
                     showNames: 'Names',
                     showSkins: 'Skins',
                     showMass: 'Mass',
-                    showFood: 'Food',
                     showMinimap: 'Minimap',
                     showBorder: 'Border',
                     showGrid: 'Grid',
@@ -14180,7 +14071,6 @@
                 ['showNames', 'Names', true],
                 ['showSkins', 'Skins', true],
                 ['showMass', 'Mass', false],
-                ['showFood', 'Food', true],
                 ['showLeaderboard', 'Leaderboard', true],
                 ['autoRespawn', 'Auto Respawn', this.app.settings.settings.autoRespawn],
                 ['autoClaimCoins', 'Auto claim coins', this.app.settings.settings.autoClaimCoins],
@@ -14203,7 +14093,7 @@
                         label.remove();
                     });
                 }
-                if (id === 'showFood' || id === 'showLeaderboard') {
+                if (id === 'showLeaderboard') {
                     input.checked = this.app.settings.game[id];
                     this.resources.listen(input, 'change', () => {
                         this.app.settingsStore.set(`game.${id}`, input.checked, true);

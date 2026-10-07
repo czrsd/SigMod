@@ -3548,12 +3548,11 @@ class QuickAccessController extends FeatureController {
         for (const source of document.querySelectorAll('.checkbox-grid input[id], .checkbox-grid select[id]')) {
             if (!(source instanceof HTMLInputElement || source instanceof HTMLSelectElement)) continue;
             if (source instanceof HTMLInputElement && source.type !== 'checkbox') continue;
-            if (source.id === 'showChat' || source.id === 'darkTheme') continue;
+            if (source.id === 'showChat' || source.id === 'darkTheme' || source.id === 'showFood') continue;
             const labels = {
                 showNames: 'Names',
                 showSkins: 'Skins',
                 showMass: 'Mass',
-                showFood: 'Food',
                 showMinimap: 'Minimap',
                 showBorder: 'Border',
                 showGrid: 'Grid',
@@ -4173,7 +4172,6 @@ class MainMenuController extends FeatureController {
             ['showNames', 'Names', true],
             ['showSkins', 'Skins', true],
             ['showMass', 'Mass', false],
-            ['showFood', 'Food', true],
             ['showLeaderboard', 'Leaderboard', true],
             ['autoRespawn', 'Auto Respawn', this.app.settings.settings.autoRespawn],
             ['autoClaimCoins', 'Auto claim coins', this.app.settings.settings.autoClaimCoins],
@@ -4196,7 +4194,7 @@ class MainMenuController extends FeatureController {
                     label.remove();
                 });
             }
-            if (id === 'showFood' || id === 'showLeaderboard') {
+            if (id === 'showLeaderboard') {
                 input.checked = this.app.settings.game[id];
                 this.resources.listen(input, 'change', () => {
                     this.app.settingsStore.set(`game.${id}`, input.checked, true);

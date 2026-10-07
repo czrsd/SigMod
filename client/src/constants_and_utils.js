@@ -375,7 +375,6 @@ const STANDARD_MOUSE_BUTTONS = [
  * @property {string|null} cellColor
  * @property {string} virusImage
  * @property {boolean} shortenNames
- * @property {boolean} showFood
  * @property {boolean} showLeaderboard
  * @property {boolean} hideOwnName
  * @property {boolean} botSkinsOnly
@@ -484,7 +483,6 @@ const DEFAULT_SETTINGS = {
         cellColor: null,
         virusImage: '/assets/images/viruses/2.png',
         shortenNames: false,
-        showFood: true,
         showLeaderboard: true,
         hideOwnName: false,
         botSkinsOnly: false,
@@ -529,7 +527,6 @@ const DEFAULT_SETTINGS = {
             'host:showNames',
             'host:showSkins',
             'host:showMass',
-            'host:showFood',
             'setting:chat.enabled',
             'host:showMinimap',
             'host:showBorder',

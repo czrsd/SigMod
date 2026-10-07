@@ -12,13 +12,6 @@ class CanvasHooks extends FeatureController {
         const originalStroke = prototype.stroke;
         const originalDrawImage = prototype.drawImage;
         const leaderboardCanvases = new WeakSet();
-        const paths = new WeakMap();
-        const originalBeginPath = prototype.beginPath;
-        const originalFill = prototype.fill;
-        const originalRestore = prototype.restore;
-        const originalMoveTo = prototype.moveTo;
-        const originalLineTo = prototype.lineTo;
-        const nativeFoodHidden = () => visual.app.host.adapter?.kind === 'native' && !visual.app.settings.game.showFood;
         const isGameContext = (context) => context?.canvas === this.app.dom?.canvas || context?.canvas?.id === SELECTORS.canvas.slice(1);
         const fillRect = function (x, y, width, height) {
             if (!isGameContext(this)) return originalFillRect.call(this, x, y, width, height);
@@ -104,15 +97,6 @@ class CanvasHooks extends FeatureController {
         const arc = function (x, y, radius, startAngle, endAngle, counterclockwise) {
             if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
             visual.applyCellColor(this, radius);
-            if (nativeFoodHidden()) {
-                let state = paths.get(this);
-                if (state) {
-                    state.small = radius <= 40 && counterclockwise === false;
-                    state.pending = null;
-                } else {
-                    paths.set(this, { small: radius <= 40 && counterclockwise === false, pending: null, polygon: false });
-                }
-            }
             return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
         };
         const fillText = function (text, x, y, maxWidth) {
@@ -202,50 +186,6 @@ class CanvasHooks extends FeatureController {
         this.resources.patch(prototype, 'strokeText', strokeText);
         this.resources.patch(prototype, 'stroke', stroke);
         this.resources.patch(prototype, 'drawImage', drawImage);
-        this.resources.patch(prototype, 'beginPath', function () {
-            if (isGameContext(this)) {
-                if (nativeFoodHidden()) {
-                    let state = paths.get(this);
-                    if (state) {
-                        state.small = false;
-                        state.pending = null;
-                        state.polygon = true;
-                    } else {
-                        paths.set(this, { small: false, pending: null, polygon: true });
-                    }
-                }
-            } else {
-                paths.delete(this);
-            }
-            return originalBeginPath.call(this);
-        });
-        const trackPoint = (context) => {
-            const state = paths.get(context);
-            if (state && state.polygon) {
-                state.small = true;
-                state.polygon = false; // Prevent redundant checks on subsequent vertices
-            }
-        };
-        this.resources.patch(prototype, 'moveTo', function (x, y) {
-            trackPoint(this);
-            return originalMoveTo.call(this, x, y);
-        });
-        this.resources.patch(prototype, 'lineTo', function (x, y) {
-            trackPoint(this);
-            return originalLineTo.call(this, x, y);
-        });
-        this.resources.patch(prototype, 'fill', function (fillRule) {
-            const state = paths.get(this);
-            if (isGameContext(this) && nativeFoodHidden() && state && state.small && this.lineWidth === 10) {
-                state.pending = fillRule;
-                return;
-            }
-            return fillRule === undefined ? originalFill.call(this) : originalFill.call(this, fillRule);
-        });
-        this.resources.patch(prototype, 'restore', function () {
-            paths.delete(this);
-            return originalRestore.call(this);
-        });
     }
 }
 class VisualController extends FeatureController {
@@ -349,57 +289,10 @@ class VisualController extends FeatureController {
     }
     /** Render-only compatibility hooks; never remove pellets from the world. */
     mountGameVisibility() {
-        let hookedGl = null;
         const hiddenBoards = new Map();
         const sync = () => {
             const api = window.sigfix;
             if (api?.world?.cells instanceof Map) this.syncSigFixCellDisplays(api);
-            const gl = api?.ui?.game?.gl;
-            if (gl && gl !== hookedGl) {
-                hookedGl = gl;
-                let vao = null;
-                let arrayBuffer = null;
-                const bindVao = gl.bindVertexArray;
-                const bindBuffer = gl.bindBuffer;
-                const draw = gl.drawArraysInstanced;
-                const upload = gl.bufferSubData;
-                this.resources.patch(gl, 'bindVertexArray', function (value) {
-                    vao = value;
-                    return bindVao.call(this, value);
-                });
-                this.resources.patch(gl, 'bindBuffer', function (target, value) {
-                    if (target === gl.ARRAY_BUFFER) arrayBuffer = value;
-                    return bindBuffer.call(this, target, value);
-                });
-                const app = this.app;
-                this.resources.patch(gl, 'drawArraysInstanced', function (mode, first, count, instanceCount) {
-                    if (!app.settings.game.showFood && vao === api.glconf.circlePelletVao) return;
-                    return draw.call(this, mode, first, count, instanceCount);
-                });
-                this.resources.patch(gl, 'bufferSubData', function (target, offset, data, srcOffset, length) {
-                    if (
-                        !app.settings.game.showFood &&
-                        target === gl.ARRAY_BUFFER &&
-                        offset === 0 &&
-                        arrayBuffer === api.glconf.playerBuffer &&
-                        data instanceof Float32Array
-                    ) {
-                        // SigFixes uploads eaten pellets first, in 17-float records.
-                        let count = 0;
-                        for (const pellet of api.world.pellets.values()) if (pellet.deadTo) count++;
-                        if (count) {
-                            const copy = data.slice();
-                            for (let i = 0; i < count && i * 17 + 15 < copy.length; i++) copy[i * 17 + 15] = 0;
-                            return srcOffset === undefined
-                                ? upload.call(this, target, offset, copy)
-                                : upload.call(this, target, offset, copy, srcOffset, length);
-                        }
-                    }
-                    return srcOffset === undefined
-                        ? upload.call(this, target, offset, data)
-                        : upload.call(this, target, offset, data, srcOffset, length);
-                });
-            }
             // SigFixes exports its leaderboard container via #sf-leaderboard (v2.8.11+).
             // Fall back to scanning body children for fixed top-right placement on older versions.
             if (api) {

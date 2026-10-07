@@ -1032,11 +1032,11 @@ class SettingsStore {
             value.settings.quickAccess = [
                 ...new Set(
                     value.settings.quickAccess
-                        .filter((item) => item !== 'host:darkTheme')
+                        .filter((item) => item !== 'host:darkTheme' && item !== 'host:showFood')
                         .map((item) => (item === 'host:showChat' ? 'setting:chat.enabled' : item))
                 ),
             ];
-        for (const key of ['showFood', 'showLeaderboard', 'hideOwnName', 'botSkinsOnly', 'showOwnSkinWithBots']) {
+        for (const key of ['showLeaderboard', 'hideOwnName', 'botSkinsOnly', 'showOwnSkinWithBots']) {
             value.game[key] = normalizeBoolean(value.game[key], this.defaults.game[key]);
         }
         for (const key of [

@@ -2425,11 +2425,23 @@ button:focus {
 
 .party_panel {
     position: absolute;
-    padding: 4px;
-    color: #fafafa;
-    background-color: rgba(0, 0, 0, 0.5);
+    padding: 6px;
+    color: var(--party-text-color, #fafafa);
+    background-color: var(--party-bg-color, rgba(0, 0, 0, 0.5));
+    border: 1px solid var(--party-border-color, rgba(255, 255, 255, 0.15));
     border-radius: 6px;
+    min-width: 150px;
     z-index: 3;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease, border-color 0.15s ease, border-radius 0.15s ease;
+}
+
+.party_panel.is-compact {
+    padding: 3px;
+    font-size: 11px;
+    min-width: 130px;
 }
 
 .drag-handle {
@@ -2438,11 +2450,142 @@ button:focus {
 
 .party_panel .drag-handle {
     gap: 8px;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.party_panel.is-compact .drag-handle {
+    margin-bottom: 2px;
+    font-size: 11px;
+}
+
+.party_panel .tag-member-row {
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.party_panel.is-compact .tag-member-row {
+    padding: 1px 3px;
+}
+
+.party_panel .tag-member-row.is-self {
+    background: rgba(59, 130, 246, 0.22);
+    border-left: 2px solid #3b82f6;
+    font-weight: 600;
+}
+
+.party_panel .tag-member-row.is-dead {
+    opacity: 0.55;
+}
+
+.party-you-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: #3b82f6;
+    color: #ffffff;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.party_panel.is-compact .party-you-tag {
+    font-size: 8px;
+    padding: 0 3px;
+}
+
+.party-avatar {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.party-avatar-skin {
+    object-fit: cover;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.party-avatar-color {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-sizing: border-box;
+}
+
+.party-avatar-dead {
+    color: #e74c3c;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.party_panel.is-compact .party-avatar {
+    width: 12px;
+    height: 12px;
+}
+
+.party-wifi-wrap {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+}
+
+.party-wifi-icon {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.tag-member-score {
+    margin-left: auto;
+    font-size: 11px;
+    opacity: 0.85;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.party-wifi-wrap + .tag-member-score {
+    margin-left: 4px;
+}
+
+.party_panel.is-compact .tag-member-score {
+    font-size: 10px;
+}
+
+.party-expand-btn {
+    appearance: none;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 3px;
+    color: currentColor;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 6px;
+    margin-top: 3px;
+    width: 100%;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease, opacity 0.15s ease;
+    opacity: 0.85;
+}
+
+.party-expand-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    opacity: 1;
 }
 
 .tag-member-index {
-    color: #c6c6c6;
+    color: currentColor;
     font-size: 12px;
+}
+
+.party_panel.is-compact .tag-member-index {
+    font-size: 11px;
 }
 
 .tag-member-nick {

@@ -302,6 +302,16 @@ class NativeProtocol extends Emitter {
         this.snapshotDirty = true;
         const protocol = this;
         const sendFacade = function (data) {
+            if (protocol.opcodes.ready && (data instanceof ArrayBuffer || ArrayBuffer.isView(data))) {
+                const view = data instanceof Uint8Array ? data : new Uint8Array(data.buffer || data);
+                if (view.length > 2 && view[0] === protocol.opcodes.encode(OPCODE.play)) {
+                    try {
+                        const jsonStr = decoder.decode(view.subarray(1, view.length - 1));
+                        const playData = JSON.parse(jsonStr);
+                        protocol.emit('play-sent', playData);
+                    } catch {}
+                }
+            }
             if (!protocol.movementOverride || !protocol.isMovementPacket(data)) {
                 return protocol.rawSend(data);
             }
@@ -330,6 +340,7 @@ class NativeProtocol extends Emitter {
     }
     sendPlay(data) {
         if (!this.canSend()) return false;
+        this.emit('play-sent', data);
         const payload = encoder.encode(JSON.stringify(data));
         const packet = new PacketWriter(payload.byteLength + 2).uint8(this.opcodes.encode(OPCODE.play)).bytes(payload).uint8(0).buffer();
         return this.send(packet);
@@ -716,6 +727,7 @@ class NativeHostAdapter extends HostAdapter {
             'packet',
             'owned-cell',
             'play-state',
+            'play-sent',
             'border',
             'chat',
             'leaderboard',
@@ -812,6 +824,12 @@ class SigFixHostAdapter extends HostAdapter {
             return originalMove.call(this, view, x, y);
         };
         this.resources.patch(this.api.net, 'move', moveFacade);
+        const originalPlay = this.api.net.play;
+        const playFacade = function (view, data) {
+            adapter.emit('play-sent', data);
+            return originalPlay.call(this, view, data);
+        };
+        this.resources.patch(this.api.net, 'play', playFacade);
         this.lastOwnedCount = this.snapshot().ownedCount;
         // New SigFixes versions can deliver decoded packets directly. Older versions
         // continue to use the SigWsHandler probe below until they migrate.

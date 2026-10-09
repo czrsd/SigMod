@@ -10,6 +10,7 @@ import {
     updateTag,
     updateScore,
     sendPing,
+    updatePartyMember,
 } from './socketUtils';
 import { socketMessageData } from '../../types';
 
@@ -56,6 +57,9 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
                 break;
             case 'score':
                 updateScore(content, socket);
+                break;
+            case 'party-member-update':
+                updatePartyMember(content, socket);
                 break;
             case 'update-nick':
                 updateNick(content, socket);

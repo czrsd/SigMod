@@ -962,6 +962,13 @@ class SettingsStore {
         value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
         value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : '#00000080';
         value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
+        value.settings.partyBorderColor = typeof value.settings.partyBorderColor === 'string' ? value.settings.partyBorderColor : '#ffffff26';
+        value.settings.partyBorderRadius = clamp(Number(value.settings.partyBorderRadius) ?? 6, 0, 20);
+        value.settings.partyBlur = clamp(Number(value.settings.partyBlur) ?? 0, 0, 20);
+        value.settings.partyMaxMembers = clamp(Number(value.settings.partyMaxMembers) || 10, 3, 50);
+        if (!['index', 'score', 'alpha'].includes(value.settings.partySort)) {
+            value.settings.partySort = 'index';
+        }
         value.settings.tag = normalizeNullableString(value.settings.tag);
         if (!['center', 'left', 'right', 'top', 'bottom'].includes(value.settings.deathScreenPos)) {
             value.settings.deathScreenPos = 'center';
@@ -1032,6 +1039,13 @@ class SettingsStore {
             'showChallenges',
             'removeShopPopup',
             'showPartyPanel',
+            'partyCompact',
+            'partyHighlightSelf',
+            'partyShowSkins',
+            'partyShowScores',
+            'partyShowIndexes',
+            'partyShowHeaderTotals',
+            'partyShowPing',
             'mergeTimer',
         ]) {
             value.settings[key] = normalizeBoolean(value.settings[key], this.defaults.settings[key]);

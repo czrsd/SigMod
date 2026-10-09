@@ -24,6 +24,9 @@ class Socket {
         y: number | null;
     };
     isAlive: boolean = true;
+    skin: string | null = null;
+    color: string | null = null;
+    ping: number | null = null;
 
     constructor(ws: WebSocket, req: Request) {
         this.ws = ws;

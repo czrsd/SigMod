@@ -220,6 +220,11 @@ const ICONS = {
         content:
             '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="22" y1="12" x2="18" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="6" y1="12" x2="2" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="12" y1="6" x2="12" y2="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="12" y1="22" x2="12" y2="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line>',
     },
+    skull: {
+        viewBox: '0 0 24 24',
+        content:
+            '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 21v-1a2 2 0 0 0-2-2H6a4 4 0 0 1-4-4V11a8 8 0 1 1 16 0v3a4 4 0 0 1-4 4h-1a2 2 0 0 0-2 2v1M9 21h6M10 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM14 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>',
+    },
 };
 
 ICONS.camera.content = ICONS.camera.content.replace('<path fill=', '<path transform="translate(-258 -467)" fill=');
@@ -241,6 +246,48 @@ function icon(name, size = 20) {
     if (!definition) return '';
     const svgSize = Number.isFinite(Number(size)) ? Math.max(1, Math.round(Number(size))) : 20;
     return `<svg class="sigmod-icon" width="${svgSize}" height="${svgSize}" viewBox="${definition.viewBox}" fill="currentColor" aria-hidden="true" focusable="false">${definition.content}</svg>`;
+}
+
+/**
+ * Renders a 3-stage wifi signal icon:
+ * - 3 filled lime/green: good ping (< 90ms)
+ * - 2 filled yellow, 1 top gray: mid ping (90 - 180ms)
+ * - 1 filled red, 2 above gray: bad ping (> 180ms)
+ * @param {number|null|undefined} ping
+ * @returns {string}
+ */
+function renderWifiIcon(ping) {
+    let stage = 'unknown';
+    const p = Number(ping);
+    if (Number.isFinite(p) && p > 0) {
+        if (p < 90) stage = 'good';
+        else if (p < 185) stage = 'mid';
+        else stage = 'bad';
+    }
+    const green = '#2ecc71';
+    const yellow = '#f1c40f';
+    const red = '#e74c3c';
+    const gray = 'rgba(255, 255, 255, 0.28)';
+
+    let c1 = gray;
+    let c2 = gray;
+    let c3 = gray;
+    if (stage === 'good') {
+        c1 = green;
+        c2 = green;
+        c3 = green;
+    } else if (stage === 'mid') {
+        c1 = yellow;
+        c2 = yellow;
+        c3 = gray;
+    } else if (stage === 'bad') {
+        c1 = red;
+        c2 = gray;
+        c3 = gray;
+    }
+
+    const label = Number.isFinite(p) && p > 0 ? `${Math.round(p)}ms` : '—';
+    return `<svg class="party-wifi-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" title="Ping: ${label} (${stage})"><path d="M5 12.55a11 11 0 0 1 14.08 0" stroke="${c3}"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0" stroke="${c2}"></path><line x1="12" y1="20" x2="12.01" y2="20" stroke="${c1}"></line></svg>`;
 }
 const SELECTORS = {
     page: '.body__inner',
@@ -402,6 +449,18 @@ const STANDARD_MOUSE_BUTTONS = [
  * @property {number} partyScale
  * @property {string} partyBgColor
  * @property {string} partyTextColor
+ * @property {string} partyBorderColor
+ * @property {number} partyBorderRadius
+ * @property {number} partyBlur
+ * @property {boolean} partyCompact
+ * @property {'index'|'score'|'alpha'} partySort
+ * @property {boolean} partyHighlightSelf
+ * @property {boolean} partyShowSkins
+ * @property {boolean} partyShowScores
+ * @property {boolean} partyShowIndexes
+ * @property {boolean} partyShowHeaderTotals
+ * @property {boolean} partyShowPing
+ * @property {number} partyMaxMembers
  * @property {number} pingDuration
  * @property {string[]} savedNames
  * @property {boolean} autoRespawn
@@ -472,6 +531,7 @@ const DEFAULT_SETTINGS = {
                 names: null,
                 skins: null,
                 autoRespawn: null,
+                party: null,
             },
         },
         mouse: { bindings: [] },
@@ -513,6 +573,18 @@ const DEFAULT_SETTINGS = {
         partyScale: 1,
         partyBgColor: '#00000080',
         partyTextColor: '#fafafa',
+        partyBorderColor: '#ffffff26',
+        partyBorderRadius: 6,
+        partyBlur: 0,
+        partyCompact: false,
+        partySort: 'index',
+        partyHighlightSelf: true,
+        partyShowSkins: true,
+        partyShowScores: true,
+        partyShowIndexes: true,
+        partyShowHeaderTotals: true,
+        partyShowPing: false,
+        partyMaxMembers: 10,
         pingDuration: 2_000,
         savedNames: [],
         autoRespawn: false,

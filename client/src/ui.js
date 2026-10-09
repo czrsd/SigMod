@@ -817,6 +817,7 @@ class MenuController extends FeatureController {
                                                 ${this.keyRow('Toggle Names', 'modinput10', 'toggle.names', 'macros.keys.toggle.names')}
                                                 ${this.keyRow('Toggle Skins', 'modinput11', 'toggle.skins', 'macros.keys.toggle.skins')}
                                                 ${this.keyRow('Toggle Autorespawn', 'modinput12', 'toggle.autoRespawn', 'macros.keys.toggle.autoRespawn')}
+                                                ${this.keyRow('Toggle Party Panel', 'modinput19', 'toggle.party', 'macros.keys.toggle.party')}
                                             </div>
                                         </div>
                                         <div class="setting-card-wrapper">
@@ -1003,6 +1004,14 @@ class MenuController extends FeatureController {
                                                 ${this.checkboxHtml('party-blurTag', 'chat.blurTag')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
+                                                <span class="text">Compact layout</span>
+                                                ${this.checkboxHtml('partyCompact', 'settings.partyCompact')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Highlight myself</span>
+                                                ${this.checkboxHtml('partyHighlightSelf', 'settings.partyHighlightSelf')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
                                                 <span class="text">Panel scale</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyScaleText">1.00x</span>
@@ -1016,11 +1025,69 @@ class MenuController extends FeatureController {
                                                     <input type="range" class="modSlider" id="pingDuration" min="500" max="15000" step="500" data-setting="settings.pingDuration" data-number style="width: 120px;">
                                                 </div>
                                             </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Max visible members</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyMaxMembersText">10</span>
+                                                    <input type="range" class="modSlider" id="partyMaxMembers" min="3" max="30" step="1" data-setting="settings.partyMaxMembers" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Sort members by</span>
+                                                <div class="centerXY" style="min-width: 170px;">
+                                                    <select class="form-control" id="partySort" data-setting="settings.partySort" style="width: 130px; height: 28px; padding: 2px 8px; font-size: 12px;">
+                                                        <option value="index">Tag index</option>
+                                                        <option value="score">Score</option>
+                                                        <option value="alpha">Alphabetical</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </section>
                                     <section class="settings-section">
-                                        <div class="settings-section-title">Colors</div>
-                                        <div class="chat-menu-colors">
+                                        <div class="settings-section-title">Display elements</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Skin avatars &amp; colors</span>
+                                                ${this.checkboxHtml('partyShowSkins', 'settings.partyShowSkins')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Member scores</span>
+                                                ${this.checkboxHtml('partyShowScores', 'settings.partyShowScores')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Tag index badges</span>
+                                                ${this.checkboxHtml('partyShowIndexes', 'settings.partyShowIndexes')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Header member &amp; score totals</span>
+                                                ${this.checkboxHtml('partyShowHeaderTotals', 'settings.partyShowHeaderTotals')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Member ping status</span>
+                                                ${this.checkboxHtml('partyShowPing', 'settings.partyShowPing')}
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Appearance &amp; styling</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Corner radius</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyBorderRadiusText">6px</span>
+                                                    <input type="range" class="modSlider" id="partyBorderRadius" min="0" max="20" step="1" data-setting="settings.partyBorderRadius" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Backdrop blur</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyBlurText">0px</span>
+                                                    <input type="range" class="modSlider" id="partyBlur" min="0" max="20" step="1" data-setting="settings.partyBlur" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="chat-menu-colors" style="margin-top: 10px;">
                                             <div class="chat-menu-color">
                                                 <span>Background</span>
                                                 <div id="partyBgColor"></div>
@@ -1028,6 +1095,10 @@ class MenuController extends FeatureController {
                                             <div class="chat-menu-color">
                                                 <span>Text</span>
                                                 <div id="partyTextColor"></div>
+                                            </div>
+                                            <div class="chat-menu-color">
+                                                <span>Border</span>
+                                                <div id="partyBorderColor"></div>
                                             </div>
                                         </div>
                                     </section>
@@ -3544,8 +3615,13 @@ class SettingsPorter {
         }
         this.app.settingsStore.set(path, value);
         if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
-        if (input.id === 'partyScale') this.updatePartySliderLabels();
-        if (input.id === 'pingDuration') this.updatePartySliderLabels();
+        if (
+            input.id === 'partyScale' ||
+            input.id === 'pingDuration' ||
+            input.id === 'partyBorderRadius' ||
+            input.id === 'partyBlur' ||
+            input.id === 'partyMaxMembers'
+        ) this.updatePartySliderLabels();
         this.root?.dispatchEvent(
             new CustomEvent('sigmod:settingchange', {
                 bubbles: true,
@@ -3620,6 +3696,21 @@ class SettingsPorter {
         if (pingLabel) {
             const v = this.app.settingsStore.get('settings.pingDuration') ?? 2000;
             pingLabel.textContent = `${(Number(v) / 1000).toFixed(1)}s`;
+        }
+        const radiusLabel = this.root?.querySelector('#partyBorderRadiusText');
+        if (radiusLabel) {
+            const v = this.app.settingsStore.get('settings.partyBorderRadius') ?? 6;
+            radiusLabel.textContent = `${Number(v)}px`;
+        }
+        const blurLabel = this.root?.querySelector('#partyBlurText');
+        if (blurLabel) {
+            const v = this.app.settingsStore.get('settings.partyBlur') ?? 0;
+            blurLabel.textContent = `${Number(v)}px`;
+        }
+        const maxMembersLabel = this.root?.querySelector('#partyMaxMembersText');
+        if (maxMembersLabel) {
+            const v = this.app.settingsStore.get('settings.partyMaxMembers') ?? 10;
+            maxMembersLabel.textContent = `${Number(v)}`;
         }
     }
 }
@@ -3716,6 +3807,7 @@ class GameSettingsController extends FeatureController {
             ['cellColor', 'game.cellColor', '#ffffff'],
             ['partyBgColor', 'settings.partyBgColor', '#00000080'],
             ['partyTextColor', 'settings.partyTextColor', '#fafafa'],
+            ['partyBorderColor', 'settings.partyBorderColor', '#ffffff26'],
         ];
         for (const [id, path, fallback] of definitions) {
             const container = this.root.querySelector(`#${id}`);
@@ -3818,6 +3910,14 @@ class GameSettingsController extends FeatureController {
                 opacity: false,
                 fallback: '#fafafa',
                 reset: '#fafafa',
+                container: true,
+            },
+            {
+                id: 'partyBorderColor',
+                path: 'settings.partyBorderColor',
+                opacity: true,
+                fallback: '#ffffff26',
+                reset: '#ffffff26',
                 container: true,
             },
             {

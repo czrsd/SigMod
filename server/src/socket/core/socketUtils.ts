@@ -68,6 +68,11 @@ const updateTag = (tag: string, socket: socket) => {
                 id: socket.sid,
                 tagIndex: socket.tagIndex,
                 nick: socket.nick,
+                score: socket.score,
+                skin: socket.skin,
+                color: socket.color,
+                isAlive: socket.isAlive,
+                ping: socket.ping,
             },
         });
     });
@@ -79,6 +84,10 @@ const updateTag = (tag: string, socket: socket) => {
             tagIndex: m.tagIndex,
             nick: m.nick,
             score: m.score,
+            skin: m.skin,
+            color: m.color,
+            isAlive: m.isAlive,
+            ping: m.ping,
         })),
     });
 
@@ -128,6 +137,11 @@ const updateMinimap = (data: minimapData, socket: socket) => {
         x,
         y,
     };
+    if (x === null || y === null) {
+        socket.isAlive = false;
+    } else {
+        socket.isAlive = true;
+    }
 
     const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server, socket.sid);
 
@@ -148,6 +162,7 @@ const updateScore = (score: number, socket: socket) => {
     if (!socket.tag || !socket.server || typeof score !== 'number' || score > 9_999_999_999) return;
 
     socket.score = score;
+    if (score > 0) socket.isAlive = true;
 
     const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
 
@@ -157,6 +172,33 @@ const updateScore = (score: number, socket: socket) => {
             content: {
                 id: socket.sid,
                 score,
+            },
+        });
+    }
+};
+
+const updatePartyMember = (
+    data: { skin?: string | null; color?: string | null; isAlive?: boolean; ping?: number | null },
+    socket: socket
+) => {
+    if (!socket.tag || !socket.server || !data) return;
+
+    if (data.skin !== undefined) socket.skin = typeof data.skin === 'string' ? data.skin.slice(0, 100) : null;
+    if (data.color !== undefined) socket.color = typeof data.color === 'string' ? data.color.slice(0, 30) : null;
+    if (typeof data.isAlive === 'boolean') socket.isAlive = data.isAlive;
+    if (typeof data.ping === 'number' && Number.isFinite(data.ping)) socket.ping = Math.round(data.ping);
+
+    const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
+
+    for (const s of sockets) {
+        s.send({
+            type: 'party-member-update',
+            content: {
+                id: socket.sid,
+                skin: socket.skin,
+                color: socket.color,
+                isAlive: socket.isAlive,
+                ping: socket.ping,
             },
         });
     }
@@ -315,4 +357,5 @@ export {
     onPartyChatMessage,
     handlePrivateMessage,
     onGoogleAuth,
+    updatePartyMember,
 };

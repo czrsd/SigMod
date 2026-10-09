@@ -291,6 +291,11 @@
             content:
                 '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></circle><line x1="22" y1="12" x2="18" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="6" y1="12" x2="2" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="12" y1="6" x2="12" y2="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="12" y1="22" x2="12" y2="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line>',
         },
+        skull: {
+            viewBox: '0 0 24 24',
+            content:
+                '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 21v-1a2 2 0 0 0-2-2H6a4 4 0 0 1-4-4V11a8 8 0 1 1 16 0v3a4 4 0 0 1-4 4h-1a2 2 0 0 0-2 2v1M9 21h6M10 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM14 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>',
+        },
     };
     ICONS.camera.content = ICONS.camera.content.replace('<path fill=', '<path transform="translate(-258 -467)" fill=');
     ICONS.camera.content = ICONS.camera.content.replace('C266.896,467.954 266.53,467.954', 'C266.896,467 266.53,467.954');
@@ -305,6 +310,37 @@
         if (!definition) return '';
         const svgSize = Number.isFinite(Number(size)) ? Math.max(1, Math.round(Number(size))) : 20;
         return `<svg class="sigmod-icon" width="${svgSize}" height="${svgSize}" viewBox="${definition.viewBox}" fill="currentColor" aria-hidden="true" focusable="false">${definition.content}</svg>`;
+    }
+    function renderWifiIcon(ping) {
+        let stage = 'unknown';
+        const p = Number(ping);
+        if (Number.isFinite(p) && p > 0) {
+            if (p < 90) stage = 'good';
+            else if (p < 185) stage = 'mid';
+            else stage = 'bad';
+        }
+        const green = '#2ecc71';
+        const yellow = '#f1c40f';
+        const red = '#e74c3c';
+        const gray = 'rgba(255, 255, 255, 0.28)';
+        let c1 = gray;
+        let c2 = gray;
+        let c3 = gray;
+        if (stage === 'good') {
+            c1 = green;
+            c2 = green;
+            c3 = green;
+        } else if (stage === 'mid') {
+            c1 = yellow;
+            c2 = yellow;
+            c3 = gray;
+        } else if (stage === 'bad') {
+            c1 = red;
+            c2 = gray;
+            c3 = gray;
+        }
+        const label = Number.isFinite(p) && p > 0 ? `${Math.round(p)}ms` : '\u2014';
+        return `<svg class="party-wifi-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" title="Ping: ${label} (${stage})"><path d="M5 12.55a11 11 0 0 1 14.08 0" stroke="${c3}"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0" stroke="${c2}"></path><line x1="12" y1="20" x2="12.01" y2="20" stroke="${c1}"></line></svg>`;
     }
     const SELECTORS = {
         page: '.body__inner',
@@ -444,6 +480,7 @@
                     names: null,
                     skins: null,
                     autoRespawn: null,
+                    party: null,
                 },
             },
             mouse: { bindings: [] },
@@ -485,6 +522,18 @@
             partyScale: 1,
             partyBgColor: '#00000080',
             partyTextColor: '#fafafa',
+            partyBorderColor: '#ffffff26',
+            partyBorderRadius: 6,
+            partyBlur: 0,
+            partyCompact: false,
+            partySort: 'index',
+            partyHighlightSelf: true,
+            partyShowSkins: true,
+            partyShowScores: true,
+            partyShowIndexes: true,
+            partyShowHeaderTotals: true,
+            partyShowPing: false,
+            partyMaxMembers: 10,
             pingDuration: 2e3,
             savedNames: [],
             autoRespawn: false,
@@ -1709,6 +1758,14 @@
             value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
             value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : '#00000080';
             value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
+            value.settings.partyBorderColor =
+                typeof value.settings.partyBorderColor === 'string' ? value.settings.partyBorderColor : '#ffffff26';
+            value.settings.partyBorderRadius = clamp(Number(value.settings.partyBorderRadius) ?? 6, 0, 20);
+            value.settings.partyBlur = clamp(Number(value.settings.partyBlur) ?? 0, 0, 20);
+            value.settings.partyMaxMembers = clamp(Number(value.settings.partyMaxMembers) || 10, 3, 50);
+            if (!['index', 'score', 'alpha'].includes(value.settings.partySort)) {
+                value.settings.partySort = 'index';
+            }
             value.settings.tag = normalizeNullableString(value.settings.tag);
             if (!['center', 'left', 'right', 'top', 'bottom'].includes(value.settings.deathScreenPos)) {
                 value.settings.deathScreenPos = 'center';
@@ -1779,6 +1836,13 @@
                 'showChallenges',
                 'removeShopPopup',
                 'showPartyPanel',
+                'partyCompact',
+                'partyHighlightSelf',
+                'partyShowSkins',
+                'partyShowScores',
+                'partyShowIndexes',
+                'partyShowHeaderTotals',
+                'partyShowPing',
                 'mergeTimer',
             ]) {
                 value.settings[key] = normalizeBoolean(value.settings[key], this.defaults.settings[key]);
@@ -2864,6 +2928,16 @@
             this.snapshotDirty = true;
             const protocol = this;
             const sendFacade = function (data) {
+                if (protocol.opcodes.ready && (data instanceof ArrayBuffer || ArrayBuffer.isView(data))) {
+                    const view = data instanceof Uint8Array ? data : new Uint8Array(data.buffer || data);
+                    if (view.length > 2 && view[0] === protocol.opcodes.encode(OPCODE.play)) {
+                        try {
+                            const jsonStr = decoder.decode(view.subarray(1, view.length - 1));
+                            const playData = JSON.parse(jsonStr);
+                            protocol.emit('play-sent', playData);
+                        } catch {}
+                    }
+                }
                 if (!protocol.movementOverride || !protocol.isMovementPacket(data)) {
                     return protocol.rawSend(data);
                 }
@@ -2892,6 +2966,7 @@
         }
         sendPlay(data) {
             if (!this.canSend()) return false;
+            this.emit('play-sent', data);
             const payload = encoder.encode(JSON.stringify(data));
             const packet = new PacketWriter(payload.byteLength + 2)
                 .uint8(this.opcodes.encode(OPCODE.play))
@@ -3281,6 +3356,7 @@
                 'packet',
                 'owned-cell',
                 'play-state',
+                'play-sent',
                 'border',
                 'chat',
                 'leaderboard',
@@ -3377,6 +3453,12 @@
                 return originalMove.call(this, view, x, y);
             };
             this.resources.patch(this.api.net, 'move', moveFacade);
+            const originalPlay = this.api.net.play;
+            const playFacade = function (view, data) {
+                adapter.emit('play-sent', data);
+                return originalPlay.call(this, view, data);
+            };
+            this.resources.patch(this.api.net, 'play', playFacade);
             this.lastOwnedCount = this.snapshot().ownedCount;
             if (typeof this.api.net.subscribePackets === 'function') {
                 let active = true;
@@ -4629,6 +4711,7 @@
                                                 ${this.keyRow('Toggle Names', 'modinput10', 'toggle.names', 'macros.keys.toggle.names')}
                                                 ${this.keyRow('Toggle Skins', 'modinput11', 'toggle.skins', 'macros.keys.toggle.skins')}
                                                 ${this.keyRow('Toggle Autorespawn', 'modinput12', 'toggle.autoRespawn', 'macros.keys.toggle.autoRespawn')}
+                                                ${this.keyRow('Toggle Party Panel', 'modinput19', 'toggle.party', 'macros.keys.toggle.party')}
                                             </div>
                                         </div>
                                         <div class="setting-card-wrapper">
@@ -4815,6 +4898,14 @@
                                                 ${this.checkboxHtml('party-blurTag', 'chat.blurTag')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
+                                                <span class="text">Compact layout</span>
+                                                ${this.checkboxHtml('partyCompact', 'settings.partyCompact')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Highlight myself</span>
+                                                ${this.checkboxHtml('partyHighlightSelf', 'settings.partyHighlightSelf')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
                                                 <span class="text">Panel scale</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="partyScaleText">1.00x</span>
@@ -4828,11 +4919,69 @@
                                                     <input type="range" class="modSlider" id="pingDuration" min="500" max="15000" step="500" data-setting="settings.pingDuration" data-number style="width: 120px;">
                                                 </div>
                                             </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Max visible members</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyMaxMembersText">10</span>
+                                                    <input type="range" class="modSlider" id="partyMaxMembers" min="3" max="30" step="1" data-setting="settings.partyMaxMembers" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Sort members by</span>
+                                                <div class="centerXY" style="min-width: 170px;">
+                                                    <select class="form-control" id="partySort" data-setting="settings.partySort" style="width: 130px; height: 28px; padding: 2px 8px; font-size: 12px;">
+                                                        <option value="index">Tag index</option>
+                                                        <option value="score">Score</option>
+                                                        <option value="alpha">Alphabetical</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </section>
                                     <section class="settings-section">
-                                        <div class="settings-section-title">Colors</div>
-                                        <div class="chat-menu-colors">
+                                        <div class="settings-section-title">Display elements</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Skin avatars &amp; colors</span>
+                                                ${this.checkboxHtml('partyShowSkins', 'settings.partyShowSkins')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Member scores</span>
+                                                ${this.checkboxHtml('partyShowScores', 'settings.partyShowScores')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Tag index badges</span>
+                                                ${this.checkboxHtml('partyShowIndexes', 'settings.partyShowIndexes')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Header member &amp; score totals</span>
+                                                ${this.checkboxHtml('partyShowHeaderTotals', 'settings.partyShowHeaderTotals')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Member ping status</span>
+                                                ${this.checkboxHtml('partyShowPing', 'settings.partyShowPing')}
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Appearance &amp; styling</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Corner radius</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyBorderRadiusText">6px</span>
+                                                    <input type="range" class="modSlider" id="partyBorderRadius" min="0" max="20" step="1" data-setting="settings.partyBorderRadius" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <span class="text">Backdrop blur</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyBlurText">0px</span>
+                                                    <input type="range" class="modSlider" id="partyBlur" min="0" max="20" step="1" data-setting="settings.partyBlur" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="chat-menu-colors" style="margin-top: 10px;">
                                             <div class="chat-menu-color">
                                                 <span>Background</span>
                                                 <div id="partyBgColor"></div>
@@ -4840,6 +4989,10 @@
                                             <div class="chat-menu-color">
                                                 <span>Text</span>
                                                 <div id="partyTextColor"></div>
+                                            </div>
+                                            <div class="chat-menu-color">
+                                                <span>Border</span>
+                                                <div id="partyBorderColor"></div>
                                             </div>
                                         </div>
                                     </section>
@@ -7350,8 +7503,14 @@
             }
             this.app.settingsStore.set(path, value);
             if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
-            if (input.id === 'partyScale') this.updatePartySliderLabels();
-            if (input.id === 'pingDuration') this.updatePartySliderLabels();
+            if (
+                input.id === 'partyScale' ||
+                input.id === 'pingDuration' ||
+                input.id === 'partyBorderRadius' ||
+                input.id === 'partyBlur' ||
+                input.id === 'partyMaxMembers'
+            )
+                this.updatePartySliderLabels();
             this.root?.dispatchEvent(
                 new CustomEvent('sigmod:settingchange', {
                     bubbles: true,
@@ -7426,6 +7585,21 @@
             if (pingLabel) {
                 const v = this.app.settingsStore.get('settings.pingDuration') ?? 2e3;
                 pingLabel.textContent = `${(Number(v) / 1e3).toFixed(1)}s`;
+            }
+            const radiusLabel = this.root?.querySelector('#partyBorderRadiusText');
+            if (radiusLabel) {
+                const v = this.app.settingsStore.get('settings.partyBorderRadius') ?? 6;
+                radiusLabel.textContent = `${Number(v)}px`;
+            }
+            const blurLabel = this.root?.querySelector('#partyBlurText');
+            if (blurLabel) {
+                const v = this.app.settingsStore.get('settings.partyBlur') ?? 0;
+                blurLabel.textContent = `${Number(v)}px`;
+            }
+            const maxMembersLabel = this.root?.querySelector('#partyMaxMembersText');
+            if (maxMembersLabel) {
+                const v = this.app.settingsStore.get('settings.partyMaxMembers') ?? 10;
+                maxMembersLabel.textContent = `${Number(v)}`;
             }
         }
     }
@@ -7519,6 +7693,7 @@
                 ['cellColor', 'game.cellColor', '#ffffff'],
                 ['partyBgColor', 'settings.partyBgColor', '#00000080'],
                 ['partyTextColor', 'settings.partyTextColor', '#fafafa'],
+                ['partyBorderColor', 'settings.partyBorderColor', '#ffffff26'],
             ];
             for (const [id, path, fallback] of definitions) {
                 const container = this.root.querySelector(`#${id}`);
@@ -7621,6 +7796,14 @@
                     opacity: false,
                     fallback: '#fafafa',
                     reset: '#fafafa',
+                    container: true,
+                },
+                {
+                    id: 'partyBorderColor',
+                    path: 'settings.partyBorderColor',
+                    opacity: true,
+                    fallback: '#ffffff26',
+                    reset: '#ffffff26',
                     container: true,
                 },
                 {
@@ -11600,6 +11783,10 @@
             this.lastScore = null;
             this.sentPositionNull = false;
             this.lastPositionKey = null;
+            this.expanded = false;
+            this.localSkin = null;
+            this.localColor = null;
+            this.localIsAlive = true;
         }
         async mount() {
             const backend = this.app.backend;
@@ -11607,6 +11794,7 @@
             this.resources.add(backend.on('join-tag', (member) => this.join(member)));
             this.resources.add(backend.on('leave-tag', ({ id } = {}) => this.leave(id)));
             this.resources.add(backend.on('score-tag', (update) => this.updateScore(update)));
+            this.resources.add(backend.on('party-member-update', (data) => this.updateMemberStatus(data)));
             this.resources.add(
                 backend.on('open', () => {
                     this.publishIdentity();
@@ -11615,6 +11803,25 @@
             );
             this.bindIdentityInputs();
             this.syncPublishTimers();
+            const bindHost = (adapter) => {
+                if (!adapter) return;
+                this.resources.child('host-party-events').dispose();
+                const events = this.resources.child('host-party-events');
+                events.add(adapter.on('play-sent', (data) => this.handlePlaySent(data)));
+                events.add(
+                    adapter.on('play-state', (playing) => {
+                        this.localIsAlive = Boolean(playing);
+                        if (playing) {
+                            if (!this.localColor) this.localColor = this.resolveLocalColor();
+                            if (!this.localSkin) this.localSkin = this.resolveLocalSkin();
+                        }
+                        this.publishMemberStatus();
+                        this.render();
+                    })
+                );
+            };
+            this.resources.add(this.app.host.on('change', bindHost));
+            if (this.app.host.adapter) bindHost(this.app.host.adapter);
             if (this.app.settings.settings.showPartyPanel && this.app.settings.settings.tag) {
                 this.ensurePanel();
             }
@@ -11629,7 +11836,10 @@
             if (current && !current.disposed) return;
             const scope = this.resources.child('party-publish');
             scope.interval(() => this.publishPosition(), TIMING.positionPublish);
-            scope.interval(() => this.publishScore(), TIMING.scorePublish);
+            scope.interval(() => {
+                this.publishScore();
+                this.publishMemberStatus();
+            }, TIMING.scorePublish);
         }
         ensureTagInput() {
             let tagInput = document.querySelector('#tag');
@@ -11648,9 +11858,79 @@
             nick.insertAdjacentElement('beforebegin', tagInput);
             return tagInput;
         }
+        resolveLocalSkin(playData = null) {
+            let raw = null;
+            if (playData && typeof playData.skin === 'string' && playData.skin.trim()) {
+                raw = playData.skin.trim();
+            }
+            if (!raw && Array.isArray(window.settings?.userData?.lastSkinUsed) && window.settings.userData.lastSkinUsed.length > 0) {
+                const entry = window.settings.userData.lastSkinUsed[0];
+                if (typeof entry === 'string') {
+                    const shopSkins = window.settings?.shop?.skins;
+                    if (Array.isArray(shopSkins)) {
+                        const found = shopSkins.find((s) => s._id === entry);
+                        if (found?.name) raw = found.name;
+                        else raw = entry;
+                    } else {
+                        raw = entry;
+                    }
+                }
+            }
+            if (!raw && typeof window.settings?.gameSettings?.skin === 'string' && window.settings.gameSettings.skin.trim()) {
+                raw = window.settings.gameSettings.skin.trim();
+            }
+            if (!raw && typeof window.sigfix?.settings?.skin === 'string' && window.sigfix.settings.skin.trim()) {
+                raw = window.sigfix.settings.skin.trim();
+            }
+            if (!raw && typeof window.sigfix?.settings?.selfSkin === 'string' && window.sigfix.settings.selfSkin.trim()) {
+                raw = window.sigfix.settings.selfSkin.trim();
+            }
+            if (!raw) {
+                try {
+                    const st = JSON.parse(localStorage.getItem('settings') || '{}');
+                    if (typeof st.skin === 'string' && st.skin.trim()) raw = st.skin.trim();
+                } catch {}
+            }
+            if (!raw) return null;
+            return (
+                raw
+                    .replace(/^1%/, '')
+                    .replace(/\.png$/i, '')
+                    .trim() || null
+            );
+        }
+        resolveLocalColor() {
+            const adapter = this.app.host.adapter;
+            if (adapter?.protocol?.cells && adapter.protocol.owned?.size > 0) {
+                for (const id of adapter.protocol.owned) {
+                    const cell = adapter.protocol.cells.get(id);
+                    if (cell?.color && Array.isArray(cell.color)) {
+                        const [r, g, b] = cell.color;
+                        return `#${[r, g, b].map((v) => Number(v).toString(16).padStart(2, '0')).join('')}`;
+                    }
+                }
+            }
+            if (this.app.settings.game?.cellColor) {
+                return this.app.settings.game.cellColor;
+            }
+            return null;
+        }
+        handlePlaySent(playData = null) {
+            this.localSkin = this.resolveLocalSkin(playData);
+            this.localColor = this.resolveLocalColor();
+            this.localIsAlive = true;
+            this.publishMemberStatus();
+            this.render();
+        }
         bindIdentityInputs() {
             const tagInput = this.ensureTagInput();
             const nicknameInput = document.querySelector(SELECTORS.nickname);
+            const playBtn = document.querySelector(SELECTORS.play);
+            if (playBtn instanceof HTMLElement) {
+                this.resources.listen(playBtn, 'click', () => {
+                    this.resources.timeout(() => this.handlePlaySent(), 60);
+                });
+            }
             const urlTag = new URLSearchParams(location.search).get('tag')?.replace(/\/$/, '') || null;
             if (urlTag) this.app.settingsStore.set('settings.tag', urlTag, true);
             const updateTagText = (value) => {
@@ -11706,8 +11986,30 @@
                             this.closePanel();
                         }
                     }
-                    if (!path || path === 'settings.partyScale' || path === 'settings.partyBgColor' || path === 'settings.partyTextColor') {
+                    if (
+                        !path ||
+                        path === 'settings.partyScale' ||
+                        path === 'settings.partyBgColor' ||
+                        path === 'settings.partyTextColor' ||
+                        path === 'settings.partyBorderColor' ||
+                        path === 'settings.partyBorderRadius' ||
+                        path === 'settings.partyBlur' ||
+                        path === 'settings.partyCompact'
+                    ) {
                         this.updateStyles();
+                    }
+                    if (
+                        !path ||
+                        path === 'settings.partySort' ||
+                        path === 'settings.partyHighlightSelf' ||
+                        path === 'settings.partyShowSkins' ||
+                        path === 'settings.partyShowScores' ||
+                        path === 'settings.partyShowIndexes' ||
+                        path === 'settings.partyShowHeaderTotals' ||
+                        path === 'settings.partyShowPing' ||
+                        path === 'settings.partyMaxMembers'
+                    ) {
+                        this.render();
                     }
                     if (!path || path === 'chat.blurTag') {
                         if (tagInput instanceof HTMLInputElement) {
@@ -11725,8 +12027,20 @@
             this.panel.style.transformOrigin = 'top left';
             this.panel.style.backgroundColor = settings.partyBgColor ?? '#00000080';
             this.panel.style.color = settings.partyTextColor ?? '#fafafa';
+            this.panel.style.borderColor = settings.partyBorderColor ?? '#ffffff26';
+            this.panel.style.borderRadius = `${settings.partyBorderRadius ?? 6}px`;
+            const blur = Number(settings.partyBlur) || 0;
+            if (blur > 0) {
+                this.panel.style.backdropFilter = `blur(${blur}px)`;
+                this.panel.style.webkitBackdropFilter = `blur(${blur}px)`;
+            } else {
+                this.panel.style.backdropFilter = '';
+                this.panel.style.webkitBackdropFilter = '';
+            }
+            this.panel.classList.toggle('is-compact', Boolean(settings.partyCompact));
             this.panel.style.setProperty('--party-bg-color', settings.partyBgColor ?? '#00000080');
             this.panel.style.setProperty('--party-text-color', settings.partyTextColor ?? '#fafafa');
+            this.panel.style.setProperty('--party-border-color', settings.partyBorderColor ?? '#ffffff26');
         }
         closePanel() {
             this.members.clear();
@@ -11769,6 +12083,20 @@
             this.lastScore = score;
             this.app.backend.send('score', score);
         }
+        publishMemberStatus() {
+            if (!this.app.settings.settings.tag) return;
+            const latency = this.app.host.adapter?.snapshot().latency ?? this.app.state.backend.latency ?? null;
+            const isAlive = !isDeadScreenVisible() && Boolean(this.app.host.adapter?.snapshot().playing);
+            this.localIsAlive = isAlive;
+            const color = this.localColor || this.resolveLocalColor();
+            const skin = this.localSkin || this.resolveLocalSkin();
+            this.app.backend.send('party-member-update', {
+                skin,
+                color,
+                isAlive,
+                ping: latency !== null ? Math.round(latency) : null,
+            });
+        }
         ensurePanel() {
             if (this.panel?.isConnected) return this.panel;
             const panel = createElement('section', {
@@ -11792,14 +12120,17 @@
             const memberIcon = createElement('span', {
                 className: 'centerXY g-2',
             });
-            memberIcon.innerHTML = icon('users', 18);
+            memberIcon.innerHTML = icon('users', 16);
             memberIcon.append(memberCount);
             const scoreIcon = createElement('span', {
                 className: 'centerXY g-2',
             });
-            scoreIcon.innerHTML = icon('user', 18);
+            scoreIcon.innerHTML = icon('user', 16);
             scoreIcon.append(score);
-            const totals = createElement('span', { className: 'centerXY g-2' });
+            const totals = createElement('span', {
+                className: 'centerXY g-2',
+                attributes: { id: 'tag_totals' },
+            });
             totals.append(memberIcon, scoreIcon);
             header.append(title, totals);
             panel.append(header, members);
@@ -11850,6 +12181,10 @@
                     tagIndex: Number(member.tagIndex) || 0,
                     nick: typeof member.nick === 'string' ? member.nick : 'Unnamed',
                     score: Number(member.score) || 0,
+                    skin: typeof member.skin === 'string' ? member.skin : null,
+                    color: typeof member.color === 'string' ? member.color : null,
+                    isAlive: member.isAlive !== false,
+                    ping: typeof member.ping === 'number' ? member.ping : null,
                 });
             }
             this.render();
@@ -11862,7 +12197,11 @@
                 id,
                 tagIndex: Number(member.tagIndex) || 0,
                 nick: typeof member.nick === 'string' ? member.nick : 'Unnamed',
-                score: 0,
+                score: Number(member.score) || 0,
+                skin: typeof member.skin === 'string' ? member.skin : null,
+                color: typeof member.color === 'string' ? member.color : null,
+                isAlive: member.isAlive !== false,
+                ping: typeof member.ping === 'number' ? member.ping : null,
             });
             this.render();
         }
@@ -11875,6 +12214,17 @@
             const member = this.members.get(String(update.id));
             if (!member) return;
             member.score = Number(update.score) || 0;
+            if (member.score > 0) member.isAlive = true;
+            this.render();
+        }
+        updateMemberStatus(data) {
+            if (!isObject(data) || data.id === void 0) return;
+            const member = this.members.get(String(data.id));
+            if (!member) return;
+            if (data.skin !== void 0) member.skin = data.skin;
+            if (data.color !== void 0) member.color = data.color;
+            if (data.isAlive !== void 0) member.isAlive = data.isAlive;
+            if (data.ping !== void 0) member.ping = data.ping;
             this.render();
         }
         render() {
@@ -11882,41 +12232,127 @@
             const container = panel.querySelector('#members_container');
             const count = panel.querySelector('#tag_member_len');
             const total = panel.querySelector('#tag_score');
+            const totals = panel.querySelector('#tag_totals');
             if (!container || !count || !total) return;
+            const settings = this.app.settings.settings;
+            if (totals instanceof HTMLElement) {
+                totals.style.display = settings.partyShowHeaderTotals !== false ? 'flex' : 'none';
+            }
             container.replaceChildren();
-            const members = [...this.members.values()].sort((a, b) => a.tagIndex - b.tagIndex);
-            for (const member of members) {
-                const row = createElement('div', { className: 'flex g-2' });
-                const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
-                const skinName = skinMatch ? skinMatch[1].replace(/\.png$/i, '') : null;
-                const displayName = skinMatch ? skinMatch[2] : member.nick;
-                const nameContainer = createElement('span', { className: 'tag-member-nick centerY', attributes: { style: 'gap: 4px;' } });
-                if (skinName) {
-                    nameContainer.append(
-                        createElement('img', {
-                            attributes: {
-                                src: `https://sigmally.com/static/skins/${skinName}.png`,
-                                style: 'width: 14px; height: 14px; border-radius: 50%; object-fit: cover;',
-                                onerror: "this.style.display='none'",
-                            },
+            const sortMode = settings.partySort || 'index';
+            const sorted = [...this.members.values()].sort((a, b) => {
+                if (sortMode === 'score') {
+                    return (b.score || 0) - (a.score || 0) || a.tagIndex - b.tagIndex;
+                }
+                if (sortMode === 'alpha') {
+                    return a.nick.localeCompare(b.nick, void 0, { sensitivity: 'base' });
+                }
+                return a.tagIndex - b.tagIndex;
+            });
+            const maxMembers = Math.max(3, Number(settings.partyMaxMembers) || 10);
+            const shouldLimit = sorted.length > maxMembers;
+            const visibleMembers = shouldLimit && !this.expanded ? sorted.slice(0, maxMembers) : sorted;
+            for (const member of visibleMembers) {
+                const isSelf = member.id === String(this.app.state.backend.sid);
+                if (isSelf) {
+                    if (this.localSkin && !member.skin) member.skin = this.localSkin;
+                    if (this.localColor && !member.color) member.color = this.localColor;
+                    member.isAlive = this.localIsAlive;
+                }
+                const isDead = member.isAlive === false;
+                const row = createElement('div', { className: 'flex centerY g-2 tag-member-row' });
+                if (isSelf && settings.partyHighlightSelf !== false) {
+                    row.classList.add('is-self');
+                }
+                if (isDead) {
+                    row.classList.add('is-dead');
+                }
+                if (settings.partyShowIndexes !== false) {
+                    row.append(
+                        createElement('span', {
+                            className: 'tag-member-index',
+                            text: member.tagIndex,
                         })
                     );
                 }
+                if (settings.partyShowSkins !== false) {
+                    let skinName = member.skin;
+                    if (!skinName) {
+                        const skinMatch2 = String(member.nick).match(/^\{(.*?)\}(.*)$/);
+                        if (skinMatch2) skinName = skinMatch2[1].replace(/\.png$/i, '');
+                    }
+                    if (isDead) {
+                        const deadIcon = createElement('span', {
+                            className: 'party-avatar party-avatar-dead centerXY',
+                            attributes: { title: 'Dead' },
+                        });
+                        deadIcon.innerHTML = icon('skull', 12);
+                        row.append(deadIcon);
+                    } else if (skinName) {
+                        const img = createElement('img', {
+                            className: 'party-avatar party-avatar-skin',
+                            attributes: {
+                                src: `https://sigmally.com/static/skins/${skinName}.png`,
+                                alt: skinName,
+                                title: skinName,
+                                onerror: "this.style.display='none'",
+                            },
+                        });
+                        row.append(img);
+                    } else {
+                        const colorCircle = createElement('span', {
+                            className: 'party-avatar party-avatar-color',
+                            attributes: {
+                                style: `background-color: ${member.color || '#3b82f6'};`,
+                                title: 'Cell color',
+                            },
+                        });
+                        row.append(colorCircle);
+                    }
+                }
+                const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
+                const displayName = skinMatch ? skinMatch[2] : member.nick;
+                const nameContainer = createElement('span', {
+                    className: 'tag-member-nick centerY',
+                    attributes: { style: 'gap: 4px;' },
+                });
                 nameContainer.append(document.createTextNode(displayName));
-                row.append(
-                    createElement('span', {
-                        className: 'tag-member-index',
-                        text: member.tagIndex,
-                    }),
-                    nameContainer,
-                    createElement('span', {
-                        text: member.score > 0 ? this.formatScore(member.score) : '',
-                    })
-                );
+                if (isSelf && settings.partyHighlightSelf !== false) {
+                    nameContainer.append(createElement('span', { className: 'party-you-tag', text: 'YOU' }));
+                }
+                row.append(nameContainer);
+                if (settings.partyShowPing) {
+                    const wifiWrap = createElement('span', { className: 'party-wifi-wrap centerY' });
+                    const currentPing = isSelf
+                        ? (this.app.host.adapter?.snapshot().latency ?? this.app.state.backend.latency)
+                        : member.ping;
+                    wifiWrap.innerHTML = renderWifiIcon(currentPing);
+                    row.append(wifiWrap);
+                }
+                if (settings.partyShowScores !== false) {
+                    row.append(
+                        createElement('span', {
+                            className: 'tag-member-score',
+                            text: member.score > 0 ? this.formatScore(member.score) : '',
+                        })
+                    );
+                }
                 container.append(row);
             }
-            count.textContent = String(members.length);
-            total.textContent = this.formatScore(members.reduce((sum, member) => sum + member.score, 0));
+            if (shouldLimit) {
+                const expandBtn = createElement('button', {
+                    type: 'button',
+                    className: 'party-expand-btn',
+                    text: this.expanded ? 'Show less' : `+${sorted.length - maxMembers} more`,
+                });
+                this.resources.listen(expandBtn, 'click', () => {
+                    this.expanded = !this.expanded;
+                    this.render();
+                });
+                container.append(expandBtn);
+            }
+            count.textContent = String(sorted.length);
+            total.textContent = this.formatScore(sorted.reduce((sum, member) => sum + (member.score || 0), 0));
         }
         formatScore(score) {
             return score >= 1e3 ? `${(score / 1e3).toFixed(1)}k` : String(score);
@@ -11974,18 +12410,34 @@
         updatePlayer(data) {
             if (!isObject(data) || data.sid === void 0) return;
             const id = String(data.sid);
+            const party = this.app.features.get('party');
             if (data.x === null || data.y === null) {
                 this.players.delete(id);
+                if (party && party.members.has(id)) {
+                    const member = party.members.get(id);
+                    if (member && member.isAlive !== false) {
+                        member.isAlive = false;
+                        party.render();
+                    }
+                }
             } else {
                 const x = Number(data.x);
                 const y = Number(data.y);
-                if (!Number.isFinite(x) || !Number.isFinite(y)) this.players.delete(id);
-                else {
+                if (!Number.isFinite(x) || !Number.isFinite(y)) {
+                    this.players.delete(id);
+                } else {
                     this.players.set(id, {
                         x,
                         y,
                         nick: typeof data.nick === 'string' ? data.nick : 'Unnamed',
                     });
+                    if (party && party.members.has(id)) {
+                        const member = party.members.get(id);
+                        if (member && member.isAlive === false) {
+                            member.isAlive = true;
+                            party.render();
+                        }
+                    }
                 }
             }
             this.scheduleDraw();
@@ -12249,6 +12701,11 @@
             if (this.matches(event, keys.toggle.autoRespawn)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleSetting('autoRespawn');
+            }
+            if (this.matches(event, keys.toggle.party)) {
+                if (event.key === 'Dead') event.preventDefault();
+                const show = !this.app.settingsStore.get('settings.showPartyPanel');
+                this.app.settingsStore.set('settings.showPartyPanel', show);
             }
             if (this.matches(event, keys.respawn)) {
                 if (event.key === 'Dead') event.preventDefault();

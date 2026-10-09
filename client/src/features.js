@@ -1365,6 +1365,10 @@ class PartyController extends FeatureController {
         this.lastScore = null;
         this.sentPositionNull = false;
         this.lastPositionKey = null;
+        this.expanded = false;
+        this.localSkin = null;
+        this.localColor = null;
+        this.localIsAlive = true;
     }
     async mount() {
         const backend = this.app.backend;
@@ -1372,6 +1376,7 @@ class PartyController extends FeatureController {
         this.resources.add(backend.on('join-tag', (member) => this.join(member)));
         this.resources.add(backend.on('leave-tag', ({ id } = {}) => this.leave(id)));
         this.resources.add(backend.on('score-tag', (update) => this.updateScore(update)));
+        this.resources.add(backend.on('party-member-update', (data) => this.updateMemberStatus(data)));
         this.resources.add(
             backend.on('open', () => {
                 this.publishIdentity();
@@ -1380,6 +1385,27 @@ class PartyController extends FeatureController {
         );
         this.bindIdentityInputs();
         this.syncPublishTimers();
+
+        const bindHost = (adapter) => {
+            if (!adapter) return;
+            this.resources.child('host-party-events').dispose();
+            const events = this.resources.child('host-party-events');
+            events.add(adapter.on('play-sent', (data) => this.handlePlaySent(data)));
+            events.add(
+                adapter.on('play-state', (playing) => {
+                    this.localIsAlive = Boolean(playing);
+                    if (playing) {
+                        if (!this.localColor) this.localColor = this.resolveLocalColor();
+                        if (!this.localSkin) this.localSkin = this.resolveLocalSkin();
+                    }
+                    this.publishMemberStatus();
+                    this.render();
+                })
+            );
+        };
+        this.resources.add(this.app.host.on('change', bindHost));
+        if (this.app.host.adapter) bindHost(this.app.host.adapter);
+
         if (this.app.settings.settings.showPartyPanel && this.app.settings.settings.tag) {
             this.ensurePanel();
         }
@@ -1394,7 +1420,10 @@ class PartyController extends FeatureController {
         if (current && !current.disposed) return;
         const scope = this.resources.child('party-publish');
         scope.interval(() => this.publishPosition(), TIMING.positionPublish);
-        scope.interval(() => this.publishScore(), TIMING.scorePublish);
+        scope.interval(() => {
+            this.publishScore();
+            this.publishMemberStatus();
+        }, TIMING.scorePublish);
     }
     ensureTagInput() {
         let tagInput = document.querySelector('#tag');
@@ -1413,9 +1442,74 @@ class PartyController extends FeatureController {
         nick.insertAdjacentElement('beforebegin', tagInput);
         return tagInput;
     }
+    resolveLocalSkin(playData = null) {
+        let raw = null;
+        if (playData && typeof playData.skin === 'string' && playData.skin.trim()) {
+            raw = playData.skin.trim();
+        }
+        if (!raw && Array.isArray(window.settings?.userData?.lastSkinUsed) && window.settings.userData.lastSkinUsed.length > 0) {
+            const entry = window.settings.userData.lastSkinUsed[0];
+            if (typeof entry === 'string') {
+                const shopSkins = window.settings?.shop?.skins;
+                if (Array.isArray(shopSkins)) {
+                    const found = shopSkins.find((s) => s._id === entry);
+                    if (found?.name) raw = found.name;
+                    else raw = entry;
+                } else {
+                    raw = entry;
+                }
+            }
+        }
+        if (!raw && typeof window.settings?.gameSettings?.skin === 'string' && window.settings.gameSettings.skin.trim()) {
+            raw = window.settings.gameSettings.skin.trim();
+        }
+        if (!raw && typeof window.sigfix?.settings?.skin === 'string' && window.sigfix.settings.skin.trim()) {
+            raw = window.sigfix.settings.skin.trim();
+        }
+        if (!raw && typeof window.sigfix?.settings?.selfSkin === 'string' && window.sigfix.settings.selfSkin.trim()) {
+            raw = window.sigfix.settings.selfSkin.trim();
+        }
+        if (!raw) {
+            try {
+                const st = JSON.parse(localStorage.getItem('settings') || '{}');
+                if (typeof st.skin === 'string' && st.skin.trim()) raw = st.skin.trim();
+            } catch {}
+        }
+        if (!raw) return null;
+        return raw.replace(/^1%/, '').replace(/\.png$/i, '').trim() || null;
+    }
+    resolveLocalColor() {
+        const adapter = this.app.host.adapter;
+        if (adapter?.protocol?.cells && adapter.protocol.owned?.size > 0) {
+            for (const id of adapter.protocol.owned) {
+                const cell = adapter.protocol.cells.get(id);
+                if (cell?.color && Array.isArray(cell.color)) {
+                    const [r, g, b] = cell.color;
+                    return `#${[r, g, b].map((v) => Number(v).toString(16).padStart(2, '0')).join('')}`;
+                }
+            }
+        }
+        if (this.app.settings.game?.cellColor) {
+            return this.app.settings.game.cellColor;
+        }
+        return null;
+    }
+    handlePlaySent(playData = null) {
+        this.localSkin = this.resolveLocalSkin(playData);
+        this.localColor = this.resolveLocalColor();
+        this.localIsAlive = true;
+        this.publishMemberStatus();
+        this.render();
+    }
     bindIdentityInputs() {
         const tagInput = this.ensureTagInput();
         const nicknameInput = document.querySelector(SELECTORS.nickname);
+        const playBtn = document.querySelector(SELECTORS.play);
+        if (playBtn instanceof HTMLElement) {
+            this.resources.listen(playBtn, 'click', () => {
+                this.resources.timeout(() => this.handlePlaySent(), 60);
+            });
+        }
         const urlTag = new URLSearchParams(location.search).get('tag')?.replace(/\/$/, '') || null;
         if (urlTag) this.app.settingsStore.set('settings.tag', urlTag, true);
         const updateTagText = (value) => {
@@ -1472,8 +1566,30 @@ class PartyController extends FeatureController {
                         this.closePanel();
                     }
                 }
-                if (!path || path === 'settings.partyScale' || path === 'settings.partyBgColor' || path === 'settings.partyTextColor') {
+                if (
+                    !path ||
+                    path === 'settings.partyScale' ||
+                    path === 'settings.partyBgColor' ||
+                    path === 'settings.partyTextColor' ||
+                    path === 'settings.partyBorderColor' ||
+                    path === 'settings.partyBorderRadius' ||
+                    path === 'settings.partyBlur' ||
+                    path === 'settings.partyCompact'
+                ) {
                     this.updateStyles();
+                }
+                if (
+                    !path ||
+                    path === 'settings.partySort' ||
+                    path === 'settings.partyHighlightSelf' ||
+                    path === 'settings.partyShowSkins' ||
+                    path === 'settings.partyShowScores' ||
+                    path === 'settings.partyShowIndexes' ||
+                    path === 'settings.partyShowHeaderTotals' ||
+                    path === 'settings.partyShowPing' ||
+                    path === 'settings.partyMaxMembers'
+                ) {
+                    this.render();
                 }
                 if (!path || path === 'chat.blurTag') {
                     if (tagInput instanceof HTMLInputElement) {
@@ -1493,8 +1609,20 @@ class PartyController extends FeatureController {
         this.panel.style.transformOrigin = 'top left';
         this.panel.style.backgroundColor = settings.partyBgColor ?? '#00000080';
         this.panel.style.color = settings.partyTextColor ?? '#fafafa';
+        this.panel.style.borderColor = settings.partyBorderColor ?? '#ffffff26';
+        this.panel.style.borderRadius = `${settings.partyBorderRadius ?? 6}px`;
+        const blur = Number(settings.partyBlur) || 0;
+        if (blur > 0) {
+            this.panel.style.backdropFilter = `blur(${blur}px)`;
+            this.panel.style.webkitBackdropFilter = `blur(${blur}px)`;
+        } else {
+            this.panel.style.backdropFilter = '';
+            this.panel.style.webkitBackdropFilter = '';
+        }
+        this.panel.classList.toggle('is-compact', Boolean(settings.partyCompact));
         this.panel.style.setProperty('--party-bg-color', settings.partyBgColor ?? '#00000080');
         this.panel.style.setProperty('--party-text-color', settings.partyTextColor ?? '#fafafa');
+        this.panel.style.setProperty('--party-border-color', settings.partyBorderColor ?? '#ffffff26');
     }
     closePanel() {
         this.members.clear();
@@ -1537,6 +1665,20 @@ class PartyController extends FeatureController {
         this.lastScore = score;
         this.app.backend.send('score', score);
     }
+    publishMemberStatus() {
+        if (!this.app.settings.settings.tag) return;
+        const latency = this.app.host.adapter?.snapshot().latency ?? this.app.state.backend.latency ?? null;
+        const isAlive = !isDeadScreenVisible() && Boolean(this.app.host.adapter?.snapshot().playing);
+        this.localIsAlive = isAlive;
+        const color = this.localColor || this.resolveLocalColor();
+        const skin = this.localSkin || this.resolveLocalSkin();
+        this.app.backend.send('party-member-update', {
+            skin,
+            color,
+            isAlive,
+            ping: latency !== null ? Math.round(latency) : null,
+        });
+    }
     ensurePanel() {
         if (this.panel?.isConnected) return this.panel;
         const panel = createElement('section', {
@@ -1560,14 +1702,17 @@ class PartyController extends FeatureController {
         const memberIcon = createElement('span', {
             className: 'centerXY g-2',
         });
-        memberIcon.innerHTML = icon('users', 18);
+        memberIcon.innerHTML = icon('users', 16);
         memberIcon.append(memberCount);
         const scoreIcon = createElement('span', {
             className: 'centerXY g-2',
         });
-        scoreIcon.innerHTML = icon('user', 18);
+        scoreIcon.innerHTML = icon('user', 16);
         scoreIcon.append(score);
-        const totals = createElement('span', { className: 'centerXY g-2' });
+        const totals = createElement('span', {
+            className: 'centerXY g-2',
+            attributes: { id: 'tag_totals' },
+        });
         totals.append(memberIcon, scoreIcon);
         header.append(title, totals);
         panel.append(header, members);
@@ -1618,6 +1763,10 @@ class PartyController extends FeatureController {
                 tagIndex: Number(member.tagIndex) || 0,
                 nick: typeof member.nick === 'string' ? member.nick : 'Unnamed',
                 score: Number(member.score) || 0,
+                skin: typeof member.skin === 'string' ? member.skin : null,
+                color: typeof member.color === 'string' ? member.color : null,
+                isAlive: member.isAlive !== false,
+                ping: typeof member.ping === 'number' ? member.ping : null,
             });
         }
         this.render();
@@ -1630,7 +1779,11 @@ class PartyController extends FeatureController {
             id,
             tagIndex: Number(member.tagIndex) || 0,
             nick: typeof member.nick === 'string' ? member.nick : 'Unnamed',
-            score: 0,
+            score: Number(member.score) || 0,
+            skin: typeof member.skin === 'string' ? member.skin : null,
+            color: typeof member.color === 'string' ? member.color : null,
+            isAlive: member.isAlive !== false,
+            ping: typeof member.ping === 'number' ? member.ping : null,
         });
         this.render();
     }
@@ -1643,6 +1796,17 @@ class PartyController extends FeatureController {
         const member = this.members.get(String(update.id));
         if (!member) return;
         member.score = Number(update.score) || 0;
+        if (member.score > 0) member.isAlive = true;
+        this.render();
+    }
+    updateMemberStatus(data) {
+        if (!isObject(data) || data.id === undefined) return;
+        const member = this.members.get(String(data.id));
+        if (!member) return;
+        if (data.skin !== undefined) member.skin = data.skin;
+        if (data.color !== undefined) member.color = data.color;
+        if (data.isAlive !== undefined) member.isAlive = data.isAlive;
+        if (data.ping !== undefined) member.ping = data.ping;
         this.render();
     }
     render() {
@@ -1650,44 +1814,145 @@ class PartyController extends FeatureController {
         const container = panel.querySelector('#members_container');
         const count = panel.querySelector('#tag_member_len');
         const total = panel.querySelector('#tag_score');
+        const totals = panel.querySelector('#tag_totals');
         if (!container || !count || !total) return;
+
+        const settings = this.app.settings.settings;
+        if (totals instanceof HTMLElement) {
+            totals.style.display = settings.partyShowHeaderTotals !== false ? 'flex' : 'none';
+        }
+
         container.replaceChildren();
-        const members = [...this.members.values()].sort((a, b) => a.tagIndex - b.tagIndex);
-        for (const member of members) {
-            const row = createElement('div', { className: 'flex g-2' });
 
-            const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
-            const skinName = skinMatch ? skinMatch[1].replace(/\.png$/i, '') : null;
-            const displayName = skinMatch ? skinMatch[2] : member.nick;
+        const sortMode = settings.partySort || 'index';
+        const sorted = [...this.members.values()].sort((a, b) => {
+            if (sortMode === 'score') {
+                return (b.score || 0) - (a.score || 0) || a.tagIndex - b.tagIndex;
+            }
+            if (sortMode === 'alpha') {
+                return a.nick.localeCompare(b.nick, undefined, { sensitivity: 'base' });
+            }
+            return a.tagIndex - b.tagIndex;
+        });
 
-            const nameContainer = createElement('span', { className: 'tag-member-nick centerY', attributes: { style: 'gap: 4px;' } });
-            if (skinName) {
-                nameContainer.append(
-                    createElement('img', {
-                        attributes: {
-                            src: `https://sigmally.com/static/skins/${skinName}.png`,
-                            style: 'width: 14px; height: 14px; border-radius: 50%; object-fit: cover;',
-                            onerror: "this.style.display='none'",
-                        },
+        const maxMembers = Math.max(3, Number(settings.partyMaxMembers) || 10);
+        const shouldLimit = sorted.length > maxMembers;
+        const visibleMembers = shouldLimit && !this.expanded ? sorted.slice(0, maxMembers) : sorted;
+
+        for (const member of visibleMembers) {
+            const isSelf = member.id === String(this.app.state.backend.sid);
+            if (isSelf) {
+                if (this.localSkin && !member.skin) member.skin = this.localSkin;
+                if (this.localColor && !member.color) member.color = this.localColor;
+                member.isAlive = this.localIsAlive;
+            }
+
+            const isDead = member.isAlive === false;
+            const row = createElement('div', { className: 'flex centerY g-2 tag-member-row' });
+            if (isSelf && settings.partyHighlightSelf !== false) {
+                row.classList.add('is-self');
+            }
+            if (isDead) {
+                row.classList.add('is-dead');
+            }
+
+            // Tag Index badge
+            if (settings.partyShowIndexes !== false) {
+                row.append(
+                    createElement('span', {
+                        className: 'tag-member-index',
+                        text: member.tagIndex,
                     })
                 );
             }
-            nameContainer.append(document.createTextNode(displayName));
 
-            row.append(
-                createElement('span', {
-                    className: 'tag-member-index',
-                    text: member.tagIndex,
-                }),
-                nameContainer,
-                createElement('span', {
-                    text: member.score > 0 ? this.formatScore(member.score) : '',
-                })
-            );
+            // Skin / Avatar / Color / Skull
+            if (settings.partyShowSkins !== false) {
+                let skinName = member.skin;
+                if (!skinName) {
+                    const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
+                    if (skinMatch) skinName = skinMatch[1].replace(/\.png$/i, '');
+                }
+
+                if (isDead) {
+                    const deadIcon = createElement('span', {
+                        className: 'party-avatar party-avatar-dead centerXY',
+                        attributes: { title: 'Dead' },
+                    });
+                    deadIcon.innerHTML = icon('skull', 12);
+                    row.append(deadIcon);
+                } else if (skinName) {
+                    const img = createElement('img', {
+                        className: 'party-avatar party-avatar-skin',
+                        attributes: {
+                            src: `https://sigmally.com/static/skins/${skinName}.png`,
+                            alt: skinName,
+                            title: skinName,
+                            onerror: "this.style.display='none'",
+                        },
+                    });
+                    row.append(img);
+                } else {
+                    const colorCircle = createElement('span', {
+                        className: 'party-avatar party-avatar-color',
+                        attributes: {
+                            style: `background-color: ${member.color || '#3b82f6'};`,
+                            title: 'Cell color',
+                        },
+                    });
+                    row.append(colorCircle);
+                }
+            }
+
+            // Nickname
+            const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
+            const displayName = skinMatch ? skinMatch[2] : member.nick;
+            const nameContainer = createElement('span', {
+                className: 'tag-member-nick centerY',
+                attributes: { style: 'gap: 4px;' },
+            });
+            nameContainer.append(document.createTextNode(displayName));
+            if (isSelf && settings.partyHighlightSelf !== false) {
+                nameContainer.append(createElement('span', { className: 'party-you-tag', text: 'YOU' }));
+            }
+            row.append(nameContainer);
+
+            // Ping Wifi indicator
+            if (settings.partyShowPing) {
+                const wifiWrap = createElement('span', { className: 'party-wifi-wrap centerY' });
+                const currentPing = isSelf ? (this.app.host.adapter?.snapshot().latency ?? this.app.state.backend.latency) : member.ping;
+                wifiWrap.innerHTML = renderWifiIcon(currentPing);
+                row.append(wifiWrap);
+            }
+
+            // Score
+            if (settings.partyShowScores !== false) {
+                row.append(
+                    createElement('span', {
+                        className: 'tag-member-score',
+                        text: member.score > 0 ? this.formatScore(member.score) : '',
+                    })
+                );
+            }
+
             container.append(row);
         }
-        count.textContent = String(members.length);
-        total.textContent = this.formatScore(members.reduce((sum, member) => sum + member.score, 0));
+
+        if (shouldLimit) {
+            const expandBtn = createElement('button', {
+                type: 'button',
+                className: 'party-expand-btn',
+                text: this.expanded ? 'Show less' : `+${sorted.length - maxMembers} more`,
+            });
+            this.resources.listen(expandBtn, 'click', () => {
+                this.expanded = !this.expanded;
+                this.render();
+            });
+            container.append(expandBtn);
+        }
+
+        count.textContent = String(sorted.length);
+        total.textContent = this.formatScore(sorted.reduce((sum, member) => sum + (member.score || 0), 0));
     }
     formatScore(score) {
         return score >= 1_000 ? `${(score / 1_000).toFixed(1)}k` : String(score);
@@ -1745,18 +2010,34 @@ class MinimapController extends FeatureController {
     updatePlayer(data) {
         if (!isObject(data) || data.sid === undefined) return;
         const id = String(data.sid);
+        const party = this.app.features.get('party');
         if (data.x === null || data.y === null) {
             this.players.delete(id);
+            if (party && party.members.has(id)) {
+                const member = party.members.get(id);
+                if (member && member.isAlive !== false) {
+                    member.isAlive = false;
+                    party.render();
+                }
+            }
         } else {
             const x = Number(data.x);
             const y = Number(data.y);
-            if (!Number.isFinite(x) || !Number.isFinite(y)) this.players.delete(id);
-            else {
+            if (!Number.isFinite(x) || !Number.isFinite(y)) {
+                this.players.delete(id);
+            } else {
                 this.players.set(id, {
                     x,
                     y,
                     nick: typeof data.nick === 'string' ? data.nick : 'Unnamed',
                 });
+                if (party && party.members.has(id)) {
+                    const member = party.members.get(id);
+                    if (member && member.isAlive === false) {
+                        member.isAlive = true;
+                        party.render();
+                    }
+                }
             }
         }
         this.scheduleDraw();
@@ -2021,6 +2302,11 @@ class MacroController extends FeatureController {
         if (this.matches(event, keys.toggle.autoRespawn)) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleSetting('autoRespawn');
+        }
+        if (this.matches(event, keys.toggle.party)) {
+            if (event.key === 'Dead') event.preventDefault();
+            const show = !this.app.settingsStore.get('settings.showPartyPanel');
+            this.app.settingsStore.set('settings.showPartyPanel', show);
         }
         if (this.matches(event, keys.respawn)) {
             if (event.key === 'Dead') event.preventDefault();

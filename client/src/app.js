@@ -65,16 +65,22 @@ class SigModApp {
             return;
         }
 
-        this.exportCompatibility();
-        this.createFeatureSkeleton();
-        this.i18n.initialize();
-        const authReady = this.mount('auth');
-        this.host.start();
         try {
+            this.exportCompatibility();
+            this.createFeatureSkeleton();
+            this.i18n.initialize();
+            const authReady = this.mount('auth').catch((err) => this.logger.error('Auth mount failed', err));
+            this.host.start();
             await authReady;
             this.dom = await this.readiness.pageShell();
             for (const phase of FEATURE_PHASES) {
-                for (const [name] of phase) await this.mount(name);
+                for (const [name] of phase) {
+                    try {
+                        await this.mount(name);
+                    } catch (mountErr) {
+                        this.logger.error(`Phase mount error for ${name}`, mountErr);
+                    }
+                }
             }
             this.backend.connect();
             this.starting = false;
@@ -82,7 +88,7 @@ class SigModApp {
             this.logConsoleInfo();
         } catch (error) {
             this.logger.error('Initialization failed', error);
-            this.destroy();
+            this.starting = false;
         }
     }
     logConsoleInfo() {
@@ -147,7 +153,11 @@ class SigModApp {
         for (const phase of FEATURE_PHASES) {
             for (const [name, Type] of phase) {
                 if (name === 'chat' && this.settings.chat.enabled === false) continue;
-                this.features.set(name, new Type(this, name));
+                try {
+                    this.features.set(name, new Type(this, name));
+                } catch (error) {
+                    this.logger.error(`Feature ${name} failed to instantiate`, error);
+                }
             }
         }
     }

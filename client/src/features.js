@@ -91,7 +91,6 @@ class EmojiPicker {
         this.app = app;
         this.resources = resources;
         this.getInput = typeof getInput === 'function' ? getInput : () => null;
-        this.panel = null;
         this.emojiPanel = null;
         this.emojis = null;
         this.emojiByValue = new Map();
@@ -107,6 +106,9 @@ class EmojiPicker {
     }
     get panel() {
         return this.emojiPanel;
+    }
+    set panel(value) {
+        this.emojiPanel = value;
     }
     loadRecentEmojis() {
         try {

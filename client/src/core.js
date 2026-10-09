@@ -865,8 +865,9 @@ class SettingsStore {
         }
         if (sourceVersion < BUILD.settingsVersion) this.backup(source, `v${sourceVersion}`);
         const migrated = this.migrate(parsed, sourceVersion);
-        this.value = this.normalize(mergeKnown(this.defaults, migrated));
-        this.savedKeys = clone(this.value.macros.keys);
+        const merged = mergeKnown(this.defaults, migrated);
+        this.value = this.normalize(merged);
+        this.savedKeys = extractKeybindsFromSettings(this.value);
         if (JSON.stringify(this.value) !== source) this.flush();
         return this.value;
     }
@@ -909,9 +910,10 @@ class SettingsStore {
         return value;
     }
     normalize(value) {
-        const normalizeBinding = (binding) => {
-            if (binding === null || binding === '') return null;
-            return typeof binding === 'string' ? binding.toLowerCase() : null;
+        const normalizeBinding = (rawBinding) => {
+            const binding = unwrapSettingScalar(rawBinding);
+            if (binding === null || binding === '' || binding === undefined) return null;
+            return typeof binding === 'string' ? binding.trim().toLowerCase() || null : null;
         };
         const normalizeNullableString = (input) => (typeof input === 'string' ? input : null);
         const normalizeBoolean = (input, fallback) => (typeof input === 'boolean' ? input : fallback);
@@ -919,26 +921,20 @@ class SettingsStore {
         value.storageVersion = BUILD.settingsVersion;
         value.macros.feedSpeed = clamp(Number(value.macros.feedSpeed) || 40, 5, 100);
         value.macros.keys.line.instantSplit = clamp(Math.trunc(Number(value.macros.keys.line.instantSplit) || 0), 0, 4);
-        for (const [key, binding] of Object.entries(value.macros.keys)) {
-            if (isObject(binding)) {
-                for (const [nestedKey, nestedBinding] of Object.entries(binding)) {
-                    if (nestedKey !== 'instantSplit') binding[nestedKey] = normalizeBinding(nestedBinding);
-                }
-            } else value.macros.keys[key] = normalizeBinding(binding);
+        for (const { path } of ALL_KEYBIND_DEFINITIONS) {
+            const raw = getPath(value, path);
+            const normalized = normalizeBinding(raw);
+            setPath(value, path, normalized);
         }
         const seenBindings = new Set();
-        const clearDuplicateBindings = (group) => {
-            for (const [name, binding] of Object.entries(group)) {
-                if (name === 'instantSplit' || typeof binding !== 'string') continue;
-                if (seenBindings.has(binding)) group[name] = null;
-                else seenBindings.add(binding);
-            }
-        };
-        for (const [name, binding] of Object.entries(value.macros.keys)) {
-            if (isObject(binding)) clearDuplicateBindings(binding);
-            else if (typeof binding === 'string') {
-                if (seenBindings.has(binding)) value.macros.keys[name] = null;
-                else seenBindings.add(binding);
+        for (const { path } of ALL_KEYBIND_DEFINITIONS) {
+            const raw = getPath(value, path);
+            const binding = unwrapSettingScalar(raw);
+            if (typeof binding !== 'string' || !binding.length) continue;
+            if (seenBindings.has(binding)) {
+                setPath(value, path, null);
+            } else {
+                seenBindings.add(binding);
             }
         }
         const mouseBindings = new Map();
@@ -1057,7 +1053,11 @@ class SettingsStore {
         return value;
     }
     get(path) {
-        if (path.startsWith('macros.keys.')) return getPath(this.savedKeys, path.slice('macros.keys.'.length));
+        if (path === 'macros.keys') return this.savedKeys;
+        if (path.startsWith('macros.keys.')) {
+            const val = getPath(this.savedKeys, path.slice('macros.keys.'.length));
+            return unwrapSettingScalar(val);
+        }
         return getPath(this.value, path);
     }
     onChange(listener) {
@@ -1075,12 +1075,26 @@ class SettingsStore {
         }
     }
     set(path, value, immediate = false) {
-        if (path.startsWith('macros.keys.')) setPath(this.savedKeys, path.slice('macros.keys.'.length), value);
+        if (isKeybindSettingPath(path)) {
+            const targetVal = typeof value === 'string' ? value.trim().toLowerCase() : null;
+            if (targetVal) {
+                for (const def of ALL_KEYBIND_DEFINITIONS) {
+                    if (def.path !== path) {
+                        const current = unwrapSettingScalar(this.get(def.path));
+                        if (typeof current === 'string' && current.toLowerCase() === targetVal) {
+                            setPath(this.savedKeys, def.path.slice('macros.keys.'.length), null);
+                            setPath(this.value, def.path, null);
+                        }
+                    }
+                }
+            }
+            setPath(this.savedKeys, path.slice('macros.keys.'.length), value);
+        }
         setPath(this.value, path, value);
         const next = mergeKnown(this.defaults, this.value);
-        next.macros.keys = clone(this.savedKeys);
+        next.macros.keys = extractKeybindsFromSettings(this.value);
         this.normalize(next);
-        this.savedKeys = clone(next.macros.keys);
+        this.savedKeys = extractKeybindsFromSettings(next);
         replaceInPlace(this.value, next);
         if (immediate) this.flush();
         else this.flushLater();
@@ -1089,8 +1103,9 @@ class SettingsStore {
     update(mutator, immediate = false) {
         mutator(this.value);
         const next = mergeKnown(this.defaults, this.value);
-        next.macros.keys = clone(this.savedKeys);
+        next.macros.keys = extractKeybindsFromSettings(this.value);
         replaceInPlace(this.value, this.normalize(next));
+        this.savedKeys = extractKeybindsFromSettings(this.value);
         if (immediate) this.flush();
         else this.flushLater();
         this.notifyChange(null);
@@ -1114,8 +1129,9 @@ class SettingsStore {
         const previous = this.storage.getItem(this.key);
         if (previous) this.backup(previous, 'before-import');
         const migrated = this.migrate(clone(input), sourceVersion);
-        const next = this.normalize(mergeKnown(this.defaults, migrated));
-        this.savedKeys = clone(next.macros.keys);
+        const merged = mergeKnown(this.defaults, migrated);
+        const next = this.normalize(merged);
+        this.savedKeys = extractKeybindsFromSettings(next);
         replaceInPlace(this.value, next);
         this.flush();
         this.notifyChange(null);
@@ -1126,7 +1142,8 @@ class SettingsStore {
             // SigFixes replaces some key fields with non-enumerable accessors.
             // Read the known settings schema so those keys remain in the saved JSON.
             const snapshot = mergeKnown(this.defaults, this.value);
-            snapshot.macros.keys = clone(this.savedKeys);
+            snapshot.macros.keys = extractKeybindsFromSettings(this.value);
+            this.savedKeys = clone(snapshot.macros.keys);
             this.storage.setItem(this.key, JSON.stringify(snapshot));
         } catch (error) {
             this.logger.error('Unable to save settings', error);

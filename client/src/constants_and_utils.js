@@ -585,6 +585,29 @@ const decoder = new TextDecoder();
 const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const KEYBIND_CODE_PREFIX = 'code:';
+const ALL_KEYBIND_DEFINITIONS = [
+    { path: 'macros.keys.rapidFeed', label: 'Rapid Feed' },
+    { path: 'macros.keys.respawn', label: 'Respawn' },
+    { path: 'macros.keys.ping', label: 'Ping' },
+    { path: 'macros.keys.location', label: 'Send location' },
+    { path: 'macros.keys.saveImage', label: 'Make screenshot' },
+    { path: 'macros.keys.splits.double', label: 'Double split' },
+    { path: 'macros.keys.splits.triple', label: 'Triple split' },
+    { path: 'macros.keys.splits.quad', label: 'Quad split' },
+    { path: 'macros.keys.splits.doubleTrick', label: 'Double Trick' },
+    { path: 'macros.keys.splits.selfTrick', label: 'Self Trick' },
+    { path: 'macros.keys.line.horizontal', label: 'Horizontal line' },
+    { path: 'macros.keys.line.vertical', label: 'Vertical line' },
+    { path: 'macros.keys.line.fixed', label: 'Fixed line' },
+    { path: 'macros.keys.toggle.menu', label: 'Toggle menu' },
+    { path: 'macros.keys.toggle.chat', label: 'Toggle chat' },
+    { path: 'macros.keys.toggle.names', label: 'Toggle names' },
+    { path: 'macros.keys.toggle.skins', label: 'Toggle skins' },
+    { path: 'macros.keys.toggle.autoRespawn', label: 'Toggle autorespawn' },
+];
+const ALL_KEYBIND_PATHS = new Set(ALL_KEYBIND_DEFINITIONS.map((item) => item.path));
+const isKeybindSettingPath = (path) => typeof path === 'string' && ALL_KEYBIND_PATHS.has(path);
+const getKeybindLabel = (path) => ALL_KEYBIND_DEFINITIONS.find((item) => item.path === path)?.label ?? path;
 /** @param {KeyboardEvent} event */
 const keybindValueFromEvent = (event) => {
     const key = typeof event.key === 'string' ? event.key : '';
@@ -594,17 +617,33 @@ const keybindValueFromEvent = (event) => {
 };
 /** @param {string} binding */
 const keybindCodeLabel = (binding) => {
+    if (typeof binding !== 'string' || !binding.startsWith(KEYBIND_CODE_PREFIX)) return binding;
     const code = binding.slice(KEYBIND_CODE_PREFIX.length);
-    const label = code ? `${code[0].toUpperCase()}${code.slice(1)}` : '';
-    return label ? `Physical ${label.replace(/([a-z])([A-Z])/g, '$1 $2')}` : binding;
+    if (!code) return binding;
+    if (code.startsWith('key') && code.length > 3) {
+        return `Key ${code.slice(3).toUpperCase()}`;
+    }
+    if (code.startsWith('digit') && code.length > 5) {
+        return `Digit ${code.slice(5)}`;
+    }
+    if (code.startsWith('numpad') && code.length > 6) {
+        return `Num ${code.slice(6).toUpperCase()}`;
+    }
+    const label = `${code[0].toUpperCase()}${code.slice(1)}`;
+    return `Physical ${label.replace(/([a-z])([A-Z0-9])/g, '$1 $2')}`;
 };
 /** @param {KeyboardEvent} event @param {unknown} binding */
 const keybindMatchesEvent = (event, binding) => {
-    if (typeof binding !== 'string' || !binding.length) return false;
-    const normalized = binding.toLowerCase();
-    return normalized.startsWith(KEYBIND_CODE_PREFIX)
-        ? keybindValueFromEvent(event) === normalized
-        : String(event.key).toLowerCase() === normalized;
+    const raw = unwrapSettingScalar(binding);
+    if (typeof raw !== 'string' || !raw.length) return false;
+    const normalized = raw.toLowerCase();
+    if (normalized.startsWith(KEYBIND_CODE_PREFIX)) {
+        const targetCode = normalized.slice(KEYBIND_CODE_PREFIX.length);
+        if (typeof event.code === 'string' && event.code.toLowerCase() === targetCode) return true;
+        return keybindValueFromEvent(event) === normalized;
+    }
+    const eventKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+    return eventKey === normalized;
 };
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -650,16 +689,26 @@ const clone = (value) => {
     if (!isObject(value)) return value;
     return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, clone(item)]));
 };
-const mergeKnown = (defaults, input) => {
+const mergeKnown = (defaults, input, path = '') => {
     if (Array.isArray(defaults)) return Array.isArray(input) ? clone(input) : clone(defaults);
     const scalar = unwrapSettingScalar(input);
     if (defaults === null) {
         return scalar === null || ['string', 'number', 'boolean'].includes(typeof scalar) ? scalar : null;
     }
+    if (isKeybindSettingPath(path)) {
+        if (scalar === undefined) return clone(defaults);
+        if (scalar === null || scalar === '') return null;
+        return typeof scalar === 'string' ? scalar.toLowerCase() : clone(defaults);
+    }
     if (!isObject(defaults)) return typeof scalar === typeof defaults ? scalar : defaults;
     const result = {};
     for (const [key, fallback] of Object.entries(defaults)) {
-        result[key] = mergeKnown(fallback, isObject(input) || Array.isArray(input) ? input[key] : undefined);
+        const nextPath = path ? `${path}.${key}` : key;
+        const inputValue =
+            (isObject(input) && key in input) || (Array.isArray(input) && own(input, key))
+                ? input[key]
+                : undefined;
+        result[key] = mergeKnown(fallback, inputValue, nextPath);
     }
     return result;
 };
@@ -669,6 +718,16 @@ const setPath = (value, path, next) => {
     const property = keys.pop();
     const target = keys.reduce((current, key) => current[key], value);
     target[property] = next;
+};
+const extractKeybindsFromSettings = (settings) => {
+    const keys = clone(DEFAULT_SETTINGS.macros.keys);
+    for (const { path } of ALL_KEYBIND_DEFINITIONS) {
+        const raw = getPath(settings, path);
+        const val = unwrapSettingScalar(raw);
+        const normalized = val === null || val === undefined || val === '' ? null : (typeof val === 'string' ? val.toLowerCase() : null);
+        setPath(keys, path.slice('macros.keys.'.length), normalized);
+    }
+    return keys;
 };
 const replaceInPlace = (target, source) => {
     if (Array.isArray(target) && Array.isArray(source)) {

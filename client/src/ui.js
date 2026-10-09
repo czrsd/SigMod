@@ -2458,17 +2458,23 @@ class KeybindRecorder {
         );
     }
     setupKeybindRecorder() {
-        if (!this.root) return;
         this.syncKeybindLabels();
         this.resources.listen(document, 'sigmod:languagechange', () => this.syncKeybindLabels());
-        this.resources.listen(this.root, 'focusin', (event) => {
+        this.resources.add(
+            this.app.settingsStore.onChange((changedPath) => {
+                if (!changedPath || changedPath.startsWith('macros.keys.')) {
+                    this.syncKeybindInputs();
+                }
+            })
+        );
+        this.resources.listen(document, 'focusin', (event) => {
             const input = event.target;
             if (!this.isManagedKeybind(input)) return;
             input.dataset.recording = 'true';
             input.value = this.message('Press a key…');
             input.classList.add('is-recording');
         });
-        this.resources.listen(this.root, 'focusout', (event) => {
+        this.resources.listen(document, 'focusout', (event) => {
             const input = event.target;
             if (!this.isManagedKeybind(input)) return;
             if (input.dataset.recording === 'true') {
@@ -2478,7 +2484,7 @@ class KeybindRecorder {
             }
         });
         this.resources.listen(
-            this.root,
+            document,
             'keydown',
             async (event) => {
                 const input = event.target;
@@ -2510,22 +2516,21 @@ class KeybindRecorder {
                     if (decision === 'cancel') {
                         input.value = this.bindingDisplay(this.app.settingsStore.get(path));
                         input.dataset.recording = 'false';
+                        input.classList.remove('is-recording');
                         input.blur();
                         return;
                     }
                     if (decision === 'reassign') {
-                        for (const candidate of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
-                            const binding =
-                                candidate instanceof HTMLInputElement
-                                    ? unwrapSettingScalar(this.app.settingsStore.get(candidate.dataset.setting))
-                                    : null;
-                            if (
-                                candidate instanceof HTMLInputElement &&
-                                candidate.dataset.setting !== path &&
-                                typeof binding === 'string' &&
-                                binding.toLowerCase() === value
-                            )
-                                this.app.settingsStore.set(candidate.dataset.setting, null, true);
+                        for (const conflict of conflicts) {
+                            this.app.settingsStore.set(conflict.path, null, true);
+                            for (const candidate of document.querySelectorAll(`.keybinding[data-setting="${conflict.path}"]`)) {
+                                if (candidate instanceof HTMLInputElement) {
+                                    candidate.value = '';
+                                    candidate.dataset.bindingValue = '';
+                                    candidate.classList.remove('is-conflict');
+                                    candidate.removeAttribute('data-conflict');
+                                }
+                            }
                         }
                     }
                 }
@@ -2534,7 +2539,7 @@ class KeybindRecorder {
                 input.dataset.recording = 'false';
                 input.classList.remove('is-recording');
                 input.value = this.bindingDisplay(value);
-                this.updateKeybindingConflicts();
+                this.syncKeybindInputs();
                 this.root?.dispatchEvent(
                     new CustomEvent('sigmod:settingchange', {
                         bubbles: true,
@@ -2546,23 +2551,32 @@ class KeybindRecorder {
             true
         );
     }
+    syncKeybindInputs() {
+        for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
+            if (!(input instanceof HTMLInputElement) || input.dataset.recording === 'true') continue;
+            const path = input.dataset.setting;
+            const value = this.app.settingsStore.get(path);
+            const binding = unwrapSettingScalar(value);
+            input.dataset.bindingValue = typeof binding === 'string' ? binding : '';
+            input.value = this.bindingDisplay(binding);
+        }
+        this.updateKeybindingConflicts();
+    }
     syncKeybindLabels() {
-        if (!this.root) return;
-        for (const input of this.root.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
+        for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
             if (!(input instanceof HTMLInputElement)) continue;
             input.readOnly = true;
             input.removeAttribute('maxlength');
             input.autocomplete = 'off';
-            const label = input.dataset.label || 'Keybind';
+            const label = input.dataset.label || input.name || getKeybindLabel(input.dataset.setting);
             input.setAttribute('aria-label', `${this.message(label)} ${this.message('keybind')}`);
         }
         this.updateKeybindingConflicts();
     }
     updateKeybindingConflicts() {
-        if (!this.root) return;
-        for (const badge of this.root.querySelectorAll('.keybinding-conflict')) badge.remove();
+        for (const badge of document.querySelectorAll('.keybinding-conflict')) badge.remove();
         const groups = new Map();
-        for (const input of this.root.querySelectorAll('.keybinding[data-setting]')) {
+        for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
             if (!(input instanceof HTMLInputElement)) continue;
             input.classList.remove('is-conflict');
             input.removeAttribute('data-conflict');
@@ -2580,7 +2594,7 @@ class KeybindRecorder {
             for (const input of inputs) {
                 const others = inputs
                     .filter((candidate) => candidate !== input)
-                    .map((candidate) => this.message(candidate.dataset.label || candidate.name || 'another action'));
+                    .map((candidate) => this.message(candidate.dataset.label || candidate.name || getKeybindLabel(candidate.dataset.setting)));
                 const message = this.message('Already used by {actions}', {
                     actions: others.join(', '),
                 });
@@ -2597,21 +2611,42 @@ class KeybindRecorder {
     }
     findKeybindingConflicts(path, value) {
         if (typeof value !== 'string' || !value.length) return [];
+        const normalized = value.toLowerCase();
         const conflicts = [];
+        const seenPaths = new Set();
+        for (const def of ALL_KEYBIND_DEFINITIONS) {
+            if (def.path === path) continue;
+            const current = unwrapSettingScalar(this.app.settingsStore.get(def.path));
+            if (typeof current === 'string' && current.toLowerCase() === normalized) {
+                conflicts.push({
+                    path: def.path,
+                    label: def.label,
+                });
+                seenPaths.add(def.path);
+            }
+        }
         for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
             if (!(input instanceof HTMLInputElement) || input.dataset.setting === path) continue;
-            const binding = unwrapSettingScalar(this.app.settingsStore.get(input.dataset.setting));
-            if (typeof binding === 'string' && binding.toLowerCase() === value)
-                conflicts.push(input.dataset.label || input.name || input.dataset.setting);
+            const settingPath = input.dataset.setting;
+            if (seenPaths.has(settingPath)) continue;
+            const binding = unwrapSettingScalar(this.app.settingsStore.get(settingPath));
+            if (typeof binding === 'string' && binding.toLowerCase() === normalized) {
+                conflicts.push({
+                    path: settingPath,
+                    label: input.dataset.label || input.name || getKeybindLabel(settingPath),
+                });
+                seenPaths.add(settingPath);
+            }
         }
         return conflicts;
     }
-    askKeybindingConflict(path, value, labels) {
+    askKeybindingConflict(path, value, conflicts) {
         const modal = this.app.features.get('modal');
         if (!modal) return Promise.resolve('cancel');
         const body = createElement('div', {
             className: 'keybinding-conflict-dialog',
         });
+        const labels = conflicts.map((c) => (typeof c === 'string' ? c : c.label || getKeybindLabel(c.path)));
         body.append(
             createElement('strong', {
                 text: this.message('Duplicate keybinding detected'),
@@ -3194,7 +3229,11 @@ class SettingsPorter {
             const sigmally = this.readStoredSettings(STORAGE.gameSettings);
             if (sigmally) payload.sigmally = sigmally;
         }
-        if (scopes.includes('sigmod')) payload.sigmod = clone(this.app.settingsStore.value);
+        if (scopes.includes('sigmod')) {
+            const sigmod = clone(this.app.settingsStore.value);
+            sigmod.macros.keys = clone(this.app.settingsStore.savedKeys);
+            payload.sigmod = sigmod;
+        }
         if (scopes.includes('sigfix')) {
             const sigfix = this.readStoredSettings('sigfix');
             if (sigfix) payload.sigfix = sigfix;
@@ -3204,11 +3243,13 @@ class SettingsPorter {
     buildSettingsExport() {
         const sigmally = this.readStoredSettings(STORAGE.gameSettings);
         const sigfix = this.readStoredSettings('sigfix');
+        const sigmod = clone(this.app.settingsStore.value);
+        sigmod.macros.keys = clone(this.app.settingsStore.savedKeys);
         return {
             format: 'sigmod-settings',
             version: 1,
             exportedAt: new Date().toISOString(),
-            sigmod: clone(this.app.settingsStore.value),
+            sigmod,
             ...(sigmally ? { sigmally } : {}),
             ...(sigfix ? { sigfix } : {}),
         };
@@ -3306,10 +3347,8 @@ class SettingsPorter {
             if (input.dataset.nullValue === value) value = null;
             else if (own(input.dataset, 'number')) value = Number(value);
             else if (own(input.dataset, 'pixels')) value = `${Number(value) || 0}px`;
-            else if (input.classList.contains('keybinding')) value = value.trim().slice(-1).toLowerCase() || null;
         }
         this.app.settingsStore.set(path, value);
-        if (input.classList.contains('keybinding')) input.value = value ?? '';
         if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
         if (input.id === 'partyScale') this.updatePartySliderLabels();
         if (input.id === 'pingDuration') this.updatePartySliderLabels();

@@ -669,28 +669,38 @@ class ChatController extends FeatureController {
             return { wrapper, input };
         };
         const keys = makeSection('Keybindings');
+        const locValue = this.app.settingsStore.get('macros.keys.location');
+        const toggleValue = this.app.settingsStore.get('macros.keys.toggle.chat');
         const locationKey = createElement('input', {
             className: 'keybinding',
             attributes: {
                 id: 'chat-location-key',
                 'data-setting': 'macros.keys.location',
+                'data-label': 'Send location',
                 type: 'text',
-                maxlength: '1',
                 placeholder: '...',
                 'aria-label': 'Send location keybind',
+                readonly: 'true',
+                autocomplete: 'off',
             },
         });
+        locationKey.value = menu?.bindingDisplay(locValue) ?? '';
+        locationKey.dataset.bindingValue = typeof locValue === 'string' ? locValue : '';
         const toggleKey = createElement('input', {
             className: 'keybinding',
             attributes: {
                 id: 'chat-toggle-key',
                 'data-setting': 'macros.keys.toggle.chat',
+                'data-label': 'Toggle chat',
                 type: 'text',
-                maxlength: '1',
                 placeholder: '...',
                 'aria-label': 'Show or hide chat keybind',
+                readonly: 'true',
+                autocomplete: 'off',
             },
         });
+        toggleKey.value = menu?.bindingDisplay(toggleValue) ?? '';
+        toggleKey.dataset.bindingValue = typeof toggleValue === 'string' ? toggleValue : '';
         keys.body.append(
             makeRow('Send location', locationKey, 'Send your current position to chat.'),
             makeRow('Show / Hide chat', toggleKey)
@@ -754,39 +764,6 @@ class ChatController extends FeatureController {
         page.append(keys.section, behavior.section, style);
         panel.append(page);
         this.settingsPanel = panel;
-        const bindKey = (input, path) => {
-            input.readOnly = true;
-            input.autocomplete = 'off';
-            input.value = this.app.settingsStore.get(path) ?? '';
-            this.resources.listen(input, 'focus', () => {
-                input.dataset.recording = 'true';
-                input.value = 'Press a key…';
-            });
-            this.resources.listen(input, 'keydown', (event) => {
-                if (input.dataset.recording !== 'true') return;
-                event.preventDefault();
-                event.stopPropagation();
-                if (event.key === 'Escape') {
-                    input.value = this.app.settingsStore.get(path) ?? '';
-                } else {
-                    const clearBinding =
-                        event.key === 'Backspace' ||
-                        event.key === 'Delete' ||
-                        event.code === 'Backspace' ||
-                        event.code === 'Delete' ||
-                        event.keyCode === 8 ||
-                        event.keyCode === 46;
-                    const value = clearBinding ? null : keybindValueFromEvent(event);
-                    if (value === null && !clearBinding) return;
-                    this.app.settingsStore.set(path, value, true);
-                    input.value = this.app.features.get('menu')?.bindingDisplay(value) ?? value;
-                }
-                input.dataset.recording = 'false';
-                input.blur();
-            });
-        };
-        bindKey(locationKey, 'macros.keys.location');
-        bindKey(toggleKey, 'macros.keys.toggle.chat');
         const bindBoolean = (input, path) => {
             input.checked = Boolean(this.app.settingsStore.get(path));
             this.resources.listen(input, 'change', () => {

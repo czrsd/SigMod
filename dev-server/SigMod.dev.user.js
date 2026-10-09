@@ -30,34 +30,34 @@
 //
 // @version      11.0.0-dev
 //
-// @description     Sigmally mod with macros, friends, tags, themes, skins, visual customization, quality-of-life features and more.
-// @description:de  Sigmally-Mod mit Makros, Freunden, Tags, Themes, Skins, visueller Anpassung und vielen weiteren Funktionen.
-// @description:es  Mod para Sigmally con macros, amigos, etiquetas, temas, skins, personalización visual y muchas más funciones.
-// @description:pt  Mod para Sigmally com macros, amigos, tags, temas, skins, personalização visual e muitos outros recursos.
-// @description:ru  Мод для Sigmally с макросами, друзьями, тегами, темами, скинами, настройкой интерфейса и другими функциями.
-// @description:tr  Makrolar, arkadaşlar, etiketler, temalar, skinler, görsel özelleştirme ve daha fazlasını içeren Sigmally modu.
-// @description:ar  مود Sigmally مع وحدات ماكرو وأصدقاء وعلامات وسمات وسكنات وتخصيص بصري وميزات إضافية كثيرة.
-// @description:cs  Mod pro Sigmally s makry, přáteli, tagy, motivy, skiny, vizuálním přizpůsobením a mnoha dalšími funkcemi.
-// @description:da  Sigmally-mod med makroer, venner, tags, temaer, skins, visuel tilpasning og meget mere.
-// @description:el  Mod για το Sigmally με μακροεντολές, φίλους, ετικέτες, θέματα, skins, οπτική προσαρμογή και πολλά ακόμη.
-// @description:fi  Sigmally-modi, jossa on makroja, ystäviä, tageja, teemoja, skinejä, visuaalista mukautusta ja paljon muuta.
-// @description:fr  Mod Sigmally avec macros, amis, tags, thèmes, skins, personnalisation visuelle et bien plus encore.
-// @description:hi  मैक्रो, दोस्त, टैग, थीम, स्किन, विज़ुअल कस्टमाइज़ेशन और कई अन्य सुविधाओं वाला Sigmally मॉड।
-// @description:hu  Sigmally mod makrókkal, barátokkal, tagekkel, témákkal, skinekkel, vizuális testreszabással és sok más funkcióval.
-// @description:id  Mod Sigmally dengan makro, teman, tag, tema, skin, kustomisasi visual, dan banyak fitur lainnya.
-// @description:it  Mod per Sigmally con macro, amici, tag, temi, skin, personalizzazione visiva e molto altro.
-// @description:ja  マクロ、フレンド、タグ、テーマ、スキン、ビジュアルカスタマイズなどを備えた Sigmally 用モッド。
-// @description:ko  매크로, 친구, 태그, 테마, 스킨, 시각적 사용자 지정 등 다양한 기능을 제공하는 Sigmally 모드입니다.
-// @description:nl  Sigmally-mod met macro's, vrienden, tags, thema's, skins, visuele aanpassingen en nog veel meer.
-// @description:no  Sigmally-mod med makroer, venner, tagger, temaer, skins, visuell tilpasning og mye mer.
-// @description:pl  Mod do Sigmally z makrami, znajomymi, tagami, motywami, skinami, personalizacją wizualną i wieloma innymi funkcjami.
-// @description:ro  Mod pentru Sigmally cu macrocomenzi, prieteni, etichete, teme, skinuri, personalizare vizuală și multe altele.
-// @description:sv  Sigmally-mod med makron, vänner, taggar, teman, skins, visuell anpassning och mycket mer.
-// @description:th  ม็อด Sigmally พร้อมมาโคร เพื่อน แท็ก ธีม สกิน การปรับแต่งภาพ และฟีเจอร์อื่น ๆ อีกมากมาย
-// @description:uk  Мод для Sigmally з макросами, друзями, тегами, темами, скінами, візуальним налаштуванням і багатьма іншими функціями.
-// @description:vi  Mod Sigmally có macro, bạn bè, thẻ, chủ đề, skin, tùy chỉnh giao diện và nhiều tính năng khác.
-// @description:zh-CN 适用于 Sigmally 的模组，包含宏、好友、标签、主题、皮肤、视觉自定义及更多功能。
-// @description:zh-TW 適用於 Sigmally 的模組，包含巨集、好友、標籤、主題、造型、視覺自訂及更多功能。
+// @description     Advanced Sigmally mod: Rapid feed macro, split tricks, live teammate radar, cell merge timer, freeze line-splits, mouse macros & instant respawn.
+// @description:de  Erweiterter Sigmally-Mod: Rapid-Feed-Makro, Split-Tricks, Teammate-Party-Radar, Zell-Merge-Timer, Freeze-Linesplits, Maus-Makros und Instant-Respawn.
+// @description:es  Mod avanzado para Sigmally: Macro de feed rápido, trucos de split, radar de equipo, temporizador de merge, congelar líneas, macros de ratón y respawn rápido.
+// @description:pt  Mod avançado para Sigmally: Macro de feed rápido, truques de split, radar de equipe, merge timer, congelamento, macros de mouse e respawn instantâneo.
+// @description:ru  Продвинутый мод для Sigmally: быстрый фид-макрос, сплиты, радар тиммейтов, таймер слияния клеток, фриз/лайнсплит, макросы мыши и быстрый респавн.
+// @description:tr  Gelişmiş Sigmally modu: Hızlı feed makrosu, split ve trickler, takım radarı, hücre merge timer, dondurma (freeze), mouse makroları ve hızlı respawn.
+// @description:ar  مود متقدم لـ Sigmally: ماكرو تغذية سريع، حيل الانقسام، رادار الفريق الحي، مؤقت اندماج الخلايا، تجميد الحركة، ماكرو الفأرة ورسبون فوري.
+// @description:cs  Pokročilý mod pro Sigmally: Rychlé krmení, split triky, živý radar týmu, časovač sloučení buněk, freeze linky, makra myši a okamžitý respawn.
+// @description:da  Avanceret Sigmally-mod: Hurtigt feed-makro, split-tricks, live holdradar, celle-merge-timer, freeze line-splits, musemakroer og instant respawn.
+// @description:el  Προηγμένο mod για το Sigmally: Rapid feed macro, κόλπα split, live ραντάρ ομάδας, χρονόμετρο ένωσης, πάγωμα κίνησης, macros ποντικιού & instant respawn.
+// @description:fi  Edistynyt Sigmally-modi: Nopea feed-makro, split-temput, tiimitutka, solujen merge-ajastin, liikejäädytys, hiirimakrot ja välitön respawn.
+// @description:fr  Mod avancé pour Sigmally : Macro feed rapide, tricks de split, radar d'équipe en direct, merge timer, freeze de trajectoire, macros souris et respawn rapide.
+// @description:hi  Sigmally के लिए उन्नत मॉड: रैपिड फीड मैक्रो, स्प्लिट ट्रिक्स, लाइव टीममेट रडार, मर्ज टाइमर, मूवमेंट फ्रीज, माउस मैक्रोज़ और तुरंत रीस्पॉन।
+// @description:hu  Fejlett Sigmally mod: Gyors feed makró, split trükkök, élő csapattárs radar, sejt merge időzítő, freeze line-split, egérmakrók és azonnali respawn.
+// @description:id  Mod canggih untuk Sigmally: Makro feed cepat, trik split, radar teman tim live, timer merge sel, freeze gerakan, makro mouse & respawn instan.
+// @description:it  Mod avanzato per Sigmally: Macro feed rapido, trucchi di split, radar compagni live, timer merge celle, freeze movimento, macro mouse e respawn rapido.
+// @description:ja  Sigmally 向け高度な Mod: 高速フィードマクロ、スプリットトリック、味方レーダー、合体タイマー、移動フリーズ、マウス操作マクロ、即時リスポーン。
+// @description:ko  Sigmally 고급 모드: 빠른 피드 매크로, 스플릿 트릭, 실시간 팀원 레이더, 머지 타이머, 무브먼트 프리즈, 마우스 매크로 및 즉시 리스폰.
+// @description:nl  Geavanceerde Sigmally-mod: Snelle feedmacro, split-trucs, live teamgenotenradar, cel-merge-timer, bewegingsfreeze, muismacro's en directe respawn.
+// @description:no  Avansert Sigmally-mod: Rask feed-makro, split-triks, live lagkamerat-radar, celle-merge-timer, bevegelsesfrys, musemakroer og umiddelbar respawn.
+// @description:pl  Zaawansowany mod do Sigmally: Szybkie makro karmienia, triki splitu, radar drużyny na żywo, licznik łączenia komórek, freeze, makra myszy i szybki respawn.
+// @description:ro  Mod avansat pentru Sigmally: Macro rapid de feed, trucuri split, radar de echipă live, cronometru de unire celule, freeze, macro-uri de mouse și respawn instant.
+// @description:sv  Avancerad Sigmally-mod: Snabbt feed-makro, split-trick, lagkamratradar i realtid, cell-merge-timer, freeze line-splits, musmakron och direkt respawn.
+// @description:th  ม็อด Sigmally ขั้นสูง: มาโครป้อนอาหารเร็ว, ทริกสปลิต, เรดาร์เพื่อนร่วมทีมสด, ตัวจับเวลารวมเซลล์, ฟรีซล็อกทิศทาง, มาโครเมาส์ และเกิดใหม่ทันที.
+// @description:uk  Просунутий мод для Sigmally: швидкий фід-макрос, трюки зі сплітами, радар тімейтів, таймер злиття клітин, фриз руху, макроси миші та миттєвий респавн.
+// @description:vi  Mod Sigmally nâng cao: Macro feed nhanh, mẹo split, radar đồng đội trực tiếp, hẹn giờ hợp nhất tế bào, đóng băng di chuyển, macro chuột và hồi sinh tức thì.
+// @description:zh-CN Sigmally 高级模组：极速喂食宏、分裂技巧、队友实时雷达、细胞合并计时器、轨迹锁定、鼠标宏与即时复活。
+// @description:zh-TW Sigmally 進階模組：極速餵食巨集、分裂技巧、隊友即時雷達、細胞合併計時器、軌跡鎖定、滑鼠巨集與即時復活。
 //
 // @author       Cursed
 // @namespace    https://greasyfork.org/users/981958
@@ -582,14 +582,21 @@
     const getKeybindLabel = (path) => ALL_KEYBIND_DEFINITIONS.find((item) => item.path === path)?.label ?? path;
     const keybindValueFromEvent = (event) => {
         const key = typeof event.key === 'string' ? event.key : '';
-        if (key && !['Dead', 'Unidentified', 'Process'].includes(key)) return key.toLowerCase();
         const code = typeof event.code === 'string' ? event.code : '';
+        if (key === '^') return '^';
+        if (key === 'Dead') {
+            if (code === 'Backquote' || code === 'BracketLeft') return '^';
+            if (code === 'Equal') return '\xB4';
+        }
+        if (code.toLowerCase() === 'backquote' && ['Dead', 'Unidentified', 'Process', ''].includes(key)) return '^';
+        if (key && !['Dead', 'Unidentified', 'Process'].includes(key)) return key.toLowerCase();
         return code ? `${KEYBIND_CODE_PREFIX}${code.toLowerCase()}` : null;
     };
     const keybindCodeLabel = (binding) => {
         if (typeof binding !== 'string' || !binding.startsWith(KEYBIND_CODE_PREFIX)) return binding;
         const code = binding.slice(KEYBIND_CODE_PREFIX.length);
         if (!code) return binding;
+        if (code.toLowerCase() === 'backquote') return '^';
         if (code.startsWith('key') && code.length > 3) {
             return `Key ${code.slice(3).toUpperCase()}`;
         }
@@ -606,13 +613,20 @@
         const raw = unwrapSettingScalar(binding);
         if (typeof raw !== 'string' || !raw.length) return false;
         const normalized = raw.toLowerCase();
+        if (normalized === '^' || normalized === 'code:backquote') {
+            if (event.key === '^') return true;
+            if (event.code === 'Backquote') return true;
+            if (event.code === 'BracketLeft' && (event.key === 'Dead' || event.key === '^')) return true;
+            if (event.key === 'Dead' && event.code === 'Digit6') return true;
+        }
         if (normalized.startsWith(KEYBIND_CODE_PREFIX)) {
             const targetCode = normalized.slice(KEYBIND_CODE_PREFIX.length);
             if (typeof event.code === 'string' && event.code.toLowerCase() === targetCode) return true;
             return keybindValueFromEvent(event) === normalized;
         }
         const eventKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
-        return eventKey === normalized;
+        if (eventKey === normalized) return true;
+        return keybindValueFromEvent(event) === normalized;
     };
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1656,17 +1670,6 @@
                 const normalized = normalizeBinding(raw);
                 setPath(value, path, normalized);
             }
-            const seenBindings = /* @__PURE__ */ new Set();
-            for (const { path } of ALL_KEYBIND_DEFINITIONS) {
-                const raw = getPath(value, path);
-                const binding = unwrapSettingScalar(raw);
-                if (typeof binding !== 'string' || !binding.length) continue;
-                if (seenBindings.has(binding)) {
-                    setPath(value, path, null);
-                } else {
-                    seenBindings.add(binding);
-                }
-            }
             const mouseBindings = /* @__PURE__ */ new Map();
             for (const binding of value.macros.mouse.bindings) {
                 if (!isObject(binding)) continue;
@@ -1809,18 +1812,6 @@
         }
         set(path, value, immediate = false) {
             if (isKeybindSettingPath(path)) {
-                const targetVal = typeof value === 'string' ? value.trim().toLowerCase() : null;
-                if (targetVal) {
-                    for (const def of ALL_KEYBIND_DEFINITIONS) {
-                        if (def.path !== path) {
-                            const current = unwrapSettingScalar(this.get(def.path));
-                            if (typeof current === 'string' && current.toLowerCase() === targetVal) {
-                                setPath(this.savedKeys, def.path.slice('macros.keys.'.length), null);
-                                setPath(this.value, def.path, null);
-                            }
-                        }
-                    }
-                }
                 setPath(this.savedKeys, path.slice('macros.keys.'.length), value);
             }
             setPath(this.value, path, value);
@@ -4588,7 +4579,11 @@
                             <section class="mod_tab scroll" id="mod_macros" data-mod-panel>
                                 <div class="modColItems">
                                     <div class="macros_wrapper">
-                                        <span class="text-center f-big">Keybindings</span>
+                                        <div class="macros-header-bar flex justify-sb align-center">
+                                            <span class="text-center f-big">Keybindings</span>
+                                            <button type="button" class="modButton keybinds-reset-btn" id="sigmod-reset-keybinds" title="Restore all default keybindings">Reset Defaults</button>
+                                        </div>
+                                        <div id="sigmod-keybind-conflict-banner" class="keybind-conflict-banner" style="display: none;"></div>
                                         <hr style="border-color: #3F3F3F">
                                         <div style="justify-content: center;">
                                             <div class="f-column g-10" style="align-items: center; justify-content: center;">
@@ -6245,7 +6240,7 @@
         }
         bindingDisplay(value) {
             const binding = unwrapSettingScalar(value);
-            if (typeof binding !== 'string' || !binding.length) return '';
+            if (typeof binding !== 'string' || !binding.length) return this.message('Unbound');
             const labels = {
                 ' ': 'Space',
                 tab: 'Tab',
@@ -6261,6 +6256,8 @@
                 arrowright: '\u2192',
                 backspace: 'Backspace',
                 delete: 'Delete',
+                '^': '^',
+                'code:backquote': '^',
             };
             const normalized = binding.toLowerCase();
             return (
@@ -6280,9 +6277,69 @@
                 input.dataset.setting?.startsWith('macros.keys.')
             );
         }
+        ensureKeybindWrappers() {
+            for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
+                if (!(input instanceof HTMLInputElement)) continue;
+                if (input.parentElement?.classList.contains('keybinding-wrapper')) continue;
+                const wrapper = createElement('span', { className: 'keybinding-wrapper' });
+                input.parentElement?.insertBefore(wrapper, input);
+                wrapper.append(input);
+                const clearBtn = createElement('button', {
+                    className: 'keybinding-clear',
+                    attributes: {
+                        type: 'button',
+                        title: this.message('Unbind key'),
+                        'aria-label': this.message('Unbind key'),
+                        tabindex: '-1',
+                    },
+                    text: '\u2715',
+                });
+                clearBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                clearBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const path = input.dataset.setting;
+                    if (!path) return;
+                    this.app.settingsStore.set(path, null, true);
+                    this.syncKeybindInputs();
+                    input.blur();
+                });
+                wrapper.append(clearBtn);
+            }
+        }
+        showRecordingHint(input) {
+            this.removeRecordingHint();
+            const wrapper = input.closest('.keybinding-wrapper') || input;
+            const tip = createElement('div', {
+                className: 'keybind-recording-tip',
+                attributes: { id: 'sigmod-keybind-tip' },
+            });
+            tip.innerHTML = `
+            <span class="tip-main">${this.message('Press any key to bind')}</span>
+            <span class="tip-sub">${this.message('Esc to cancel \u2022 Backspace to unbind')}</span>
+        `;
+            document.body.append(tip);
+            const rect = wrapper.getBoundingClientRect();
+            tip.style.position = 'fixed';
+            tip.style.zIndex = '100000';
+            tip.style.left = `${Math.max(20, rect.left + rect.width / 2)}px`;
+            tip.style.top = `${rect.bottom + 6}px`;
+            tip.style.transform = 'translateX(-50%)';
+            this.activeTip = tip;
+        }
+        removeRecordingHint() {
+            if (this.activeTip) {
+                this.activeTip.remove();
+                this.activeTip = null;
+            }
+        }
         setupKeybindRecorder() {
             this.syncKeybindLabels();
             this.resources.listen(document, 'sigmod:languagechange', () => this.syncKeybindLabels());
+            this.resources.add(() => this.removeRecordingHint());
             this.resources.add(
                 this.app.settingsStore.onChange((changedPath) => {
                     if (!changedPath || changedPath.startsWith('macros.keys.')) {
@@ -6290,19 +6347,62 @@
                     }
                 })
             );
+            this.resources.listen(document, 'click', (event) => {
+                const btn = event.target.closest('#sigmod-reset-keybinds');
+                if (!btn) return;
+                event.preventDefault();
+                const modal = this.app.features.get('modal');
+                if (!modal) return;
+                const dialog = createElement('div', { className: 'keybind-reset-dialog' });
+                dialog.innerHTML = `
+                <div class="keybind-reset-header flex align-center g-10">
+                    <span class="warn-icon">${icon('warning', 24)}</span>
+                    <strong style="font-size: 15px; color: #f8fafc;">${this.message('Reset all keybindings?')}</strong>
+                </div>
+                <p style="margin: 14px 0 16px; color: #94a3b8; font-size: 12px; line-height: 1.5;">
+                    ${this.message('This will restore all 18 keybindings to their default keys. Your other mod settings, themes, and stats will remain untouched.')}
+                </p>
+                <div class="flex g-8 justify-end">
+                    <button type="button" class="modButton" id="kb-reset-cancel">${this.message('Cancel')}</button>
+                    <button type="button" class="modButton modButton-danger" id="kb-reset-confirm" style="background: #dc2626 !important; border-color: #ef4444 !important; color: #fff !important;">${this.message('Reset Defaults')}</button>
+                </div>
+            `;
+                modal.open('keybind-reset-confirm', dialog, {
+                    className: 'modAlert keybind-reset-modal',
+                    closeOnBackdrop: true,
+                });
+                dialog
+                    .querySelector('#kb-reset-cancel')
+                    ?.addEventListener('click', () => modal.close('keybind-reset-confirm'), { once: true });
+                dialog.querySelector('#kb-reset-confirm')?.addEventListener(
+                    'click',
+                    () => {
+                        modal.close('keybind-reset-confirm');
+                        this.app.settingsStore.reset('macros.keys');
+                        this.syncKeybindInputs();
+                        this.app.features.get('modal')?.alert(this.message('Keybindings restored to default settings.'), 'success');
+                    },
+                    { once: true }
+                );
+            });
             this.resources.listen(document, 'focusin', (event) => {
                 const input = event.target;
                 if (!this.isManagedKeybind(input)) return;
                 input.dataset.recording = 'true';
                 input.value = this.message('Press a key\u2026');
+                input.classList.remove('is-unbound');
                 input.classList.add('is-recording');
+                this.showRecordingHint(input);
             });
             this.resources.listen(document, 'focusout', (event) => {
                 const input = event.target;
                 if (!this.isManagedKeybind(input)) return;
+                this.removeRecordingHint();
                 if (input.dataset.recording === 'true') {
                     input.dataset.recording = 'false';
-                    input.value = this.bindingDisplay(this.app.settingsStore.get(input.dataset.setting));
+                    const val = unwrapSettingScalar(this.app.settingsStore.get(input.dataset.setting));
+                    input.value = this.bindingDisplay(val);
+                    input.classList.toggle('is-unbound', !val);
                     input.classList.remove('is-recording');
                 }
             });
@@ -6317,10 +6417,13 @@
                     if (event.repeat) return;
                     const path = input.dataset.setting;
                     if (!path) return;
+                    this.removeRecordingHint();
                     if (event.key === 'Escape') {
                         input.dataset.recording = 'false';
                         input.classList.remove('is-recording');
-                        input.value = this.bindingDisplay(this.app.settingsStore.get(path));
+                        const currentVal = unwrapSettingScalar(this.app.settingsStore.get(path));
+                        input.value = this.bindingDisplay(currentVal);
+                        input.classList.toggle('is-unbound', !currentVal);
                         input.blur();
                         return;
                     }
@@ -6337,23 +6440,24 @@
                     if (conflicts.length) {
                         const decision = await this.askKeybindingConflict(path, value, conflicts);
                         if (decision === 'cancel') {
-                            input.value = this.bindingDisplay(this.app.settingsStore.get(path));
+                            const currentVal = unwrapSettingScalar(this.app.settingsStore.get(path));
+                            input.value = this.bindingDisplay(currentVal);
+                            input.classList.toggle('is-unbound', !currentVal);
                             input.dataset.recording = 'false';
                             input.classList.remove('is-recording');
                             input.blur();
                             return;
                         }
-                        if (decision === 'reassign') {
+                        if (decision === 'swap') {
+                            const oldKey = unwrapSettingScalar(this.app.settingsStore.get(path));
+                            const firstConflict = conflicts[0];
+                            this.app.settingsStore.set(firstConflict.path, oldKey ?? null, true);
+                            for (let i = 1; i < conflicts.length; i += 1) {
+                                this.app.settingsStore.set(conflicts[i].path, null, true);
+                            }
+                        } else if (decision === 'reassign') {
                             for (const conflict of conflicts) {
                                 this.app.settingsStore.set(conflict.path, null, true);
-                                for (const candidate of document.querySelectorAll(`.keybinding[data-setting="${conflict.path}"]`)) {
-                                    if (candidate instanceof HTMLInputElement) {
-                                        candidate.value = '';
-                                        candidate.dataset.bindingValue = '';
-                                        candidate.classList.remove('is-conflict');
-                                        candidate.removeAttribute('data-conflict');
-                                    }
-                                }
                             }
                         }
                     }
@@ -6361,6 +6465,7 @@
                     input.dataset.bindingValue = value ?? '';
                     input.dataset.recording = 'false';
                     input.classList.remove('is-recording');
+                    input.classList.toggle('is-unbound', !value);
                     input.value = this.bindingDisplay(value);
                     this.syncKeybindInputs();
                     this.root?.dispatchEvent(
@@ -6375,6 +6480,7 @@
             );
         }
         syncKeybindInputs() {
+            this.ensureKeybindWrappers();
             for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
                 if (!(input instanceof HTMLInputElement) || input.dataset.recording === 'true') continue;
                 const path = input.dataset.setting;
@@ -6382,10 +6488,15 @@
                 const binding = unwrapSettingScalar(value);
                 input.dataset.bindingValue = typeof binding === 'string' ? binding : '';
                 input.value = this.bindingDisplay(binding);
+                const hasVal = Boolean(binding && typeof binding === 'string' && binding.length);
+                input.classList.toggle('is-unbound', !hasVal);
+                const wrapper = input.closest('.keybinding-wrapper');
+                if (wrapper) wrapper.dataset.hasValue = hasVal ? 'true' : 'false';
             }
             this.updateKeybindingConflicts();
         }
         syncKeybindLabels() {
+            this.ensureKeybindWrappers();
             for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
                 if (!(input instanceof HTMLInputElement)) continue;
                 input.readOnly = true;
@@ -6394,33 +6505,57 @@
                 const label = input.dataset.label || input.name || getKeybindLabel(input.dataset.setting);
                 input.setAttribute('aria-label', `${this.message(label)} ${this.message('keybind')}`);
             }
-            this.updateKeybindingConflicts();
+            this.syncKeybindInputs();
         }
         updateKeybindingConflicts() {
             for (const badge of document.querySelectorAll('.keybinding-conflict')) badge.remove();
             const groups = /* @__PURE__ */ new Map();
+            for (const def of ALL_KEYBIND_DEFINITIONS) {
+                const raw = this.app.settingsStore.get(def.path);
+                const binding = unwrapSettingScalar(raw);
+                if (typeof binding !== 'string' || !binding.length) continue;
+                let norm = binding.toLowerCase();
+                if (norm === 'code:backquote') norm = '^';
+                const list = groups.get(norm) ?? [];
+                list.push(def);
+                groups.set(norm, list);
+            }
+            const conflictGroups = [...groups.entries()].filter(([, items]) => items.length > 1);
+            const banner = document.querySelector('#sigmod-keybind-conflict-banner');
+            if (banner) {
+                if (conflictGroups.length > 0) {
+                    const keysDisplay = conflictGroups
+                        .map(([k]) => `<span class="sigmod-key-chip">${this.bindingDisplay(k)}</span>`)
+                        .join(' ');
+                    banner.style.display = 'flex';
+                    banner.innerHTML = `
+                    <div class="banner-icon">${icon('warning', 18)}</div>
+                    <div class="banner-text">
+                        <strong>${this.message('Shared Keys')}:</strong>
+                        <span>${this.message('Multiple actions are using: {keys}', { keys: keysDisplay })}</span>
+                    </div>
+                `;
+                } else {
+                    banner.style.display = 'none';
+                    banner.innerHTML = '';
+                }
+            }
             for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
                 if (!(input instanceof HTMLInputElement)) continue;
                 input.classList.remove('is-conflict');
                 input.removeAttribute('data-conflict');
                 input.title = this.message(
-                    'Click and press a key. Dead or unidentified keys use their physical keyboard position. Backspace/Delete clears it.'
+                    'Click and press a key. Dead or unidentified keys use physical layout. Backspace/Delete clears it.'
                 );
                 const value = unwrapSettingScalar(this.app.settingsStore.get(input.dataset.setting));
                 if (typeof value !== 'string' || !value.length) continue;
-                const key = value.toLowerCase();
-                if (!groups.has(key)) groups.set(key, []);
-                groups.get(key).push(input);
-            }
-            for (const inputs of groups.values()) {
-                if (inputs.length < 2) continue;
-                for (const input of inputs) {
-                    const others = inputs
-                        .filter((candidate) => candidate !== input)
-                        .map((candidate) =>
-                            this.message(candidate.dataset.label || candidate.name || getKeybindLabel(candidate.dataset.setting))
-                        );
-                    const message = this.message('Already used by {actions}', {
+                let normVal = value.toLowerCase();
+                if (normVal === 'code:backquote') normVal = '^';
+                const group = groups.get(normVal);
+                if (group && group.length > 1) {
+                    const path = input.dataset.setting;
+                    const others = group.filter((item) => item.path !== path).map((item) => this.message(item.label));
+                    const message = this.message('Also used by {actions}', {
                         actions: others.join(', '),
                     });
                     input.classList.add('is-conflict');
@@ -6430,19 +6565,27 @@
                         className: 'keybinding-conflict',
                         text: message,
                     });
-                    input.parentElement?.append(badge);
+                    const wrapper = input.closest('.macroRow, .stats-line') || input.parentElement;
+                    wrapper?.append(badge);
                 }
             }
         }
         findKeybindingConflicts(path, value) {
             if (typeof value !== 'string' || !value.length) return [];
-            const normalized = value.toLowerCase();
+            let normalized = value.toLowerCase();
+            if (normalized === 'code:backquote') normalized = '^';
             const conflicts = [];
             const seenPaths = /* @__PURE__ */ new Set();
+            const matchesNorm = (target) => {
+                if (typeof target !== 'string' || !target.length) return false;
+                let other = target.toLowerCase();
+                if (other === 'code:backquote') other = '^';
+                return other === normalized;
+            };
             for (const def of ALL_KEYBIND_DEFINITIONS) {
                 if (def.path === path) continue;
                 const current = unwrapSettingScalar(this.app.settingsStore.get(def.path));
-                if (typeof current === 'string' && current.toLowerCase() === normalized) {
+                if (matchesNorm(current)) {
                     conflicts.push({
                         path: def.path,
                         label: def.label,
@@ -6455,7 +6598,7 @@
                 const settingPath = input.dataset.setting;
                 if (seenPaths.has(settingPath)) continue;
                 const binding = unwrapSettingScalar(this.app.settingsStore.get(settingPath));
-                if (typeof binding === 'string' && binding.toLowerCase() === normalized) {
+                if (matchesNorm(binding)) {
                     conflicts.push({
                         path: settingPath,
                         label: input.dataset.label || input.name || getKeybindLabel(settingPath),
@@ -6468,51 +6611,85 @@
         askKeybindingConflict(path, value, conflicts) {
             const modal = this.app.features.get('modal');
             if (!modal) return Promise.resolve('cancel');
+            const currentKey = unwrapSettingScalar(this.app.settingsStore.get(path));
+            const currentDisplay = currentKey ? this.bindingDisplay(currentKey) : null;
+            const newDisplay = this.bindingDisplay(value);
+            const conflictingAction = conflicts[0];
+            const conflictLabel = conflictingAction.label || getKeybindLabel(conflictingAction.path);
+            const targetLabel = getKeybindLabel(path);
             const body = createElement('div', {
                 className: 'keybinding-conflict-dialog',
             });
-            const labels = conflicts.map((c) => (typeof c === 'string' ? c : c.label || getKeybindLabel(c.path)));
-            body.append(
-                createElement('strong', {
-                    text: this.message('Duplicate keybinding detected'),
-                }),
-                createElement('p', {
-                    text: this.message('The key {key} is already assigned to {actions}.', {
-                        key: this.bindingDisplay(value),
-                        actions: labels.map((label) => this.message(label)).join(', '),
-                    }),
-                }),
-                createElement('p', {
-                    text: this.message('Reassign it to this action, or cancel this change. Each key can control only one action.'),
-                })
-            );
-            const actions = createElement('div', { className: 'flex g-5' });
-            const cancel = createElement('button', {
-                className: 'modButton',
-                text: this.message('Cancel'),
-                attributes: { type: 'button' },
-            });
-            const reassign = createElement('button', {
-                className: 'modButton',
-                text: this.message('Yes, Reassign'),
-                attributes: { type: 'button' },
-            });
-            actions.append(cancel, reassign);
-            body.append(actions);
+            body.innerHTML = `
+            <div class="keybinding-conflict-title">${this.message('Key Already Assigned')}</div>
+            <div class="keybinding-conflict-desc">
+                ${this.message('Key {key} is already assigned to {action}.', {
+                    key: `<span class="sigmod-key-chip">${newDisplay}</span>`,
+                    action: `<strong>${this.message(conflictLabel)}</strong>`,
+                })}
+            </div>
+            ${
+                currentDisplay
+                    ? `<div class="keybinding-conflict-subdesc">
+                        ${this.message('{action} currently uses {key}.', {
+                            action: `<strong>${this.message(targetLabel)}</strong>`,
+                            key: `<span class="sigmod-key-chip">${currentDisplay}</span>`,
+                        })}
+                    </div>`
+                    : ''
+            }
+            <div class="keybinding-conflict-actions">
+                <button type="button" class="modButton btn-conflict-cancel" id="kb-conflict-cancel">
+                    ${this.message('Cancel')}
+                </button>
+                <button type="button" class="modButton btn-conflict-swap" id="kb-conflict-swap">
+                    ${this.message('Swap Keys')}
+                </button>
+                <button type="button" class="modButton btn-conflict-both" id="kb-conflict-both">
+                    ${this.message('Use for Both')}
+                </button>
+                <button type="button" class="modButton modButton-primary btn-conflict-reassign" id="kb-conflict-reassign">
+                    ${this.message('Reassign')}
+                </button>
+            </div>
+        `;
             modal.open('keybinding-conflict', body, {
                 className: 'modAlert keybinding-conflict-modal',
+                closeOnBackdrop: true,
             });
             return new Promise((resolve) => {
+                let finished = false;
                 const finish = (result) => {
+                    if (finished) return;
+                    finished = true;
+                    document.removeEventListener('keydown', handleModalKeys, true);
                     modal.close('keybinding-conflict');
                     resolve(result);
                 };
-                cancel.addEventListener('click', () => finish('cancel'), {
-                    once: true,
-                });
-                reassign.addEventListener('click', () => finish('reassign'), {
-                    once: true,
-                });
+                const handleModalKeys = (e) => {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        finish('cancel');
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        finish('reassign');
+                    } else if (e.key === 's' || e.key === 'S') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        finish('swap');
+                    } else if (e.key === 'b' || e.key === 'B') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        finish('both');
+                    }
+                };
+                document.addEventListener('keydown', handleModalKeys, true);
+                body.querySelector('#kb-conflict-cancel')?.addEventListener('click', () => finish('cancel'), { once: true });
+                body.querySelector('#kb-conflict-swap')?.addEventListener('click', () => finish('swap'), { once: true });
+                body.querySelector('#kb-conflict-both')?.addEventListener('click', () => finish('both'), { once: true });
+                body.querySelector('#kb-conflict-reassign')?.addEventListener('click', () => finish('reassign'), { once: true });
             });
         }
     }
@@ -10163,6 +10340,7 @@
             this.resources = resources;
             this.getInput = typeof getInput === 'function' ? getInput : () => null;
             this.panel = null;
+            this.emojiPanel = null;
             this.emojis = null;
             this.emojiByValue = /* @__PURE__ */ new Map();
             this.emojiRequest = null;
@@ -10171,6 +10349,12 @@
             this.emojiScrollFrame = 0;
             this.emojiBatchSize = 49;
             this.recentEmojis = this.loadRecentEmojis();
+        }
+        get input() {
+            return this.getInput();
+        }
+        get panel() {
+            return this.emojiPanel;
         }
         loadRecentEmojis() {
             try {
@@ -10231,22 +10415,48 @@
             panel.append(header, searchWrap, categoryTabs, categories);
             document.body.append(panel);
             this.emojiPanel = panel;
+            this.panel = panel;
             this.resources.add(() => {
                 panel.remove();
                 if (this.emojiPanel === panel) this.emojiPanel = null;
+                if (this.panel === panel) this.panel = null;
             });
             const refresh = () => this.renderEmojis(search.value, this.emojiCategory);
             this.resources.listen(search, 'input', refresh);
             this.resources.listen(search, 'keydown', (event) => {
                 if (event.key === 'Escape') {
                     event.preventDefault();
+                    event.stopPropagation();
                     panel.classList.add('hidden_full');
                     this.input?.focus();
+                    return;
+                }
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const first = categories.querySelector('[data-emoji-value]');
+                    if (first instanceof HTMLButtonElement) {
+                        first.click();
+                    }
                 }
             });
             this.resources.listen(close, 'click', () => {
                 panel.classList.add('hidden_full');
                 this.input?.focus();
+            });
+            this.resources.listen(panel, 'keydown', (event) => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    panel.classList.add('hidden_full');
+                    this.input?.focus();
+                }
+            });
+            this.resources.listen(document, 'pointerdown', (event) => {
+                if (panel.classList.contains('hidden_full')) return;
+                const target = event.target instanceof Element ? event.target : null;
+                if (!target) return;
+                if (panel.contains(target) || emojiButton.contains(target)) return;
+                panel.classList.add('hidden_full');
             });
             this.resources.listen(categoryTabs, 'click', (event) => {
                 const button = event.target instanceof Element ? event.target.closest('[data-emoji-category]') : null;
@@ -10257,17 +10467,28 @@
                 }
                 this.renderEmojis(search.value, this.emojiCategory);
             });
+            this.resources.listen(categories, 'mousedown', (event) => {
+                const button = event.target instanceof Element ? event.target.closest('[data-emoji-value]') : null;
+                if (button) {
+                    event.preventDefault();
+                }
+            });
             this.resources.listen(categories, 'click', (event) => {
                 const button = event.target instanceof Element ? event.target.closest('[data-emoji-value]') : null;
                 if (!(button instanceof HTMLButtonElement)) return;
                 const value = button.dataset.emojiValue;
-                if (!value || !(this.input instanceof HTMLInputElement)) return;
-                const start = this.input.selectionStart ?? this.input.value.length;
-                const end = this.input.selectionEnd ?? start;
-                this.input.setRangeText(value, start, end, 'end');
+                const input = this.input;
+                if (!value || !(input instanceof HTMLInputElement)) return;
+                const start = input.selectionStart ?? input.value.length;
+                const end = input.selectionEnd ?? start;
+                input.setRangeText(value, start, end, 'end');
+                input.dispatchEvent(new Event('input', { bubbles: true }));
                 this.rememberEmoji(value);
                 this.renderEmojiCategoryTabs();
-                this.input.focus();
+                if (this.emojiCategory === 'Recent') {
+                    this.renderEmojis(search.value, 'Recent');
+                }
+                input.focus();
             });
             this.resources.listen(categories, 'scroll', () => {
                 if (this.emojiScrollFrame) return;
@@ -10472,7 +10693,22 @@
             this.nativeChatBlocks = /* @__PURE__ */ new Map();
             this.nativeChatSyncQueued = false;
             this.blockedRequest = null;
+            this.history = [];
+            this.historyIndex = -1;
+            this.historyDraft = '';
             this.emojiPicker = new EmojiPicker(app2, this.resources, () => this.input);
+        }
+        blurChat() {
+            if (this.input) {
+                this.input.blur();
+            }
+            this.emojiPicker?.panel?.classList.add('hidden_full');
+            const canvas = document.querySelector(SELECTORS.canvas);
+            if (canvas instanceof HTMLElement) {
+                canvas.focus();
+            } else {
+                window.focus();
+            }
         }
         async mount() {
             this.createView();
@@ -10523,7 +10759,7 @@
                     type: 'text',
                     maxlength: '250',
                     autocomplete: 'off',
-                    placeholder: 'message...',
+                    placeholder: 'Message...',
                 },
             });
             const settings = createElement('button', {
@@ -10585,17 +10821,59 @@
             this.resources.timeout(() => this.updateScrollState(), 0);
             this.resources.listen(input, 'keydown', (event) => {
                 event.stopPropagation();
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    this.blurChat();
+                    return;
+                }
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     this.submit();
+                    return;
+                }
+                if (event.key === 'ArrowUp') {
+                    if (this.history.length > 0) {
+                        if (this.historyIndex === -1) {
+                            this.historyDraft = input.value;
+                        }
+                        if (this.historyIndex + 1 < this.history.length) {
+                            this.historyIndex += 1;
+                            input.value = this.history[this.historyIndex];
+                            input.setSelectionRange(input.value.length, input.value.length);
+                            event.preventDefault();
+                        }
+                    }
+                    return;
+                }
+                if (event.key === 'ArrowDown') {
+                    if (this.historyIndex > 0) {
+                        this.historyIndex -= 1;
+                        input.value = this.history[this.historyIndex];
+                        input.setSelectionRange(input.value.length, input.value.length);
+                        event.preventDefault();
+                    } else if (this.historyIndex === 0) {
+                        this.historyIndex = -1;
+                        input.value = this.historyDraft;
+                        input.setSelectionRange(input.value.length, input.value.length);
+                        event.preventDefault();
+                    }
+                    return;
                 }
             });
             this.resources.listen(document, 'keydown', (event) => {
-                if (event.key !== 'Enter' || isTyping()) return;
+                if (event.key !== 'Enter' || isTyping() || input.disabled) return;
                 event.preventDefault();
                 event.stopPropagation();
                 input.focus();
             });
+            const canvas = document.querySelector(SELECTORS.canvas);
+            if (canvas) {
+                this.resources.listen(canvas, 'pointerdown', () => {
+                    if (document.activeElement === this.input) {
+                        this.blurChat();
+                    }
+                });
+            }
             this.resources.listen(messages, 'contextmenu', (event) => this.openMessageMenu(event));
             this.resources.add(() => root.remove());
         }
@@ -10631,7 +10909,7 @@
                         settings.showChat = true;
                         localStorage.setItem('settings', JSON.stringify(settings));
                     }
-                } catch (e) {}
+                } catch {}
             });
             const sync = () => {
                 this.nativeChatSyncQueued = false;
@@ -11010,7 +11288,8 @@
         }
         updateInputAvailability() {
             if (!(this.input instanceof HTMLInputElement)) return;
-            const requiresLogin = this.mode === 'main' && !this.app.state.user;
+            const user = this.app.state.user || (isObject(window.gameSettings) ? window.gameSettings.user : null);
+            const requiresLogin = this.mode === 'main' && !user;
             const partyUnavailable = this.mode === 'party' && !this.app.settings.settings.tag;
             this.input.disabled = requiresLogin || partyUnavailable;
             this.input.placeholder = requiresLogin
@@ -11023,8 +11302,39 @@
         }
         submit() {
             const value = this.input?.value.trim();
-            if (!value) return;
+            if (!value) {
+                this.blurChat();
+                return;
+            }
             this.input.value = '';
+            this.historyDraft = '';
+            this.historyIndex = -1;
+            if (!this.history.length || this.history[0] !== value) {
+                this.history.unshift(value);
+                if (this.history.length > 50) this.history.pop();
+            }
+            if (value.toLowerCase() === '/clear' || value.toLowerCase() === '/c') {
+                this.messages?.replaceChildren();
+                this.unreadCount = 0;
+                this.updateScrollState();
+                return;
+            }
+            if (value.toLowerCase() === '/party' || value.toLowerCase() === '/p') {
+                this.setMode('party');
+                return;
+            }
+            if (value.toLowerCase() === '/main' || value.toLowerCase() === '/m') {
+                this.setMode('main');
+                return;
+            }
+            if (value.toLowerCase().startsWith('/p ') || value.toLowerCase().startsWith('/party ')) {
+                const partyMsg = value.replace(/^\/(?:party|p)\s+/, '').trim();
+                if (partyMsg && this.app.settings.settings.tag) {
+                    this.app.backend.send('chat-message', { message: partyMsg });
+                    this.scrollToBottom(true);
+                }
+                return;
+            }
             if (this.mode === 'party') {
                 if (this.app.settings.settings.tag) {
                     this.app.backend.send('chat-message', { message: value });
@@ -11032,18 +11342,34 @@
             } else {
                 this.queueGameChat(value);
             }
+            this.scrollToBottom(true);
         }
         queueGameChat(message) {
             const parts = [];
             let current = '';
-            for (const word of message.split(/\s+/)) {
-                if (!current || current.length + word.length + 1 <= 15) current += `${current ? ' ' : ''}${word}`;
-                else {
+            const words = message.split(/\s+/).filter(Boolean);
+            for (let word of words) {
+                while (word.length > 15) {
+                    const sub = word.slice(0, 15);
+                    word = word.slice(15);
+                    if (current) {
+                        parts.push(current);
+                        current = '';
+                    }
+                    parts.push(sub);
+                }
+                if (!word) continue;
+                if (!current) {
+                    current = word;
+                } else if (current.length + word.length + 1 <= 15) {
+                    current += ` ${word}`;
+                } else {
                     parts.push(current);
                     current = word;
                 }
             }
             if (current) parts.push(current);
+            if (!parts.length) return;
             this.sendQueue = this.sendQueue.then(async () => {
                 for (let index = 0; index < parts.length; index += 1) {
                     if (this.resources.disposed) return;
@@ -11858,6 +12184,7 @@
                 return;
             } else if (this.matches(event, this.adapter?.kind === 'sigfix' ? rapidFeedBinding : keys.rapidFeed)) {
                 event.stopPropagation();
+                if (event.key === 'Dead') event.preventDefault();
                 this.startRapidFeed(rapidFeedBinding);
                 return;
             }
@@ -11871,22 +12198,66 @@
             ) {
                 this.nudgeVertical();
             }
-            if (this.matches(event, keys.toggle.menu)) this.toggleMenu();
-            else if (this.matches(event, keys.splits.double)) this.split(2);
-            else if (this.matches(event, keys.splits.triple)) this.split(3);
-            else if (this.matches(event, keys.splits.quad)) this.split(4);
-            else if (this.matches(event, keys.splits.doubleTrick)) this.trickSplit(2);
-            else if (this.matches(event, keys.splits.selfTrick)) this.trickSplit(4);
-            else if (this.matches(event, keys.line.horizontal) && isMenuClosed()) this.toggleLock('horizontal');
-            else if (this.matches(event, keys.line.vertical) && isMenuClosed()) this.toggleLock('vertical');
-            else if (this.matches(event, keys.line.fixed) && isMenuClosed()) this.toggleLock('fixed');
-            else if (this.matches(event, keys.location)) this.sendLocation();
-            else if (this.matches(event, keys.toggle.chat)) this.toggleChat();
-            else if (this.matches(event, keys.toggle.names)) this.toggleSetting('showNames');
-            else if (this.matches(event, keys.toggle.skins)) this.toggleSetting('showSkins');
-            else if (this.matches(event, keys.toggle.autoRespawn)) this.toggleSetting('autoRespawn');
-            else if (this.matches(event, keys.respawn)) this.fastRespawn();
-            else if (this.matches(event, keys.saveImage)) this.captureScreenshot();
+            if (this.matches(event, keys.toggle.menu)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleMenu();
+            }
+            if (this.matches(event, keys.splits.double)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.split(2);
+            } else if (this.matches(event, keys.splits.triple)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.split(3);
+            } else if (this.matches(event, keys.splits.quad)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.split(4);
+            } else if (this.matches(event, keys.splits.doubleTrick)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.trickSplit(2);
+            } else if (this.matches(event, keys.splits.selfTrick)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.trickSplit(4);
+            }
+            if (this.matches(event, keys.line.horizontal) && isMenuClosed()) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleLock('horizontal');
+            }
+            if (this.matches(event, keys.line.vertical) && isMenuClosed()) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleLock('vertical');
+            }
+            if (this.matches(event, keys.line.fixed) && isMenuClosed()) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleLock('fixed');
+            }
+            if (this.matches(event, keys.location)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.sendLocation();
+            }
+            if (this.matches(event, keys.toggle.chat)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleChat();
+            }
+            if (this.matches(event, keys.toggle.names)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleSetting('showNames');
+            }
+            if (this.matches(event, keys.toggle.skins)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleSetting('showSkins');
+            }
+            if (this.matches(event, keys.toggle.autoRespawn)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleSetting('autoRespawn');
+            }
+            if (this.matches(event, keys.respawn)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.fastRespawn();
+            }
+            if (this.matches(event, keys.saveImage)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.captureScreenshot();
+            }
         }
         /** @param {KeyboardEvent} event */
         handleKeyUp(event) {
@@ -12069,6 +12440,7 @@
                 }, 10);
             } else {
                 chat.style.opacity = '0';
+                chat.querySelector('#chatSendInput')?.blur();
                 document.querySelectorAll('.chatAddedContainer').forEach((element) => {
                     element.classList.add('hidden_full');
                 });

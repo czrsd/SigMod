@@ -611,8 +611,14 @@ const getKeybindLabel = (path) => ALL_KEYBIND_DEFINITIONS.find((item) => item.pa
 /** @param {KeyboardEvent} event */
 const keybindValueFromEvent = (event) => {
     const key = typeof event.key === 'string' ? event.key : '';
-    if (key && !['Dead', 'Unidentified', 'Process'].includes(key)) return key.toLowerCase();
     const code = typeof event.code === 'string' ? event.code : '';
+    if (key === '^') return '^';
+    if (key === 'Dead') {
+        if (code === 'Backquote' || code === 'BracketLeft') return '^';
+        if (code === 'Equal') return '´';
+    }
+    if (code.toLowerCase() === 'backquote' && ['Dead', 'Unidentified', 'Process', ''].includes(key)) return '^';
+    if (key && !['Dead', 'Unidentified', 'Process'].includes(key)) return key.toLowerCase();
     return code ? `${KEYBIND_CODE_PREFIX}${code.toLowerCase()}` : null;
 };
 /** @param {string} binding */
@@ -620,6 +626,7 @@ const keybindCodeLabel = (binding) => {
     if (typeof binding !== 'string' || !binding.startsWith(KEYBIND_CODE_PREFIX)) return binding;
     const code = binding.slice(KEYBIND_CODE_PREFIX.length);
     if (!code) return binding;
+    if (code.toLowerCase() === 'backquote') return '^';
     if (code.startsWith('key') && code.length > 3) {
         return `Key ${code.slice(3).toUpperCase()}`;
     }
@@ -637,13 +644,20 @@ const keybindMatchesEvent = (event, binding) => {
     const raw = unwrapSettingScalar(binding);
     if (typeof raw !== 'string' || !raw.length) return false;
     const normalized = raw.toLowerCase();
+    if (normalized === '^' || normalized === 'code:backquote') {
+        if (event.key === '^') return true;
+        if (event.code === 'Backquote') return true;
+        if (event.code === 'BracketLeft' && (event.key === 'Dead' || event.key === '^')) return true;
+        if (event.key === 'Dead' && event.code === 'Digit6') return true;
+    }
     if (normalized.startsWith(KEYBIND_CODE_PREFIX)) {
         const targetCode = normalized.slice(KEYBIND_CODE_PREFIX.length);
         if (typeof event.code === 'string' && event.code.toLowerCase() === targetCode) return true;
         return keybindValueFromEvent(event) === normalized;
     }
     const eventKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
-    return eventKey === normalized;
+    if (eventKey === normalized) return true;
+    return keybindValueFromEvent(event) === normalized;
 };
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

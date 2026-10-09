@@ -926,17 +926,6 @@ class SettingsStore {
             const normalized = normalizeBinding(raw);
             setPath(value, path, normalized);
         }
-        const seenBindings = new Set();
-        for (const { path } of ALL_KEYBIND_DEFINITIONS) {
-            const raw = getPath(value, path);
-            const binding = unwrapSettingScalar(raw);
-            if (typeof binding !== 'string' || !binding.length) continue;
-            if (seenBindings.has(binding)) {
-                setPath(value, path, null);
-            } else {
-                seenBindings.add(binding);
-            }
-        }
         const mouseBindings = new Map();
         for (const binding of value.macros.mouse.bindings) {
             if (!isObject(binding)) continue;
@@ -1076,18 +1065,6 @@ class SettingsStore {
     }
     set(path, value, immediate = false) {
         if (isKeybindSettingPath(path)) {
-            const targetVal = typeof value === 'string' ? value.trim().toLowerCase() : null;
-            if (targetVal) {
-                for (const def of ALL_KEYBIND_DEFINITIONS) {
-                    if (def.path !== path) {
-                        const current = unwrapSettingScalar(this.get(def.path));
-                        if (typeof current === 'string' && current.toLowerCase() === targetVal) {
-                            setPath(this.savedKeys, def.path.slice('macros.keys.'.length), null);
-                            setPath(this.value, def.path, null);
-                        }
-                    }
-                }
-            }
             setPath(this.savedKeys, path.slice('macros.keys.'.length), value);
         }
         setPath(this.value, path, value);

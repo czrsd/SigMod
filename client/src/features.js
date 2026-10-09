@@ -92,6 +92,7 @@ class EmojiPicker {
         this.resources = resources;
         this.getInput = typeof getInput === 'function' ? getInput : () => null;
         this.panel = null;
+        this.emojiPanel = null;
         this.emojis = null;
         this.emojiByValue = new Map();
         this.emojiRequest = null;
@@ -100,6 +101,12 @@ class EmojiPicker {
         this.emojiScrollFrame = 0;
         this.emojiBatchSize = 49;
         this.recentEmojis = this.loadRecentEmojis();
+    }
+    get input() {
+        return this.getInput();
+    }
+    get panel() {
+        return this.emojiPanel;
     }
     loadRecentEmojis() {
         try {
@@ -162,22 +169,48 @@ class EmojiPicker {
         panel.append(header, searchWrap, categoryTabs, categories);
         document.body.append(panel);
         this.emojiPanel = panel;
+        this.panel = panel;
         this.resources.add(() => {
             panel.remove();
             if (this.emojiPanel === panel) this.emojiPanel = null;
+            if (this.panel === panel) this.panel = null;
         });
         const refresh = () => this.renderEmojis(search.value, this.emojiCategory);
         this.resources.listen(search, 'input', refresh);
         this.resources.listen(search, 'keydown', (event) => {
             if (event.key === 'Escape') {
                 event.preventDefault();
+                event.stopPropagation();
                 panel.classList.add('hidden_full');
                 this.input?.focus();
+                return;
+            }
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const first = categories.querySelector('[data-emoji-value]');
+                if (first instanceof HTMLButtonElement) {
+                    first.click();
+                }
             }
         });
         this.resources.listen(close, 'click', () => {
             panel.classList.add('hidden_full');
             this.input?.focus();
+        });
+        this.resources.listen(panel, 'keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                panel.classList.add('hidden_full');
+                this.input?.focus();
+            }
+        });
+        this.resources.listen(document, 'pointerdown', (event) => {
+            if (panel.classList.contains('hidden_full')) return;
+            const target = event.target instanceof Element ? event.target : null;
+            if (!target) return;
+            if (panel.contains(target) || emojiButton.contains(target)) return;
+            panel.classList.add('hidden_full');
         });
         this.resources.listen(categoryTabs, 'click', (event) => {
             const button = event.target instanceof Element ? event.target.closest('[data-emoji-category]') : null;
@@ -188,19 +221,31 @@ class EmojiPicker {
             }
             this.renderEmojis(search.value, this.emojiCategory);
         });
+        // Prevent clicking emoji from stealing input focus so cursor position remains intact
+        this.resources.listen(categories, 'mousedown', (event) => {
+            const button = event.target instanceof Element ? event.target.closest('[data-emoji-value]') : null;
+            if (button) {
+                event.preventDefault();
+            }
+        });
         // One listener handles every rendered emoji. This avoids retaining a
         // listener/disposer for each button whenever search results are rebuilt.
         this.resources.listen(categories, 'click', (event) => {
             const button = event.target instanceof Element ? event.target.closest('[data-emoji-value]') : null;
             if (!(button instanceof HTMLButtonElement)) return;
             const value = button.dataset.emojiValue;
-            if (!value || !(this.input instanceof HTMLInputElement)) return;
-            const start = this.input.selectionStart ?? this.input.value.length;
-            const end = this.input.selectionEnd ?? start;
-            this.input.setRangeText(value, start, end, 'end');
+            const input = this.input;
+            if (!value || !(input instanceof HTMLInputElement)) return;
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? start;
+            input.setRangeText(value, start, end, 'end');
+            input.dispatchEvent(new Event('input', { bubbles: true }));
             this.rememberEmoji(value);
             this.renderEmojiCategoryTabs();
-            this.input.focus();
+            if (this.emojiCategory === 'Recent') {
+                this.renderEmojis(search.value, 'Recent');
+            }
+            input.focus();
         });
         // Only append the next batch when the user gets close to the bottom.
         // requestAnimationFrame keeps the scroll handler cheap during fast scrolling.
@@ -410,7 +455,22 @@ class ChatController extends FeatureController {
         this.nativeChatBlocks = new Map();
         this.nativeChatSyncQueued = false;
         this.blockedRequest = null;
+        this.history = [];
+        this.historyIndex = -1;
+        this.historyDraft = '';
         this.emojiPicker = new EmojiPicker(app, this.resources, () => this.input);
+    }
+    blurChat() {
+        if (this.input) {
+            this.input.blur();
+        }
+        this.emojiPicker?.panel?.classList.add('hidden_full');
+        const canvas = document.querySelector(SELECTORS.canvas);
+        if (canvas instanceof HTMLElement) {
+            canvas.focus();
+        } else {
+            window.focus();
+        }
     }
     async mount() {
         this.createView();
@@ -461,7 +521,7 @@ class ChatController extends FeatureController {
                 type: 'text',
                 maxlength: '250',
                 autocomplete: 'off',
-                placeholder: 'message...',
+                placeholder: 'Message...',
             },
         });
         const settings = createElement('button', {
@@ -523,18 +583,60 @@ class ChatController extends FeatureController {
         this.resources.timeout(() => this.updateScrollState(), 0);
         this.resources.listen(input, 'keydown', (event) => {
             event.stopPropagation();
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                this.blurChat();
+                return;
+            }
             if (event.key === 'Enter') {
                 event.preventDefault();
                 this.submit();
+                return;
+            }
+            if (event.key === 'ArrowUp') {
+                if (this.history.length > 0) {
+                    if (this.historyIndex === -1) {
+                        this.historyDraft = input.value;
+                    }
+                    if (this.historyIndex + 1 < this.history.length) {
+                        this.historyIndex += 1;
+                        input.value = this.history[this.historyIndex];
+                        input.setSelectionRange(input.value.length, input.value.length);
+                        event.preventDefault();
+                    }
+                }
+                return;
+            }
+            if (event.key === 'ArrowDown') {
+                if (this.historyIndex > 0) {
+                    this.historyIndex -= 1;
+                    input.value = this.history[this.historyIndex];
+                    input.setSelectionRange(input.value.length, input.value.length);
+                    event.preventDefault();
+                } else if (this.historyIndex === 0) {
+                    this.historyIndex = -1;
+                    input.value = this.historyDraft;
+                    input.setSelectionRange(input.value.length, input.value.length);
+                    event.preventDefault();
+                }
+                return;
             }
         });
         this.resources.listen(document, 'keydown', (event) => {
-            if (event.key !== 'Enter' || isTyping()) return;
+            if (event.key !== 'Enter' || isTyping() || input.disabled) return;
             event.preventDefault();
             // Sigmally handles Enter on window and would otherwise focus its hidden textbox.
             event.stopPropagation();
             input.focus();
         });
+        const canvas = document.querySelector(SELECTORS.canvas);
+        if (canvas) {
+            this.resources.listen(canvas, 'pointerdown', () => {
+                if (document.activeElement === this.input) {
+                    this.blurChat();
+                }
+            });
+        }
         this.resources.listen(messages, 'contextmenu', (event) => this.openMessageMenu(event));
         this.resources.add(() => root.remove());
     }
@@ -572,7 +674,7 @@ class ChatController extends FeatureController {
                     settings.showChat = true;
                     localStorage.setItem('settings', JSON.stringify(settings));
                 }
-            } catch (e) {}
+            } catch {}
         });
 
         const sync = () => {
@@ -952,7 +1054,8 @@ class ChatController extends FeatureController {
     }
     updateInputAvailability() {
         if (!(this.input instanceof HTMLInputElement)) return;
-        const requiresLogin = this.mode === 'main' && !this.app.state.user;
+        const user = this.app.state.user || (isObject(window.gameSettings) ? window.gameSettings.user : null);
+        const requiresLogin = this.mode === 'main' && !user;
         const partyUnavailable = this.mode === 'party' && !this.app.settings.settings.tag;
         this.input.disabled = requiresLogin || partyUnavailable;
         this.input.placeholder = requiresLogin ? 'Login to use the chat' : partyUnavailable ? 'Join a tag to use party chat' : 'Message...';
@@ -961,8 +1064,39 @@ class ChatController extends FeatureController {
     }
     submit() {
         const value = this.input?.value.trim();
-        if (!value) return;
+        if (!value) {
+            this.blurChat();
+            return;
+        }
         this.input.value = '';
+        this.historyDraft = '';
+        this.historyIndex = -1;
+        if (!this.history.length || this.history[0] !== value) {
+            this.history.unshift(value);
+            if (this.history.length > 50) this.history.pop();
+        }
+        if (value.toLowerCase() === '/clear' || value.toLowerCase() === '/c') {
+            this.messages?.replaceChildren();
+            this.unreadCount = 0;
+            this.updateScrollState();
+            return;
+        }
+        if (value.toLowerCase() === '/party' || value.toLowerCase() === '/p') {
+            this.setMode('party');
+            return;
+        }
+        if (value.toLowerCase() === '/main' || value.toLowerCase() === '/m') {
+            this.setMode('main');
+            return;
+        }
+        if (value.toLowerCase().startsWith('/p ') || value.toLowerCase().startsWith('/party ')) {
+            const partyMsg = value.replace(/^\/(?:party|p)\s+/, '').trim();
+            if (partyMsg && this.app.settings.settings.tag) {
+                this.app.backend.send('chat-message', { message: partyMsg });
+                this.scrollToBottom(true);
+            }
+            return;
+        }
         if (this.mode === 'party') {
             if (this.app.settings.settings.tag) {
                 this.app.backend.send('chat-message', { message: value });
@@ -970,18 +1104,34 @@ class ChatController extends FeatureController {
         } else {
             this.queueGameChat(value);
         }
+        this.scrollToBottom(true);
     }
     queueGameChat(message) {
         const parts = [];
         let current = '';
-        for (const word of message.split(/\s+/)) {
-            if (!current || current.length + word.length + 1 <= 15) current += `${current ? ' ' : ''}${word}`;
-            else {
+        const words = message.split(/\s+/).filter(Boolean);
+        for (let word of words) {
+            while (word.length > 15) {
+                const sub = word.slice(0, 15);
+                word = word.slice(15);
+                if (current) {
+                    parts.push(current);
+                    current = '';
+                }
+                parts.push(sub);
+            }
+            if (!word) continue;
+            if (!current) {
+                current = word;
+            } else if (current.length + word.length + 1 <= 15) {
+                current += ` ${word}`;
+            } else {
                 parts.push(current);
                 current = word;
             }
         }
         if (current) parts.push(current);
+        if (!parts.length) return;
         this.sendQueue = this.sendQueue.then(async () => {
             for (let index = 0; index < parts.length; index += 1) {
                 if (this.resources.disposed) return;
@@ -1806,6 +1956,7 @@ class MacroController extends FeatureController {
             return;
         } else if (this.matches(event, this.adapter?.kind === 'sigfix' ? rapidFeedBinding : keys.rapidFeed)) {
             event.stopPropagation();
+            if (event.key === 'Dead') event.preventDefault();
             this.startRapidFeed(rapidFeedBinding);
             return;
         }
@@ -1819,22 +1970,66 @@ class MacroController extends FeatureController {
         ) {
             this.nudgeVertical();
         }
-        if (this.matches(event, keys.toggle.menu)) this.toggleMenu();
-        else if (this.matches(event, keys.splits.double)) this.split(2);
-        else if (this.matches(event, keys.splits.triple)) this.split(3);
-        else if (this.matches(event, keys.splits.quad)) this.split(4);
-        else if (this.matches(event, keys.splits.doubleTrick)) this.trickSplit(2);
-        else if (this.matches(event, keys.splits.selfTrick)) this.trickSplit(4);
-        else if (this.matches(event, keys.line.horizontal) && isMenuClosed()) this.toggleLock('horizontal');
-        else if (this.matches(event, keys.line.vertical) && isMenuClosed()) this.toggleLock('vertical');
-        else if (this.matches(event, keys.line.fixed) && isMenuClosed()) this.toggleLock('fixed');
-        else if (this.matches(event, keys.location)) this.sendLocation();
-        else if (this.matches(event, keys.toggle.chat)) this.toggleChat();
-        else if (this.matches(event, keys.toggle.names)) this.toggleSetting('showNames');
-        else if (this.matches(event, keys.toggle.skins)) this.toggleSetting('showSkins');
-        else if (this.matches(event, keys.toggle.autoRespawn)) this.toggleSetting('autoRespawn');
-        else if (this.matches(event, keys.respawn)) this.fastRespawn();
-        else if (this.matches(event, keys.saveImage)) this.captureScreenshot();
+        if (this.matches(event, keys.toggle.menu)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleMenu();
+        }
+        if (this.matches(event, keys.splits.double)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.split(2);
+        } else if (this.matches(event, keys.splits.triple)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.split(3);
+        } else if (this.matches(event, keys.splits.quad)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.split(4);
+        } else if (this.matches(event, keys.splits.doubleTrick)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.trickSplit(2);
+        } else if (this.matches(event, keys.splits.selfTrick)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.trickSplit(4);
+        }
+        if (this.matches(event, keys.line.horizontal) && isMenuClosed()) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleLock('horizontal');
+        }
+        if (this.matches(event, keys.line.vertical) && isMenuClosed()) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleLock('vertical');
+        }
+        if (this.matches(event, keys.line.fixed) && isMenuClosed()) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleLock('fixed');
+        }
+        if (this.matches(event, keys.location)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.sendLocation();
+        }
+        if (this.matches(event, keys.toggle.chat)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleChat();
+        }
+        if (this.matches(event, keys.toggle.names)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleSetting('showNames');
+        }
+        if (this.matches(event, keys.toggle.skins)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleSetting('showSkins');
+        }
+        if (this.matches(event, keys.toggle.autoRespawn)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleSetting('autoRespawn');
+        }
+        if (this.matches(event, keys.respawn)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.fastRespawn();
+        }
+        if (this.matches(event, keys.saveImage)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.captureScreenshot();
+        }
     }
     /** @param {KeyboardEvent} event */
     handleKeyUp(event) {
@@ -2022,6 +2217,7 @@ class MacroController extends FeatureController {
             }, 10);
         } else {
             chat.style.opacity = '0';
+            chat.querySelector('#chatSendInput')?.blur();
             document.querySelectorAll('.chatAddedContainer').forEach((element) => {
                 element.classList.add('hidden_full');
             });

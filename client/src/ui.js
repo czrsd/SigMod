@@ -767,7 +767,11 @@ class MenuController extends FeatureController {
                             <section class="mod_tab scroll" id="mod_macros" data-mod-panel>
                                 <div class="modColItems">
                                     <div class="macros_wrapper">
-                                        <span class="text-center f-big">Keybindings</span>
+                                        <div class="macros-header-bar flex justify-sb align-center">
+                                            <span class="text-center f-big">Keybindings</span>
+                                            <button type="button" class="modButton keybinds-reset-btn" id="sigmod-reset-keybinds" title="Restore all default keybindings">Reset Defaults</button>
+                                        </div>
+                                        <div id="sigmod-keybind-conflict-banner" class="keybind-conflict-banner" style="display: none;"></div>
                                         <hr style="border-color: #3F3F3F">
                                         <div style="justify-content: center;">
                                             <div class="f-column g-10" style="align-items: center; justify-content: center;">
@@ -2424,7 +2428,7 @@ class KeybindRecorder {
     }
     bindingDisplay(value) {
         const binding = unwrapSettingScalar(value);
-        if (typeof binding !== 'string' || !binding.length) return '';
+        if (typeof binding !== 'string' || !binding.length) return this.message('Unbound');
         const labels = {
             ' ': 'Space',
             tab: 'Tab',
@@ -2440,6 +2444,8 @@ class KeybindRecorder {
             arrowright: '→',
             backspace: 'Backspace',
             delete: 'Delete',
+            '^': '^',
+            'code:backquote': '^',
         };
         const normalized = binding.toLowerCase();
         return (
@@ -2457,9 +2463,69 @@ class KeybindRecorder {
             input instanceof HTMLInputElement && input.classList.contains('keybinding') && input.dataset.setting?.startsWith('macros.keys.')
         );
     }
+    ensureKeybindWrappers() {
+        for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
+            if (!(input instanceof HTMLInputElement)) continue;
+            if (input.parentElement?.classList.contains('keybinding-wrapper')) continue;
+            const wrapper = createElement('span', { className: 'keybinding-wrapper' });
+            input.parentElement?.insertBefore(wrapper, input);
+            wrapper.append(input);
+            const clearBtn = createElement('button', {
+                className: 'keybinding-clear',
+                attributes: {
+                    type: 'button',
+                    title: this.message('Unbind key'),
+                    'aria-label': this.message('Unbind key'),
+                    tabindex: '-1',
+                },
+                text: '✕',
+            });
+            clearBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            clearBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const path = input.dataset.setting;
+                if (!path) return;
+                this.app.settingsStore.set(path, null, true);
+                this.syncKeybindInputs();
+                input.blur();
+            });
+            wrapper.append(clearBtn);
+        }
+    }
+    showRecordingHint(input) {
+        this.removeRecordingHint();
+        const wrapper = input.closest('.keybinding-wrapper') || input;
+        const tip = createElement('div', {
+            className: 'keybind-recording-tip',
+            attributes: { id: 'sigmod-keybind-tip' },
+        });
+        tip.innerHTML = `
+            <span class="tip-main">${this.message('Press any key to bind')}</span>
+            <span class="tip-sub">${this.message('Esc to cancel • Backspace to unbind')}</span>
+        `;
+        document.body.append(tip);
+        const rect = wrapper.getBoundingClientRect();
+        tip.style.position = 'fixed';
+        tip.style.zIndex = '100000';
+        tip.style.left = `${Math.max(20, rect.left + rect.width / 2)}px`;
+        tip.style.top = `${rect.bottom + 6}px`;
+        tip.style.transform = 'translateX(-50%)';
+        this.activeTip = tip;
+    }
+    removeRecordingHint() {
+        if (this.activeTip) {
+            this.activeTip.remove();
+            this.activeTip = null;
+        }
+    }
     setupKeybindRecorder() {
         this.syncKeybindLabels();
         this.resources.listen(document, 'sigmod:languagechange', () => this.syncKeybindLabels());
+        this.resources.add(() => this.removeRecordingHint());
         this.resources.add(
             this.app.settingsStore.onChange((changedPath) => {
                 if (!changedPath || changedPath.startsWith('macros.keys.')) {
@@ -2467,19 +2533,56 @@ class KeybindRecorder {
                 }
             })
         );
+        this.resources.listen(document, 'click', (event) => {
+            const btn = event.target.closest('#sigmod-reset-keybinds');
+            if (!btn) return;
+            event.preventDefault();
+            const modal = this.app.features.get('modal');
+            if (!modal) return;
+            const dialog = createElement('div', { className: 'keybind-reset-dialog' });
+            dialog.innerHTML = `
+                <div class="keybind-reset-header flex align-center g-10">
+                    <span class="warn-icon">${icon('warning', 24)}</span>
+                    <strong style="font-size: 15px; color: #f8fafc;">${this.message('Reset all keybindings?')}</strong>
+                </div>
+                <p style="margin: 14px 0 16px; color: #94a3b8; font-size: 12px; line-height: 1.5;">
+                    ${this.message('This will restore all 18 keybindings to their default keys. Your other mod settings, themes, and stats will remain untouched.')}
+                </p>
+                <div class="flex g-8 justify-end">
+                    <button type="button" class="modButton" id="kb-reset-cancel">${this.message('Cancel')}</button>
+                    <button type="button" class="modButton modButton-danger" id="kb-reset-confirm" style="background: #dc2626 !important; border-color: #ef4444 !important; color: #fff !important;">${this.message('Reset Defaults')}</button>
+                </div>
+            `;
+            modal.open('keybind-reset-confirm', dialog, {
+                className: 'modAlert keybind-reset-modal',
+                closeOnBackdrop: true,
+            });
+            dialog.querySelector('#kb-reset-cancel')?.addEventListener('click', () => modal.close('keybind-reset-confirm'), { once: true });
+            dialog.querySelector('#kb-reset-confirm')?.addEventListener('click', () => {
+                modal.close('keybind-reset-confirm');
+                this.app.settingsStore.reset('macros.keys');
+                this.syncKeybindInputs();
+                this.app.features.get('modal')?.alert(this.message('Keybindings restored to default settings.'), 'success');
+            }, { once: true });
+        });
         this.resources.listen(document, 'focusin', (event) => {
             const input = event.target;
             if (!this.isManagedKeybind(input)) return;
             input.dataset.recording = 'true';
             input.value = this.message('Press a key…');
+            input.classList.remove('is-unbound');
             input.classList.add('is-recording');
+            this.showRecordingHint(input);
         });
         this.resources.listen(document, 'focusout', (event) => {
             const input = event.target;
             if (!this.isManagedKeybind(input)) return;
+            this.removeRecordingHint();
             if (input.dataset.recording === 'true') {
                 input.dataset.recording = 'false';
-                input.value = this.bindingDisplay(this.app.settingsStore.get(input.dataset.setting));
+                const val = unwrapSettingScalar(this.app.settingsStore.get(input.dataset.setting));
+                input.value = this.bindingDisplay(val);
+                input.classList.toggle('is-unbound', !val);
                 input.classList.remove('is-recording');
             }
         });
@@ -2494,10 +2597,13 @@ class KeybindRecorder {
                 if (event.repeat) return;
                 const path = input.dataset.setting;
                 if (!path) return;
+                this.removeRecordingHint();
                 if (event.key === 'Escape') {
                     input.dataset.recording = 'false';
                     input.classList.remove('is-recording');
-                    input.value = this.bindingDisplay(this.app.settingsStore.get(path));
+                    const currentVal = unwrapSettingScalar(this.app.settingsStore.get(path));
+                    input.value = this.bindingDisplay(currentVal);
+                    input.classList.toggle('is-unbound', !currentVal);
                     input.blur();
                     return;
                 }
@@ -2514,23 +2620,24 @@ class KeybindRecorder {
                 if (conflicts.length) {
                     const decision = await this.askKeybindingConflict(path, value, conflicts);
                     if (decision === 'cancel') {
-                        input.value = this.bindingDisplay(this.app.settingsStore.get(path));
+                        const currentVal = unwrapSettingScalar(this.app.settingsStore.get(path));
+                        input.value = this.bindingDisplay(currentVal);
+                        input.classList.toggle('is-unbound', !currentVal);
                         input.dataset.recording = 'false';
                         input.classList.remove('is-recording');
                         input.blur();
                         return;
                     }
-                    if (decision === 'reassign') {
+                    if (decision === 'swap') {
+                        const oldKey = unwrapSettingScalar(this.app.settingsStore.get(path));
+                        const firstConflict = conflicts[0];
+                        this.app.settingsStore.set(firstConflict.path, oldKey ?? null, true);
+                        for (let i = 1; i < conflicts.length; i += 1) {
+                            this.app.settingsStore.set(conflicts[i].path, null, true);
+                        }
+                    } else if (decision === 'reassign') {
                         for (const conflict of conflicts) {
                             this.app.settingsStore.set(conflict.path, null, true);
-                            for (const candidate of document.querySelectorAll(`.keybinding[data-setting="${conflict.path}"]`)) {
-                                if (candidate instanceof HTMLInputElement) {
-                                    candidate.value = '';
-                                    candidate.dataset.bindingValue = '';
-                                    candidate.classList.remove('is-conflict');
-                                    candidate.removeAttribute('data-conflict');
-                                }
-                            }
                         }
                     }
                 }
@@ -2538,6 +2645,7 @@ class KeybindRecorder {
                 input.dataset.bindingValue = value ?? '';
                 input.dataset.recording = 'false';
                 input.classList.remove('is-recording');
+                input.classList.toggle('is-unbound', !value);
                 input.value = this.bindingDisplay(value);
                 this.syncKeybindInputs();
                 this.root?.dispatchEvent(
@@ -2552,6 +2660,7 @@ class KeybindRecorder {
         );
     }
     syncKeybindInputs() {
+        this.ensureKeybindWrappers();
         for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
             if (!(input instanceof HTMLInputElement) || input.dataset.recording === 'true') continue;
             const path = input.dataset.setting;
@@ -2559,10 +2668,15 @@ class KeybindRecorder {
             const binding = unwrapSettingScalar(value);
             input.dataset.bindingValue = typeof binding === 'string' ? binding : '';
             input.value = this.bindingDisplay(binding);
+            const hasVal = Boolean(binding && typeof binding === 'string' && binding.length);
+            input.classList.toggle('is-unbound', !hasVal);
+            const wrapper = input.closest('.keybinding-wrapper');
+            if (wrapper) wrapper.dataset.hasValue = hasVal ? 'true' : 'false';
         }
         this.updateKeybindingConflicts();
     }
     syncKeybindLabels() {
+        this.ensureKeybindWrappers();
         for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
             if (!(input instanceof HTMLInputElement)) continue;
             input.readOnly = true;
@@ -2571,31 +2685,61 @@ class KeybindRecorder {
             const label = input.dataset.label || input.name || getKeybindLabel(input.dataset.setting);
             input.setAttribute('aria-label', `${this.message(label)} ${this.message('keybind')}`);
         }
-        this.updateKeybindingConflicts();
+        this.syncKeybindInputs();
     }
     updateKeybindingConflicts() {
         for (const badge of document.querySelectorAll('.keybinding-conflict')) badge.remove();
         const groups = new Map();
+        for (const def of ALL_KEYBIND_DEFINITIONS) {
+            const raw = this.app.settingsStore.get(def.path);
+            const binding = unwrapSettingScalar(raw);
+            if (typeof binding !== 'string' || !binding.length) continue;
+            let norm = binding.toLowerCase();
+            if (norm === 'code:backquote') norm = '^';
+            const list = groups.get(norm) ?? [];
+            list.push(def);
+            groups.set(norm, list);
+        }
+
+        const conflictGroups = [...groups.entries()].filter(([, items]) => items.length > 1);
+        const banner = document.querySelector('#sigmod-keybind-conflict-banner');
+        if (banner) {
+            if (conflictGroups.length > 0) {
+                const keysDisplay = conflictGroups
+                    .map(([k]) => `<span class="sigmod-key-chip">${this.bindingDisplay(k)}</span>`)
+                    .join(' ');
+                banner.style.display = 'flex';
+                banner.innerHTML = `
+                    <div class="banner-icon">${icon('warning', 18)}</div>
+                    <div class="banner-text">
+                        <strong>${this.message('Shared Keys')}:</strong>
+                        <span>${this.message('Multiple actions are using: {keys}', { keys: keysDisplay })}</span>
+                    </div>
+                `;
+            } else {
+                banner.style.display = 'none';
+                banner.innerHTML = '';
+            }
+        }
+
         for (const input of document.querySelectorAll('.keybinding[data-setting^="macros.keys."]')) {
             if (!(input instanceof HTMLInputElement)) continue;
             input.classList.remove('is-conflict');
             input.removeAttribute('data-conflict');
             input.title = this.message(
-                'Click and press a key. Dead or unidentified keys use their physical keyboard position. Backspace/Delete clears it.'
+                'Click and press a key. Dead or unidentified keys use physical layout. Backspace/Delete clears it.'
             );
             const value = unwrapSettingScalar(this.app.settingsStore.get(input.dataset.setting));
             if (typeof value !== 'string' || !value.length) continue;
-            const key = value.toLowerCase();
-            if (!groups.has(key)) groups.set(key, []);
-            groups.get(key).push(input);
-        }
-        for (const inputs of groups.values()) {
-            if (inputs.length < 2) continue;
-            for (const input of inputs) {
-                const others = inputs
-                    .filter((candidate) => candidate !== input)
-                    .map((candidate) => this.message(candidate.dataset.label || candidate.name || getKeybindLabel(candidate.dataset.setting)));
-                const message = this.message('Already used by {actions}', {
+            let normVal = value.toLowerCase();
+            if (normVal === 'code:backquote') normVal = '^';
+            const group = groups.get(normVal);
+            if (group && group.length > 1) {
+                const path = input.dataset.setting;
+                const others = group
+                    .filter((item) => item.path !== path)
+                    .map((item) => this.message(item.label));
+                const message = this.message('Also used by {actions}', {
                     actions: others.join(', '),
                 });
                 input.classList.add('is-conflict');
@@ -2605,19 +2749,27 @@ class KeybindRecorder {
                     className: 'keybinding-conflict',
                     text: message,
                 });
-                input.parentElement?.append(badge);
+                const wrapper = input.closest('.macroRow, .stats-line') || input.parentElement;
+                wrapper?.append(badge);
             }
         }
     }
     findKeybindingConflicts(path, value) {
         if (typeof value !== 'string' || !value.length) return [];
-        const normalized = value.toLowerCase();
+        let normalized = value.toLowerCase();
+        if (normalized === 'code:backquote') normalized = '^';
         const conflicts = [];
         const seenPaths = new Set();
+        const matchesNorm = (target) => {
+            if (typeof target !== 'string' || !target.length) return false;
+            let other = target.toLowerCase();
+            if (other === 'code:backquote') other = '^';
+            return other === normalized;
+        };
         for (const def of ALL_KEYBIND_DEFINITIONS) {
             if (def.path === path) continue;
             const current = unwrapSettingScalar(this.app.settingsStore.get(def.path));
-            if (typeof current === 'string' && current.toLowerCase() === normalized) {
+            if (matchesNorm(current)) {
                 conflicts.push({
                     path: def.path,
                     label: def.label,
@@ -2630,7 +2782,7 @@ class KeybindRecorder {
             const settingPath = input.dataset.setting;
             if (seenPaths.has(settingPath)) continue;
             const binding = unwrapSettingScalar(this.app.settingsStore.get(settingPath));
-            if (typeof binding === 'string' && binding.toLowerCase() === normalized) {
+            if (matchesNorm(binding)) {
                 conflicts.push({
                     path: settingPath,
                     label: input.dataset.label || input.name || getKeybindLabel(settingPath),
@@ -2643,51 +2795,93 @@ class KeybindRecorder {
     askKeybindingConflict(path, value, conflicts) {
         const modal = this.app.features.get('modal');
         if (!modal) return Promise.resolve('cancel');
+
+        const currentKey = unwrapSettingScalar(this.app.settingsStore.get(path));
+        const currentDisplay = currentKey ? this.bindingDisplay(currentKey) : null;
+        const newDisplay = this.bindingDisplay(value);
+        const conflictingAction = conflicts[0];
+        const conflictLabel = conflictingAction.label || getKeybindLabel(conflictingAction.path);
+        const targetLabel = getKeybindLabel(path);
+
         const body = createElement('div', {
             className: 'keybinding-conflict-dialog',
         });
-        const labels = conflicts.map((c) => (typeof c === 'string' ? c : c.label || getKeybindLabel(c.path)));
-        body.append(
-            createElement('strong', {
-                text: this.message('Duplicate keybinding detected'),
-            }),
-            createElement('p', {
-                text: this.message('The key {key} is already assigned to {actions}.', {
-                    key: this.bindingDisplay(value),
-                    actions: labels.map((label) => this.message(label)).join(', '),
-                }),
-            }),
-            createElement('p', {
-                text: this.message('Reassign it to this action, or cancel this change. Each key can control only one action.'),
-            })
-        );
-        const actions = createElement('div', { className: 'flex g-5' });
-        const cancel = createElement('button', {
-            className: 'modButton',
-            text: this.message('Cancel'),
-            attributes: { type: 'button' },
-        });
-        const reassign = createElement('button', {
-            className: 'modButton',
-            text: this.message('Yes, Reassign'),
-            attributes: { type: 'button' },
-        });
-        actions.append(cancel, reassign);
-        body.append(actions);
+
+        body.innerHTML = `
+            <div class="keybinding-conflict-title">${this.message('Key Already Assigned')}</div>
+            <div class="keybinding-conflict-desc">
+                ${this.message('Key {key} is already assigned to {action}.', {
+                    key: `<span class="sigmod-key-chip">${newDisplay}</span>`,
+                    action: `<strong>${this.message(conflictLabel)}</strong>`,
+                })}
+            </div>
+            ${
+                currentDisplay
+                    ? `<div class="keybinding-conflict-subdesc">
+                        ${this.message('{action} currently uses {key}.', {
+                            action: `<strong>${this.message(targetLabel)}</strong>`,
+                            key: `<span class="sigmod-key-chip">${currentDisplay}</span>`,
+                        })}
+                    </div>`
+                    : ''
+            }
+            <div class="keybinding-conflict-actions">
+                <button type="button" class="modButton btn-conflict-cancel" id="kb-conflict-cancel">
+                    ${this.message('Cancel')}
+                </button>
+                <button type="button" class="modButton btn-conflict-swap" id="kb-conflict-swap">
+                    ${this.message('Swap Keys')}
+                </button>
+                <button type="button" class="modButton btn-conflict-both" id="kb-conflict-both">
+                    ${this.message('Use for Both')}
+                </button>
+                <button type="button" class="modButton modButton-primary btn-conflict-reassign" id="kb-conflict-reassign">
+                    ${this.message('Reassign')}
+                </button>
+            </div>
+        `;
+
         modal.open('keybinding-conflict', body, {
             className: 'modAlert keybinding-conflict-modal',
+            closeOnBackdrop: true,
         });
+
         return new Promise((resolve) => {
+            let finished = false;
             const finish = (result) => {
+                if (finished) return;
+                finished = true;
+                document.removeEventListener('keydown', handleModalKeys, true);
                 modal.close('keybinding-conflict');
                 resolve(result);
             };
-            cancel.addEventListener('click', () => finish('cancel'), {
-                once: true,
-            });
-            reassign.addEventListener('click', () => finish('reassign'), {
-                once: true,
-            });
+
+            const handleModalKeys = (e) => {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    finish('cancel');
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    finish('reassign');
+                } else if (e.key === 's' || e.key === 'S') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    finish('swap');
+                } else if (e.key === 'b' || e.key === 'B') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    finish('both');
+                }
+            };
+
+            document.addEventListener('keydown', handleModalKeys, true);
+
+            body.querySelector('#kb-conflict-cancel')?.addEventListener('click', () => finish('cancel'), { once: true });
+            body.querySelector('#kb-conflict-swap')?.addEventListener('click', () => finish('swap'), { once: true });
+            body.querySelector('#kb-conflict-both')?.addEventListener('click', () => finish('both'), { once: true });
+            body.querySelector('#kb-conflict-reassign')?.addEventListener('click', () => finish('reassign'), { once: true });
         });
     }
 }

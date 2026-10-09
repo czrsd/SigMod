@@ -30,34 +30,34 @@
 //
 // @version      11.0.0
 //
-// @description     Sigmally mod with macros, friends, tags, themes, skins, visual customization, quality-of-life features and more.
-// @description:de  Sigmally-Mod mit Makros, Freunden, Tags, Themes, Skins, visueller Anpassung und vielen weiteren Funktionen.
-// @description:es  Mod para Sigmally con macros, amigos, etiquetas, temas, skins, personalización visual y muchas más funciones.
-// @description:pt  Mod para Sigmally com macros, amigos, tags, temas, skins, personalização visual e muitos outros recursos.
-// @description:ru  Мод для Sigmally с макросами, друзьями, тегами, темами, скинами, настройкой интерфейса и другими функциями.
-// @description:tr  Makrolar, arkadaşlar, etiketler, temalar, skinler, görsel özelleştirme ve daha fazlasını içeren Sigmally modu.
-// @description:ar  مود Sigmally مع وحدات ماكرو وأصدقاء وعلامات وسمات وسكنات وتخصيص بصري وميزات إضافية كثيرة.
-// @description:cs  Mod pro Sigmally s makry, přáteli, tagy, motivy, skiny, vizuálním přizpůsobením a mnoha dalšími funkcemi.
-// @description:da  Sigmally-mod med makroer, venner, tags, temaer, skins, visuel tilpasning og meget mere.
-// @description:el  Mod για το Sigmally με μακροεντολές, φίλους, ετικέτες, θέματα, skins, οπτική προσαρμογή και πολλά ακόμη.
-// @description:fi  Sigmally-modi, jossa on makroja, ystäviä, tageja, teemoja, skinejä, visuaalista mukautusta ja paljon muuta.
-// @description:fr  Mod Sigmally avec macros, amis, tags, thèmes, skins, personnalisation visuelle et bien plus encore.
-// @description:hi  मैक्रो, दोस्त, टैग, थीम, स्किन, विज़ुअल कस्टमाइज़ेशन और कई अन्य सुविधाओं वाला Sigmally मॉड।
-// @description:hu  Sigmally mod makrókkal, barátokkal, tagekkel, témákkal, skinekkel, vizuális testreszabással és sok más funkcióval.
-// @description:id  Mod Sigmally dengan makro, teman, tag, tema, skin, kustomisasi visual, dan banyak fitur lainnya.
-// @description:it  Mod per Sigmally con macro, amici, tag, temi, skin, personalizzazione visiva e molto altro.
-// @description:ja  マクロ、フレンド、タグ、テーマ、スキン、ビジュアルカスタマイズなどを備えた Sigmally 用モッド。
-// @description:ko  매크로, 친구, 태그, 테마, 스킨, 시각적 사용자 지정 등 다양한 기능을 제공하는 Sigmally 모드입니다.
-// @description:nl  Sigmally-mod met macro's, vrienden, tags, thema's, skins, visuele aanpassingen en nog veel meer.
-// @description:no  Sigmally-mod med makroer, venner, tagger, temaer, skins, visuell tilpasning og mye mer.
-// @description:pl  Mod do Sigmally z makrami, znajomymi, tagami, motywami, skinami, personalizacją wizualną i wieloma innymi funkcjami.
-// @description:ro  Mod pentru Sigmally cu macrocomenzi, prieteni, etichete, teme, skinuri, personalizare vizuală și multe altele.
-// @description:sv  Sigmally-mod med makron, vänner, taggar, teman, skins, visuell anpassning och mycket mer.
-// @description:th  ม็อด Sigmally พร้อมมาโคร เพื่อน แท็ก ธีม สกิน การปรับแต่งภาพ และฟีเจอร์อื่น ๆ อีกมากมาย
-// @description:uk  Мод для Sigmally з макросами, друзями, тегами, темами, скінами, візуальним налаштуванням і багатьма іншими функціями.
-// @description:vi  Mod Sigmally có macro, bạn bè, thẻ, chủ đề, skin, tùy chỉnh giao diện và nhiều tính năng khác.
-// @description:zh-CN 适用于 Sigmally 的模组，包含宏、好友、标签、主题、皮肤、视觉自定义及更多功能。
-// @description:zh-TW 適用於 Sigmally 的模組，包含巨集、好友、標籤、主題、造型、視覺自訂及更多功能。
+// @description     Advanced Sigmally mod: Rapid feed macro, split tricks, live teammate radar, cell merge timer, freeze line-splits, mouse macros & instant respawn.
+// @description:de  Erweiterter Sigmally-Mod: Rapid-Feed-Makro, Split-Tricks, Teammate-Party-Radar, Zell-Merge-Timer, Freeze-Linesplits, Maus-Makros und Instant-Respawn.
+// @description:es  Mod avanzado para Sigmally: Macro de feed rápido, trucos de split, radar de equipo, temporizador de merge, congelar líneas, macros de ratón y respawn rápido.
+// @description:pt  Mod avançado para Sigmally: Macro de feed rápido, truques de split, radar de equipe, merge timer, congelamento, macros de mouse e respawn instantâneo.
+// @description:ru  Продвинутый мод для Sigmally: быстрый фид-макрос, сплиты, радар тиммейтов, таймер слияния клеток, фриз/лайнсплит, макросы мыши и быстрый респавн.
+// @description:tr  Gelişmiş Sigmally modu: Hızlı feed makrosu, split ve trickler, takım radarı, hücre merge timer, dondurma (freeze), mouse makroları ve hızlı respawn.
+// @description:ar  مود متقدم لـ Sigmally: ماكرو تغذية سريع، حيل الانقسام، رادار الفريق الحي، مؤقت اندماج الخلايا، تجميد الحركة، ماكرو الفأرة ورسبون فوري.
+// @description:cs  Pokročilý mod pro Sigmally: Rychlé krmení, split triky, živý radar týmu, časovač sloučení buněk, freeze linky, makra myši a okamžitý respawn.
+// @description:da  Avanceret Sigmally-mod: Hurtigt feed-makro, split-tricks, live holdradar, celle-merge-timer, freeze line-splits, musemakroer og instant respawn.
+// @description:el  Προηγμένο mod για το Sigmally: Rapid feed macro, κόλπα split, live ραντάρ ομάδας, χρονόμετρο ένωσης, πάγωμα κίνησης, macros ποντικιού & instant respawn.
+// @description:fi  Edistynyt Sigmally-modi: Nopea feed-makro, split-temput, tiimitutka, solujen merge-ajastin, liikejäädytys, hiirimakrot ja välitön respawn.
+// @description:fr  Mod avancé pour Sigmally : Macro feed rapide, tricks de split, radar d'équipe en direct, merge timer, freeze de trajectoire, macros souris et respawn rapide.
+// @description:hi  Sigmally के लिए उन्नत मॉड: रैपिड फीड मैक्रो, स्प्लिट ट्रिक्स, लाइव टीममेट रडार, मर्ज टाइमर, मूवमेंट फ्रीज, माउस मैक्रोज़ और तुरंत रीस्पॉन।
+// @description:hu  Fejlett Sigmally mod: Gyors feed makró, split trükkök, élő csapattárs radar, sejt merge időzítő, freeze line-split, egérmakrók és azonnali respawn.
+// @description:id  Mod canggih untuk Sigmally: Makro feed cepat, trik split, radar teman tim live, timer merge sel, freeze gerakan, makro mouse & respawn instan.
+// @description:it  Mod avanzato per Sigmally: Macro feed rapido, trucchi di split, radar compagni live, timer merge celle, freeze movimento, macro mouse e respawn rapido.
+// @description:ja  Sigmally 向け高度な Mod: 高速フィードマクロ、スプリットトリック、味方レーダー、合体タイマー、移動フリーズ、マウス操作マクロ、即時リスポーン。
+// @description:ko  Sigmally 고급 모드: 빠른 피드 매크로, 스플릿 트릭, 실시간 팀원 레이더, 머지 타이머, 무브먼트 프리즈, 마우스 매크로 및 즉시 리스폰.
+// @description:nl  Geavanceerde Sigmally-mod: Snelle feedmacro, split-trucs, live teamgenotenradar, cel-merge-timer, bewegingsfreeze, muismacro's en directe respawn.
+// @description:no  Avansert Sigmally-mod: Rask feed-makro, split-triks, live lagkamerat-radar, celle-merge-timer, bevegelsesfrys, musemakroer og umiddelbar respawn.
+// @description:pl  Zaawansowany mod do Sigmally: Szybkie makro karmienia, triki splitu, radar drużyny na żywo, licznik łączenia komórek, freeze, makra myszy i szybki respawn.
+// @description:ro  Mod avansat pentru Sigmally: Macro rapid de feed, trucuri split, radar de echipă live, cronometru de unire celule, freeze, macro-uri de mouse și respawn instant.
+// @description:sv  Avancerad Sigmally-mod: Snabbt feed-makro, split-trick, lagkamratradar i realtid, cell-merge-timer, freeze line-splits, musmakron och direkt respawn.
+// @description:th  ม็อด Sigmally ขั้นสูง: มาโครป้อนอาหารเร็ว, ทริกสปลิต, เรดาร์เพื่อนร่วมทีมสด, ตัวจับเวลารวมเซลล์, ฟรีซล็อกทิศทาง, มาโครเมาส์ และเกิดใหม่ทันที.
+// @description:uk  Просунутий мод для Sigmally: швидкий фід-макрос, трюки зі сплітами, радар тімейтів, таймер злиття клітин, фриз руху, макроси миші та миттєвий респавн.
+// @description:vi  Mod Sigmally nâng cao: Macro feed nhanh, mẹo split, radar đồng đội trực tiếp, hẹn giờ hợp nhất tế bào, đóng băng di chuyển, macro chuột và hồi sinh tức thì.
+// @description:zh-CN Sigmally 高级模组：极速喂食宏、分裂技巧、队友实时雷达、细胞合并计时器、轨迹锁定、鼠标宏与即时复活。
+// @description:zh-TW Sigmally 進階模組：極速餵食巨集、分裂技巧、隊友即時雷達、細胞合併計時器、軌跡鎖定、滑鼠巨集與即時復活。
 //
 // @author       Cursed
 // @namespace    https://greasyfork.org/users/981958

@@ -5977,3 +5977,263 @@ html.sigmod-hide-ads #modalfolks {
     100% { transform: scale(1); opacity: 1; }
 }
 
+/* SigMod Keybindings Styling */
+.keybinding-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.keybinding {
+    min-width: 64px;
+    max-width: 104px;
+    height: 28px;
+    padding: 0 18px 0 8px;
+    border-radius: 4px;
+    border: 1px solid #262626;
+    background: #181818;
+    color: #eee;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.keybinding:hover {
+    background: #222;
+    border-color: #333;
+    color: #fff;
+}
+
+.keybinding.is-unbound {
+    color: #666;
+    font-weight: 500;
+    font-style: italic;
+    border-style: dashed;
+    border-color: #222;
+    background: #141414;
+    padding-right: 8px;
+}
+
+.keybinding.is-recording {
+    border-color: #8a25e5 !important;
+    border-style: solid !important;
+    background: #201a29 !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 2px rgba(138, 37, 229, 0.3) !important;
+    padding-right: 8px;
+}
+
+.keybinding.is-conflict {
+    border-color: #552a2a !important;
+    background: #1f1414 !important;
+    color: #e5a3a3 !important;
+}
+
+.keybinding-clear {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: #888;
+    border: none;
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 1;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.keybinding-wrapper:hover .keybinding-clear,
+.keybinding-wrapper:focus-within .keybinding-clear {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.keybinding-clear:hover {
+    background: #333;
+    color: #fff;
+}
+
+.keybinding-wrapper[data-has-value="false"] .keybinding-clear,
+.keybinding.is-recording ~ .keybinding-clear {
+    display: none !important;
+}
+
+.keybind-recording-tip {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 4px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+    animation: tipFadeIn 0.15s ease-out;
+}
+
+.keybind-recording-tip .tip-main {
+    color: #ddd;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.keybind-recording-tip .tip-sub {
+    color: #777;
+    font-size: 9px;
+}
+
+@keyframes tipFadeIn {
+    from { opacity: 0; transform: translate(-50%, -4px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.keybinding-conflict-modal {
+    max-width: 440px !important;
+    width: 90vw !important;
+    padding: 18px 22px !important;
+    background: #151515 !important;
+    border: 1px solid #282828 !important;
+    border-radius: 6px !important;
+}
+
+.keybinding-conflict-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.keybinding-conflict-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.keybinding-conflict-desc {
+    font-size: 13px;
+    color: #bbb;
+    line-height: 1.5;
+}
+
+.keybinding-conflict-subdesc {
+    font-size: 12px;
+    color: #777;
+    line-height: 1.4;
+}
+
+.sigmod-key-chip {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: #252525;
+    color: #fff;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
+.keybinding-conflict-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.keybinding-conflict-actions .modButton {
+    padding: 6px 14px;
+    min-height: 32px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.macros-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+}
+
+.keybinds-reset-btn {
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+    background: #202020 !important;
+    border: 1px solid #2a2a2a !important;
+    color: #888 !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.keybinds-reset-btn:hover {
+    background: #282828 !important;
+    color: #eee !important;
+    border-color: #383838 !important;
+}
+
+.keybind-reset-dialog {
+    max-width: 380px;
+}
+
+.keybind-reset-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.keybind-reset-modal {
+    padding: 16px 20px !important;
+    background: #151515 !important;
+    border: 1px solid #282828 !important;
+    border-radius: 6px !important;
+}
+
+.keybind-conflict-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-top: 8px;
+    border-radius: 4px;
+    background: #1b1717;
+    border: 1px solid #2d1e1e;
+    color: #c99;
+    font-size: 11px;
+}
+
+.keybind-conflict-banner .banner-icon {
+    display: flex;
+    align-items: center;
+    color: #b97979;
+    flex-shrink: 0;
+}
+
+.keybind-conflict-banner .banner-text {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+}
+
+

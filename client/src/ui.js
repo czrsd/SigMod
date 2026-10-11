@@ -1060,8 +1060,8 @@ class MenuController extends FeatureController {
                                                 ${this.checkboxHtml('partyShowIndexes', 'settings.partyShowIndexes')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <span class="text">Header member &amp; score totals</span>
-                                                ${this.checkboxHtml('partyShowHeaderTotals', 'settings.partyShowHeaderTotals')}
+                                                <span class="text">Panel header</span>
+                                                ${this.checkboxHtml('partyShowHeader', 'settings.partyShowHeader')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
                                                 <span class="text">Member ping status</span>
@@ -2629,12 +2629,16 @@ class KeybindRecorder {
                 closeOnBackdrop: true,
             });
             dialog.querySelector('#kb-reset-cancel')?.addEventListener('click', () => modal.close('keybind-reset-confirm'), { once: true });
-            dialog.querySelector('#kb-reset-confirm')?.addEventListener('click', () => {
-                modal.close('keybind-reset-confirm');
-                this.app.settingsStore.reset('macros.keys');
-                this.syncKeybindInputs();
-                this.app.features.get('modal')?.alert(this.message('Keybindings restored to default settings.'), 'success');
-            }, { once: true });
+            dialog.querySelector('#kb-reset-confirm')?.addEventListener(
+                'click',
+                () => {
+                    modal.close('keybind-reset-confirm');
+                    this.app.settingsStore.reset('macros.keys');
+                    this.syncKeybindInputs();
+                    this.app.features.get('modal')?.alert(this.message('Keybindings restored to default settings.'), 'success');
+                },
+                { once: true }
+            );
         });
         this.resources.listen(document, 'focusin', (event) => {
             const input = event.target;
@@ -2776,9 +2780,7 @@ class KeybindRecorder {
         const banner = document.querySelector('#sigmod-keybind-conflict-banner');
         if (banner) {
             if (conflictGroups.length > 0) {
-                const keysDisplay = conflictGroups
-                    .map(([k]) => `<span class="sigmod-key-chip">${this.bindingDisplay(k)}</span>`)
-                    .join(' ');
+                const keysDisplay = conflictGroups.map(([k]) => `<span class="sigmod-key-chip">${this.bindingDisplay(k)}</span>`).join(' ');
                 banner.style.display = 'flex';
                 banner.innerHTML = `
                     <div class="banner-icon">${icon('warning', 18)}</div>
@@ -2797,9 +2799,7 @@ class KeybindRecorder {
             if (!(input instanceof HTMLInputElement)) continue;
             input.classList.remove('is-conflict');
             input.removeAttribute('data-conflict');
-            input.title = this.message(
-                'Click and press a key. Dead or unidentified keys use physical layout. Backspace/Delete clears it.'
-            );
+            input.title = this.message('Click and press a key. Dead or unidentified keys use physical layout. Backspace/Delete clears it.');
             const value = unwrapSettingScalar(this.app.settingsStore.get(input.dataset.setting));
             if (typeof value !== 'string' || !value.length) continue;
             let normVal = value.toLowerCase();
@@ -2807,9 +2807,7 @@ class KeybindRecorder {
             const group = groups.get(normVal);
             if (group && group.length > 1) {
                 const path = input.dataset.setting;
-                const others = group
-                    .filter((item) => item.path !== path)
-                    .map((item) => this.message(item.label));
+                const others = group.filter((item) => item.path !== path).map((item) => this.message(item.label));
                 const message = this.message('Also used by {actions}', {
                     actions: others.join(', '),
                 });
@@ -3621,7 +3619,8 @@ class SettingsPorter {
             input.id === 'partyBorderRadius' ||
             input.id === 'partyBlur' ||
             input.id === 'partyMaxMembers'
-        ) this.updatePartySliderLabels();
+        )
+            this.updatePartySliderLabels();
         this.root?.dispatchEvent(
             new CustomEvent('sigmod:settingchange', {
                 bubbles: true,
@@ -3805,9 +3804,9 @@ class GameSettingsController extends FeatureController {
             ['borderColor', 'game.borderColor', '#0000ff'],
             ['foodColor', 'game.foodColor', '#ffffff'],
             ['cellColor', 'game.cellColor', '#ffffff'],
-            ['partyBgColor', 'settings.partyBgColor', '#00000080'],
+            ['partyBgColor', 'settings.partyBgColor', 'rgba(0, 0, 0, 0.4)'],
             ['partyTextColor', 'settings.partyTextColor', '#fafafa'],
-            ['partyBorderColor', 'settings.partyBorderColor', '#ffffff26'],
+            ['partyBorderColor', 'settings.partyBorderColor', 'transparent'],
         ];
         for (const [id, path, fallback] of definitions) {
             const container = this.root.querySelector(`#${id}`);
@@ -3900,8 +3899,8 @@ class GameSettingsController extends FeatureController {
                 id: 'partyBgColor',
                 path: 'settings.partyBgColor',
                 opacity: true,
-                fallback: '#00000080',
-                reset: '#00000080',
+                fallback: 'rgba(0, 0, 0, 0.4)',
+                reset: 'rgba(0, 0, 0, 0.4)',
                 container: true,
             },
             {
@@ -3916,8 +3915,8 @@ class GameSettingsController extends FeatureController {
                 id: 'partyBorderColor',
                 path: 'settings.partyBorderColor',
                 opacity: true,
-                fallback: '#ffffff26',
-                reset: '#ffffff26',
+                fallback: 'transparent',
+                reset: 'transparent',
                 container: true,
             },
             {

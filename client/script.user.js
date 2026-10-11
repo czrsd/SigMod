@@ -522,7 +522,7 @@
         },
         settings: {
             tag: null,
-            partyPanel: { x: 10, y: 85 },
+            partyPanel: { x: 4, y: 300 },
             showPartyPanel: true,
             partyScale: 1,
             partyBgColor: 'rgba(0, 0, 0, 0.4)',
@@ -4583,15 +4583,20 @@
                     if (file) void this.importSettings(file);
                 });
             }
-            this.resources.listen(
-                root,
-                'wheel',
-                async (event) => {
-                    if (!this.isOpen()) return;
+            const handleWheel = (event) => {
+                const target = event.target;
+                const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
+                if (
+                    this.isOpen() ||
+                    Boolean(element?.closest('.mod_menu, [data-sigmod-root], .mod_overlay, #modAlert_overlay, .alert_overlay, .modChat'))
+                ) {
                     event.stopPropagation();
-                },
-                { capture: true, passive: true }
-            );
+                    event.stopImmediatePropagation();
+                }
+            };
+            this.resources.listen(window, 'wheel', handleWheel, { capture: true, passive: true });
+            this.resources.listen(root, 'wheel', handleWheel, { capture: true, passive: true });
+            this.resources.listen(root, 'wheel', handleWheel, { capture: false, passive: true });
             this.setupHomeSearch();
             this.app.i18n?.apply();
             this.resources.listen(document, 'keydown', (event) => {
@@ -6210,7 +6215,9 @@
             else this.open();
         }
         isOpen() {
-            return this.root?.getAttribute('aria-hidden') === 'false';
+            if (!this.root) return false;
+            if (this.root.getAttribute('aria-hidden') === 'false') return true;
+            return this.root.style.display !== 'none' && this.root.style.opacity !== '0' && getComputedStyle(this.root).display !== 'none';
         }
         handleExternalTabClick(event) {
             const target = event.target;
@@ -9613,7 +9620,7 @@
             if (languages) this.setHidden(languages, hideLanguages);
             document.documentElement.classList.toggle('sigmod-hide-ads', hideAds);
             this.app.adProtection?.setEnabled(hideAds);
-            if (!zigAdEnabled || hasZigGlobal()) removeZigAd();
+            if (!zigActive || !zigAdEnabled || hasZigGlobal()) removeZigAd();
             else insertZigAd(this.resources);
         }
         applyLauncherColor() {
@@ -13377,13 +13384,15 @@
         }
         /** @param {Event} event */
         isGamePointerEvent(event) {
+            const target = event.target;
+            if (!(target instanceof Element)) return false;
+            if (target.id === 'sf-canvas' || target.id === 'canvas' || target === this.app.dom?.canvas) return true;
             const canvas =
                 this.app.host.adapter?.kind === 'sigfix'
                     ? document.querySelector('#sf-canvas')
                     : (this.app.dom?.canvas ?? document.querySelector(SELECTORS.canvas));
-            if (!(canvas instanceof HTMLCanvasElement)) return false;
-            if (event.target === canvas) return true;
-            return this.lockOverlay instanceof HTMLElement && event.target === this.lockOverlay;
+            if (canvas instanceof HTMLCanvasElement && target === canvas) return true;
+            return this.lockOverlay instanceof HTMLElement && target === this.lockOverlay;
         }
         /** @param {KeyboardEvent} event @param {unknown} binding */
         matches(event, binding) {
@@ -13485,15 +13494,22 @@
             if (typeof window.settings?.change === 'function') window.settings.change(setting, enabled);
         }
         toggleMenu() {
+            const menuController = this.app.features.get('menu');
+            if (menuController) {
+                menuController.toggle();
+                return;
+            }
             const menu = document.querySelector('.mod_menu');
             if (!(menu instanceof HTMLElement)) return;
             const hidden = getComputedStyle(menu).display === 'none';
             if (hidden) {
                 menu.style.display = 'flex';
+                menu.setAttribute('aria-hidden', 'false');
                 this.resources.timeout(() => {
                     menu.style.opacity = '1';
                 }, 10);
             } else {
+                menu.setAttribute('aria-hidden', 'true');
                 menu.style.opacity = '0';
                 this.resources.timeout(() => {
                     if (menu.style.opacity === '0') menu.style.display = 'none';
@@ -15674,6 +15690,9 @@
             super(app2, name);
             this.activePings = /* @__PURE__ */ new Map();
             this.wheelOpen = false;
+            this.pingSource = null;
+            this.lastPingTime = 0;
+            this.lastCancelTime = 0;
             this.wheelElement = null;
             this.wheelSlices = [];
             this.pointerPosition = { x: 0, y: 0 };
@@ -15862,7 +15881,7 @@
                 window,
                 'contextmenu',
                 (event) => {
-                    if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 100) {
+                    if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 500 || Date.now() - (this.lastPingTime || 0) < 500) {
                         event.preventDefault();
                         event.stopPropagation();
                     }
@@ -15883,36 +15902,24 @@
             });
         }
         isPingInput(event) {
+            if (!event.isTrusted) return false;
             if (isTyping() || !this.app.settings.settings.tag || !this.app.state.backend.connected) return false;
+            const menu = this.app.features.get('menu');
+            if (menu?.isOpen()) return false;
             const macros = this.app.features.get('macros');
             if (event instanceof KeyboardEvent && macros) {
                 if (event.ctrlKey || event.metaKey) return false;
                 return macros.matches(event, this.app.settings.macros.keys.ping);
             } else if (event instanceof MouseEvent && macros) {
+                if (!macros.isGamePointerEvent(event)) return false;
                 const action = macros.mouseBinding(event.button);
                 return action === 'ping';
             }
             return false;
         }
         handleKeyDown(event) {
-            if (event.repeat) return;
-            if (this.isPingInput(event) && !this.wheelOpen) {
-                event.preventDefault();
-                this.openWheel();
-                this.wheelCancelled = false;
-            }
-        }
-        handleKeyUp(event) {
-            if (this.isPingInput(event) && this.wheelOpen) {
-                event.preventDefault();
-                this.closeWheel();
-                if (!this.wheelCancelled) {
-                    this.sendPing(this.hoveredPing || 'default');
-                }
-            }
-        }
-        handleMouseDown(event) {
-            if (this.wheelOpen && (event.button === 0 || event.button === 2)) {
+            if (event.repeat || !event.isTrusted) return;
+            if (this.wheelOpen && event.key === 'Escape') {
                 event.preventDefault();
                 event.stopPropagation();
                 this.closeWheel();
@@ -15922,22 +15929,58 @@
             }
             if (this.isPingInput(event) && !this.wheelOpen) {
                 event.preventDefault();
-                this.openWheel();
+                this.openWheel({ type: 'key', code: event.code });
+                this.wheelCancelled = false;
+            }
+        }
+        handleKeyUp(event) {
+            if (!event.isTrusted) return;
+            if (this.wheelOpen && this.pingSource?.type === 'key') {
+                const macros = this.app.features.get('macros');
+                if (macros?.matches(event, this.app.settings.macros.keys.ping)) {
+                    event.preventDefault();
+                    this.closeWheel();
+                    if (!this.wheelCancelled) {
+                        this.sendPing(this.hoveredPing || 'default');
+                        this.lastPingTime = Date.now();
+                    }
+                }
+            }
+        }
+        handleMouseDown(event) {
+            if (!event.isTrusted) return;
+            if (this.wheelOpen) {
+                const isOriginButton = this.pingSource?.type === 'mouse' && this.pingSource.button === event.button;
+                if (!isOriginButton && (event.button === 0 || event.button === 2)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.closeWheel();
+                    this.wheelCancelled = true;
+                    this.lastCancelTime = Date.now();
+                    return;
+                }
+            }
+            if (this.isPingInput(event) && !this.wheelOpen) {
+                event.preventDefault();
+                this.openWheel({ type: 'mouse', button: event.button });
                 this.wheelCancelled = false;
             }
         }
         handleMouseUp(event) {
-            if (this.isPingInput(event) && this.wheelOpen) {
+            if (!event.isTrusted) return;
+            if (this.wheelOpen && this.pingSource?.type === 'mouse' && this.pingSource.button === event.button) {
                 event.preventDefault();
                 this.closeWheel();
                 if (!this.wheelCancelled) {
                     this.sendPing(this.hoveredPing || 'default');
+                    this.lastPingTime = Date.now();
                 }
             }
         }
-        openWheel() {
+        openWheel(source = null) {
             this.wheelOpen = true;
             this.wheelCancelled = false;
+            this.pingSource = source;
             let cx = this.pointerPosition.x;
             let cy = this.pointerPosition.y;
             if ((!cx && !cy) || (cx === 0 && cy === 0)) {
@@ -16025,6 +16068,7 @@
         }
         closeWheel() {
             this.wheelOpen = false;
+            this.pingSource = null;
             if (this.wheelElement) {
                 this.wheelElement.remove();
                 this.wheelElement = null;
@@ -19563,6 +19607,7 @@
     let zigAdDismissed = false;
     let zigAdClosedForSession = false;
     let zigAdEnabled = DEFAULT_SETTINGS.themes.showZigPopup;
+    let zigActive = false;
     let zigAdMenuWasVisible = false;
     let zigAdSyncFrame = 0;
     let zigAdDomObserver = null;
@@ -19637,7 +19682,7 @@
     };
     const syncZigAd = () => {
         zigAdSyncFrame = 0;
-        if (!zigAdEnabled) {
+        if (!zigActive || !zigAdEnabled) {
             removeZigAd();
             return;
         }
@@ -19737,8 +19782,8 @@
     };
     const insertZigAd = (resources = null) => {
         bindZigAdLifecycle(resources);
-        if (!zigAdEnabled || hasZigGlobal() || zigAdDismissed || document.querySelector('.zig-ad')) {
-            if (hasZigGlobal()) removeZigAd();
+        if (!zigActive || !zigAdEnabled || hasZigGlobal() || zigAdDismissed || document.querySelector('.zig-ad')) {
+            if (!zigActive || hasZigGlobal()) removeZigAd();
             return;
         }
         const leftMenu = document.querySelector('#left-menu');
@@ -19783,6 +19828,13 @@
     app.resources.add(() => {
         if (window.__sigmodApp === app) delete window.__sigmodApp;
     });
+    app.resources.add(
+        app.backend.on('zig-active', (active) => {
+            zigActive = Boolean(active);
+            if (!zigActive) removeZigAd();
+            else syncZigAd();
+        })
+    );
     warmUpStartPageMouse(app.resources);
     app.start();
 })();

@@ -136,6 +136,11 @@
             content:
                 '<path fill="currentColor" d="M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z"></path>',
         },
+        arrowLeft: {
+            viewBox: '0 0 24 24',
+            content:
+                '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"></path>',
+        },
         house: {
             viewBox: '0 0 64 64',
             content:
@@ -517,12 +522,12 @@
         },
         settings: {
             tag: null,
-            partyPanel: { x: 4, y: 300 },
+            partyPanel: { x: 10, y: 85 },
             showPartyPanel: true,
             partyScale: 1,
-            partyBgColor: '#00000080',
+            partyBgColor: 'rgba(0, 0, 0, 0.4)',
             partyTextColor: '#fafafa',
-            partyBorderColor: '#ffffff26',
+            partyBorderColor: 'transparent',
             partyBorderRadius: 6,
             partyBlur: 0,
             partyCompact: false,
@@ -531,6 +536,7 @@
             partyShowSkins: true,
             partyShowScores: true,
             partyShowIndexes: true,
+            partyShowHeader: true,
             partyShowHeaderTotals: true,
             partyShowPing: false,
             partyMaxMembers: 10,
@@ -625,6 +631,7 @@
         { path: 'macros.keys.toggle.names', label: 'Toggle names' },
         { path: 'macros.keys.toggle.skins', label: 'Toggle skins' },
         { path: 'macros.keys.toggle.autoRespawn', label: 'Toggle autorespawn' },
+        { path: 'macros.keys.toggle.party', label: 'Toggle party panel' },
     ];
     const ALL_KEYBIND_PATHS = new Set(ALL_KEYBIND_DEFINITIONS.map((item) => item.path));
     const isKeybindSettingPath = (path) => typeof path === 'string' && ALL_KEYBIND_PATHS.has(path);
@@ -772,6 +779,32 @@
             else target[key] = clone(value);
         }
         return target;
+    };
+    const syncSigFixKeybindings = (keys) => {
+        try {
+            const sigfixSettings = window.sigfix?.sigmod?.settings;
+            if (!sigfixSettings || !isObject(keys)) return;
+            const norm = (val) => {
+                const raw = unwrapSettingScalar(val);
+                return typeof raw === 'string' && raw.length ? raw.toLowerCase() : void 0;
+            };
+            const doubleKey = norm(keys.splits?.double);
+            const tripleKey = norm(keys.splits?.triple);
+            const quadKey = norm(keys.splits?.quad);
+            const respawnKey = norm(keys.respawn);
+            const hLineKey = norm(keys.line?.horizontal);
+            const vLineKey = norm(keys.line?.vertical);
+            const fLineKey = norm(keys.line?.fixed);
+            const rapidKey = norm(keys.rapidFeed);
+            if (sigfixSettings.doubleKey !== doubleKey) sigfixSettings.doubleKey = doubleKey;
+            if (sigfixSettings.tripleKey !== tripleKey) sigfixSettings.tripleKey = tripleKey;
+            if (sigfixSettings.quadKey !== quadKey) sigfixSettings.quadKey = quadKey;
+            if (sigfixSettings.respawnKey !== respawnKey) sigfixSettings.respawnKey = respawnKey;
+            if (sigfixSettings.horizontalLineKey !== hLineKey) sigfixSettings.horizontalLineKey = hLineKey;
+            if (sigfixSettings.verticalLineKey !== vLineKey) sigfixSettings.verticalLineKey = vLineKey;
+            if (sigfixSettings.fixedLineKey !== fLineKey) sigfixSettings.fixedLineKey = fLineKey;
+            if (rapidKey && sigfixSettings.rapidFeedKey !== rapidKey) sigfixSettings.rapidFeedKey = rapidKey;
+        } catch {}
     };
     class MatchHistoryStore {
         constructor(logger) {
@@ -1752,14 +1785,29 @@
                 value.themes[key] = normalizeBoolean(value.themes[key], this.defaults.themes[key]);
             }
             value.settings.pingDuration = clamp(Number(value.settings.pingDuration) || 2e3, 250, 3e4);
-            value.settings.savedNames = [...new Set(value.settings.savedNames.filter((name) => typeof name === 'string'))];
-            value.settings.partyPanel.x = Number.isFinite(Number(value.settings.partyPanel.x)) ? Number(value.settings.partyPanel.x) : 0;
-            value.settings.partyPanel.y = Number.isFinite(Number(value.settings.partyPanel.y)) ? Number(value.settings.partyPanel.y) : 0;
+            const defaultPartyX = 10;
+            const defaultPartyY = 85;
+            const currentPartyX = Number(value.settings.partyPanel?.x);
+            const currentPartyY = Number(value.settings.partyPanel?.y);
+            if (
+                !Number.isFinite(currentPartyX) ||
+                !Number.isFinite(currentPartyY) ||
+                (currentPartyX === 0 && currentPartyY === 0) ||
+                (currentPartyX === 4 && currentPartyY === 300) ||
+                (currentPartyX <= 15 && currentPartyY < 75)
+            ) {
+                value.settings.partyPanel.x = defaultPartyX;
+                value.settings.partyPanel.y = defaultPartyY;
+            } else {
+                value.settings.partyPanel.x = currentPartyX;
+                value.settings.partyPanel.y = currentPartyY;
+            }
             value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
-            value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : '#00000080';
+            value.settings.partyBgColor =
+                typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : 'rgba(0, 0, 0, 0.4)';
             value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
             value.settings.partyBorderColor =
-                typeof value.settings.partyBorderColor === 'string' ? value.settings.partyBorderColor : '#ffffff26';
+                typeof value.settings.partyBorderColor === 'string' ? value.settings.partyBorderColor : 'transparent';
             value.settings.partyBorderRadius = clamp(Number(value.settings.partyBorderRadius) ?? 6, 0, 20);
             value.settings.partyBlur = clamp(Number(value.settings.partyBlur) ?? 0, 0, 20);
             value.settings.partyMaxMembers = clamp(Number(value.settings.partyMaxMembers) || 10, 3, 50);
@@ -1841,6 +1889,7 @@
                 'partyShowSkins',
                 'partyShowScores',
                 'partyShowIndexes',
+                'partyShowHeader',
                 'partyShowHeaderTotals',
                 'partyShowPing',
                 'mergeTimer',
@@ -1884,6 +1933,7 @@
             this.normalize(next);
             this.savedKeys = extractKeybindsFromSettings(next);
             replaceInPlace(this.value, next);
+            syncSigFixKeybindings(this.savedKeys);
             if (immediate) this.flush();
             else this.flushLater();
             this.notifyChange(path);
@@ -1894,17 +1944,30 @@
             next.macros.keys = extractKeybindsFromSettings(this.value);
             replaceInPlace(this.value, this.normalize(next));
             this.savedKeys = extractKeybindsFromSettings(this.value);
+            syncSigFixKeybindings(this.savedKeys);
             if (immediate) this.flush();
             else this.flushLater();
             this.notifyChange(null);
         }
         reset(path = null) {
-            if (!path) replaceInPlace(this.value, this.defaults);
-            else setPath(this.value, path, clone(getPath(this.defaults, path)));
-            if (!path) this.savedKeys = clone(this.defaults.macros.keys);
-            else if (path === 'macros' || path === 'macros.keys') this.savedKeys = clone(this.defaults.macros.keys);
-            else if (path.startsWith('macros.keys.'))
-                setPath(this.savedKeys, path.slice('macros.keys.'.length), clone(getPath(this.defaults, path)));
+            if (!path) {
+                replaceInPlace(this.value, this.defaults);
+                this.savedKeys = clone(this.defaults.macros.keys);
+            } else {
+                const targetVal = getPath(this.value, path);
+                const defaultVal = getPath(this.defaults, path);
+                if (isObject(targetVal) && isObject(defaultVal)) {
+                    replaceInPlace(targetVal, defaultVal);
+                } else {
+                    setPath(this.value, path, clone(defaultVal));
+                }
+                if (path === 'macros' || path === 'macros.keys') {
+                    this.savedKeys = clone(this.defaults.macros.keys);
+                } else if (path.startsWith('macros.keys.')) {
+                    setPath(this.savedKeys, path.slice('macros.keys.'.length), clone(defaultVal));
+                }
+            }
+            syncSigFixKeybindings(this.savedKeys);
             this.flush();
             this.notifyChange(path);
         }
@@ -1921,6 +1984,7 @@
             const next = this.normalize(merged);
             this.savedKeys = extractKeybindsFromSettings(next);
             replaceInPlace(this.value, next);
+            syncSigFixKeybindings(this.savedKeys);
             this.flush();
             this.notifyChange(null);
             return this.value;
@@ -2059,13 +2123,25 @@
         owns(type, value) {
             const adapter = this.app.host.adapter;
             if (adapter?.kind !== 'sigfix') return false;
+            if (type === 'keys') {
+                const sigfixDefaultKeys = /* @__PURE__ */ new Set([
+                    'respawn',
+                    'line.horizontal',
+                    'line.vertical',
+                    'line.fixed',
+                    'splits.double',
+                    'splits.triple',
+                    'splits.quad',
+                ]);
+                if (sigfixDefaultKeys.has(value)) return true;
+            }
             for (const claim of this.claims) {
                 if (claim.api === adapter.api && claim[type].has(value)) return true;
             }
             return false;
         }
         ownsKeyEvent(event) {
-            if (!this.claims.size || this.app.host.adapter?.kind !== 'sigfix') return false;
+            if (this.app.host.adapter?.kind !== 'sigfix') return false;
             for (const path of this.supportedKeys) {
                 if (this.owns('keys', path) && keybindMatchesEvent(event, this.app.settingsStore.get(`macros.keys.${path}`))) return true;
             }
@@ -2941,8 +3017,28 @@
                 if (!protocol.movementOverride || !protocol.isMovementPacket(data)) {
                     return protocol.rawSend(data);
                 }
-                const { x, y } = protocol.movementOverride;
-                return protocol.rawSend(protocol.createMovePacket(x, y));
+                const override = protocol.movementOverride;
+                let targetX = override.x;
+                let targetY = override.y;
+                if (override.lock === 'horizontal' || override.lock === 'vertical') {
+                    try {
+                        const reader = new PacketReader(data);
+                        reader.skip(1);
+                        const mouseX = reader.int32LE();
+                        const mouseY = reader.int32LE();
+                        if (override.lock === 'horizontal') {
+                            targetX = mouseX;
+                            targetY = override.y;
+                        } else if (override.lock === 'vertical') {
+                            targetX = override.x;
+                            targetY = mouseY;
+                        }
+                    } catch {
+                        targetX = override.x;
+                        targetY = override.y;
+                    }
+                }
+                return protocol.rawSend(protocol.createMovePacket(targetX, targetY));
             };
             resources.patch(socket, 'send', sendFacade);
             resources.listen(socket, 'open', () => this.emit('open'));
@@ -2988,8 +3084,22 @@
         }
         sendMove(x, y) {
             if (!this.canSend()) return false;
-            const target = this.movementOverride ?? { x, y };
-            return this.send(this.createMovePacket(target.x, target.y));
+            const override = this.movementOverride;
+            let targetX = x;
+            let targetY = y;
+            if (override) {
+                if (override.lock === 'horizontal') {
+                    targetX = x;
+                    targetY = override.y;
+                } else if (override.lock === 'vertical') {
+                    targetX = override.x;
+                    targetY = y;
+                } else {
+                    targetX = override.x;
+                    targetY = override.y;
+                }
+            }
+            return this.send(this.createMovePacket(targetX, targetY));
         }
         createMovePacket(x, y) {
             const int32 = (value) => clamp(Number.isFinite(Number(value)) ? Math.trunc(Number(value)) : 0, -2147483648, 2147483647);
@@ -3184,7 +3294,11 @@
             const snapshot = this.worldSnapshot();
             this.emit('world-update', snapshot);
             this.emit('world', snapshot);
-            if (!snapshot.playing) this.emit('play-state', false);
+            const isPlaying = Boolean(snapshot.playing);
+            if (this.lastPlayState !== isPlaying) {
+                this.lastPlayState = isPlaying;
+                this.emit('play-state', isPlaying);
+            }
         }
         trackKill(killerId, killedId) {
             if (!this.owned.has(killerId)) return;
@@ -3448,7 +3562,17 @@
             const originalMove = this.api.net.move;
             const moveFacade = function (view, x, y) {
                 if (adapter.movementOverride && view === adapter.api.world.selected) {
-                    return originalMove.call(this, view, adapter.movementOverride.x, adapter.movementOverride.y);
+                    const override = adapter.movementOverride;
+                    let targetX = override.x;
+                    let targetY = override.y;
+                    if (override.lock === 'horizontal') {
+                        targetX = x;
+                        targetY = override.y;
+                    } else if (override.lock === 'vertical') {
+                        targetX = override.x;
+                        targetY = y;
+                    }
+                    return originalMove.call(this, view, targetX, targetY);
                 }
                 return originalMove.call(this, view, x, y);
             };
@@ -3503,7 +3627,11 @@
                         const snapshot = this.snapshot();
                         const split = this.lastOwnedCount > 0 && snapshot.ownedCount > this.lastOwnedCount;
                         this.emit('owned-cell', { id, split });
-                        this.emit('play-state', snapshot.playing);
+                        const isPlaying = Boolean(snapshot.playing);
+                        if (this.lastPlayState !== isPlaying) {
+                            this.lastPlayState = isPlaying;
+                            this.emit('play-state', isPlaying);
+                        }
                         this.lastOwnedCount = snapshot.ownedCount;
                         break;
                     }
@@ -3512,7 +3640,10 @@
                         this.killedPlayers.clear();
                         this.lastOwnedCount = 0;
                         this.leaderboard.finish();
-                        this.emit('play-state', false);
+                        if (this.lastPlayState !== false) {
+                            this.lastPlayState = false;
+                            this.emit('play-state', false);
+                        }
                         break;
                     case OPCODE.border:
                         this.invalidateSnapshot();
@@ -3618,7 +3749,11 @@
             this.lastOwnedCount = snapshot.ownedCount;
             this.emit('world-update', snapshot);
             this.emit('world', snapshot);
-            if (!snapshot.playing) this.emit('play-state', false);
+            const isPlaying = Boolean(snapshot.playing);
+            if (this.lastPlayState !== isPlaying) {
+                this.lastPlayState = isPlaying;
+                this.emit('play-state', isPlaying);
+            }
         }
         remainingBuffer(reader) {
             const start = reader.view.byteOffset + reader.offset;
@@ -3702,9 +3837,22 @@
         }
         sendMove(x, y) {
             if (!this.isReady()) return false;
-            const target = this.movementOverride ?? { x, y };
+            let targetX = x;
+            let targetY = y;
+            if (this.movementOverride) {
+                if (this.movementOverride.lock === 'horizontal') {
+                    targetX = x;
+                    targetY = this.movementOverride.y;
+                } else if (this.movementOverride.lock === 'vertical') {
+                    targetX = this.movementOverride.x;
+                    targetY = y;
+                } else {
+                    targetX = this.movementOverride.x;
+                    targetY = this.movementOverride.y;
+                }
+            }
             try {
-                this.api.net.move(this.api.world.selected, target.x, target.y);
+                this.api.net.move(this.api.world.selected, targetX, targetY);
                 return true;
             } catch (error) {
                 this.logger.warnOnce('sigfix-send-move', 'Unable to send movement through SigFix', error);
@@ -3727,6 +3875,26 @@
                 this.logger.warnOnce(`sigfix-send-${action}`, 'Unable to send action through SigFix', error);
                 return false;
             }
+        }
+        respawn() {
+            if (!this.isReady()) return false;
+            try {
+                const view = this.api.world?.selected;
+                if (view === void 0) return false;
+                const name = typeof this.api.input?.name === 'function' ? this.api.input.name(view) : '';
+                const playData = typeof this.api.input?.playData === 'function' ? this.api.input.playData(name, false) : { name, skin: '' };
+                if (typeof this.api.net?.respawn === 'function') {
+                    this.api.net.respawn(view, playData);
+                    return true;
+                }
+                if (typeof this.api.net?.play === 'function') {
+                    this.api.net.play(view, playData);
+                    return true;
+                }
+            } catch (error) {
+                this.logger.warnOnce('sigfix-respawn', 'Unable to respawn through SigFix API', error);
+            }
+            return false;
         }
         setMovementOverride(position) {
             this.movementOverride = position;
@@ -3823,8 +3991,10 @@
                 this.app.state.backend.connected = true;
                 this.send('version', BUILD.serverVersion);
                 this.send('server-changed', getGameMode());
-                if (this.connectedCount > 1 && this.app.state.nickname) {
-                    this.send('update-nick', this.app.state.nickname);
+                const currentNick = document.querySelector(SELECTORS.nickname)?.value?.trim() || this.app.state.nickname;
+                if (currentNick) {
+                    this.app.state.nickname = currentNick;
+                    this.send('update-nick', currentNick);
                 }
                 this.emit('open');
             });
@@ -4954,8 +5124,8 @@
                                                 ${this.checkboxHtml('partyShowIndexes', 'settings.partyShowIndexes')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
-                                                <span class="text">Header member &amp; score totals</span>
-                                                ${this.checkboxHtml('partyShowHeaderTotals', 'settings.partyShowHeaderTotals')}
+                                                <span class="text">Panel header</span>
+                                                ${this.checkboxHtml('partyShowHeader', 'settings.partyShowHeader')}
                                             </div>
                                             <div class="settings-item chat-menu-row">
                                                 <span class="text">Member ping status</span>
@@ -7691,9 +7861,9 @@
                 ['borderColor', 'game.borderColor', '#0000ff'],
                 ['foodColor', 'game.foodColor', '#ffffff'],
                 ['cellColor', 'game.cellColor', '#ffffff'],
-                ['partyBgColor', 'settings.partyBgColor', '#00000080'],
+                ['partyBgColor', 'settings.partyBgColor', 'rgba(0, 0, 0, 0.4)'],
                 ['partyTextColor', 'settings.partyTextColor', '#fafafa'],
-                ['partyBorderColor', 'settings.partyBorderColor', '#ffffff26'],
+                ['partyBorderColor', 'settings.partyBorderColor', 'transparent'],
             ];
             for (const [id, path, fallback] of definitions) {
                 const container = this.root.querySelector(`#${id}`);
@@ -7786,8 +7956,8 @@
                     id: 'partyBgColor',
                     path: 'settings.partyBgColor',
                     opacity: true,
-                    fallback: '#00000080',
-                    reset: '#00000080',
+                    fallback: 'rgba(0, 0, 0, 0.4)',
+                    reset: 'rgba(0, 0, 0, 0.4)',
                     container: true,
                 },
                 {
@@ -7802,8 +7972,8 @@
                     id: 'partyBorderColor',
                     path: 'settings.partyBorderColor',
                     opacity: true,
-                    fallback: '#ffffff26',
-                    reset: '#ffffff26',
+                    fallback: 'transparent',
+                    reset: 'transparent',
                     container: true,
                 },
                 {
@@ -10489,7 +10659,6 @@
                     if (!isObject(user)) return;
                     this.app.state.user = user;
                     if (isObject(window.gameSettings)) window.gameSettings.user = user;
-                    this.app.state.nickname = user.givenName || user.fullName || this.app.state.nickname;
                     const firstUser = !this.userObserved;
                     this.userObserved = true;
                     this.publishUser();
@@ -11788,7 +11957,32 @@
             this.expanded = false;
             this.localSkin = null;
             this.localColor = null;
-            this.localIsAlive = true;
+            this.rowCache = /* @__PURE__ */ new Map();
+            this.skinCache = /* @__PURE__ */ new Map();
+            this.renderRaf = null;
+            this.lastStatusKey = null;
+        }
+        hasTag() {
+            const tag = this.app.settings.settings.tag;
+            return typeof tag === 'string' && tag.trim().length > 0;
+        }
+        getTag() {
+            const tag = this.app.settings.settings.tag;
+            return typeof tag === 'string' && tag.trim().length > 0 ? tag.trim().slice(0, 3) : null;
+        }
+        shouldShowPanel() {
+            return Boolean(this.hasTag() && this.app.settings.settings.showPartyPanel);
+        }
+        requestRender() {
+            if (!this.shouldShowPanel()) {
+                this.closePanel();
+                return;
+            }
+            if (this.renderRaf) return;
+            this.renderRaf = requestAnimationFrame(() => {
+                this.renderRaf = null;
+                this.render();
+            });
         }
         async mount() {
             const backend = this.app.backend;
@@ -11812,24 +12006,26 @@
                 events.add(adapter.on('play-sent', (data) => this.handlePlaySent(data)));
                 events.add(
                     adapter.on('play-state', (playing) => {
-                        this.localIsAlive = Boolean(playing);
                         if (playing) {
-                            if (!this.localColor) this.localColor = this.resolveLocalColor();
-                            if (!this.localSkin) this.localSkin = this.resolveLocalSkin();
+                            this.localColor = this.resolveLocalColor() || this.localColor;
+                            this.localSkin = this.resolveLocalSkin() || this.localSkin;
                         }
                         this.publishMemberStatus();
-                        this.render();
+                        this.requestRender();
                     })
                 );
             };
             this.resources.add(this.app.host.on('change', bindHost));
             if (this.app.host.adapter) bindHost(this.app.host.adapter);
-            if (this.app.settings.settings.showPartyPanel && this.app.settings.settings.tag) {
+            if (this.shouldShowPanel()) {
                 this.ensurePanel();
+                this.requestRender();
+            } else {
+                this.closePanel();
             }
         }
         syncPublishTimers() {
-            const enabled = Boolean(this.app.settings.settings.tag);
+            const enabled = this.hasTag();
             const current = this.resources.children.get('party-publish');
             if (!enabled) {
                 current?.dispose();
@@ -11865,12 +12061,24 @@
             if (playData && typeof playData.skin === 'string' && playData.skin.trim()) {
                 raw = playData.skin.trim();
             }
+            if (!raw) {
+                const adapter = this.app.host.adapter;
+                if (adapter?.protocol?.cells && adapter.protocol.owned?.size > 0) {
+                    for (const id of adapter.protocol.owned) {
+                        const cell = adapter.protocol.cells.get(id);
+                        if (cell?.skin && typeof cell.skin === 'string' && cell.skin.trim()) {
+                            raw = cell.skin.trim();
+                            break;
+                        }
+                    }
+                }
+            }
             if (!raw && Array.isArray(window.settings?.userData?.lastSkinUsed) && window.settings.userData.lastSkinUsed.length > 0) {
                 const entry = window.settings.userData.lastSkinUsed[0];
                 if (typeof entry === 'string') {
                     const shopSkins = window.settings?.shop?.skins;
                     if (Array.isArray(shopSkins)) {
-                        const found = shopSkins.find((s) => s._id === entry);
+                        const found = shopSkins.find((s) => s._id === entry || s.name === entry);
                         if (found?.name) raw = found.name;
                         else raw = entry;
                     } else {
@@ -11894,6 +12102,9 @@
                 } catch {}
             }
             if (!raw) return null;
+            if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
+                return raw;
+            }
             return (
                 raw
                     .replace(/^1%/, '')
@@ -11901,7 +12112,65 @@
                     .trim() || null
             );
         }
+        getSkinUrl(skinName) {
+            if (!skinName || typeof skinName !== 'string') return null;
+            const clean = skinName.trim();
+            if (!clean) return null;
+            if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
+                return clean;
+            }
+            let name = clean.replace(/^1%/, '').replace(/\.png$/i, '');
+            const shopSkins = window.settings?.shop?.skins;
+            if (Array.isArray(shopSkins)) {
+                const found = shopSkins.find((s) => s._id === name || s.name === name);
+                if (found?.name) name = found.name.replace(/\.png$/i, '');
+            }
+            const encoded = encodeURIComponent(name);
+            if (typeof location !== 'undefined' && location.hostname.includes('sigmally.com')) {
+                return `${location.origin}/static/skins/${encoded}.png`;
+            }
+            return `https://sigmally.com/static/skins/${encoded}.png`;
+        }
+        createColorAvatar(color) {
+            const hex = color || '#3b82f6';
+            return createElement('span', {
+                className: 'party-avatar party-avatar-color',
+                attributes: {
+                    style: `background-color: ${hex} !important; display: inline-block !important; width: 14px; height: 14px; min-width: 14px; min-height: 14px; border-radius: 50%; box-sizing: border-box;`,
+                    title: 'Cell color',
+                },
+            });
+        }
+        isLocalPlaying() {
+            if (isDeadScreenVisible()) return false;
+            if (!isMenuClosed()) return false;
+            const adapter = this.app.host.adapter;
+            if (adapter) {
+                const snap = adapter.snapshot();
+                return Boolean(snap.playing || Number(snap.ownedCount) > 0);
+            }
+            return Boolean(this.app.state.player.alive);
+        }
+        isLocalAlive() {
+            return this.isLocalPlaying();
+        }
         resolveLocalColor() {
+            const sigfixApi = window.sigfix || this.app.host.adapter?.api;
+            if (sigfixApi?.world?.cells instanceof Map && sigfixApi.world.views) {
+                for (const view of sigfixApi.world.views.values()) {
+                    const owned = view?.owned;
+                    if (!owned) continue;
+                    for (const id of owned) {
+                        const cell = sigfixApi.world.cells.get(id);
+                        if (cell && typeof cell.red === 'number' && typeof cell.green === 'number' && typeof cell.blue === 'number') {
+                            const r = Math.min(255, Math.max(0, Math.round(cell.red * 255)));
+                            const g = Math.min(255, Math.max(0, Math.round(cell.green * 255)));
+                            const b = Math.min(255, Math.max(0, Math.round(cell.blue * 255)));
+                            return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+                        }
+                    }
+                }
+            }
             const adapter = this.app.host.adapter;
             if (adapter?.protocol?.cells && adapter.protocol.owned?.size > 0) {
                 for (const id of adapter.protocol.owned) {
@@ -11915,57 +12184,128 @@
             if (this.app.settings.game?.cellColor) {
                 return this.app.settings.game.cellColor;
             }
+            if (sigfixApi?.settings?.cellColor && typeof sigfixApi.settings.cellColor === 'string') {
+                return sigfixApi.settings.cellColor;
+            }
             return null;
         }
+        updateLocalNickname(rawNick) {
+            if (typeof rawNick !== 'string') return;
+            const nick = rawNick.trim() || 'Guest';
+            const changed = this.app.state.nickname !== nick;
+            this.app.state.nickname = nick;
+            const selfSid = String(this.app.state.backend.sid);
+            const selfMember = this.members.get(selfSid);
+            let memberNickChanged = false;
+            if (selfMember && selfMember.nick !== nick) {
+                selfMember.nick = nick;
+                memberNickChanged = true;
+            }
+            if (changed || memberNickChanged) {
+                this.app.backend.send('update-nick', nick);
+                this.requestRender();
+            }
+        }
         handlePlaySent(playData = null) {
+            const playNick = typeof playData?.name === 'string' && playData.name.trim() ? playData.name : null;
+            const inputNick = document.querySelector(SELECTORS.nickname)?.value?.trim() || null;
+            const activeNick = playNick || inputNick;
+            if (activeNick) {
+                this.updateLocalNickname(activeNick);
+            }
             this.localSkin = this.resolveLocalSkin(playData);
             this.localColor = this.resolveLocalColor();
-            this.localIsAlive = true;
+            this.lastStatusKey = null;
             this.publishMemberStatus();
-            this.render();
+            this.requestRender();
         }
         bindIdentityInputs() {
-            const tagInput = this.ensureTagInput();
-            const nicknameInput = document.querySelector(SELECTORS.nickname);
-            const playBtn = document.querySelector(SELECTORS.play);
-            if (playBtn instanceof HTMLElement) {
-                this.resources.listen(playBtn, 'click', () => {
-                    this.resources.timeout(() => this.handlePlaySent(), 60);
-                });
-            }
-            const urlTag = new URLSearchParams(location.search).get('tag')?.replace(/\/$/, '') || null;
-            if (urlTag) this.app.settingsStore.set('settings.tag', urlTag, true);
+            const setupNicknameInput = (input) => {
+                if (!(input instanceof HTMLInputElement) || input._nickBound) return;
+                input._nickBound = true;
+                if (input.value.trim()) {
+                    this.updateLocalNickname(input.value);
+                }
+                const onNickChange = () => {
+                    this.updateLocalNickname(input.value);
+                };
+                this.resources.listen(input, 'input', onNickChange);
+                this.resources.listen(input, 'change', onNickChange);
+                this.resources.listen(input, 'blur', onNickChange);
+            };
+            const initialNickInput = document.querySelector(SELECTORS.nickname);
+            if (initialNickInput instanceof HTMLInputElement) setupNicknameInput(initialNickInput);
+            const onPlayAction = () => {
+                const currentNick = document.querySelector(SELECTORS.nickname)?.value;
+                if (currentNick) this.updateLocalNickname(currentNick);
+                this.resources.timeout(() => this.handlePlaySent(), 60);
+            };
+            this.resources.listen(document, 'click', (event) => {
+                if (
+                    event.target instanceof Element &&
+                    event.target.closest(
+                        `${SELECTORS.play}, ${SELECTORS.continueButton}, #play-btn, #btn-play, #continue_button, .play-button`
+                    )
+                ) {
+                    onPlayAction();
+                }
+            });
+            this.resources.listen(document, 'keydown', (event) => {
+                if (event.key === 'Enter') {
+                    const active = document.activeElement;
+                    if (active instanceof HTMLInputElement && active.matches(SELECTORS.nickname)) {
+                        onPlayAction();
+                    }
+                }
+            });
+            const urlTag = new URLSearchParams(location.search).get('tag')?.replace(/\/$/, '')?.trim() || null;
+            if (urlTag) this.app.settingsStore.set('settings.tag', urlTag.slice(0, 3), true);
             const updateTagText = (value) => {
                 const tagText = document.querySelector('.tagText');
                 if (tagText) tagText.textContent = value ? `Tag: ${value}` : '';
             };
-            if (tagInput instanceof HTMLInputElement) {
-                tagInput.value = urlTag ?? this.app.settings.settings.tag ?? '';
-                tagInput.classList.toggle('blur', Boolean(this.app.settings.chat?.blurTag));
-                updateTagText(tagInput.value);
-                this.resources.listen(tagInput, 'input', (event) => {
+            let tagDebounceTimer = null;
+            const setupTagInput = (input) => {
+                if (!(input instanceof HTMLInputElement) || input._tagBound) return;
+                input._tagBound = true;
+                const currentTag = this.getTag() ?? '';
+                if (input.value !== currentTag) input.value = currentTag;
+                input.classList.toggle('blur', Boolean(this.app.settings.chat?.blurTag));
+                updateTagText(currentTag);
+                const onTagChange = (event) => {
                     event.stopPropagation();
-                    const value = tagInput.value.trim() || null;
-                    this.app.settingsStore.set('settings.tag', value, true);
-                });
-            }
-            if (nicknameInput instanceof HTMLInputElement) {
-                this.app.state.nickname = nicknameInput.value.trim() || 'Guest';
-                this.resources.listen(nicknameInput, 'input', () => {
-                    this.app.state.nickname = nicknameInput.value.trim() || 'Guest';
-                    this.app.backend.send('update-nick', this.app.state.nickname);
-                });
-            }
+                    if (tagDebounceTimer) clearTimeout(tagDebounceTimer);
+                    tagDebounceTimer = setTimeout(() => {
+                        const value = input.value.trim() ? input.value.trim().slice(0, 3) : null;
+                        this.app.settingsStore.set('settings.tag', value, true);
+                    }, 150);
+                };
+                this.resources.listen(input, 'input', onTagChange);
+                this.resources.listen(input, 'change', onTagChange);
+            };
+            let tagInput = this.ensureTagInput();
+            if (tagInput instanceof HTMLInputElement) setupTagInput(tagInput);
+            const observer = new MutationObserver(() => {
+                const currentInput = this.ensureTagInput();
+                if (currentInput instanceof HTMLInputElement && !currentInput._tagBound) {
+                    tagInput = currentInput;
+                    setupTagInput(tagInput);
+                }
+                const currentNickInput = document.querySelector(SELECTORS.nickname);
+                if (currentNickInput instanceof HTMLInputElement && !currentNickInput._nickBound) {
+                    setupNicknameInput(currentNickInput);
+                }
+            });
+            this.resources.observe(observer, document.body, { childList: true, subtree: true });
             this.resources.add(
                 this.app.settingsStore.onChange((path) => {
-                    const settings = this.app.settings.settings;
                     if (!path || path === 'settings.tag') {
-                        const value = settings.tag || null;
-                        if (tagInput instanceof HTMLInputElement && tagInput.value !== (value || '')) {
-                            tagInput.value = value || '';
+                        const tag = this.getTag();
+                        if (tagInput instanceof HTMLInputElement && tagInput.value !== (tag || '')) {
+                            tagInput.value = tag || '';
                         }
-                        this.app.backend.send('update-tag', value);
-                        updateTagText(value);
+                        this.app.backend.send('update-tag', tag);
+                        updateTagText(tag);
                         const minimap = this.app.features.get('minimap');
                         if (minimap) minimap.clear();
                         this.lastScore = null;
@@ -11973,17 +12313,24 @@
                         this.lastPositionKey = null;
                         this.syncPublishTimers();
                         this.members.clear();
-                        if (value && settings.showPartyPanel) {
+                        this.rowCache.forEach((row) => row.remove());
+                        this.rowCache.clear();
+                        const container = this.panel?.querySelector('#members_container');
+                        if (container) container.replaceChildren();
+                        this.expanded = false;
+                        if (this.shouldShowPanel()) {
                             this.ensurePanel();
-                            this.render();
+                            this.publishMemberStatus();
+                            this.publishScore();
+                            this.requestRender();
                         } else {
                             this.closePanel();
                         }
                     }
                     if (!path || path === 'settings.showPartyPanel') {
-                        if (settings.showPartyPanel && settings.tag) {
+                        if (this.shouldShowPanel()) {
                             this.ensurePanel();
-                            this.render();
+                            this.requestRender();
                         } else {
                             this.closePanel();
                         }
@@ -11996,7 +12343,8 @@
                         path === 'settings.partyBorderColor' ||
                         path === 'settings.partyBorderRadius' ||
                         path === 'settings.partyBlur' ||
-                        path === 'settings.partyCompact'
+                        path === 'settings.partyCompact' ||
+                        path === 'settings.partyShowHeader'
                     ) {
                         this.updateStyles();
                     }
@@ -12007,11 +12355,18 @@
                         path === 'settings.partyShowSkins' ||
                         path === 'settings.partyShowScores' ||
                         path === 'settings.partyShowIndexes' ||
+                        path === 'settings.partyShowHeader' ||
                         path === 'settings.partyShowHeaderTotals' ||
                         path === 'settings.partyShowPing' ||
                         path === 'settings.partyMaxMembers'
                     ) {
-                        this.render();
+                        this.rowCache.forEach((row) => row.remove());
+                        this.rowCache.clear();
+                        const container = this.panel?.querySelector('#members_container');
+                        if (container) container.replaceChildren();
+                        if (this.shouldShowPanel()) {
+                            this.requestRender();
+                        }
                     }
                     if (!path || path === 'chat.blurTag') {
                         if (tagInput instanceof HTMLInputElement) {
@@ -12025,11 +12380,17 @@
         updateStyles() {
             if (!this.panel) return;
             const settings = this.app.settings.settings;
+            this.panel.style.boxShadow = 'none';
             this.panel.style.transform = `scale(${settings.partyScale ?? 1})`;
             this.panel.style.transformOrigin = 'top left';
-            this.panel.style.backgroundColor = settings.partyBgColor ?? '#00000080';
+            this.panel.style.backgroundColor = settings.partyBgColor ?? 'rgba(0, 0, 0, 0.4)';
             this.panel.style.color = settings.partyTextColor ?? '#fafafa';
-            this.panel.style.borderColor = settings.partyBorderColor ?? '#ffffff26';
+            const borderColor = settings.partyBorderColor;
+            if (borderColor && borderColor !== 'transparent' && borderColor !== 'none') {
+                this.panel.style.border = `1px solid ${borderColor}`;
+            } else {
+                this.panel.style.border = 'none';
+            }
             this.panel.style.borderRadius = `${settings.partyBorderRadius ?? 6}px`;
             const blur = Number(settings.partyBlur) || 0;
             if (blur > 0) {
@@ -12040,13 +12401,24 @@
                 this.panel.style.webkitBackdropFilter = '';
             }
             this.panel.classList.toggle('is-compact', Boolean(settings.partyCompact));
-            this.panel.style.setProperty('--party-bg-color', settings.partyBgColor ?? '#00000080');
+            this.panel.style.setProperty('--party-bg-color', settings.partyBgColor ?? 'rgba(0, 0, 0, 0.4)');
             this.panel.style.setProperty('--party-text-color', settings.partyTextColor ?? '#fafafa');
-            this.panel.style.setProperty('--party-border-color', settings.partyBorderColor ?? '#ffffff26');
+            this.panel.style.setProperty('--party-border-color', settings.partyBorderColor ?? 'transparent');
+            const showHeader =
+                settings.partyShowHeader !== void 0 ? settings.partyShowHeader !== false : settings.partyShowHeaderTotals !== false;
+            const header = this.panel.querySelector('header');
+            if (header instanceof HTMLElement) {
+                header.style.display = showHeader ? 'flex' : 'none';
+            }
         }
         closePanel() {
             this.members.clear();
+            this.rowCache.clear();
             this.drag = null;
+            if (this.renderRaf) {
+                cancelAnimationFrame(this.renderRaf);
+                this.renderRaf = null;
+            }
             document.body.style.userSelect = '';
             if (this.panel) {
                 this.panel.remove();
@@ -12058,13 +12430,19 @@
             }
         }
         publishIdentity() {
-            this.app.backend.send('update-nick', this.app.state.nickname);
-            if (this.app.settings.settings.tag) {
-                this.app.backend.send('update-tag', this.app.settings.settings.tag);
+            const inputNick = document.querySelector(SELECTORS.nickname)?.value?.trim();
+            if (inputNick) {
+                this.updateLocalNickname(inputNick);
+            } else {
+                this.app.backend.send('update-nick', this.app.state.nickname);
+            }
+            const tag = this.getTag();
+            if (tag) {
+                this.app.backend.send('update-tag', tag);
             }
         }
         publishPosition() {
-            if (!this.app.settings.settings.tag) return;
+            if (!this.hasTag()) return;
             const position = this.app.host.adapter?.snapshot().position;
             if (position) {
                 const key = `${position.x}:${position.y}`;
@@ -12079,27 +12457,42 @@
             }
         }
         publishScore() {
-            if (!this.app.settings.settings.tag) return;
+            if (!this.hasTag()) return;
             const score = Math.round(this.app.host.adapter?.snapshot().score ?? 0);
             if (score === this.lastScore) return;
             this.lastScore = score;
             this.app.backend.send('score', score);
         }
         publishMemberStatus() {
-            if (!this.app.settings.settings.tag) return;
+            if (!this.hasTag()) return;
             const latency = this.app.host.adapter?.snapshot().latency ?? this.app.state.backend.latency ?? null;
-            const isAlive = !isDeadScreenVisible() && Boolean(this.app.host.adapter?.snapshot().playing);
-            this.localIsAlive = isAlive;
+            const isPlaying = this.isLocalPlaying();
+            if (isPlaying) {
+                this.localColor = this.resolveLocalColor() || this.localColor;
+                this.localSkin = this.resolveLocalSkin() || this.localSkin;
+            }
             const color = this.localColor || this.resolveLocalColor();
             const skin = this.localSkin || this.resolveLocalSkin();
+            this.localSkin = skin;
+            this.localColor = color;
+            const ping = latency !== null ? Math.round(latency) : null;
+            const key = `${skin || ''}|${color || ''}|${isPlaying}|${ping ?? ''}`;
+            if (key === this.lastStatusKey) return;
+            this.lastStatusKey = key;
             this.app.backend.send('party-member-update', {
                 skin,
                 color,
-                isAlive,
-                ping: latency !== null ? Math.round(latency) : null,
+                isAlive: isPlaying,
+                isPlaying,
+                ping,
             });
+            this.requestRender();
         }
         ensurePanel() {
+            if (!this.shouldShowPanel()) {
+                this.closePanel();
+                return null;
+            }
             if (this.panel?.isConnected) return this.panel;
             const panel = createElement('section', {
                 className: 'party_panel',
@@ -12107,7 +12500,11 @@
             const header = createElement('header', {
                 className: 'flex centerY justify-sb drag-handle',
             });
-            const title = createElement('strong', { text: 'Party' });
+            const currentTag = this.getTag();
+            const title = createElement('strong', {
+                attributes: { id: 'party_title' },
+                text: currentTag ? `Party ${currentTag}` : 'Party',
+            });
             const memberCount = createElement('span', {
                 attributes: { id: 'tag_member_len' },
                 text: '0',
@@ -12135,19 +12532,27 @@
             });
             totals.append(memberIcon, scoreIcon);
             header.append(title, totals);
+            const showHeader =
+                this.app.settings.settings.partyShowHeader !== void 0
+                    ? this.app.settings.settings.partyShowHeader !== false
+                    : this.app.settings.settings.partyShowHeaderTotals !== false;
+            header.style.display = showHeader ? 'flex' : 'none';
             panel.append(header, members);
-            panel.style.left = `${this.app.settings.settings.partyPanel.x ?? 4}px`;
-            panel.style.top = `${this.app.settings.settings.partyPanel.y ?? 300}px`;
+            panel.style.boxShadow = 'none';
+            panel.style.left = `${this.app.settings.settings.partyPanel.x ?? 10}px`;
+            panel.style.top = `${this.app.settings.settings.partyPanel.y ?? 85}px`;
             document.body.append(panel);
             this.panel = panel;
             this.updateStyles();
-            this.resources.listen(header, 'pointerdown', (event) => {
+            this.resources.listen(panel, 'pointerdown', (event) => {
+                if (this.drag) return;
+                if (event.target instanceof Element && event.target.closest('button, input, a, select')) return;
                 this.drag = {
                     pointerId: event.pointerId,
                     offsetX: event.clientX - panel.offsetLeft,
                     offsetY: event.clientY - panel.offsetTop,
                 };
-                header.setPointerCapture?.(event.pointerId);
+                panel.setPointerCapture?.(event.pointerId);
                 document.body.style.userSelect = 'none';
             });
             this.resources.listen(window, 'pointermove', (event) => {
@@ -12176,73 +12581,255 @@
         renderMembers(input) {
             if (!Array.isArray(input)) return;
             this.members.clear();
+            const selfSid = String(this.app.state.backend.sid);
+            const currentSelfNick =
+                (typeof this.app.state.nickname === 'string' && this.app.state.nickname.trim()) ||
+                document.querySelector(SELECTORS.nickname)?.value?.trim() ||
+                null;
             for (const member of input) {
                 if (!isObject(member) || member.id === void 0) continue;
-                this.members.set(String(member.id), {
-                    id: String(member.id),
+                const isPlaying = Boolean(member.isPlaying ?? member.isAlive);
+                const id = String(member.id);
+                const isSelf = id === selfSid;
+                this.members.set(id, {
+                    id,
                     tagIndex: Number(member.tagIndex) || 0,
-                    nick: typeof member.nick === 'string' ? member.nick : 'Unnamed',
+                    nick: (isSelf && currentSelfNick) || (typeof member.nick === 'string' ? member.nick : 'Unnamed'),
                     score: Number(member.score) || 0,
                     skin: typeof member.skin === 'string' ? member.skin : null,
                     color: typeof member.color === 'string' ? member.color : null,
-                    isAlive: member.isAlive !== false,
+                    isAlive: isPlaying,
+                    isPlaying,
                     ping: typeof member.ping === 'number' ? member.ping : null,
                 });
             }
-            this.render();
+            if (this.shouldShowPanel()) {
+                this.requestRender();
+            } else {
+                this.closePanel();
+            }
         }
         join(member) {
             if (!isObject(member) || member.id === void 0) return;
             const id = String(member.id);
             if (this.members.has(id)) return;
+            const isPlaying = Boolean(member.isPlaying ?? member.isAlive);
+            const selfSid = String(this.app.state.backend.sid);
+            const isSelf = id === selfSid;
+            const currentSelfNick = isSelf
+                ? (typeof this.app.state.nickname === 'string' && this.app.state.nickname.trim()) ||
+                  document.querySelector(SELECTORS.nickname)?.value?.trim() ||
+                  null
+                : null;
             this.members.set(id, {
                 id,
                 tagIndex: Number(member.tagIndex) || 0,
-                nick: typeof member.nick === 'string' ? member.nick : 'Unnamed',
+                nick: (isSelf && currentSelfNick) || (typeof member.nick === 'string' ? member.nick : 'Unnamed'),
                 score: Number(member.score) || 0,
                 skin: typeof member.skin === 'string' ? member.skin : null,
                 color: typeof member.color === 'string' ? member.color : null,
-                isAlive: member.isAlive !== false,
+                isAlive: isPlaying,
+                isPlaying,
                 ping: typeof member.ping === 'number' ? member.ping : null,
             });
-            this.render();
+            if (this.shouldShowPanel()) {
+                this.requestRender();
+            }
         }
         leave(id) {
             if (id === void 0 || !this.members.delete(String(id))) return;
-            this.render();
+            if (this.shouldShowPanel()) {
+                this.requestRender();
+            }
         }
         updateScore(update) {
             if (!isObject(update) || update.id === void 0) return;
             const member = this.members.get(String(update.id));
             if (!member) return;
             member.score = Number(update.score) || 0;
-            if (member.score > 0) member.isAlive = true;
-            this.render();
+            if (this.shouldShowPanel()) {
+                this.requestRender();
+            }
         }
         updateMemberStatus(data) {
             if (!isObject(data) || data.id === void 0) return;
             const member = this.members.get(String(data.id));
             if (!member) return;
+            const selfSid = String(this.app.state.backend.sid);
+            const isSelf = String(data.id) === selfSid;
+            if (data.nick !== void 0) {
+                if (isSelf && this.app.state.nickname) {
+                    member.nick = this.app.state.nickname;
+                } else {
+                    member.nick = typeof data.nick === 'string' ? data.nick : member.nick;
+                }
+            }
             if (data.skin !== void 0) member.skin = data.skin;
             if (data.color !== void 0) member.color = data.color;
-            if (data.isAlive !== void 0) member.isAlive = data.isAlive;
+            if (data.isPlaying !== void 0 || data.isAlive !== void 0) {
+                const isPlaying = Boolean(data.isPlaying ?? data.isAlive);
+                member.isPlaying = isPlaying;
+                member.isAlive = isPlaying;
+            }
             if (data.ping !== void 0) member.ping = data.ping;
-            this.render();
+            if (this.shouldShowPanel()) {
+                this.requestRender();
+            }
+        }
+        getCombinedMembers() {
+            const rawMembers = [...this.members.values()];
+            const selfSid = String(this.app.state.backend.sid);
+            const currentSelfNick =
+                (typeof this.app.state.nickname === 'string' && this.app.state.nickname.trim()) ||
+                (typeof this.members.get(selfSid)?.nick === 'string' && this.members.get(selfSid).nick.trim()) ||
+                document.querySelector(SELECTORS.nickname)?.value?.trim() ||
+                '';
+            const groups = /* @__PURE__ */ new Map();
+            for (const m of rawMembers) {
+                if (m.id === selfSid && currentSelfNick) {
+                    m.nick = currentSelfNick;
+                }
+                const key = m.nick || 'Unnamed';
+                if (!groups.has(key)) {
+                    groups.set(key, []);
+                }
+                groups.get(key).push(m);
+            }
+            const combined = [];
+            for (const [nick, list] of groups.entries()) {
+                if (list.length === 1) {
+                    const single = { ...list[0] };
+                    if (single.id === selfSid) {
+                        single.isSelf = true;
+                        if (currentSelfNick) single.nick = currentSelfNick;
+                        single.skin = this.localSkin || this.resolveLocalSkin() || single.skin || null;
+                        single.color = this.localColor || this.resolveLocalColor() || single.color || null;
+                        single.isPlaying = this.isLocalPlaying();
+                        single.isAlive = single.isPlaying;
+                    } else {
+                        single.isPlaying = Boolean(single.isPlaying ?? single.isAlive);
+                        single.isAlive = single.isPlaying;
+                    }
+                    combined.push(single);
+                    continue;
+                }
+                const hasSelf = list.some((m) => m.id === selfSid);
+                const totalScore = list.reduce((sum, m) => sum + (m.score || 0), 0);
+                const minTagIndex = Math.min(...list.map((m) => m.tagIndex || 9999));
+                const isAnyPlaying = hasSelf
+                    ? this.isLocalPlaying() || list.some((m) => m.id !== selfSid && Boolean(m.isPlaying ?? m.isAlive))
+                    : list.some((m) => Boolean(m.isPlaying ?? m.isAlive));
+                const rep =
+                    list.find((m) => Boolean(m.isPlaying ?? m.isAlive) && m.score > 0) ||
+                    list.find((m) => Boolean(m.isPlaying ?? m.isAlive)) ||
+                    list[0];
+                const skin =
+                    (hasSelf && (this.localSkin || this.resolveLocalSkin())) || list.find((m) => Boolean(m.skin))?.skin || rep.skin || null;
+                const color =
+                    (hasSelf && (this.localColor || this.resolveLocalColor())) ||
+                    list.find((m) => Boolean(m.color))?.color ||
+                    rep.color ||
+                    null;
+                const pings = list.map((m) => m.ping).filter((p) => typeof p === 'number' && Number.isFinite(p));
+                const ping = pings.length > 0 ? Math.round(pings.reduce((a, b) => a + b, 0) / pings.length) : rep.ping;
+                combined.push({
+                    id: rep.id,
+                    tagIndex: minTagIndex,
+                    nick: (hasSelf && currentSelfNick) || nick,
+                    score: totalScore,
+                    skin,
+                    color,
+                    isAlive: isAnyPlaying,
+                    isPlaying: isAnyPlaying,
+                    ping,
+                    isSelf: hasSelf,
+                });
+            }
+            return combined;
+        }
+        renderStatusIcon(wrap, member) {
+            const isPlaying = Boolean(member.isPlaying);
+            const skinUrl = isPlaying ? this.getSkinUrl(member.skin) : null;
+            const color = member.color || '#3b82f6';
+            const statusKey = `${isPlaying}|${skinUrl || ''}|${color}`;
+            if (wrap._statusKey === statusKey && wrap.firstElementChild) {
+                return;
+            }
+            wrap._statusKey = statusKey;
+            wrap.replaceChildren();
+            if (!isPlaying) {
+                const deadIcon = createElement('span', {
+                    className: 'party-avatar party-avatar-dead centerXY',
+                    attributes: { title: 'Dead / Menu' },
+                });
+                deadIcon.innerHTML = icon('skull', 12);
+                wrap.append(deadIcon);
+                return;
+            }
+            if (skinUrl) {
+                if (this.skinCache.get(skinUrl) === 'failed') {
+                    wrap.append(this.createColorAvatar(color));
+                    return;
+                }
+                const img = createElement('img', {
+                    className: 'party-avatar party-avatar-skin',
+                    attributes: {
+                        src: skinUrl,
+                        alt: member.nick || 'Avatar',
+                        title: member.nick || 'Avatar',
+                        crossorigin: 'anonymous',
+                    },
+                });
+                img.addEventListener(
+                    'error',
+                    () => {
+                        this.skinCache.set(skinUrl, 'failed');
+                        img.replaceWith(this.createColorAvatar(color));
+                    },
+                    { once: true }
+                );
+                img.addEventListener(
+                    'load',
+                    () => {
+                        this.skinCache.set(skinUrl, 'loaded');
+                    },
+                    { once: true }
+                );
+                wrap.append(img);
+            } else {
+                wrap.append(this.createColorAvatar(color));
+            }
         }
         render() {
+            if (!this.shouldShowPanel()) {
+                this.closePanel();
+                return;
+            }
             const panel = this.ensurePanel();
+            if (!panel) return;
             const container = panel.querySelector('#members_container');
             const count = panel.querySelector('#tag_member_len');
             const total = panel.querySelector('#tag_score');
             const totals = panel.querySelector('#tag_totals');
+            const title = panel.querySelector('#party_title');
             if (!container || !count || !total) return;
-            const settings = this.app.settings.settings;
-            if (totals instanceof HTMLElement) {
-                totals.style.display = settings.partyShowHeaderTotals !== false ? 'flex' : 'none';
+            const currentTag = this.getTag();
+            if (title) {
+                title.textContent = currentTag ? `Party ${currentTag}` : 'Party';
             }
-            container.replaceChildren();
+            const settings = this.app.settings.settings;
+            const showHeader =
+                settings.partyShowHeader !== void 0 ? settings.partyShowHeader !== false : settings.partyShowHeaderTotals !== false;
+            const header = panel.querySelector('header');
+            if (header instanceof HTMLElement) {
+                header.style.display = showHeader ? 'flex' : 'none';
+            }
+            if (totals instanceof HTMLElement) {
+                totals.style.display = 'flex';
+            }
+            const combinedList = this.getCombinedMembers();
             const sortMode = settings.partySort || 'index';
-            const sorted = [...this.members.values()].sort((a, b) => {
+            const sorted = combinedList.sort((a, b) => {
                 if (sortMode === 'score') {
                     return (b.score || 0) - (a.score || 0) || a.tagIndex - b.tagIndex;
                 }
@@ -12254,104 +12841,116 @@
             const maxMembers = Math.max(3, Number(settings.partyMaxMembers) || 10);
             const shouldLimit = sorted.length > maxMembers;
             const visibleMembers = shouldLimit && !this.expanded ? sorted.slice(0, maxMembers) : sorted;
+            const activeKeys = /* @__PURE__ */ new Set();
+            let previousRow = null;
             for (const member of visibleMembers) {
-                const isSelf = member.id === String(this.app.state.backend.sid);
-                if (isSelf) {
-                    if (this.localSkin && !member.skin) member.skin = this.localSkin;
-                    if (this.localColor && !member.color) member.color = this.localColor;
-                    member.isAlive = this.localIsAlive;
+                const isSelf = Boolean(member.isSelf || member.id === String(this.app.state.backend.sid));
+                const key = isSelf ? '__self__' : member.nick || member.id;
+                activeKeys.add(key);
+                const isPlaying = Boolean(member.isPlaying);
+                let row = this.rowCache.get(key);
+                if (!row) {
+                    row = createElement('div', { className: 'flex centerY g-2 tag-member-row' });
+                    row.style.setProperty('border', 'none', 'important');
+                    row.style.setProperty('border-left', 'none', 'important');
+                    const indexBadge = createElement('span', { className: 'tag-member-index' });
+                    const iconWrap = createElement('span', { className: 'party-status-wrap' });
+                    const nickEl = createElement('span', {
+                        className: 'tag-member-nick centerY',
+                        attributes: { style: 'gap: 4px;' },
+                    });
+                    const wifiWrap = createElement('span', { className: 'party-wifi-wrap centerY' });
+                    const scoreEl = createElement('span', { className: 'tag-member-score' });
+                    row.append(indexBadge, iconWrap, nickEl, wifiWrap, scoreEl);
+                    row._indexBadge = indexBadge;
+                    row._iconWrap = iconWrap;
+                    row._nickEl = nickEl;
+                    row._wifiWrap = wifiWrap;
+                    row._scoreEl = scoreEl;
+                    this.rowCache.set(key, row);
                 }
-                const isDead = member.isAlive === false;
-                const row = createElement('div', { className: 'flex centerY g-2 tag-member-row' });
-                if (isSelf && settings.partyHighlightSelf !== false) {
-                    row.classList.add('is-self');
-                }
-                if (isDead) {
-                    row.classList.add('is-dead');
-                }
+                row.classList.toggle('is-self', Boolean(isSelf && settings.partyHighlightSelf !== false));
+                row.classList.toggle('is-dead', !isPlaying);
                 if (settings.partyShowIndexes !== false) {
-                    row.append(
-                        createElement('span', {
-                            className: 'tag-member-index',
-                            text: member.tagIndex,
-                        })
-                    );
+                    row._indexBadge.style.display = '';
+                    row._indexBadge.textContent = String(member.tagIndex);
+                } else {
+                    row._indexBadge.style.display = 'none';
                 }
                 if (settings.partyShowSkins !== false) {
-                    let skinName = member.skin;
-                    if (!skinName) {
-                        const skinMatch2 = String(member.nick).match(/^\{(.*?)\}(.*)$/);
-                        if (skinMatch2) skinName = skinMatch2[1].replace(/\.png$/i, '');
-                    }
-                    if (isDead) {
-                        const deadIcon = createElement('span', {
-                            className: 'party-avatar party-avatar-dead centerXY',
-                            attributes: { title: 'Dead' },
-                        });
-                        deadIcon.innerHTML = icon('skull', 12);
-                        row.append(deadIcon);
-                    } else if (skinName) {
-                        const img = createElement('img', {
-                            className: 'party-avatar party-avatar-skin',
-                            attributes: {
-                                src: `https://sigmally.com/static/skins/${skinName}.png`,
-                                alt: skinName,
-                                title: skinName,
-                                onerror: "this.style.display='none'",
-                            },
-                        });
-                        row.append(img);
-                    } else {
-                        const colorCircle = createElement('span', {
-                            className: 'party-avatar party-avatar-color',
-                            attributes: {
-                                style: `background-color: ${member.color || '#3b82f6'};`,
-                                title: 'Cell color',
-                            },
-                        });
-                        row.append(colorCircle);
-                    }
+                    row._iconWrap.style.display = '';
+                    this.renderStatusIcon(row._iconWrap, member);
+                } else {
+                    row._iconWrap.style.display = 'none';
                 }
-                const skinMatch = String(member.nick).match(/^\{(.*?)\}(.*)$/);
-                const displayName = skinMatch ? skinMatch[2] : member.nick;
-                const nameContainer = createElement('span', {
-                    className: 'tag-member-nick centerY',
-                    attributes: { style: 'gap: 4px;' },
-                });
-                nameContainer.append(document.createTextNode(displayName));
-                if (isSelf && settings.partyHighlightSelf !== false) {
-                    nameContainer.append(createElement('span', { className: 'party-you-tag', text: 'YOU' }));
+                if (row._nickEl.textContent !== member.nick) {
+                    row._nickEl.textContent = member.nick;
                 }
-                row.append(nameContainer);
                 if (settings.partyShowPing) {
-                    const wifiWrap = createElement('span', { className: 'party-wifi-wrap centerY' });
+                    row._wifiWrap.style.display = '';
                     const currentPing = isSelf
                         ? (this.app.host.adapter?.snapshot().latency ?? this.app.state.backend.latency)
                         : member.ping;
-                    wifiWrap.innerHTML = renderWifiIcon(currentPing);
-                    row.append(wifiWrap);
+                    const wifiHtml = renderWifiIcon(currentPing);
+                    if (row._wifiWrap._html !== wifiHtml) {
+                        row._wifiWrap.innerHTML = wifiHtml;
+                        row._wifiWrap._html = wifiHtml;
+                    }
+                } else {
+                    row._wifiWrap.style.display = 'none';
                 }
                 if (settings.partyShowScores !== false) {
-                    row.append(
-                        createElement('span', {
-                            className: 'tag-member-score',
-                            text: member.score > 0 ? this.formatScore(member.score) : '',
-                        })
-                    );
+                    row._scoreEl.style.display = '';
+                    const scoreText = member.score > 0 ? this.formatScore(member.score) : '';
+                    if (row._scoreEl.textContent !== scoreText) {
+                        row._scoreEl.textContent = scoreText;
+                    }
+                } else {
+                    row._scoreEl.style.display = 'none';
                 }
-                container.append(row);
+                if (previousRow) {
+                    if (previousRow.nextSibling !== row) {
+                        container.insertBefore(row, previousRow.nextSibling);
+                    }
+                } else {
+                    if (container.firstElementChild !== row) {
+                        container.insertBefore(row, container.firstElementChild);
+                    }
+                }
+                previousRow = row;
             }
+            for (const [key, cachedRow] of this.rowCache.entries()) {
+                if (!activeKeys.has(key)) {
+                    cachedRow.remove();
+                    this.rowCache.delete(key);
+                }
+            }
+            const currentActiveRows = new Set(this.rowCache.values());
+            for (const child of [...container.children]) {
+                if (child.classList.contains('tag-member-row') && !currentActiveRows.has(child)) {
+                    child.remove();
+                }
+            }
+            let expandBtn = container.querySelector('.party-expand-btn');
             if (shouldLimit) {
-                const expandBtn = createElement('button', {
-                    type: 'button',
-                    className: 'party-expand-btn',
-                    text: this.expanded ? 'Show less' : `+${sorted.length - maxMembers} more`,
-                });
-                this.resources.listen(expandBtn, 'click', () => {
-                    this.expanded = !this.expanded;
-                    this.render();
-                });
-                container.append(expandBtn);
+                const btnText = this.expanded ? 'Show less' : `+${sorted.length - maxMembers} more`;
+                if (!expandBtn) {
+                    expandBtn = createElement('button', {
+                        type: 'button',
+                        className: 'party-expand-btn',
+                        text: btnText,
+                    });
+                    this.resources.listen(expandBtn, 'click', () => {
+                        this.expanded = !this.expanded;
+                        this.requestRender();
+                    });
+                    container.append(expandBtn);
+                } else {
+                    expandBtn.textContent = btnText;
+                    container.append(expandBtn);
+                }
+            } else if (expandBtn) {
+                expandBtn.remove();
             }
             count.textContent = String(sorted.length);
             total.textContent = this.formatScore(sorted.reduce((sum, member) => sum + (member.score || 0), 0));
@@ -12361,6 +12960,12 @@
         }
         destroy() {
             document.body.style.userSelect = '';
+            if (this.renderRaf) {
+                cancelAnimationFrame(this.renderRaf);
+                this.renderRaf = null;
+            }
+            this.rowCache.clear();
+            this.skinCache.clear();
             this.panel = null;
             this.members.clear();
             super.destroy();
@@ -12502,8 +13107,10 @@
         }
         async mount() {
             const documentRoot = document;
-            this.resources.interval(() => this.syncSigFixHeldFeed(), 500);
-            this.resources.listen(documentRoot, 'sigmod:settingchange', () => this.syncSigFixHeldFeed());
+            this.syncHostKeybindings();
+            this.resources.interval(() => this.syncHostKeybindings(), 250);
+            this.resources.listen(documentRoot, 'sigmod:settingchange', () => this.syncHostKeybindings());
+            this.resources.add(this.app.settingsStore.onChange(() => this.syncHostKeybindings()));
             this.resources.listen(documentRoot, 'keydown', (event) => this.handleKeyDown(event));
             this.resources.listen(documentRoot, 'keyup', (event) => this.handleKeyUp(event));
             this.resources.listen(
@@ -12537,8 +13144,9 @@
             this.resources.add(
                 this.app.host.on('change', (adapter) => {
                     this.stopFeeding();
+                    this.syncHostKeybindings();
                     if (!this.lockPosition) return;
-                    adapter.setMovementOverride(this.lockPosition);
+                    adapter.setMovementOverride({ ...this.lockPosition, lock: this.lock });
                 })
             );
             if (this.app.inputOwnership) {
@@ -12552,8 +13160,13 @@
         }
         syncSigFixHeldFeed() {
             if (this.adapter?.kind !== 'sigfix' || this.app.inputOwnership?.owns('keys', 'rapidFeed')) return;
-            const settings = this.adapter.api?.sigmod?.settings;
+            const settings = this.adapter.api?.sigmod?.settings ?? window.sigfix?.sigmod?.settings;
             if (settings && settings.rapidFeedKey !== 'w') settings.rapidFeedKey = 'w';
+        }
+        syncHostKeybindings() {
+            const keys = this.app.settingsStore.get('macros.keys');
+            syncSigFixKeybindings(keys);
+            this.syncSigFixHeldFeed();
         }
         /** @returns {Point|null} */
         getPlayerPosition() {
@@ -12579,7 +13192,7 @@
                 if (remaining <= 0 || this.resources.disposed) return;
                 remaining -= 1;
                 this.split(1);
-                if (remaining > 0) this.resources.timeout(run, 20);
+                if (remaining > 0) this.resources.timeout(run, 45);
             };
             run();
         }
@@ -12788,7 +13401,7 @@
             this.adapter?.sendMove(position.x, position.y);
             this.lock = kind;
             this.lockPosition = position;
-            this.adapter?.setMovementOverride(position);
+            this.adapter?.setMovementOverride({ ...position, lock: kind });
             this.showLockOverlay(kind);
             const instantSplit = this.app.settings.macros.keys.line.instantSplit;
             if (Number(instantSplit) > 0) {
@@ -12830,12 +13443,12 @@
             const { x, y } = this.lockPosition;
             this.adapter?.setMovementOverride(null);
             this.adapter?.sendMove(x, y - 100);
-            this.adapter?.setMovementOverride(this.lockPosition);
+            this.adapter?.setMovementOverride({ ...this.lockPosition, lock: 'vertical' });
             this.resources.timeout(() => {
                 if (generation !== this.verticalMoveGeneration || this.lock !== 'vertical') return;
                 this.adapter?.setMovementOverride(null);
                 this.adapter?.sendMove(x, y);
-                this.adapter?.setMovementOverride(this.lockPosition);
+                this.adapter?.setMovementOverride({ ...this.lockPosition, lock: 'vertical' });
             }, 50);
         }
         sendLocation() {
@@ -12910,12 +13523,20 @@
         }
         fastRespawn() {
             const score = this.app.currentPlayerScore();
-            if (this.adapter?.kind === 'sigfix' || score >= 5500) return;
-            this.app.sendChat('/leaveworld');
-            this.resources.timeout(() => {
-                this.clickRespawnControls();
-                this.resources.timeout(() => this.getPlayButton()?.click(), TIMING.uiTransition);
-            }, 50);
+            if (score >= 5500) return;
+            if (this.adapter?.kind === 'sigfix' && typeof this.adapter.respawn === 'function') {
+                if (this.adapter.respawn()) return;
+            }
+            if (score > 0) {
+                this.app.sendChat('/leaveworld');
+            }
+            this.resources.timeout(
+                () => {
+                    this.clickRespawnControls();
+                    this.resources.timeout(() => this.getPlayButton()?.click(), TIMING.uiTransition);
+                },
+                score > 0 ? 50 : 0
+            );
         }
         checkAutoRespawn() {
             if (!this.app.settings.settings.autoRespawn || !isDeadScreenVisible()) return;
@@ -14997,6 +15618,7 @@
                 ['autoRespawn', 'Auto Respawn', this.app.settings.settings.autoRespawn],
                 ['autoClaimCoins', 'Auto claim coins', this.app.settings.settings.autoClaimCoins],
                 ['showPosition', 'Position', false],
+                ['moreZoom', 'Zoomout', false],
             ];
             const hostSettings = readLocalJson(STORAGE.gameSettings, {});
             for (const [id, labelText, fallback] of entries) {
@@ -15030,9 +15652,15 @@
                     });
                 } else {
                     input.checked = typeof hostSettings[id] === 'boolean' ? hostSettings[id] : fallback;
+                    if (id === 'moreZoom' && window.sigfix?.aux?.settings) {
+                        window.sigfix.aux.settings.zoomout = input.checked;
+                    }
                     this.resources.listen(input, 'change', () => {
                         const settings = readLocalJson(STORAGE.gameSettings, {});
                         settings[id] = input.checked;
+                        if (id === 'moreZoom' && window.sigfix?.aux?.settings) {
+                            window.sigfix.aux.settings.zoomout = input.checked;
+                        }
                         if (!writeLocalJson(STORAGE.gameSettings, settings)) {
                             this.app.logger.warnOnce(`host-setting-${id}`, `Unable to save ${id}`);
                         }
@@ -17922,6 +18550,15 @@
         }
         render(announcements) {
             this.container.replaceChildren();
+            if (!announcements.length) {
+                this.container.append(
+                    createElement('div', {
+                        className: 'mod-announcements-empty',
+                        text: 'No announcements yet...',
+                    })
+                );
+                return;
+            }
             for (const announcement of announcements) {
                 const id = String(announcement._id ?? announcement.id ?? '');
                 if (!id) continue;
@@ -17986,67 +18623,117 @@
                 className: 'mod_tab scroll sigmod-announcement-tab',
                 attributes: { id: 'announcement-tab', 'data-mod-panel': '' },
             });
-            const header = createElement('div', {
-                className: 'centerY justify-sb',
+            const navBar = createElement('div', {
+                className: 'sigmod-announcement-nav',
             });
-            const identity = createElement('div', { className: 'centerY g-5' });
+            const back = createElement('button', {
+                className: 'sigmod-announcement-back-btn',
+                attributes: { type: 'button', id: 'mod-announcement-back' },
+            });
+            back.innerHTML = `${icon('arrowLeft', 16)}<span>Back</span>`;
+            navBar.append(back);
+            const isPinned = Boolean(data.preview?.pinned ?? data.pinned);
+            if (isPinned) {
+                const pinnedBadge = createElement('div', {
+                    className: 'sigmod-announcement-pinned-pill',
+                });
+                pinnedBadge.innerHTML = `${icon('pushPin', 13)}<span>Pinned</span>`;
+                navBar.append(pinnedBadge);
+            }
+            const heroCard = createElement('div', {
+                className: 'sigmod-announcement-hero',
+            });
             const iconUrl = safeHttpUrl(data.preview?.icon ?? data.icon ?? '', true);
+            if (iconUrl) {
+                const iconImg = createElement('img', {
+                    className: 'sigmod-announcement-hero-icon',
+                    attributes: {
+                        src: iconUrl,
+                        alt: '',
+                        width: '44',
+                        height: '44',
+                        draggable: 'false',
+                    },
+                });
+                heroCard.append(iconImg);
+            }
             const titleGroup = createElement('div', {
-                className: 'f-column centerX',
+                className: 'sigmod-announcement-hero-text',
             });
+            const title = String(data.full?.title ?? data.preview?.title ?? data.title ?? 'Announcement');
             titleGroup.append(
                 createElement('h2', {
-                    text: String(data.full?.title ?? data.title ?? 'Announcement'),
+                    className: 'sigmod-announcement-hero-title',
+                    text: title,
                 })
             );
-            const date = data.date ?? data.createdAt;
-            titleGroup.append(
-                createElement('span', {
-                    className: 'sigmod-announcement-date',
-                    text: date ? new Date(date).toLocaleDateString() : '',
-                })
-            );
-            if (iconUrl) {
-                identity.append(
-                    createElement('img', {
-                        className: 'sigmod-announcement-icon',
-                        attributes: {
-                            src: iconUrl,
-                            width: '64',
-                            draggable: 'false',
-                        },
+            const rawDate = data.date ?? data.createdAt;
+            let formattedDate = '';
+            if (rawDate) {
+                const d = new Date(rawDate);
+                if (!Number.isNaN(d.getTime())) {
+                    formattedDate = d.toLocaleDateString(void 0, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                    });
+                } else {
+                    formattedDate = String(rawDate);
+                }
+            }
+            if (formattedDate) {
+                titleGroup.append(
+                    createElement('span', {
+                        className: 'sigmod-announcement-hero-date',
+                        text: formattedDate,
                     })
                 );
             }
-            identity.append(titleGroup);
-            const back = createElement('button', {
-                className: 'modButton-black sigmod-announcement-back',
-                text: 'Back',
-                attributes: { type: 'button', id: 'mod-announcement-back' },
+            heroCard.append(titleGroup);
+            const card = createElement('div', {
+                className: 'mod-announcement-content sigmod-announcement-card',
             });
-            header.append(identity, back);
-            const content = createElement('div', {
-                className: 'mod-announcement-content',
+            const descriptionHtml = String(data.full?.description ?? data.description ?? '');
+            const body = createElement('div', {
+                className: 'sigmod-announcement-body',
             });
-            const description = createElement('div', {
-                className: 'f-column g-10 scroll',
-                text: data.full?.description ?? data.description ?? '',
-            });
-            const images = createElement('div', {
-                className: 'mod-announcement-images scroll',
-            });
-            const imageList = Array.isArray(data.full?.images) ? data.full.images : [];
-            for (const image of imageList) {
-                const imageUrl = safeHttpUrl(image, true);
-                if (!imageUrl) continue;
-                const img = createElement('img', {
-                    attributes: { src: imageUrl },
-                });
-                img.addEventListener('click', () => window.open(imageUrl, '_blank', 'noopener'));
-                images.append(img);
+            body.innerHTML = descriptionHtml;
+            for (const link of body.querySelectorAll('a')) {
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
             }
-            content.append(description, images);
-            tab.append(header, content);
+            card.append(body);
+            const imageList = Array.isArray(data.full?.images) ? data.full.images : [];
+            const validImages = imageList.map((img) => safeHttpUrl(img, true)).filter(Boolean);
+            if (validImages.length > 0) {
+                const gallerySection = createElement('div', {
+                    className: 'sigmod-announcement-gallery-section',
+                });
+                gallerySection.append(
+                    createElement('div', {
+                        className: 'sigmod-announcement-gallery-label',
+                        text: `Attached Images (${validImages.length})`,
+                    })
+                );
+                const gallery = createElement('div', {
+                    className: 'sigmod-announcement-gallery',
+                });
+                for (const imgUrl of validImages) {
+                    const img = createElement('img', {
+                        className: 'sigmod-announcement-gallery-thumb',
+                        attributes: {
+                            src: imgUrl,
+                            alt: '',
+                            loading: 'lazy',
+                        },
+                    });
+                    img.addEventListener('click', () => window.open(imgUrl, '_blank', 'noopener,noreferrer'));
+                    gallery.append(img);
+                }
+                gallerySection.append(gallery);
+                card.append(gallerySection);
+            }
+            tab.append(navBar, heroCard, card);
             menuContent.append(tab);
             menu.openTab('announcement-tab');
             this.resources.listen(back, 'click', () => {

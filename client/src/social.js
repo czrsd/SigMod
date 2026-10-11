@@ -2232,6 +2232,15 @@ class AnnouncementsController extends FeatureController {
     }
     render(announcements) {
         this.container.replaceChildren();
+        if (!announcements.length) {
+            this.container.append(
+                createElement('div', {
+                    className: 'mod-announcements-empty',
+                    text: 'No announcements yet...',
+                })
+            );
+            return;
+        }
         for (const announcement of announcements) {
             const id = String(announcement._id ?? announcement.id ?? '');
             if (!id) continue;
@@ -2292,71 +2301,128 @@ class AnnouncementsController extends FeatureController {
         if (!(menuContent instanceof HTMLElement)) return;
         const existing = menuContent.querySelector('#announcement-tab');
         existing?.remove();
+
         const tab = createElement('section', {
             className: 'mod_tab scroll sigmod-announcement-tab',
             attributes: { id: 'announcement-tab', 'data-mod-panel': '' },
         });
-        const header = createElement('div', {
-            className: 'centerY justify-sb',
+
+        const navBar = createElement('div', {
+            className: 'sigmod-announcement-nav',
         });
-        const identity = createElement('div', { className: 'centerY g-5' });
+        const back = createElement('button', {
+            className: 'sigmod-announcement-back-btn',
+            attributes: { type: 'button', id: 'mod-announcement-back' },
+        });
+        back.innerHTML = `${icon('arrowLeft', 16)}<span>Back</span>`;
+        navBar.append(back);
+
+        const isPinned = Boolean(data.preview?.pinned ?? data.pinned);
+        if (isPinned) {
+            const pinnedBadge = createElement('div', {
+                className: 'sigmod-announcement-pinned-pill',
+            });
+            pinnedBadge.innerHTML = `${icon('pushPin', 13)}<span>Pinned</span>`;
+            navBar.append(pinnedBadge);
+        }
+
+        const heroCard = createElement('div', {
+            className: 'sigmod-announcement-hero',
+        });
         const iconUrl = safeHttpUrl(data.preview?.icon ?? data.icon ?? '', true);
+        if (iconUrl) {
+            const iconImg = createElement('img', {
+                className: 'sigmod-announcement-hero-icon',
+                attributes: {
+                    src: iconUrl,
+                    alt: '',
+                    width: '44',
+                    height: '44',
+                    draggable: 'false',
+                },
+            });
+            heroCard.append(iconImg);
+        }
         const titleGroup = createElement('div', {
-            className: 'f-column centerX',
+            className: 'sigmod-announcement-hero-text',
         });
+        const title = String(data.full?.title ?? data.preview?.title ?? data.title ?? 'Announcement');
         titleGroup.append(
             createElement('h2', {
-                text: String(data.full?.title ?? data.title ?? 'Announcement'),
+                className: 'sigmod-announcement-hero-title',
+                text: title,
             })
         );
-        const date = data.date ?? data.createdAt;
-        titleGroup.append(
-            createElement('span', {
-                className: 'sigmod-announcement-date',
-                text: date ? new Date(date).toLocaleDateString() : '',
-            })
-        );
-        if (iconUrl) {
-            identity.append(
-                createElement('img', {
-                    className: 'sigmod-announcement-icon',
-                    attributes: {
-                        src: iconUrl,
-                        width: '64',
-                        draggable: 'false',
-                    },
+        const rawDate = data.date ?? data.createdAt;
+        let formattedDate = '';
+        if (rawDate) {
+            const d = new Date(rawDate);
+            if (!Number.isNaN(d.getTime())) {
+                formattedDate = d.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                });
+            } else {
+                formattedDate = String(rawDate);
+            }
+        }
+        if (formattedDate) {
+            titleGroup.append(
+                createElement('span', {
+                    className: 'sigmod-announcement-hero-date',
+                    text: formattedDate,
                 })
             );
         }
-        identity.append(titleGroup);
-        const back = createElement('button', {
-            className: 'modButton-black sigmod-announcement-back',
-            text: 'Back',
-            attributes: { type: 'button', id: 'mod-announcement-back' },
+        heroCard.append(titleGroup);
+
+        const card = createElement('div', {
+            className: 'mod-announcement-content sigmod-announcement-card',
         });
-        header.append(identity, back);
-        const content = createElement('div', {
-            className: 'mod-announcement-content',
+        const descriptionHtml = String(data.full?.description ?? data.description ?? '');
+        const body = createElement('div', {
+            className: 'sigmod-announcement-body',
         });
-        const description = createElement('div', {
-            className: 'f-column g-10 scroll',
-            text: data.full?.description ?? data.description ?? '',
-        });
-        const images = createElement('div', {
-            className: 'mod-announcement-images scroll',
-        });
-        const imageList = Array.isArray(data.full?.images) ? data.full.images : [];
-        for (const image of imageList) {
-            const imageUrl = safeHttpUrl(image, true);
-            if (!imageUrl) continue;
-            const img = createElement('img', {
-                attributes: { src: imageUrl },
-            });
-            img.addEventListener('click', () => window.open(imageUrl, '_blank', 'noopener'));
-            images.append(img);
+        body.innerHTML = descriptionHtml;
+        for (const link of body.querySelectorAll('a')) {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
         }
-        content.append(description, images);
-        tab.append(header, content);
+        card.append(body);
+
+        const imageList = Array.isArray(data.full?.images) ? data.full.images : [];
+        const validImages = imageList.map((img) => safeHttpUrl(img, true)).filter(Boolean);
+        if (validImages.length > 0) {
+            const gallerySection = createElement('div', {
+                className: 'sigmod-announcement-gallery-section',
+            });
+            gallerySection.append(
+                createElement('div', {
+                    className: 'sigmod-announcement-gallery-label',
+                    text: `Attached Images (${validImages.length})`,
+                })
+            );
+            const gallery = createElement('div', {
+                className: 'sigmod-announcement-gallery',
+            });
+            for (const imgUrl of validImages) {
+                const img = createElement('img', {
+                    className: 'sigmod-announcement-gallery-thumb',
+                    attributes: {
+                        src: imgUrl,
+                        alt: '',
+                        loading: 'lazy',
+                    },
+                });
+                img.addEventListener('click', () => window.open(imgUrl, '_blank', 'noopener,noreferrer'));
+                gallery.append(img);
+            }
+            gallerySection.append(gallery);
+            card.append(gallerySection);
+        }
+
+        tab.append(navBar, heroCard, card);
         menuContent.append(tab);
         menu.openTab('announcement-tab');
         this.resources.listen(back, 'click', () => {

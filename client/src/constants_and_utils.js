@@ -66,6 +66,11 @@ const ICONS = {
         content:
             '<path fill="currentColor" d="M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z"></path>',
     },
+    arrowLeft: {
+        viewBox: '0 0 24 24',
+        content:
+            '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"></path>',
+    },
     house: {
         viewBox: '0 0 64 64',
         content:
@@ -458,6 +463,7 @@ const STANDARD_MOUSE_BUTTONS = [
  * @property {boolean} partyShowSkins
  * @property {boolean} partyShowScores
  * @property {boolean} partyShowIndexes
+ * @property {boolean} partyShowHeader
  * @property {boolean} partyShowHeaderTotals
  * @property {boolean} partyShowPing
  * @property {number} partyMaxMembers
@@ -568,12 +574,12 @@ const DEFAULT_SETTINGS = {
     },
     settings: {
         tag: null,
-        partyPanel: { x: 4, y: 300 },
+        partyPanel: { x: 10, y: 85 },
         showPartyPanel: true,
         partyScale: 1,
-        partyBgColor: '#00000080',
+        partyBgColor: 'rgba(0, 0, 0, 0.4)',
         partyTextColor: '#fafafa',
-        partyBorderColor: '#ffffff26',
+        partyBorderColor: 'transparent',
         partyBorderRadius: 6,
         partyBlur: 0,
         partyCompact: false,
@@ -582,6 +588,7 @@ const DEFAULT_SETTINGS = {
         partyShowSkins: true,
         partyShowScores: true,
         partyShowIndexes: true,
+        partyShowHeader: true,
         partyShowHeaderTotals: true,
         partyShowPing: false,
         partyMaxMembers: 10,
@@ -676,6 +683,7 @@ const ALL_KEYBIND_DEFINITIONS = [
     { path: 'macros.keys.toggle.names', label: 'Toggle names' },
     { path: 'macros.keys.toggle.skins', label: 'Toggle skins' },
     { path: 'macros.keys.toggle.autoRespawn', label: 'Toggle autorespawn' },
+    { path: 'macros.keys.toggle.party', label: 'Toggle party panel' },
 ];
 const ALL_KEYBIND_PATHS = new Set(ALL_KEYBIND_DEFINITIONS.map((item) => item.path));
 const isKeybindSettingPath = (path) => typeof path === 'string' && ALL_KEYBIND_PATHS.has(path);
@@ -790,10 +798,7 @@ const mergeKnown = (defaults, input, path = '') => {
     const result = {};
     for (const [key, fallback] of Object.entries(defaults)) {
         const nextPath = path ? `${path}.${key}` : key;
-        const inputValue =
-            (isObject(input) && key in input) || (Array.isArray(input) && own(input, key))
-                ? input[key]
-                : undefined;
+        const inputValue = (isObject(input) && key in input) || (Array.isArray(input) && own(input, key)) ? input[key] : undefined;
         result[key] = mergeKnown(fallback, inputValue, nextPath);
     }
     return result;
@@ -810,7 +815,7 @@ const extractKeybindsFromSettings = (settings) => {
     for (const { path } of ALL_KEYBIND_DEFINITIONS) {
         const raw = getPath(settings, path);
         const val = unwrapSettingScalar(raw);
-        const normalized = val === null || val === undefined || val === '' ? null : (typeof val === 'string' ? val.toLowerCase() : null);
+        const normalized = val === null || val === undefined || val === '' ? null : typeof val === 'string' ? val.toLowerCase() : null;
         setPath(keys, path.slice('macros.keys.'.length), normalized);
     }
     return keys;
@@ -829,6 +834,35 @@ const replaceInPlace = (target, source) => {
         else target[key] = clone(value);
     }
     return target;
+};
+const syncSigFixKeybindings = (keys) => {
+    try {
+        const sigfixSettings = window.sigfix?.sigmod?.settings;
+        if (!sigfixSettings || !isObject(keys)) return;
+        const norm = (val) => {
+            const raw = unwrapSettingScalar(val);
+            return typeof raw === 'string' && raw.length ? raw.toLowerCase() : undefined;
+        };
+        const doubleKey = norm(keys.splits?.double);
+        const tripleKey = norm(keys.splits?.triple);
+        const quadKey = norm(keys.splits?.quad);
+        const respawnKey = norm(keys.respawn);
+        const hLineKey = norm(keys.line?.horizontal);
+        const vLineKey = norm(keys.line?.vertical);
+        const fLineKey = norm(keys.line?.fixed);
+        const rapidKey = norm(keys.rapidFeed);
+
+        if (sigfixSettings.doubleKey !== doubleKey) sigfixSettings.doubleKey = doubleKey;
+        if (sigfixSettings.tripleKey !== tripleKey) sigfixSettings.tripleKey = tripleKey;
+        if (sigfixSettings.quadKey !== quadKey) sigfixSettings.quadKey = quadKey;
+        if (sigfixSettings.respawnKey !== respawnKey) sigfixSettings.respawnKey = respawnKey;
+        if (sigfixSettings.horizontalLineKey !== hLineKey) sigfixSettings.horizontalLineKey = hLineKey;
+        if (sigfixSettings.verticalLineKey !== vLineKey) sigfixSettings.verticalLineKey = vLineKey;
+        if (sigfixSettings.fixedLineKey !== fLineKey) sigfixSettings.fixedLineKey = fLineKey;
+        if (rapidKey && sigfixSettings.rapidFeedKey !== rapidKey) sigfixSettings.rapidFeedKey = rapidKey;
+    } catch {
+        // Ignore host adapter access errors
+    }
 };
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~ Persistent data stores                                                            ~

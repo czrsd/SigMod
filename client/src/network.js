@@ -315,8 +315,28 @@ class NativeProtocol extends Emitter {
             if (!protocol.movementOverride || !protocol.isMovementPacket(data)) {
                 return protocol.rawSend(data);
             }
-            const { x, y } = protocol.movementOverride;
-            return protocol.rawSend(protocol.createMovePacket(x, y));
+            const override = protocol.movementOverride;
+            let targetX = override.x;
+            let targetY = override.y;
+            if (override.lock === 'horizontal' || override.lock === 'vertical') {
+                try {
+                    const reader = new PacketReader(data);
+                    reader.skip(1);
+                    const mouseX = reader.int32LE();
+                    const mouseY = reader.int32LE();
+                    if (override.lock === 'horizontal') {
+                        targetX = mouseX;
+                        targetY = override.y;
+                    } else if (override.lock === 'vertical') {
+                        targetX = override.x;
+                        targetY = mouseY;
+                    }
+                } catch {
+                    targetX = override.x;
+                    targetY = override.y;
+                }
+            }
+            return protocol.rawSend(protocol.createMovePacket(targetX, targetY));
         };
         resources.patch(socket, 'send', sendFacade);
         resources.listen(socket, 'open', () => this.emit('open'));
@@ -358,8 +378,22 @@ class NativeProtocol extends Emitter {
     }
     sendMove(x, y) {
         if (!this.canSend()) return false;
-        const target = this.movementOverride ?? { x, y };
-        return this.send(this.createMovePacket(target.x, target.y));
+        const override = this.movementOverride;
+        let targetX = x;
+        let targetY = y;
+        if (override) {
+            if (override.lock === 'horizontal') {
+                targetX = x;
+                targetY = override.y;
+            } else if (override.lock === 'vertical') {
+                targetX = override.x;
+                targetY = y;
+            } else {
+                targetX = override.x;
+                targetY = override.y;
+            }
+        }
+        return this.send(this.createMovePacket(targetX, targetY));
     }
     createMovePacket(x, y) {
         const int32 = (value) => clamp(Number.isFinite(Number(value)) ? Math.trunc(Number(value)) : 0, -0x80000000, 0x7fffffff);
@@ -554,7 +588,11 @@ class NativeProtocol extends Emitter {
         const snapshot = this.worldSnapshot();
         this.emit('world-update', snapshot);
         this.emit('world', snapshot);
-        if (!snapshot.playing) this.emit('play-state', false);
+        const isPlaying = Boolean(snapshot.playing);
+        if (this.lastPlayState !== isPlaying) {
+            this.lastPlayState = isPlaying;
+            this.emit('play-state', isPlaying);
+        }
     }
     trackKill(killerId, killedId) {
         if (!this.owned.has(killerId)) return;
@@ -819,7 +857,17 @@ class SigFixHostAdapter extends HostAdapter {
         const originalMove = this.api.net.move;
         const moveFacade = function (view, x, y) {
             if (adapter.movementOverride && view === adapter.api.world.selected) {
-                return originalMove.call(this, view, adapter.movementOverride.x, adapter.movementOverride.y);
+                const override = adapter.movementOverride;
+                let targetX = override.x;
+                let targetY = override.y;
+                if (override.lock === 'horizontal') {
+                    targetX = x;
+                    targetY = override.y;
+                } else if (override.lock === 'vertical') {
+                    targetX = override.x;
+                    targetY = y;
+                }
+                return originalMove.call(this, view, targetX, targetY);
             }
             return originalMove.call(this, view, x, y);
         };
@@ -876,7 +924,11 @@ class SigFixHostAdapter extends HostAdapter {
                     const snapshot = this.snapshot();
                     const split = this.lastOwnedCount > 0 && snapshot.ownedCount > this.lastOwnedCount;
                     this.emit('owned-cell', { id, split });
-                    this.emit('play-state', snapshot.playing);
+                    const isPlaying = Boolean(snapshot.playing);
+                    if (this.lastPlayState !== isPlaying) {
+                        this.lastPlayState = isPlaying;
+                        this.emit('play-state', isPlaying);
+                    }
                     this.lastOwnedCount = snapshot.ownedCount;
                     break;
                 }
@@ -885,7 +937,10 @@ class SigFixHostAdapter extends HostAdapter {
                     this.killedPlayers.clear();
                     this.lastOwnedCount = 0;
                     this.leaderboard.finish();
-                    this.emit('play-state', false);
+                    if (this.lastPlayState !== false) {
+                        this.lastPlayState = false;
+                        this.emit('play-state', false);
+                    }
                     break;
                 case OPCODE.border:
                     this.invalidateSnapshot();
@@ -991,7 +1046,11 @@ class SigFixHostAdapter extends HostAdapter {
         this.lastOwnedCount = snapshot.ownedCount;
         this.emit('world-update', snapshot);
         this.emit('world', snapshot);
-        if (!snapshot.playing) this.emit('play-state', false);
+        const isPlaying = Boolean(snapshot.playing);
+        if (this.lastPlayState !== isPlaying) {
+            this.lastPlayState = isPlaying;
+            this.emit('play-state', isPlaying);
+        }
     }
     remainingBuffer(reader) {
         const start = reader.view.byteOffset + reader.offset;
@@ -1075,9 +1134,22 @@ class SigFixHostAdapter extends HostAdapter {
     }
     sendMove(x, y) {
         if (!this.isReady()) return false;
-        const target = this.movementOverride ?? { x, y };
+        let targetX = x;
+        let targetY = y;
+        if (this.movementOverride) {
+            if (this.movementOverride.lock === 'horizontal') {
+                targetX = x;
+                targetY = this.movementOverride.y;
+            } else if (this.movementOverride.lock === 'vertical') {
+                targetX = this.movementOverride.x;
+                targetY = y;
+            } else {
+                targetX = this.movementOverride.x;
+                targetY = this.movementOverride.y;
+            }
+        }
         try {
-            this.api.net.move(this.api.world.selected, target.x, target.y);
+            this.api.net.move(this.api.world.selected, targetX, targetY);
             return true;
         } catch (error) {
             this.logger.warnOnce('sigfix-send-move', 'Unable to send movement through SigFix', error);
@@ -1100,6 +1172,26 @@ class SigFixHostAdapter extends HostAdapter {
             this.logger.warnOnce(`sigfix-send-${action}`, 'Unable to send action through SigFix', error);
             return false;
         }
+    }
+    respawn() {
+        if (!this.isReady()) return false;
+        try {
+            const view = this.api.world?.selected;
+            if (view === undefined) return false;
+            const name = typeof this.api.input?.name === 'function' ? this.api.input.name(view) : '';
+            const playData = typeof this.api.input?.playData === 'function' ? this.api.input.playData(name, false) : { name, skin: '' };
+            if (typeof this.api.net?.respawn === 'function') {
+                this.api.net.respawn(view, playData);
+                return true;
+            }
+            if (typeof this.api.net?.play === 'function') {
+                this.api.net.play(view, playData);
+                return true;
+            }
+        } catch (error) {
+            this.logger.warnOnce('sigfix-respawn', 'Unable to respawn through SigFix API', error);
+        }
+        return false;
     }
     setMovementOverride(position) {
         this.movementOverride = position;
@@ -1199,8 +1291,10 @@ class BackendClient extends Emitter {
             this.app.state.backend.connected = true;
             this.send('version', BUILD.serverVersion);
             this.send('server-changed', getGameMode());
-            if (this.connectedCount > 1 && this.app.state.nickname) {
-                this.send('update-nick', this.app.state.nickname);
+            const currentNick = document.querySelector(SELECTORS.nickname)?.value?.trim() || this.app.state.nickname;
+            if (currentNick) {
+                this.app.state.nickname = currentNick;
+                this.send('update-nick', currentNick);
             }
             this.emit('open');
         });

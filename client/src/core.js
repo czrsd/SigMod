@@ -956,13 +956,28 @@ class SettingsStore {
             value.themes[key] = normalizeBoolean(value.themes[key], this.defaults.themes[key]);
         }
         value.settings.pingDuration = clamp(Number(value.settings.pingDuration) || 2_000, 250, 30_000);
-        value.settings.savedNames = [...new Set(value.settings.savedNames.filter((name) => typeof name === 'string'))];
-        value.settings.partyPanel.x = Number.isFinite(Number(value.settings.partyPanel.x)) ? Number(value.settings.partyPanel.x) : 0;
-        value.settings.partyPanel.y = Number.isFinite(Number(value.settings.partyPanel.y)) ? Number(value.settings.partyPanel.y) : 0;
+        const defaultPartyX = 10;
+        const defaultPartyY = 85;
+        const currentPartyX = Number(value.settings.partyPanel?.x);
+        const currentPartyY = Number(value.settings.partyPanel?.y);
+        if (
+            !Number.isFinite(currentPartyX) ||
+            !Number.isFinite(currentPartyY) ||
+            (currentPartyX === 0 && currentPartyY === 0) ||
+            (currentPartyX === 4 && currentPartyY === 300) ||
+            (currentPartyX <= 15 && currentPartyY < 75)
+        ) {
+            value.settings.partyPanel.x = defaultPartyX;
+            value.settings.partyPanel.y = defaultPartyY;
+        } else {
+            value.settings.partyPanel.x = currentPartyX;
+            value.settings.partyPanel.y = currentPartyY;
+        }
         value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
-        value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : '#00000080';
+        value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : 'rgba(0, 0, 0, 0.4)';
         value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
-        value.settings.partyBorderColor = typeof value.settings.partyBorderColor === 'string' ? value.settings.partyBorderColor : '#ffffff26';
+        value.settings.partyBorderColor =
+            typeof value.settings.partyBorderColor === 'string' ? value.settings.partyBorderColor : 'transparent';
         value.settings.partyBorderRadius = clamp(Number(value.settings.partyBorderRadius) ?? 6, 0, 20);
         value.settings.partyBlur = clamp(Number(value.settings.partyBlur) ?? 0, 0, 20);
         value.settings.partyMaxMembers = clamp(Number(value.settings.partyMaxMembers) || 10, 3, 50);
@@ -1044,6 +1059,7 @@ class SettingsStore {
             'partyShowSkins',
             'partyShowScores',
             'partyShowIndexes',
+            'partyShowHeader',
             'partyShowHeaderTotals',
             'partyShowPing',
             'mergeTimer',
@@ -1087,6 +1103,7 @@ class SettingsStore {
         this.normalize(next);
         this.savedKeys = extractKeybindsFromSettings(next);
         replaceInPlace(this.value, next);
+        syncSigFixKeybindings(this.savedKeys);
         if (immediate) this.flush();
         else this.flushLater();
         this.notifyChange(path);
@@ -1097,17 +1114,30 @@ class SettingsStore {
         next.macros.keys = extractKeybindsFromSettings(this.value);
         replaceInPlace(this.value, this.normalize(next));
         this.savedKeys = extractKeybindsFromSettings(this.value);
+        syncSigFixKeybindings(this.savedKeys);
         if (immediate) this.flush();
         else this.flushLater();
         this.notifyChange(null);
     }
     reset(path = null) {
-        if (!path) replaceInPlace(this.value, this.defaults);
-        else setPath(this.value, path, clone(getPath(this.defaults, path)));
-        if (!path) this.savedKeys = clone(this.defaults.macros.keys);
-        else if (path === 'macros' || path === 'macros.keys') this.savedKeys = clone(this.defaults.macros.keys);
-        else if (path.startsWith('macros.keys.'))
-            setPath(this.savedKeys, path.slice('macros.keys.'.length), clone(getPath(this.defaults, path)));
+        if (!path) {
+            replaceInPlace(this.value, this.defaults);
+            this.savedKeys = clone(this.defaults.macros.keys);
+        } else {
+            const targetVal = getPath(this.value, path);
+            const defaultVal = getPath(this.defaults, path);
+            if (isObject(targetVal) && isObject(defaultVal)) {
+                replaceInPlace(targetVal, defaultVal);
+            } else {
+                setPath(this.value, path, clone(defaultVal));
+            }
+            if (path === 'macros' || path === 'macros.keys') {
+                this.savedKeys = clone(this.defaults.macros.keys);
+            } else if (path.startsWith('macros.keys.')) {
+                setPath(this.savedKeys, path.slice('macros.keys.'.length), clone(defaultVal));
+            }
+        }
+        syncSigFixKeybindings(this.savedKeys);
         this.flush();
         this.notifyChange(path);
     }
@@ -1124,6 +1154,7 @@ class SettingsStore {
         const next = this.normalize(merged);
         this.savedKeys = extractKeybindsFromSettings(next);
         replaceInPlace(this.value, next);
+        syncSigFixKeybindings(this.savedKeys);
         this.flush();
         this.notifyChange(null);
         return this.value;
@@ -1264,13 +1295,25 @@ class InputOwnership extends Emitter {
     owns(type, value) {
         const adapter = this.app.host.adapter;
         if (adapter?.kind !== 'sigfix') return false;
+        if (type === 'keys') {
+            const sigfixDefaultKeys = new Set([
+                'respawn',
+                'line.horizontal',
+                'line.vertical',
+                'line.fixed',
+                'splits.double',
+                'splits.triple',
+                'splits.quad',
+            ]);
+            if (sigfixDefaultKeys.has(value)) return true;
+        }
         for (const claim of this.claims) {
             if (claim.api === adapter.api && claim[type].has(value)) return true;
         }
         return false;
     }
     ownsKeyEvent(event) {
-        if (!this.claims.size || this.app.host.adapter?.kind !== 'sigfix') return false;
+        if (this.app.host.adapter?.kind !== 'sigfix') return false;
         for (const path of this.supportedKeys) {
             if (this.owns('keys', path) && keybindMatchesEvent(event, this.app.settingsStore.get(`macros.keys.${path}`))) return true;
         }

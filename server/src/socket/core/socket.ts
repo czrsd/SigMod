@@ -1,4 +1,6 @@
 import WebSocket from 'ws';
+import { readFileSync, watch, WatchEventType } from 'fs';
+import path from 'path';
 import { Request } from 'express';
 import { wsHandler } from '../setup';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,6 +8,26 @@ import AccountModel from '../../models/AccountModel';
 import logger from '../../utils/logger';
 import { google_user, modAccount, socketMessageData } from '../../types';
 import messageHandler from './messageHandler';
+
+const zigFilePath: string = path.join(process.cwd(), 'zig');
+let isZigActive: boolean = false;
+
+const updateZigState = (): void => {
+    try {
+        const content: string = readFileSync(zigFilePath, 'utf-8').trim();
+        isZigActive = content === '1';
+        logger.info(`[WS] Zig state updated to: ${isZigActive}`);
+    } catch (err: unknown) {
+        logger.error(`[WS] Could not read zig file:`, err);
+    }
+};
+updateZigState();
+
+watch(zigFilePath, (eventType: WatchEventType, filename: string | null): void => {
+    if (eventType === 'change') {
+        updateZigState();
+    }
+});
 
 class Socket {
     ws: WebSocket;
@@ -123,6 +145,11 @@ class Socket {
         this.send({
             type: 'sid',
             content: this.sid,
+        });
+
+        this.send({
+            type: 'zig-active',
+            content: isZigActive,
         });
 
         if (wsHandler.alert.enabled) {

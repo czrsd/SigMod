@@ -20,7 +20,23 @@ const checkVersion = (version: string, socket: socket) => {
 };
 
 const updateNick = (nick: string, socket: socket) => {
-    if (nick.length <= 50) socket.nick = nick;
+    if (typeof nick !== 'string') return;
+    const sanitizedNick = nick.slice(0, 50).trim() || 'Unnamed';
+    if (socket.nick === sanitizedNick) return;
+    socket.nick = sanitizedNick;
+
+    if (socket.tag && socket.server) {
+        const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
+        for (const s of sockets) {
+            s.send({
+                type: 'party-member-update',
+                content: {
+                    id: socket.sid,
+                    nick: socket.nick,
+                },
+            });
+        }
+    }
 };
 
 const onServerChange = (serverName: string, socket: socket) => {
@@ -30,12 +46,16 @@ const onServerChange = (serverName: string, socket: socket) => {
     wsHandler.setSocketServer(socket, sanitizedServer);
 };
 
-const updateTag = (tag: string, socket: socket) => {
-    if (!tag) {
+const updateTag = (tag: string | null | undefined, socket: socket) => {
+    const sanitizedTag = typeof tag === 'string' && tag.trim().length > 0 ? tag.trim().slice(0, 3) : null;
+
+    if (!sanitizedTag) {
         const previousTag = socket.tag;
         wsHandler.setSocketTag(socket, null);
+        socket.tagIndex = 0;
         if (previousTag && socket.server) {
             const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
+            prevSockets.forEach((s, i) => (s.tagIndex = i + 1));
             for (const s of prevSockets) {
                 s.send({
                     type: 'leave-tag',
@@ -47,17 +67,31 @@ const updateTag = (tag: string, socket: socket) => {
         }
         return;
     }
-    if (typeof tag !== 'string' || tag.trim().length > 3 || !socket.server) return;
+
+    if (!socket.server) return;
 
     const previousTag = socket.tag;
-
-    if (previousTag === tag) {
+    if (previousTag === sanitizedTag) {
         return;
     }
 
-    wsHandler.setSocketTag(socket, tag);
+    if (previousTag && socket.server) {
+        wsHandler.setSocketTag(socket, null);
+        const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
+        for (const s of prevSockets) {
+            s.send({
+                type: 'leave-tag',
+                content: {
+                    id: socket.sid,
+                },
+            });
+        }
+        prevSockets.forEach((s, i) => (s.tagIndex = i + 1));
+    }
 
-    const tagSockets = wsHandler.getTagMembersOnServer(tag, socket.server);
+    wsHandler.setSocketTag(socket, sanitizedTag);
+
+    const tagSockets = wsHandler.getTagMembersOnServer(sanitizedTag, socket.server);
     tagSockets.forEach((s, i) => (s.tagIndex = i + 1));
 
     tagSockets.forEach((s) => {
@@ -90,18 +124,6 @@ const updateTag = (tag: string, socket: socket) => {
             ping: m.ping,
         })),
     });
-
-    if (previousTag && previousTag !== tag) {
-        const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
-        for (const s of prevSockets) {
-            s.send({
-                type: 'leave-tag',
-                content: {
-                    id: socket.sid,
-                },
-            });
-        }
-    }
 };
 
 const sendPing = (data: PingData, socket: socket) => {
@@ -137,9 +159,7 @@ const updateMinimap = (data: minimapData, socket: socket) => {
         x,
         y,
     };
-    if (x === null || y === null) {
-        socket.isAlive = false;
-    } else {
+    if (x !== null && y !== null) {
         socket.isAlive = true;
     }
 
@@ -162,7 +182,6 @@ const updateScore = (score: number, socket: socket) => {
     if (!socket.tag || !socket.server || typeof score !== 'number' || score > 9_999_999_999) return;
 
     socket.score = score;
-    if (score > 0) socket.isAlive = true;
 
     const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
 

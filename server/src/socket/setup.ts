@@ -13,11 +13,11 @@ wss.on('connection', (ws: WebSocket, req: Request) => {
 // Periodic heartbeat to clean up dead/zombie sockets
 const heartbeatInterval = setInterval(() => {
     for (const socket of wsHandler.sockets.values()) {
-        if (!socket.isAlive) {
+        if (!socket.isWsAlive) {
             socket.ws.terminate();
             continue;
         }
-        socket.isAlive = false;
+        socket.isWsAlive = false;
         socket.ws.ping();
     }
 }, 30000);

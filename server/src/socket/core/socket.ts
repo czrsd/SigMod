@@ -23,7 +23,8 @@ class Socket {
         x: number | null;
         y: number | null;
     };
-    isAlive: boolean = true;
+    isAlive: boolean = false;
+    isWsAlive: boolean = true;
     skin: string | null = null;
     color: string | null = null;
     ping: number | null = null;
@@ -115,7 +116,7 @@ class Socket {
         this.ws.on('error', (e: any) => this.onError(e));
         this.ws.on('close', () => this.onClose());
         this.ws.on('pong', () => {
-            this.isAlive = true;
+            this.isWsAlive = true;
         });
 
         // assign socket id to client

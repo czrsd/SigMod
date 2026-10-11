@@ -496,7 +496,9 @@ button:focus {
 }
 .text {
     user-select: none;
-    font-weight: 500;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.15px;
     text-align: left;
 }
 .modButton {
@@ -1672,6 +1674,7 @@ button:focus {
 
 .setting-card-name {
     font-size: 16px;
+    font-weight: 600;
     user-select: none;
     width: 100%;
 }
@@ -2421,23 +2424,28 @@ button:focus {
 
 .party_panel {
     position: absolute;
-    padding: 6px;
+    padding: 4px;
     color: var(--party-text-color, #fafafa);
-    background-color: var(--party-bg-color, rgba(0, 0, 0, 0.5));
-    border: 1px solid var(--party-border-color, rgba(255, 255, 255, 0.15));
+    background-color: var(--party-bg-color, rgba(0, 0, 0, 0.4));
+    border: none;
     border-radius: 6px;
-    min-width: 150px;
+    min-width: 120px;
     z-index: 3;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
     user-select: none;
     box-sizing: border-box;
     transition: background-color 0.15s ease, border-color 0.15s ease, border-radius 0.15s ease;
+    cursor: grab;
+}
+
+.party_panel:active {
+    cursor: grabbing;
 }
 
 .party_panel.is-compact {
-    padding: 3px;
+    padding: 2px;
     font-size: 11px;
-    min-width: 130px;
+    min-width: 110px;
 }
 
 .drag-handle {
@@ -2446,17 +2454,21 @@ button:focus {
 
 .party_panel .drag-handle {
     gap: 8px;
-    margin-bottom: 4px;
-    font-size: 12px;
+    margin-bottom: 3px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .party_panel.is-compact .drag-handle {
     margin-bottom: 2px;
-    font-size: 11px;
+    font-size: 11.5px;
+    font-weight: 600;
 }
 
 .party_panel .tag-member-row {
     padding: 2px 4px;
+    border: none !important;
+    border-left: none !important;
     border-radius: 4px;
     transition: background-color 0.15s ease;
     box-sizing: border-box;
@@ -2468,8 +2480,9 @@ button:focus {
 }
 
 .party_panel .tag-member-row.is-self {
-    background: rgba(59, 130, 246, 0.22);
-    border-left: 2px solid #3b82f6;
+    background: rgba(255, 255, 255, 0.08);
+    border: none !important;
+    border-left: none !important;
     font-weight: 600;
 }
 
@@ -2477,30 +2490,29 @@ button:focus {
     opacity: 0.55;
 }
 
-.party-you-tag {
+.party-status-wrap {
     display: inline-flex;
     align-items: center;
-    font-size: 9px;
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: #3b82f6;
-    color: #ffffff;
-    font-weight: 700;
-    line-height: 1;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
 }
 
-.party_panel.is-compact .party-you-tag {
-    font-size: 8px;
-    padding: 0 3px;
+.party_panel.is-compact .party-status-wrap {
+    width: 12px;
+    height: 12px;
 }
 
 .party-avatar {
     width: 14px;
     height: 14px;
+    min-width: 14px;
+    min-height: 14px;
     border-radius: 50%;
     flex-shrink: 0;
+    display: inline-block;
+    box-sizing: border-box;
 }
 
 .party-avatar-skin {
@@ -2509,8 +2521,8 @@ button:focus {
 }
 
 .party-avatar-color {
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
 }
 
 .party-avatar-dead {
@@ -2523,6 +2535,8 @@ button:focus {
 .party_panel.is-compact .party-avatar {
     width: 12px;
     height: 12px;
+    min-width: 12px;
+    min-height: 12px;
 }
 
 .party-wifi-wrap {
@@ -2539,8 +2553,9 @@ button:focus {
 
 .tag-member-score {
     margin-left: auto;
-    font-size: 11px;
-    opacity: 0.85;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.9;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
@@ -2550,7 +2565,8 @@ button:focus {
 }
 
 .party_panel.is-compact .tag-member-score {
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .party-expand-btn {
@@ -2577,16 +2593,20 @@ button:focus {
 
 .tag-member-index {
     color: currentColor;
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .party_panel.is-compact .tag-member-index {
-    font-size: 11px;
+    font-size: 11.5px;
+    font-weight: 600;
 }
 
 .tag-member-nick {
     margin-left: 2px;
     margin-right: 4px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .tag-ping-container {
@@ -4205,29 +4225,49 @@ button[disabled] {
     padding-right: 4px;
 }
 
+.mod-announcements-empty {
+    color: #898989;
+    font-size: 12px;
+    text-align: center;
+    padding: 16px 0;
+}
+
 .mod-announcement {
-    background: #111111;
-    border-radius: 4px;
+    background: #111114;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
     display: flex;
-    gap: 3px;
+    align-items: center;
+    gap: 8px;
     width: 100%;
     cursor: pointer;
-    padding: 5px 8px;
+    padding: 6px 10px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    box-sizing: border-box;
+}
+
+.mod-announcement:hover {
+    background: #18181c;
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .mod-announcement-icon {
     border-radius: 50%;
-    width: 35px;
-    height: 35px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
     align-self: center;
+    object-fit: cover;
 }
 
 .mod-announcement-text {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     overflow: hidden;
     flex-grow: 1;
+    min-width: 0;
 }
 
 .mod-announcement-text > * {
@@ -4237,13 +4277,15 @@ button[disabled] {
 }
 
 .mod-announcement-text span {
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 600;
     color: #ffffff;
     flex-shrink: 0;
 }
 
+.mod-announcement-text div,
 .mod-announcement-text p {
-    font-size: 10px;
+    font-size: 11px;
     color: #898989;
     flex-shrink: 0;
     margin: 0;
@@ -4255,40 +4297,140 @@ button[disabled] {
     gap: 10px;
 }
 
-.mod-announcement-content {
+.mod-announcement-content,
+.sigmod-announcement-card {
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    background-color: #0d0d0d;
-    padding: 10px;
-    border-radius: 10px;
-    background-image: url('https://czrsd.com/static/general/bg_blur.png');
-    background-repeat: no-repeat;
-    background-position: 300px 40%;
-    background-size: cover;
+    flex-direction: column;
+    gap: 12px;
+    background-color: #0d0d0f;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-sizing: border-box;
 }
 
+.sigmod-announcement-body {
+    color: #d1d5db;
+    font-size: 13px;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.sigmod-announcement-body p,
 .mod-announcement-content p {
-    text-align: justify;
-    max-height: 330px;
-    overflow-y: auto;
-    padding-right: 10px;
+    text-align: left;
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+    margin: 0 0 10px 0;
+    color: #d1d5db;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.sigmod-announcement-body p:last-child {
+    margin-bottom: 0;
+}
+
+.sigmod-announcement-body a,
+.mod-announcement-content a {
+    color: #9d6eff;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.sigmod-announcement-body a:hover,
+.mod-announcement-content a:hover {
+    color: #be9dff;
+}
+
+.sigmod-announcement-body strong,
+.mod-announcement-content strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.sigmod-announcement-body .f-big,
+.sigmod-announcement-body strong.f-big,
+.mod-announcement-content .f-big {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 14px 0 6px 0;
+}
+
+.sigmod-announcement-body ul,
+.sigmod-announcement-body ol,
+.mod-announcement-content ul,
+.mod-announcement-content ol {
+    margin: 6px 0 12px 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sigmod-announcement-body li,
+.mod-announcement-content li {
+    color: #d1d5db;
+    line-height: 1.55;
+    font-size: 13px;
+}
+
+.sigmod-announcement-body li strong,
+.mod-announcement-content li strong {
+    color: #ffffff;
+}
+
+.sigmod-announcement-gallery-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sigmod-announcement-gallery-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #898989;
+}
+
+.sigmod-announcement-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.sigmod-announcement-gallery-thumb,
+.mod-announcement-images img {
+    width: 100%;
+    height: 85px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.sigmod-announcement-gallery-thumb:hover,
+.mod-announcement-images img:hover {
+    transform: scale(1.02);
+    border-color: rgba(157, 110, 255, 0.6);
 }
 
 .mod-announcement-images {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    min-width: 30%;
-    width: 30%;
+    gap: 10px;
     max-height: 330px;
-    padding-right: 10px;
     overflow-y: auto;
-}
-
-.mod-announcement-images img {
-    border-radius: 5px;
-    cursor: pointer;
 }
 
 #image-gallery {
@@ -4521,6 +4663,13 @@ html.sigmod-hide-ads #modalfolks {
 .settings-item.macroRow,
 .settings-item.stats-line {
     width: 100%;
+}
+
+.settings-item .text,
+.macroRow .text {
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.15px;
 }
 
 .name-save-row {
@@ -6044,11 +6193,96 @@ html.sigmod-hide-ads #modalfolks {
 #imageUpload {
     display: none;
 }
+.sigmod-announcement-tab {
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.sigmod-announcement-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+    flex-shrink: 0;
+}
+.sigmod-announcement-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #e4e4e7;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.sigmod-announcement-back-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+}
+.sigmod-announcement-pinned-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: rgba(138, 37, 229, 0.18);
+    border: 1px solid rgba(138, 37, 229, 0.38);
+    border-radius: 5px;
+    color: #c084fc;
+    font-size: 11px;
+    font-weight: 600;
+}
+.sigmod-announcement-hero {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #111114;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.sigmod-announcement-hero-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.3);
+}
+.sigmod-announcement-hero-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+.sigmod-announcement-hero-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.3;
+    word-break: break-word;
+}
+.sigmod-announcement-hero-date {
+    font-size: 11.5px;
+    color: #898989;
+}
 .sigmod-announcement-date {
-    color: #7e7e7e;
+    color: #898989;
 }
 .sigmod-announcement-back {
-    width: 20%;
+    width: auto;
+    padding: 5px 12px;
 }
 .sigmod-avatar,
 .sigmod-announcement-icon {
@@ -6074,14 +6308,12 @@ html.sigmod-hide-ads #modalfolks {
     margin-top: 26px;
 }
 .sigmod-announcement-pinned {
-    align-self: start;
-    width: 22px;
-    min-width: 22px;
+    align-self: center;
+    width: 18px;
+    min-width: 18px;
     display: flex;
-    color: inherit;
-}
-.sigmod-announcement-tab {
-    padding-right: 4px;
+    color: #c084fc;
+    margin-left: auto;
 }
 .sigmod-zig-ad-logo {
     border-radius: 8px;

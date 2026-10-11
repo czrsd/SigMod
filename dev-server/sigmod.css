@@ -2434,7 +2434,10 @@ button:focus {
     box-shadow: none;
     user-select: none;
     box-sizing: border-box;
-    transition: background-color 0.15s ease, border-color 0.15s ease, border-radius 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        border-radius 0.15s ease;
     cursor: grab;
 }
 
@@ -2582,7 +2585,9 @@ button:focus {
     width: 100%;
     cursor: pointer;
     text-align: center;
-    transition: background 0.15s ease, opacity 0.15s ease;
+    transition:
+        background 0.15s ease,
+        opacity 0.15s ease;
     opacity: 0.85;
 }
 
@@ -3370,8 +3375,7 @@ button:focus {
     justify-content: space-between;
     gap: 8px;
     padding: 11px 12px;
-    border: 1px solid #202020;
-    border-left: 0;
+    border: none;
     border-radius: 7px;
     background: #0d0d0d;
     color: #fafafa;
@@ -3383,7 +3387,7 @@ button:focus {
 }
 
 .mod-category-card:hover {
-    background: #101010;
+    background: #1c1c1c;
     transform: translateY(-1px);
 }
 
@@ -4242,7 +4246,9 @@ button[disabled] {
     width: 100%;
     cursor: pointer;
     padding: 6px 10px;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
     box-sizing: border-box;
 }
 
@@ -4416,7 +4422,9 @@ button[disabled] {
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .sigmod-announcement-gallery-thumb:hover,
@@ -6219,7 +6227,10 @@ html.sigmod-hide-ads #modalfolks {
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
 }
 .sigmod-announcement-back-btn:hover {
     background: rgba(255, 255, 255, 0.12);
@@ -7162,7 +7173,6 @@ html.sigmod-hide-ads #modalfolks {
     }
 }
 
-
 /* SigMod Keybindings Styling */
 .keybinding-wrapper {
     position: relative;
@@ -7186,7 +7196,10 @@ html.sigmod-hide-ads #modalfolks {
     text-align: center;
     letter-spacing: 0.5px;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
     user-select: none;
     box-sizing: border-box;
 }
@@ -7242,7 +7255,10 @@ html.sigmod-hide-ads #modalfolks {
     padding: 0;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease;
 }
 
 .keybinding-wrapper:hover .keybinding-clear,
@@ -7256,7 +7272,7 @@ html.sigmod-hide-ads #modalfolks {
     color: #fff;
 }
 
-.keybinding-wrapper[data-has-value="false"] .keybinding-clear,
+.keybinding-wrapper[data-has-value='false'] .keybinding-clear,
 .keybinding.is-recording ~ .keybinding-clear {
     display: none !important;
 }
@@ -7287,8 +7303,14 @@ html.sigmod-hide-ads #modalfolks {
 }
 
 @keyframes tipFadeIn {
-    from { opacity: 0; transform: translate(-50%, -4px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+    from {
+        opacity: 0;
+        transform: translate(-50%, -4px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
 }
 
 .keybinding-conflict-modal {
@@ -7421,5 +7443,3 @@ html.sigmod-hide-ads #modalfolks {
     align-items: center;
     gap: 4px 6px;
 }
-
-

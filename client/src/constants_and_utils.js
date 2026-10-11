@@ -574,7 +574,7 @@ const DEFAULT_SETTINGS = {
     },
     settings: {
         tag: null,
-        partyPanel: { x: 10, y: 85 },
+        partyPanel: { x: 4, y: 300 },
         showPartyPanel: true,
         partyScale: 1,
         partyBgColor: 'rgba(0, 0, 0, 0.4)',

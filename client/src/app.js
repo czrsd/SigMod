@@ -372,6 +372,7 @@ const warmUpStartPageMouse = (resources) => {
 let zigAdDismissed = false;
 let zigAdClosedForSession = false;
 let zigAdEnabled = DEFAULT_SETTINGS.themes.showZigPopup;
+let zigActive = false;
 let zigAdMenuWasVisible = false;
 let zigAdSyncFrame = 0;
 let zigAdDomObserver = null;
@@ -456,7 +457,7 @@ const bindZigAdHostObservers = () => {
 
 const syncZigAd = () => {
     zigAdSyncFrame = 0;
-    if (!zigAdEnabled) {
+    if (!zigActive || !zigAdEnabled) {
         removeZigAd();
         return;
     }
@@ -559,8 +560,8 @@ const bindZigAdLifecycle = (resources = null) => {
 
 const insertZigAd = (resources = null) => {
     bindZigAdLifecycle(resources);
-    if (!zigAdEnabled || hasZigGlobal() || zigAdDismissed || document.querySelector('.zig-ad')) {
-        if (hasZigGlobal()) removeZigAd();
+    if (!zigActive || !zigAdEnabled || hasZigGlobal() || zigAdDismissed || document.querySelector('.zig-ad')) {
+        if (!zigActive || hasZigGlobal()) removeZigAd();
         return;
     }
 
@@ -612,5 +613,12 @@ window.__sigmodApp = app;
 app.resources.add(() => {
     if (window.__sigmodApp === app) delete window.__sigmodApp;
 });
+app.resources.add(
+    app.backend.on('zig-active', (active) => {
+        zigActive = Boolean(active);
+        if (!zigActive) removeZigAd();
+        else syncZigAd();
+    })
+);
 warmUpStartPageMouse(app.resources);
 app.start();

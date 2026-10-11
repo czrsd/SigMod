@@ -517,16 +517,21 @@ class MenuController extends FeatureController {
                 if (file) void this.importSettings(file);
             });
         }
-        // Intercept SigFixes' window-level zoom handler without preventing menu scrolling.
-        this.resources.listen(
-            root,
-            'wheel',
-            async (event) => {
-                if (!this.isOpen()) return;
+        // Intercept SigFixes' and Sigmally's window-level zoom handlers without preventing menu scrolling.
+        const handleWheel = (event) => {
+            const target = event.target;
+            const element = target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
+            if (
+                this.isOpen() ||
+                Boolean(element?.closest('.mod_menu, [data-sigmod-root], .mod_overlay, #modAlert_overlay, .alert_overlay, .modChat'))
+            ) {
                 event.stopPropagation();
-            },
-            { capture: true, passive: true }
-        );
+                event.stopImmediatePropagation();
+            }
+        };
+        this.resources.listen(window, 'wheel', handleWheel, { capture: true, passive: true });
+        this.resources.listen(root, 'wheel', handleWheel, { capture: true, passive: true });
+        this.resources.listen(root, 'wheel', handleWheel, { capture: false, passive: true });
         this.setupHomeSearch();
         this.app.i18n?.apply();
         this.resources.listen(document, 'keydown', (event) => {
@@ -2143,7 +2148,13 @@ class MenuController extends FeatureController {
         else this.open();
     }
     isOpen() {
-        return this.root?.getAttribute('aria-hidden') === 'false';
+        if (!this.root) return false;
+        if (this.root.getAttribute('aria-hidden') === 'false') return true;
+        return (
+            this.root.style.display !== 'none' &&
+            this.root.style.opacity !== '0' &&
+            getComputedStyle(this.root).display !== 'none'
+        );
     }
     handleExternalTabClick(event) {
         const target = event.target;
@@ -5548,7 +5559,7 @@ class ThemeController extends FeatureController {
         if (languages) this.setHidden(languages, hideLanguages);
         document.documentElement.classList.toggle('sigmod-hide-ads', hideAds);
         this.app.adProtection?.setEnabled(hideAds);
-        if (!zigAdEnabled || hasZigGlobal()) removeZigAd();
+        if (!zigActive || !zigAdEnabled || hasZigGlobal()) removeZigAd();
         else insertZigAd(this.resources);
     }
     applyLauncherColor() {

@@ -2858,13 +2858,15 @@ class MacroController extends FeatureController {
     }
     /** @param {Event} event */
     isGamePointerEvent(event) {
+        const target = event.target;
+        if (!(target instanceof Element)) return false;
+        if (target.id === 'sf-canvas' || target.id === 'canvas' || target === this.app.dom?.canvas) return true;
         const canvas =
             this.app.host.adapter?.kind === 'sigfix'
                 ? document.querySelector('#sf-canvas')
                 : (this.app.dom?.canvas ?? document.querySelector(SELECTORS.canvas));
-        if (!(canvas instanceof HTMLCanvasElement)) return false;
-        if (event.target === canvas) return true;
-        return this.lockOverlay instanceof HTMLElement && event.target === this.lockOverlay;
+        if (canvas instanceof HTMLCanvasElement && target === canvas) return true;
+        return this.lockOverlay instanceof HTMLElement && target === this.lockOverlay;
     }
     /** @param {KeyboardEvent} event @param {unknown} binding */
     matches(event, binding) {
@@ -2967,15 +2969,22 @@ class MacroController extends FeatureController {
         if (typeof window.settings?.change === 'function') window.settings.change(setting, enabled);
     }
     toggleMenu() {
+        const menuController = this.app.features.get('menu');
+        if (menuController) {
+            menuController.toggle();
+            return;
+        }
         const menu = document.querySelector('.mod_menu');
         if (!(menu instanceof HTMLElement)) return;
         const hidden = getComputedStyle(menu).display === 'none';
         if (hidden) {
             menu.style.display = 'flex';
+            menu.setAttribute('aria-hidden', 'false');
             this.resources.timeout(() => {
                 menu.style.opacity = '1';
             }, 10);
         } else {
+            menu.setAttribute('aria-hidden', 'true');
             menu.style.opacity = '0';
             this.resources.timeout(() => {
                 if (menu.style.opacity === '0') menu.style.display = 'none';
@@ -5193,6 +5202,9 @@ class SmartPingController extends FeatureController {
         super(app, name);
         this.activePings = new Map();
         this.wheelOpen = false;
+        this.pingSource = null;
+        this.lastPingTime = 0;
+        this.lastCancelTime = 0;
         this.wheelElement = null;
         this.wheelSlices = [];
         this.pointerPosition = { x: 0, y: 0 };
@@ -5385,7 +5397,11 @@ class SmartPingController extends FeatureController {
             window,
             'contextmenu',
             (event) => {
-                if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 100) {
+                if (
+                    this.wheelOpen ||
+                    Date.now() - (this.lastCancelTime || 0) < 500 ||
+                    Date.now() - (this.lastPingTime || 0) < 500
+                ) {
                     event.preventDefault();
                     event.stopPropagation();
                 }
@@ -5409,12 +5425,16 @@ class SmartPingController extends FeatureController {
     }
 
     isPingInput(event) {
+        if (!event.isTrusted) return false;
         if (isTyping() || !this.app.settings.settings.tag || !this.app.state.backend.connected) return false;
+        const menu = this.app.features.get('menu');
+        if (menu?.isOpen()) return false;
         const macros = this.app.features.get('macros');
         if (event instanceof KeyboardEvent && macros) {
             if (event.ctrlKey || event.metaKey) return false;
             return macros.matches(event, this.app.settings.macros.keys.ping);
         } else if (event instanceof MouseEvent && macros) {
+            if (!macros.isGamePointerEvent(event)) return false;
             const action = macros.mouseBinding(event.button);
             return action === 'ping';
         }
@@ -5422,27 +5442,9 @@ class SmartPingController extends FeatureController {
     }
 
     handleKeyDown(event) {
-        if (event.repeat) return;
+        if (event.repeat || !event.isTrusted) return;
 
-        if (this.isPingInput(event) && !this.wheelOpen) {
-            event.preventDefault();
-            this.openWheel();
-            this.wheelCancelled = false;
-        }
-    }
-
-    handleKeyUp(event) {
-        if (this.isPingInput(event) && this.wheelOpen) {
-            event.preventDefault();
-            this.closeWheel();
-            if (!this.wheelCancelled) {
-                this.sendPing(this.hoveredPing || 'default');
-            }
-        }
-    }
-
-    handleMouseDown(event) {
-        if (this.wheelOpen && (event.button === 0 || event.button === 2)) {
+        if (this.wheelOpen && event.key === 'Escape') {
             event.preventDefault();
             event.stopPropagation();
             this.closeWheel();
@@ -5450,26 +5452,69 @@ class SmartPingController extends FeatureController {
             this.lastCancelTime = Date.now();
             return;
         }
+
         if (this.isPingInput(event) && !this.wheelOpen) {
             event.preventDefault();
-            this.openWheel();
+            this.openWheel({ type: 'key', code: event.code });
+            this.wheelCancelled = false;
+        }
+    }
+
+    handleKeyUp(event) {
+        if (!event.isTrusted) return;
+
+        if (this.wheelOpen && this.pingSource?.type === 'key') {
+            const macros = this.app.features.get('macros');
+            if (macros?.matches(event, this.app.settings.macros.keys.ping)) {
+                event.preventDefault();
+                this.closeWheel();
+                if (!this.wheelCancelled) {
+                    this.sendPing(this.hoveredPing || 'default');
+                    this.lastPingTime = Date.now();
+                }
+            }
+        }
+    }
+
+    handleMouseDown(event) {
+        if (!event.isTrusted) return;
+
+        if (this.wheelOpen) {
+            const isOriginButton = this.pingSource?.type === 'mouse' && this.pingSource.button === event.button;
+            if (!isOriginButton && (event.button === 0 || event.button === 2)) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closeWheel();
+                this.wheelCancelled = true;
+                this.lastCancelTime = Date.now();
+                return;
+            }
+        }
+
+        if (this.isPingInput(event) && !this.wheelOpen) {
+            event.preventDefault();
+            this.openWheel({ type: 'mouse', button: event.button });
             this.wheelCancelled = false;
         }
     }
 
     handleMouseUp(event) {
-        if (this.isPingInput(event) && this.wheelOpen) {
+        if (!event.isTrusted) return;
+
+        if (this.wheelOpen && this.pingSource?.type === 'mouse' && this.pingSource.button === event.button) {
             event.preventDefault();
             this.closeWheel();
             if (!this.wheelCancelled) {
                 this.sendPing(this.hoveredPing || 'default');
+                this.lastPingTime = Date.now();
             }
         }
     }
 
-    openWheel() {
+    openWheel(source = null) {
         this.wheelOpen = true;
         this.wheelCancelled = false;
+        this.pingSource = source;
 
         let cx = this.pointerPosition.x;
         let cy = this.pointerPosition.y;
@@ -5575,6 +5620,7 @@ class SmartPingController extends FeatureController {
 
     closeWheel() {
         this.wheelOpen = false;
+        this.pingSource = null;
         if (this.wheelElement) {
             this.wheelElement.remove();
             this.wheelElement = null;

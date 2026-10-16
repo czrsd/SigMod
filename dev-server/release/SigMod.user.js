@@ -301,6 +301,11 @@
             content:
                 '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 21v-1a2 2 0 0 0-2-2H6a4 4 0 0 1-4-4V11a8 8 0 1 1 16 0v3a4 4 0 0 1-4 4h-1a2 2 0 0 0-2 2v1M9 21h6M10 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM14 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>',
         },
+        puzzle: {
+            viewBox: '0 0 24 24',
+            content:
+                '<path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"></path>',
+        },
     };
     ICONS.camera.content = ICONS.camera.content.replace('<path fill=', '<path transform="translate(-258 -467)" fill=');
     ICONS.camera.content = ICONS.camera.content.replace('C266.896,467.954 266.53,467.954', 'C266.896,467 266.53,467.954');
@@ -486,6 +491,7 @@
                     skins: null,
                     autoRespawn: null,
                     party: null,
+                    hud: null,
                 },
             },
             mouse: { bindings: [] },
@@ -633,6 +639,7 @@
         { path: 'macros.keys.toggle.skins', label: 'Toggle skins' },
         { path: 'macros.keys.toggle.autoRespawn', label: 'Toggle autorespawn' },
         { path: 'macros.keys.toggle.party', label: 'Toggle party panel' },
+        { path: 'macros.keys.toggle.hud', label: 'Toggle HUD' },
     ];
     const ALL_KEYBIND_PATHS = new Set(ALL_KEYBIND_DEFINITIONS.map((item) => item.path));
     const isKeybindSettingPath = (path) => typeof path === 'string' && ALL_KEYBIND_PATHS.has(path);
@@ -1640,6 +1647,9 @@
                     detail: { locale: this.locale },
                 })
             );
+            for (const element of document.querySelectorAll('[data-sigmod-localize]')) {
+                this.translateTree(element);
+            }
         }
     }
     class SettingsStore {
@@ -2062,6 +2072,7 @@
             this.border = null;
             this.backend = { connected: false, sid: null, latency: null };
             this.friends = { settings: {}, names: /* @__PURE__ */ new Set() };
+            this.hudVisible = true;
         }
     }
     class FeatureController {
@@ -4177,6 +4188,94 @@
                 [data-sigmod-root], [data-sigmod-root] *, .mod_overlay, .mod_overlay * {
                     font-family: 'Titillium Web', sans-serif !important;
                 }
+                .keybind-info {
+                    position: relative;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    user-select: none;
+                    vertical-align: middle;
+                }
+                .keybind-info-icon {
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    background: #222;
+                    border: 1px solid #444;
+                    color: #888;
+                    font-size: 10px;
+                    font-weight: 700;
+                    line-height: 1;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-style: normal;
+                    font-family: 'Titillium Web', sans-serif;
+                    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+                }
+                .keybind-info:hover .keybind-info-icon,
+                .keybind-info:focus-within .keybind-info-icon {
+                    border-color: #607bff;
+                    color: #fff;
+                    background: #2a2a2a;
+                }
+                .keybind-info-popup {
+                    position: absolute;
+                    bottom: calc(100% + 7px);
+                    left: -16px;
+                    background: #181818;
+                    border: 1px solid #333;
+                    border-radius: 5px;
+                    padding: 6px 8px;
+                    color: #ddd;
+                    font-size: 11px;
+                    font-style: normal;
+                    font-family: 'Titillium Web', sans-serif;
+                    font-weight: 400;
+                    line-height: 1.4;
+                    white-space: normal;
+                    width: max-content;
+                    max-width: 210px;
+                    pointer-events: none;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateY(3px);
+                    transition: opacity 0.15s ease, transform 0.15s ease;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+                    z-index: 1000;
+                    text-align: left;
+                }
+                .keybind-info-popup::after {
+                    content: '';
+                    position: absolute;
+                    top: 100%;
+                    left: 23px;
+                    transform: translateX(-50%);
+                    border: 5px solid transparent;
+                    border-top-color: #333;
+                }
+                .keybind-info:hover .keybind-info-popup,
+                .keybind-info:focus-within .keybind-info-popup {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateY(0);
+                }
+                .keybind-info.is-down .keybind-info-popup {
+                    bottom: auto;
+                    top: calc(100% + 7px);
+                    transform: translateY(-3px);
+                }
+                .keybind-info.is-down .keybind-info-popup::after {
+                    top: auto;
+                    bottom: 100%;
+                    border-top-color: transparent;
+                    border-bottom-color: #333;
+                }
+                .keybind-info.is-down:hover .keybind-info-popup,
+                .keybind-info.is-down:focus-within .keybind-info-popup {
+                    transform: translateY(0);
+                }
             `;
             document.head.append(menuTypography);
             this.element = element;
@@ -4288,16 +4387,20 @@
             );
             this.resources.add(this.app.backend.on('update-available', (url) => this.showUpdate(url)));
         }
+        message(source, parameters = null) {
+            return this.app.i18n?.message(source, parameters) ?? source;
+        }
         open(id, content, options = {}) {
             this.close(id, true);
             const useOverlay = options.overlay !== false;
             const dialog = createElement('section', {
                 className: options.className || 'modAlert',
-                attributes: { role: 'dialog', 'aria-modal': 'true' },
+                attributes: { role: 'dialog', 'aria-modal': 'true', 'data-sigmod-localize': '' },
             });
             if (content instanceof Node) dialog.append(content);
             else dialog.textContent = String(content ?? '');
             dialog.dataset.modalId = id;
+            this.app.i18n?.translateTree?.(dialog);
             const scope = this.resources.child(`modal-${id}-${Date.now()}`);
             let backdrop = null;
             if (useOverlay) {
@@ -4350,7 +4453,8 @@
             const toast = createElement('div', {
                 className: `infoAlert modAlert-${toastClass}`,
             });
-            toast.append(createElement('span', { text: message }));
+            const localizedMessage = this.message(String(message ?? ''));
+            toast.append(createElement('span', { text: localizedMessage }));
             toast.append(createElement('div', { className: 'modAlert-loader' }));
             overlay.append(toast);
             const timer = window.setTimeout(() => toast.remove(), 2e3);
@@ -4508,6 +4612,17 @@
             );
             this.keybinds = new KeybindRecorder(app2, this.resources, () => this.root);
             this.settingsIO = new SettingsPorter(app2, this.resources, this);
+            this.otherExtensions = /* @__PURE__ */ new Map();
+            this.pendingOtherExtensions = [];
+            if (Array.isArray(app2.__pendingExtensions)) {
+                while (app2.__pendingExtensions.length > 0) {
+                    const pending = app2.__pendingExtensions.shift();
+                    this.registerOtherExtension(pending);
+                }
+            }
+        }
+        message(source, parameters = null) {
+            return this.app.i18n?.message(source, parameters) ?? source;
         }
         hasSigFixes() {
             return this.settingsIO?.hasSigFixes() === true;
@@ -4543,6 +4658,45 @@
                 text: `
                 .mod_nav_group.is-expanded > .mod_nav_children { max-height: 500px !important; }
                 .mod-category-panel { overflow-y: auto !important; }
+                .mod_nav_other_extensions,
+                .mod_nav_external {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    flex: 0 1 auto;
+                    max-height: 140px;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    scrollbar-width: thin;
+                    scrollbar-color: #3b3b3b transparent;
+                }
+                .mod_nav_other_extensions:empty,
+                .mod_nav_external:empty {
+                    display: none;
+                }
+                .mod_nav_other_extensions:not(:empty),
+                .mod_nav_external:not(:empty) {
+                    padding-top: 7px;
+                    border-top: 1px solid #292929;
+                }
+                .mod_nav_other_extensions::-webkit-scrollbar,
+                .mod_nav_external::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .mod_nav_other_extensions::-webkit-scrollbar-track,
+                .mod_nav_external::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .mod_nav_other_extensions::-webkit-scrollbar-thumb,
+                .mod_nav_external::-webkit-scrollbar-thumb {
+                    background: #3b3b3b;
+                    border-radius: 10px;
+                }
+                .mod_nav_other_extensions .mod_nav_btn,
+                .mod_nav_external .mod_nav_btn {
+                    background: #1f1f1f;
+                    flex-shrink: 0;
+                }
             `,
             });
             document.head.append(navStyle);
@@ -4560,7 +4714,7 @@
             this.renderRecentAccess();
             this.openTab(this.activeTab, false, false);
             this.bindLauncher();
-            this.resources.listen(root, 'click', (event) => this.handleExternalTabClick(event), true);
+            this.resources.listen(root, 'click', (event) => this.handleOtherExtensionsTabClick(event), true);
             this.resources.listen(root, 'click', (event) => this.handleClick(event));
             this.resources.listen(root, 'input', (event) => this.handleSettingInput(event));
             this.resources.listen(root, 'change', (event) => this.handleSettingInput(event));
@@ -4607,9 +4761,10 @@
             const content = root.querySelector('.mod_menu_content');
             if (content instanceof HTMLElement) {
                 const observer = new MutationObserver(() => {
-                    if (this.externalTabActive || this.tabTransitioning) return;
+                    if (this.tabTransitioning) return;
+                    const visible = this.getVisibleTabPanel();
                     for (const tab of content.querySelectorAll(':scope > .mod_tab:not([data-mod-panel])')) {
-                        if (!(tab instanceof HTMLElement)) continue;
+                        if (!(tab instanceof HTMLElement) || tab === visible) continue;
                         if (!tab.hidden) tab.hidden = true;
                         if (tab.style.display !== 'none') tab.style.display = 'none';
                         if (tab.style.opacity !== '0') tab.style.opacity = '0';
@@ -4680,7 +4835,7 @@
                                 </button>
                             </div>
 
-                            <div class="mod_nav_external" data-nav-external-slot></div>
+                            <div class="mod_nav_other_extensions mod_nav_external" data-nav-other-extensions-slot data-nav-external-slot aria-label="Other extensions"></div>
 
                             <div class="mod_nav_misc-section" data-nav-group="misc">
                                 <button type="button" class="mod_nav_btn mod_nav_category" data-nav-category="misc" data-nav-managed aria-expanded="false">
@@ -4851,16 +5006,16 @@
                                                         <label class="macroRow"><span class="text">Rapid Feed</span><input id="modinput1" class="keybinding" name="rapidFeed" data-label="Rapid Feed" data-setting="macros.keys.rapidFeed" maxlength="1" placeholder="..."></label>
                                                         <label class="macroRow"><span class="text">Double Split</span><input id="modinput2" class="keybinding" name="splits.double" data-label="Double split" data-setting="macros.keys.splits.double" maxlength="1" placeholder="..."></label>
                                                         <label class="macroRow"><span class="text">Triple Split</span><input id="modinput3" class="keybinding" name="splits.triple" data-label="Triple split" data-setting="macros.keys.splits.triple" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="text">Respawn</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
+                                                        <label class="macroRow"><span class="flex align-center g-5"><span class="text">Respawn</span>${this.infoBtn('Quickly respawns your cell after dying without having to manually click through the death screen.', 'down')}</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
                                                     </div>
                                                     <div class="f-column g-10">
                                                         <label class="macroRow"><span class="text">Quad Split</span><input id="modinput4" class="keybinding" name="splits.quad" data-label="Quad split" data-setting="macros.keys.splits.quad" maxlength="1" placeholder="..."></label>
                                                         <label class="macroRow"><span class="text">Horizontal Line</span><input id="modinput5" class="keybinding" name="line.horizontal" data-label="Horizontal line" data-setting="macros.keys.line.horizontal" maxlength="1" placeholder="..."></label>
                                                         <label class="macroRow"><span class="text">Vertical Line</span><input id="modinput7" class="keybinding" name="line.vertical" data-label="Vertical line" data-setting="macros.keys.line.vertical" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="text">Fixed Line</span><input id="modinput16" class="keybinding" name="line.fixed" data-label="Fixed line" data-setting="macros.keys.line.fixed" maxlength="1" placeholder="..."></label>
+                                                        <label class="macroRow"><span class="flex align-center g-5"><span class="text">Fixed Line</span>${this.infoBtn('Freezes your aim position in place so your cell maintains a straight trajectory without following the mouse.')}</span><input id="modinput16" class="keybinding" name="line.fixed" data-label="Fixed line" data-setting="macros.keys.line.fixed" maxlength="1" placeholder="..."></label>
                                                     </div>
                                                 </div>
-                                                <label class="macroRow" title="You need to be in a tag to use this keybind."><span class="text">Ping</span><input id="modinput18" class="keybinding" name="ping" data-label="Ping" data-setting="macros.keys.ping" maxlength="1" placeholder="..."></label>
+                                                <label class="macroRow"><span class="flex align-center g-5"><span class="text">Ping</span>${this.infoBtn('Sends a quick ping or opens the ping wheel to alert tag teammates of your location. You must be in a tag to use this keybind.')}</span><input id="modinput18" class="keybinding" name="ping" data-label="Ping" data-setting="macros.keys.ping" maxlength="1" placeholder="..."></label>
                                             </div>
                                         </div>
                                     </div>
@@ -4889,14 +5044,15 @@
                                                 ${this.keyRow('Toggle Skins', 'modinput11', 'toggle.skins', 'macros.keys.toggle.skins')}
                                                 ${this.keyRow('Toggle Autorespawn', 'modinput12', 'toggle.autoRespawn', 'macros.keys.toggle.autoRespawn')}
                                                 ${this.keyRow('Toggle Party Panel', 'modinput19', 'toggle.party', 'macros.keys.toggle.party')}
+                                                ${this.keyRow('Toggle HUD', 'modinput20', 'toggle.hud', 'macros.keys.toggle.hud')}
                                             </div>
                                         </div>
                                         <div class="setting-card-wrapper">
                                             <div class="setting-card"><div class="setting-card-action"><span class="setting-card-name">Tricksplits</span></div></div>
                                             <div class="setting-parameters" style="display: none;">
                                                 <div class="my-5"><span class="stats-info-text">Other split options - splits with delay</span></div>
-                                                ${this.keyRow('Double Trick', 'modinput13', 'splits.doubleTrick', 'macros.keys.splits.doubleTrick')}
-                                                ${this.keyRow('Self Trick', 'modinput14', 'splits.selfTrick', 'macros.keys.splits.selfTrick')}
+                                                ${this.keyRow('Double Trick', 'modinput13', 'splits.doubleTrick', 'macros.keys.splits.doubleTrick', 'Performs two quick splits with a timed delay, perfect for double splitting into a teammate or target.')}
+                                                ${this.keyRow('Self Trick', 'modinput14', 'splits.selfTrick', 'macros.keys.splits.selfTrick', 'Performs four rapid splits with a timed delay, quickly splitting all pieces for a self trick split.')}
                                             </div>
                                         </div>
                                     </div>
@@ -5264,8 +5420,15 @@
         renderMouseBindingEditor() {
             return this.mouseBinder.renderMouseBindingEditor();
         }
-        keyRow(label, id, name, path) {
-            return `<div class="stats-line justify-sb"><span>${label}</span><input id="${id}" class="keybinding" name="${name}" data-label="${label}" data-setting="${path}" maxlength="1" placeholder="..."></div>`;
+        infoBtn(text, position = 'up') {
+            const posClass = position === 'down' ? ' is-down' : '';
+            return `<span class="keybind-info${posClass}" tabindex="0" role="button" aria-label="Info" onclick="event.preventDefault();event.stopPropagation();"><span class="keybind-info-icon">i</span><span class="keybind-info-popup">${text}</span></span>`;
+        }
+        keyRow(label, id, name, path, info = '') {
+            const titleHtml = info
+                ? `<span class="flex align-center g-5"><span>${label}</span>${this.infoBtn(info)}</span>`
+                : `<span>${label}</span>`;
+            return `<div class="stats-line justify-sb">${titleHtml}<input id="${id}" class="keybinding" name="${name}" data-label="${label}" data-setting="${path}" maxlength="1" placeholder="..."></div>`;
         }
         checkRow(label, id, path = '', checkedValue = '', uncheckedValue = '') {
             const setting = path ? ` data-setting="${path}"` : '';
@@ -5384,10 +5547,11 @@
             if (!(content instanceof HTMLElement)) return;
             this.ensureCategoryPanel(content);
             this.restructureFeaturePanels(content);
-            this.adoptExternalNavButtons();
+            this.adoptOtherExtensionsNavButtons();
+            this.flushPendingOtherExtensions();
             const nav = this.root.querySelector('.mod_menu_navbar');
             if (nav instanceof HTMLElement) {
-                const observer = new MutationObserver(() => this.adoptExternalNavButtons());
+                const observer = new MutationObserver(() => this.adoptOtherExtensionsNavButtons());
                 this.resources.observe(observer, nav, { childList: true });
             }
         }
@@ -5799,10 +5963,397 @@
                 }
             }
         }
-        adoptExternalNavButtons() {
+        getOtherExtensionsSlot() {
+            return this.root?.querySelector('[data-nav-other-extensions-slot], [data-nav-external-slot]') ?? null;
+        }
+        createExtensionButtonElement(extension) {
+            if (typeof extension.buttonTemplate === 'function') {
+                const custom = extension.buttonTemplate({
+                    id: extension.id,
+                    name: extension.name,
+                    icon: extension.icon,
+                    data: extension.data,
+                    tooltip: extension.tooltip,
+                });
+                if (custom instanceof HTMLButtonElement) {
+                    custom.classList.add('mod_nav_btn');
+                    custom.dataset.extensionId = extension.id;
+                    custom.dataset.externalNav = 'true';
+                    custom.dataset.otherExtensionNav = 'true';
+                    custom.setAttribute('type', 'button');
+                    return custom;
+                }
+                if (typeof custom === 'string') {
+                    const holder = createElement('div', { html: custom.trim() });
+                    const el = holder.firstElementChild;
+                    if (el instanceof HTMLButtonElement) {
+                        el.classList.add('mod_nav_btn');
+                        el.dataset.extensionId = extension.id;
+                        el.dataset.externalNav = 'true';
+                        el.dataset.otherExtensionNav = 'true';
+                        el.setAttribute('type', 'button');
+                        return el;
+                    }
+                }
+            }
+            const btn = createElement('button', {
+                className: 'mod_nav_btn',
+                attributes: {
+                    type: 'button',
+                    'data-extension-id': extension.id,
+                    'data-external-nav': 'true',
+                    'data-other-extension-nav': 'true',
+                },
+            });
+            if (extension.tooltip) btn.setAttribute('title', extension.tooltip);
+            if (extension.icon instanceof HTMLElement) {
+                btn.append(extension.icon);
+            } else if (typeof extension.icon === 'string' && extension.icon) {
+                const raw = extension.icon.trim();
+                if (raw.startsWith('<svg') || raw.startsWith('<img') || raw.startsWith('<span') || raw.startsWith('<i')) {
+                    const iconHolder = createElement('span', {
+                        className: 'mod-nav-icon',
+                        html: raw,
+                    });
+                    btn.append(iconHolder);
+                } else if (/^(https?:\/\/|data:|blob:|\/|\.\/)/i.test(raw) || /\.(png|jpe?g|svg|webp|gif)$/i.test(raw)) {
+                    const img = createElement('img', {
+                        className: 'mod-nav-icon',
+                        attributes: { src: raw, alt: '', draggable: 'false' },
+                    });
+                    btn.append(img);
+                } else if (ICONS[raw]) {
+                    const iconHolder = createElement('span', {
+                        className: 'mod-nav-icon',
+                        html: icon(raw, 14),
+                    });
+                    btn.append(iconHolder);
+                } else {
+                    const iconHolder = createElement('span', {
+                        className: 'mod-nav-icon',
+                        text: raw,
+                    });
+                    iconHolder.style.display = 'inline-flex';
+                    iconHolder.style.alignItems = 'center';
+                    iconHolder.style.justifyContent = 'center';
+                    iconHolder.style.lineHeight = '1';
+                    btn.append(iconHolder);
+                }
+            } else {
+                const iconHolder = createElement('span', {
+                    className: 'mod-nav-icon',
+                    html: icon('puzzle', 14) || icon('more', 14),
+                });
+                btn.append(iconHolder);
+            }
+            const label = createElement('span', {
+                className: 'mod_nav_label',
+                text: extension.name,
+            });
+            btn.append(label);
+            if (extension.badge !== void 0 && extension.badge !== null && extension.badge !== '') {
+                const badge = createElement('span', {
+                    className: 'mod_nav_badge',
+                    text: String(extension.badge),
+                });
+                badge.style.marginLeft = 'auto';
+                badge.style.fontSize = '11px';
+                badge.style.padding = '1px 5px';
+                badge.style.borderRadius = '8px';
+                badge.style.background = '#2d3242';
+                badge.style.color = '#fff';
+                btn.append(badge);
+            }
+            return btn;
+        }
+        createExtensionPanelElement(extension) {
+            if (!extension.panel && !extension.template) return null;
+            if (extension.panel instanceof HTMLElement) {
+                extension.panel.classList.add('mod_tab', 'scroll');
+                if (!extension.panel.id) extension.panel.id = `mod_extension_${extension.id}`;
+                extension.panel.dataset.extensionId = extension.id;
+                return extension.panel;
+            }
+            const panel = createElement('section', {
+                className: 'mod_tab scroll',
+                attributes: {
+                    id: `mod_extension_${extension.id}`,
+                    'data-extension-id': extension.id,
+                },
+            });
+            if (typeof extension.panel === 'function') {
+                extension.panel(panel, {
+                    id: extension.id,
+                    name: extension.name,
+                    data: extension.data,
+                    panel,
+                });
+                return panel;
+            }
+            if (typeof extension.panel === 'string') {
+                panel.innerHTML = extension.panel;
+                return panel;
+            }
+            if (extension.template) {
+                panel.append(this.createExtensionPanelFromTemplate(extension.template, extension));
+                return panel;
+            }
+            return panel;
+        }
+        createExtensionPanelFromTemplate(template, extension = {}) {
+            if (typeof template === 'function') {
+                const res = template({
+                    id: extension.id,
+                    name: extension.name,
+                    data: extension.data,
+                });
+                if (res instanceof HTMLElement) return res;
+                const wrap = createElement('div', { html: typeof res === 'string' ? res : '' });
+                return wrap;
+            }
+            if (typeof template === 'string') {
+                return createElement('div', { html: template });
+            }
+            const container = createElement('div', { className: 'extension-template-root w-100' });
+            const titleText = template.title || extension.name;
+            if (titleText) {
+                container.append(
+                    createElement('div', {
+                        className: 'settings-section-title',
+                        text: titleText,
+                    })
+                );
+            }
+            if (template.description) {
+                const desc = createElement('div', {
+                    className: 'text',
+                    text: template.description,
+                });
+                desc.style.color = '#989898';
+                desc.style.fontSize = '13px';
+                desc.style.marginBottom = '12px';
+                container.append(desc);
+            }
+            if (template.content instanceof HTMLElement) {
+                container.append(template.content);
+            } else if (typeof template.content === 'string') {
+                container.append(createElement('div', { html: template.content }));
+            } else if (typeof template.html === 'string') {
+                container.append(createElement('div', { html: template.html }));
+            }
+            const appendRow = (row, target) => {
+                if (!row) return;
+                const rowEl = createElement('div', {
+                    className: 'justify-sb w-100 p-10 rounded',
+                });
+                const labelEl = createElement('span', {
+                    className: 'text',
+                    text: row.label || '',
+                });
+                if (row.description) labelEl.title = row.description;
+                rowEl.append(labelEl);
+                if (row.control instanceof HTMLElement) {
+                    rowEl.append(row.control);
+                } else if (typeof row.control === 'string') {
+                    rowEl.append(createElement('div', { html: row.control }));
+                }
+                target.append(rowEl);
+            };
+            if (Array.isArray(template.sections)) {
+                for (const sec of template.sections) {
+                    if (!sec) continue;
+                    if (sec.title) {
+                        container.append(
+                            createElement('div', {
+                                className: 'settings-section-title',
+                                text: sec.title,
+                                style: 'margin-top: 14px;',
+                            })
+                        );
+                    }
+                    if (sec.description) {
+                        const desc = createElement('div', {
+                            className: 'text',
+                            text: sec.description,
+                        });
+                        desc.style.color = '#989898';
+                        desc.style.fontSize = '12px';
+                        desc.style.marginBottom = '8px';
+                        container.append(desc);
+                    }
+                    if (sec.content instanceof HTMLElement) {
+                        container.append(sec.content);
+                    } else if (typeof sec.content === 'string') {
+                        container.append(createElement('div', { html: sec.content }));
+                    }
+                    if (Array.isArray(sec.rows)) {
+                        for (const row of sec.rows) appendRow(row, container);
+                    }
+                }
+            }
+            if (Array.isArray(template.rows)) {
+                for (const row of template.rows) appendRow(row, container);
+            }
+            return container;
+        }
+        registerOtherExtension(definition) {
+            if (!definition) return null;
+            const id = String(definition.id || `ext_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`);
+            if (this.otherExtensions.has(id)) {
+                this.unregisterOtherExtension(id);
+            }
+            const record = {
+                id,
+                name: String(definition.name || definition.title || definition.label || id),
+                icon: definition.icon || null,
+                tooltip: definition.tooltip || definition.description || '',
+                data: definition.data ?? null,
+                onClick: typeof definition.onClick === 'function' ? definition.onClick : null,
+                panel: definition.panel ?? null,
+                template: definition.template ?? null,
+                buttonTemplate: typeof definition.buttonTemplate === 'function' ? definition.buttonTemplate : null,
+                badge: definition.badge,
+                order: Number.isFinite(definition.order) ? Number(definition.order) : 0,
+                onMount: typeof definition.onMount === 'function' ? definition.onMount : null,
+                onDestroy: typeof definition.onDestroy === 'function' ? definition.onDestroy : null,
+                button: null,
+                panelElement: null,
+            };
+            this.otherExtensions.set(id, record);
+            if (!this.root) {
+                this.pendingOtherExtensions.push(id);
+            } else {
+                this.mountOtherExtension(record);
+            }
+            return {
+                id,
+                get button() {
+                    return record.button;
+                },
+                get panel() {
+                    return record.panelElement;
+                },
+                get data() {
+                    return record.data;
+                },
+                open: () => this.openOtherExtension(id),
+                remove: () => this.unregisterOtherExtension(id),
+                update: (updates) => this.updateOtherExtension(id, updates),
+            };
+        }
+        mountOtherExtension(record) {
+            const slot = this.getOtherExtensionsSlot();
+            const content = this.root?.querySelector('.mod_menu_content');
+            if (!slot || !(content instanceof HTMLElement)) return;
+            const button = this.createExtensionButtonElement(record);
+            record.button = button;
+            slot.append(button);
+            const panelEl = this.createExtensionPanelElement(record);
+            if (panelEl instanceof HTMLElement) {
+                record.panelElement = panelEl;
+                panelEl.hidden = true;
+                panelEl.style.display = 'none';
+                panelEl.style.opacity = '0';
+                if (!panelEl.parentElement) {
+                    content.append(panelEl);
+                }
+            }
+            record.onMount?.({
+                id: record.id,
+                name: record.name,
+                button: record.button,
+                panel: record.panelElement,
+                data: record.data,
+            });
+        }
+        openOtherExtension(id) {
+            const record = this.otherExtensions.get(id);
+            if (!record) return false;
+            if (!this.isOpen()) this.open();
+            if (record.panelElement instanceof HTMLElement) {
+                this.externalTabActive = true;
+                this.activeCategory = null;
+                this.activeTab = record.panelElement.id || `mod_extension_${id}`;
+                this.updateCategoryActiveState();
+                this.switchTabPanel(record.panelElement, record.button, true);
+                return true;
+            }
+            if (record.button) {
+                record.button.click();
+                return true;
+            }
+            return false;
+        }
+        unregisterOtherExtension(id) {
+            const record = this.otherExtensions.get(id);
+            if (!record) return false;
+            record.onDestroy?.();
+            record.button?.remove();
+            record.panelElement?.remove();
+            this.otherExtensions.delete(id);
+            const pendingIdx = this.pendingOtherExtensions.indexOf(id);
+            if (pendingIdx >= 0) this.pendingOtherExtensions.splice(pendingIdx, 1);
+            if (this.externalTabActive && this.activeTab === (record.panelElement?.id || `mod_extension_${id}`)) {
+                this.openTab('mod_home', false, false);
+            }
+            return true;
+        }
+        updateOtherExtension(id, updates) {
+            const record = this.otherExtensions.get(id);
+            if (!record || !updates) return false;
+            if (updates.name !== void 0) {
+                record.name = String(updates.name);
+                const label = record.button?.querySelector('.mod_nav_label');
+                if (label) label.textContent = record.name;
+            }
+            if (updates.tooltip !== void 0) {
+                record.tooltip = String(updates.tooltip);
+                record.button?.setAttribute('title', record.tooltip);
+            }
+            if (updates.data !== void 0) {
+                record.data = updates.data;
+            }
+            if (updates.badge !== void 0) {
+                record.badge = updates.badge;
+                let badgeEl = record.button?.querySelector('.mod_nav_badge');
+                if (record.badge !== null && record.badge !== '') {
+                    if (!badgeEl && record.button) {
+                        badgeEl = createElement('span', { className: 'mod_nav_badge' });
+                        badgeEl.style.marginLeft = 'auto';
+                        badgeEl.style.fontSize = '11px';
+                        badgeEl.style.padding = '1px 5px';
+                        badgeEl.style.borderRadius = '8px';
+                        badgeEl.style.background = '#2d3242';
+                        badgeEl.style.color = '#fff';
+                        record.button.append(badgeEl);
+                    }
+                    if (badgeEl) badgeEl.textContent = String(record.badge);
+                } else if (badgeEl) {
+                    badgeEl.remove();
+                }
+            }
+            if (updates.content !== void 0 && record.panelElement) {
+                if (updates.content instanceof HTMLElement) {
+                    record.panelElement.replaceChildren(updates.content);
+                } else if (typeof updates.content === 'string') {
+                    record.panelElement.innerHTML = updates.content;
+                }
+            }
+            return true;
+        }
+        flushPendingOtherExtensions() {
+            if (!this.root) return;
+            const ids = [...this.pendingOtherExtensions];
+            this.pendingOtherExtensions = [];
+            for (const id of ids) {
+                const record = this.otherExtensions.get(id);
+                if (record) this.mountOtherExtension(record);
+            }
+        }
+        adoptOtherExtensionsNavButtons() {
             if (!this.root) return;
             const nav = this.root.querySelector('.mod_menu_navbar');
-            const slot = this.root.querySelector('[data-nav-external-slot]');
+            const slot = this.getOtherExtensionsSlot();
             if (!(nav instanceof HTMLElement) || !(slot instanceof HTMLElement)) return;
             const directButtons = [...nav.children].filter(
                 (child) =>
@@ -5810,9 +6361,28 @@
             );
             for (const button of directButtons) {
                 button.dataset.externalNav = 'true';
+                button.dataset.otherExtensionNav = 'true';
                 button.setAttribute('type', 'button');
                 slot.append(button);
             }
+        }
+        adoptExternalNavButtons() {
+            return this.adoptOtherExtensionsNavButtons();
+        }
+        registerExtension(def) {
+            return this.registerOtherExtension(def);
+        }
+        unregisterExtension(id) {
+            return this.unregisterOtherExtension(id);
+        }
+        addNavbarButton(def) {
+            return this.registerOtherExtension(def);
+        }
+        getOtherExtension(id) {
+            return this.otherExtensions.get(id) || null;
+        }
+        getAllOtherExtensions() {
+            return [...this.otherExtensions.values()];
         }
         toggleCategory(categoryId, force = void 0) {
             if (!this.root) return false;
@@ -6063,7 +6633,7 @@
             if (target.closest('#resetSettings')) {
                 const scopes = this.getSelectedScopes('reset');
                 if (!scopes.length) return;
-                if (confirm('Reset selected settings? The page will reload.')) {
+                if (confirm(this.message('Reset selected settings? The page will reload.'))) {
                     if (scopes.includes('sigmod')) this.app.settingsStore.reset();
                     if (scopes.includes('game')) localStorage.removeItem(STORAGE.gameSettings);
                     if (scopes.includes('sigfix')) localStorage.removeItem('sigfix');
@@ -6072,21 +6642,21 @@
                 return;
             }
             if (target.closest('#resetModSettings')) {
-                if (confirm('Reset all SigMod settings? The page will reload.')) {
+                if (confirm(this.message('Reset all SigMod settings? The page will reload.'))) {
                     this.app.settingsStore.reset();
                     location.reload();
                 }
                 return;
             }
             if (target.closest('#resetGameSettings')) {
-                if (confirm('Reset all Sigmally game settings? The page will reload.')) {
+                if (confirm(this.message('Reset all Sigmally game settings? The page will reload.'))) {
                     localStorage.removeItem(STORAGE.gameSettings);
                     location.reload();
                 }
                 return;
             }
             if (target.closest('#resetSigFixSettings')) {
-                if (confirm('Reset all SigFixes settings? The page will reload.')) {
+                if (confirm(this.message('Reset all SigFixes settings? The page will reload.'))) {
                     localStorage.removeItem('sigfix');
                     location.reload();
                 }
@@ -6228,22 +6798,46 @@
             if (this.root.getAttribute('aria-hidden') === 'false') return true;
             return this.root.style.display !== 'none' && this.root.style.opacity !== '0' && getComputedStyle(this.root).display !== 'none';
         }
-        handleExternalTabClick(event) {
+        handleOtherExtensionsTabClick(event) {
             const target = event.target;
             if (!(target instanceof Element) || !this.root) return;
             const button = target.closest('.mod_menu_navbar .mod_nav_btn');
-            if (
-                !(button instanceof HTMLElement) ||
-                button.hasAttribute('data-mod-tab') ||
-                button.hasAttribute('data-nav-managed') ||
-                !button.closest('[data-nav-external-slot]')
-            )
-                return;
+            if (!(button instanceof HTMLElement) || button.hasAttribute('data-mod-tab') || button.hasAttribute('data-nav-managed')) return;
+            const slot = this.getOtherExtensionsSlot();
+            if (!slot || !button.closest('[data-nav-other-extensions-slot], [data-nav-external-slot]')) return;
+            const extensionId = button.dataset.extensionId;
             const content = this.root.querySelector('.mod_menu_content');
             if (!(content instanceof HTMLElement)) return;
-            const panel = [...content.querySelectorAll(':scope > .mod_tab:not([data-mod-panel])')].find(
-                (item) => item instanceof HTMLElement
+            if (extensionId && this.otherExtensions.has(extensionId)) {
+                const ext = this.otherExtensions.get(extensionId);
+                if (typeof ext.onClick === 'function') {
+                    const proceed = ext.onClick(event, {
+                        id: ext.id,
+                        name: ext.name,
+                        button: ext.button,
+                        panel: ext.panelElement,
+                        data: ext.data,
+                    });
+                    if (proceed === false || event.defaultPrevented) return;
+                }
+                if (ext.panelElement instanceof HTMLElement) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    this.externalTabActive = true;
+                    this.activeCategory = null;
+                    this.activeTab = ext.panelElement.id || `mod_extension_${ext.id}`;
+                    this.updateCategoryActiveState();
+                    this.switchTabPanel(ext.panelElement, button, true);
+                }
+                return;
+            }
+            const otherExtensionButtons = [...slot.children].filter((btn) => btn instanceof HTMLElement && !btn.dataset.extensionId);
+            const otherExtensionPanels = [...content.querySelectorAll(':scope > .mod_tab:not([data-mod-panel])')].filter(
+                (p) => p instanceof HTMLElement && !p.dataset.extensionId
             );
+            const index = otherExtensionButtons.indexOf(button);
+            const panel = (index >= 0 ? otherExtensionPanels[index] : null) || otherExtensionPanels[0];
             if (!(panel instanceof HTMLElement)) return;
             event.preventDefault();
             event.stopPropagation();
@@ -6252,6 +6846,9 @@
             this.activeCategory = null;
             this.updateCategoryActiveState();
             this.switchTabPanel(panel, button, true);
+        }
+        handleExternalTabClick(event) {
+            return this.handleOtherExtensionsTabClick(event);
         }
         getTabPanels() {
             if (!this.root) return [];
@@ -6308,13 +6905,11 @@
                     window.setTimeout(() => {
                         if (token !== this.tabTransitionToken) return;
                         this.tabTransitioning = false;
-                        if (!this.externalTabActive) {
-                            for (const item of tabs) {
-                                if (item !== panel && !item.matches('[data-mod-panel]')) {
-                                    item.hidden = true;
-                                    item.style.display = 'none';
-                                    item.style.opacity = '0';
-                                }
+                        for (const item of tabs) {
+                            if (item !== panel && !item.matches('[data-mod-panel]')) {
+                                item.hidden = true;
+                                item.style.display = 'none';
+                                item.style.opacity = '0';
                             }
                         }
                     }, 210);
@@ -7285,9 +7880,9 @@
             const seen = /* @__PURE__ */ new Set();
             const panels = this.getTabPanels();
             const externalPanels = panels.filter((panel) => !panel.matches('[data-mod-panel]'));
-            const externalButtons = [...this.root.querySelectorAll('[data-nav-external-slot] .mod_nav_btn[data-external-nav]')].filter(
-                (button) => button instanceof HTMLElement
-            );
+            const externalButtons = [
+                ...this.root.querySelectorAll('[data-nav-other-extensions-slot] .mod_nav_btn, [data-nav-external-slot] .mod_nav_btn'),
+            ].filter((button) => button instanceof HTMLElement);
             const pathLabel = (path) =>
                 cleanText(
                     String(path ?? '')
@@ -7365,16 +7960,27 @@
                 let tabId = external ? '' : panel.id;
                 let navButton = null;
                 if (external) {
-                    const index = externalPanels.indexOf(panel);
-                    navButton = externalButtons[index] ?? externalButtons[0] ?? null;
+                    if (panel.dataset.extensionId) {
+                        const ext = this.menu.otherExtensions.get(panel.dataset.extensionId);
+                        navButton = ext?.button ?? null;
+                    }
+                    if (!navButton) {
+                        const index = externalPanels.indexOf(panel);
+                        navButton = externalButtons[index] ?? externalButtons[0] ?? null;
+                    }
                 } else if (tabId) {
                     navButton = this.root.querySelector(`[data-mod-tab="${CSS.escape(tabId)}"]`);
                 }
                 const rawTabName = cleanText(navButton?.textContent);
                 const navMeta = external ? null : this.getNavigationTabMeta(tabId);
-                const tabName = rawTabName || navMeta?.title || (external ? 'Sig Fixes' : tabId.replace(/^mod_/, ''));
+                const extRecord = panel.dataset.extensionId ? this.menu.otherExtensions.get(panel.dataset.extensionId) : null;
+                const tabName =
+                    extRecord?.name ||
+                    rawTabName ||
+                    navMeta?.title ||
+                    (external ? (panel.id?.includes('sigfix') ? 'Sig Fixes' : 'Extension') : tabId.replace(/^mod_/, ''));
                 const tabAliases = external
-                    ? 'SigFix SigFixes Sig Fixes fixes performance settings'
+                    ? `${extRecord?.name ?? ''} ${extRecord?.tooltip ?? ''} SigFix SigFixes Sig Fixes fixes performance settings extensions mods`
                     : navMeta
                       ? `${navMeta.categoryTitle ?? ''} ${navMeta.category ?? ''}`
                       : '';
@@ -7628,21 +8234,21 @@
         }
         async importSettings(file) {
             if (file.size > 2 * 1024 * 1024) {
-                alert('The settings file is too large.');
+                alert(this.message('The settings file is too large.'));
                 return;
             }
             let payload;
             try {
                 payload = JSON.parse(await file.text());
             } catch {
-                alert('The selected file is not valid JSON.');
+                alert(this.message('The selected file is not valid JSON.'));
                 return;
             }
             let sections;
             try {
                 sections = this.importSections(payload);
             } catch (error) {
-                alert(error.message || 'Unable to import settings.');
+                alert(this.message(error.message || 'Unable to import settings.'));
                 return;
             }
             const names = Object.keys(sections).map(
@@ -7653,7 +8259,11 @@
                         sigfix: 'SigFixes',
                     })[key]
             );
-            if (!confirm(`Replace ${names.join(', ')} settings from ${file.name}? The page will reload.`)) return;
+            const confirmMsg = this.message('Replace {names} settings from {file}? The page will reload.', {
+                names: names.join(', '),
+                file: file.name,
+            });
+            if (!confirm(confirmMsg)) return;
             try {
                 if (sections.sigmod) this.app.settingsStore.replace(sections.sigmod);
                 if (
@@ -7663,7 +8273,7 @@
                     throw new Error('Unable to save imported settings');
             } catch (error) {
                 this.app.logger.error('Unable to import settings', error);
-                alert('Unable to save every imported setting. Reload the page before making further changes.');
+                alert(this.message('Unable to save every imported setting. Reload the page before making further changes.'));
                 return;
             }
             location.reload();
@@ -8244,13 +8854,19 @@
                 }
                 this.set(config.path, source, true);
                 this.app.features.get('visuals')?.syncAssets();
-                this.app.features.get('modal')?.alert(`Successfully applied ${config.title}.`, 'success');
+                const appliedMsg = this.app.i18n?.message
+                    ? this.app.i18n.message('Successfully applied {title}.', { title: config.title })
+                    : `Successfully applied ${config.title}.`;
+                this.app.features.get('modal')?.alert(appliedMsg, 'success');
             });
             scope.listen(reset, 'click', () => {
                 if (kind === 'skin') this.set(config.originalPath, null, true);
                 this.set(config.path, null, true);
                 this.app.features.get('visuals')?.syncAssets();
-                this.app.features.get('modal')?.alert(`The ${config.title} has been successfully reset.`, 'success');
+                const resetMsg = this.app.i18n?.message
+                    ? this.app.i18n.message('The {title} has been successfully reset.', { title: config.title })
+                    : `The ${config.title} has been successfully reset.`;
+                this.app.features.get('modal')?.alert(resetMsg, 'success');
             });
         }
         async loadSkinList(select) {
@@ -8499,7 +9115,9 @@
                         type: 'color',
                         value: stop.color,
                         'data-gradient-stop-color': index,
-                        'aria-label': `Color for gradient stop ${index + 1}`,
+                        'aria-label':
+                            this.app.i18n?.message('Color for gradient stop {index}', { index: index + 1 }) ??
+                            `Color for gradient stop ${index + 1}`,
                     },
                 });
                 color.value = stop.color;
@@ -8512,7 +9130,9 @@
                         step: '1',
                         value: Math.round(stop.position),
                         'data-gradient-stop-position': index,
-                        'aria-label': `Position for gradient stop ${index + 1}`,
+                        'aria-label':
+                            this.app.i18n?.message('Position for gradient stop {index}', { index: index + 1 }) ??
+                            `Position for gradient stop ${index + 1}`,
                     },
                 });
                 position.value = String(Math.round(stop.position));
@@ -8525,7 +9145,9 @@
                     attributes: {
                         type: 'button',
                         'data-remove-gradient-stop': index,
-                        'aria-label': `Remove gradient stop ${index + 1}`,
+                        'aria-label':
+                            this.app.i18n?.message('Remove gradient stop {index}', { index: index + 1 }) ??
+                            `Remove gradient stop ${index + 1}`,
                     },
                     text: '\xD7',
                 });
@@ -8539,7 +9161,8 @@
         addGradientStop() {
             if (this.gradientStops.length >= 6) {
                 const hint = this.editor?.querySelector('#theme-editor-hint');
-                if (hint) hint.textContent = 'A gradient can have up to 6 stops.';
+                if (hint)
+                    hint.textContent = this.app.i18n?.message('A gradient can have up to 6 stops.') ?? 'A gradient can have up to 6 stops.';
                 return;
             }
             const sorted = [...this.gradientStops].sort((a, b) => a.position - b.position);
@@ -9307,7 +9930,10 @@
             const card = target.closest('[data-custom-theme="true"]');
             if (!(card instanceof HTMLElement)) return;
             event.preventDefault();
-            if (!confirm(`Delete the theme "${card.dataset.themeName}"?`)) return;
+            const deleteConfirm = this.app.i18n?.message
+                ? this.app.i18n.message('Delete the theme "{name}"?', { name: card.dataset.themeName })
+                : `Delete the theme "${card.dataset.themeName}"?`;
+            if (!confirm(deleteConfirm)) return;
             this.removeCustomTheme(card.dataset.themeName);
         }
         handleSettingChange(event) {
@@ -9797,19 +10423,23 @@
             const leaderboardCanvases = /* @__PURE__ */ new WeakSet();
             const isGameContext = (context) =>
                 context?.canvas === this.app.dom?.canvas || context?.canvas?.id === SELECTORS.canvas.slice(1);
+            let cameraCaptureStage = 0;
+            let pendingScale = 1;
+            let inWorldSpace = false;
+            let hasEnteredWorldSpace = false;
             const fillRect = function (x, y, width, height) {
                 if (!isGameContext(this)) return originalFillRect.call(this, x, y, width, height);
                 if (visual.isBackgroundRect(this.canvas, x, y, width, height)) {
                     cameraCaptureStage = 0;
                     inWorldSpace = false;
+                    hasEnteredWorldSpace = false;
                     visual.onFrameStart();
                     this.fillStyle = visual.getMapFill(this);
+                } else if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) {
+                    return;
                 }
                 return originalFillRect.call(this, x, y, width, height);
             };
-            let cameraCaptureStage = 0;
-            let pendingScale = 1;
-            let inWorldSpace = false;
             const originalTranslate = prototype.translate;
             const originalScale = prototype.scale;
             const updateCameraState = (cw, ch, scaleVal, camX, camY, offsetX, offsetY) => {
@@ -9840,6 +10470,7 @@
                     } else if (cameraCaptureStage === 2) {
                         cameraCaptureStage = 0;
                         inWorldSpace = true;
+                        hasEnteredWorldSpace = true;
                         visual.awaitingGridStroke = false;
                         const camX = -x;
                         const camY = -y;
@@ -9873,6 +10504,7 @@
             };
             const arc = function (x, y, radius, startAngle, endAngle, counterclockwise) {
                 if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
+                if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                 visual.applyCellColor(this, radius);
                 return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
             };
@@ -9884,6 +10516,7 @@
                         ? originalFillText.call(this, replacement, x, y)
                         : originalFillText.call(this, replacement, x, y, maxWidth);
                 }
+                if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                 visual.observeNativeText(text);
                 visual.applyTextStyle(this, text, x, y, false);
                 const rendered = visual.renderedText(text);
@@ -9898,6 +10531,7 @@
                         ? originalStrokeText.call(this, replacement, x, y)
                         : originalStrokeText.call(this, replacement, x, y, maxWidth);
                 }
+                if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                 visual.applyTextStyle(this, text, x, y, true);
                 const rendered = visual.renderedText(text);
                 return maxWidth === void 0
@@ -9905,13 +10539,8 @@
                     : originalStrokeText.call(this, rendered, x, y, maxWidth);
             };
             const stroke = function (path) {
-                const state = paths.get(this);
-                if (state && state.pending !== null) {
-                    if (state.pending === void 0) originalFill.call(this);
-                    else originalFill.call(this, state.pending);
-                    state.pending = null;
-                }
                 if (isGameContext(this)) {
+                    if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                     if (visual.awaitingGridStroke) {
                         visual.awaitingGridStroke = false;
                         if (!document.getElementById('sf-canvas')) {
@@ -9938,12 +10567,7 @@
                             return originalDrawImage.call(this, image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
                     }
                 }
-                const state = paths.get(this);
-                if (state && state.pending !== null) {
-                    if (state.pending === void 0) originalFill.call(this);
-                    else originalFill.call(this, state.pending);
-                    state.pending = null;
-                }
+                if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                 if (!visual.app.settings.game.showLeaderboard && leaderboardCanvases.has(image)) return;
                 const replacement = visual.getReplacementImage(image);
                 switch (arguments.length) {
@@ -9967,6 +10591,7 @@
     }
     class VisualController extends FeatureController {
         drawMergeTimers(context) {
+            if (this.app.state.hudVisible === false) return;
             const mergeTimer = this.app.features.get('mergeTimer');
             if (mergeTimer && typeof mergeTimer.drawOnContext === 'function') {
                 mergeTimer.drawOnContext(context, this.originalFillText, this.originalStrokeText);
@@ -11841,8 +12466,10 @@
             muteButton.addEventListener('click', () => {
                 const confirmMsg =
                     name === 'Spectator'
-                        ? 'Are you sure you want to mute all spectators until you refresh the page?'
-                        : `Are you sure you want to mute '${name}' until you refresh the page?`;
+                        ? (this.app.i18n?.message('Are you sure you want to mute all spectators until you refresh the page?') ??
+                          'Are you sure you want to mute all spectators until you refresh the page?')
+                        : (this.app.i18n?.message("Are you sure you want to mute '{name}' until you refresh the page?", { name }) ??
+                          `Are you sure you want to mute '${name}' until you refresh the page?`);
                 if (confirm(confirmMsg)) {
                     this.muted.add(name);
                     this.root?.querySelectorAll('.message').forEach((message) => {
@@ -13090,7 +13717,7 @@
             const context = canvas.getContext('2d');
             if (!context) return;
             context.clearRect(0, 0, canvas.width, canvas.height);
-            if (!isMenuClosed() || isDeadScreenVisible()) return;
+            if (!isMenuClosed() || isDeadScreenVisible() || this.app.state.hudVisible === false) return;
             const width = border.right - border.left;
             const height = border.bottom - border.top;
             if (width <= 0 || height <= 0) return;
@@ -13178,6 +13805,7 @@
             if (this.app.inputOwnership) {
                 this.resources.add(this.app.inputOwnership.on('change', () => this.cleanupRuntimeState()));
             }
+            this.ensureHudStyles();
             this.resources.add(() => this.cleanupRuntimeState());
         }
         /** @returns {HostAdapter|null} */
@@ -13348,6 +13976,10 @@
                 const show = !this.app.settingsStore.get('settings.showPartyPanel');
                 this.app.settingsStore.set('settings.showPartyPanel', show);
             }
+            if (this.matches(event, keys.toggle?.hud)) {
+                if (event.key === 'Dead') event.preventDefault();
+                this.toggleHud();
+            }
             if (this.matches(event, keys.respawn)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.fastRespawn();
@@ -13457,9 +14089,10 @@
             const overlay = createElement('div', {
                 className: 'sigmod-movement-lock',
             });
+            const text = this.app.i18n?.message ? this.app.i18n.message(labels[kind]) : labels[kind];
             const label = createElement('span', {
                 className: 'sigmod-movement-lock-label',
-                text: labels[kind],
+                text,
             });
             overlay.append(label);
             (this.app.dom?.page ?? document.body).append(overlay);
@@ -13554,6 +14187,141 @@
                 this.resources.timeout(() => {
                     if (chat.style.opacity === '0') chat.style.display = 'none';
                 }, TIMING.uiTransition);
+            }
+        }
+        ensureHudStyles() {
+            if (document.getElementById('sigmod-hud-toggle-style')) return;
+            const style = createElement('style', {
+                attributes: { id: 'sigmod-hud-toggle-style', 'data-sigmod-hud': BUILD.release },
+            });
+            style.textContent = `
+            body.sigmod-hud-hidden .modChat,
+            body.sigmod-hud-hidden .minimapContainer,
+            body.sigmod-hud-hidden #party_panel,
+            body.sigmod-hud-hidden .party_panel,
+            body.sigmod-hud-hidden #sigmod_stats,
+            body.sigmod-hud-hidden .tag-ping-container,
+            body.sigmod-hud-hidden .ping-wheel-container,
+            body.sigmod-hud-hidden #sf-leaderboard,
+            body.sigmod-hud-hidden .sf-stats-container,
+            body.sigmod-hud-hidden .sf-minimap-canvas,
+            body.sigmod-hud-hidden .sf-linesplit,
+            body.sigmod-hud-hidden .sf-perftab,
+            body.sigmod-hud-hidden #chat_block {
+                display: none !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+        `;
+            (document.head || document.documentElement).append(style);
+            this.resources.add(() => style.remove());
+        }
+        toggleHud(force = void 0) {
+            const current = this.app.state.hudVisible !== false;
+            const next = typeof force === 'boolean' ? force : !current;
+            this.app.state.hudVisible = next;
+            this.ensureHudStyles();
+            const isSigFixes = Boolean(window.sigfix || this.app.host.adapter?.kind === 'sigfix' || document.getElementById('sf-canvas'));
+            if (!next) {
+                document.body.classList.add('sigmod-hud-hidden');
+                this.app.features.get('chat')?.blurChat();
+            } else {
+                document.body.classList.remove('sigmod-hud-hidden');
+            }
+            if (isSigFixes) {
+                this.syncSigFixHud(next);
+            } else {
+                this.syncSigmallyHud(next);
+            }
+            this.syncSigModHud(next);
+        }
+        syncSigFixHud(visible) {
+            const sfLeaderboard = document.getElementById('sf-leaderboard');
+            if (sfLeaderboard instanceof HTMLElement) {
+                if (!visible) {
+                    sfLeaderboard.style.setProperty('display', 'none', 'important');
+                } else {
+                    sfLeaderboard.style.removeProperty('display');
+                }
+            }
+            const sfStats =
+                document.querySelector('div[style*="white-space: pre"]')?.parentElement ||
+                [...document.querySelectorAll('div')].find(
+                    (el) =>
+                        el.style?.position === 'fixed' &&
+                        el.style?.left === '10px' &&
+                        el.style?.top === '10px' &&
+                        el.style?.width === '400px'
+                );
+            if (sfStats instanceof HTMLElement) {
+                sfStats.classList.add('sf-stats-container');
+                if (!visible) {
+                    sfStats.style.setProperty('display', 'none', 'important');
+                } else {
+                    sfStats.style.removeProperty('display');
+                }
+            }
+            const sfMinimap =
+                window.sigfix?.ui?.minimap?.canvas ||
+                [...document.querySelectorAll('canvas')].find(
+                    (c) => c.style?.position === 'fixed' && c.style?.bottom === '0px' && c.style?.right === '0px' && c.id !== 'sf-canvas'
+                );
+            if (sfMinimap instanceof HTMLElement) {
+                sfMinimap.classList.add('sf-minimap-canvas');
+                if (!visible) {
+                    sfMinimap.style.setProperty('display', 'none', 'important');
+                } else {
+                    sfMinimap.style.removeProperty('display');
+                }
+            }
+            const sfLinesplit = document.querySelector('div[style*="bottom: 10px"][style*="left: 50vw"]');
+            if (sfLinesplit instanceof HTMLElement) {
+                sfLinesplit.classList.add('sf-linesplit');
+                if (!visible) {
+                    sfLinesplit.style.setProperty('display', 'none', 'important');
+                } else {
+                    sfLinesplit.style.removeProperty('display');
+                }
+            }
+            const sfPerftab = document.querySelector('div[style*="top: 10px"][style*="left: 50vw"]');
+            if (sfPerftab instanceof HTMLElement) {
+                sfPerftab.classList.add('sf-perftab');
+                if (!visible) {
+                    sfPerftab.style.setProperty('display', 'none', 'important');
+                } else {
+                    sfPerftab.style.removeProperty('display');
+                }
+            }
+            const chatBlock = document.getElementById('chat_block');
+            if (chatBlock instanceof HTMLElement) {
+                if (!visible) {
+                    chatBlock.style.setProperty('display', 'none', 'important');
+                } else {
+                    chatBlock.style.removeProperty('display');
+                }
+            }
+        }
+        syncSigmallyHud(visible) {
+            const chatBlock = document.getElementById('chat_block');
+            if (chatBlock instanceof HTMLElement) {
+                if (!visible) {
+                    chatBlock.style.setProperty('display', 'none', 'important');
+                } else {
+                    chatBlock.style.removeProperty('display');
+                }
+            }
+        }
+        syncSigModHud(visible) {
+            const party = this.app.features.get('party');
+            const minimap = this.app.features.get('minimap');
+            if (visible) {
+                if (party && party.shouldShowPanel()) {
+                    party.ensurePanel();
+                    party.requestRender();
+                }
+                if (minimap) {
+                    minimap.scheduleDraw();
+                }
             }
         }
         fastRespawn() {
@@ -14609,7 +15377,8 @@
             }
         }
         async deleteAll() {
-            if (!confirm('Delete all saved screenshots?')) return;
+            const confirmMsg = this.app.i18n?.message('Delete all saved screenshots?') ?? 'Delete all saved screenshots?';
+            if (!confirm(confirmMsg)) return;
             try {
                 if (!(await this.ensureDatabase())) return;
                 await this.clear();
@@ -14742,7 +15511,10 @@
             this.render();
         }
         remove(name) {
-            if (!confirm(`Are you sure you want to delete the name '${name}'?`)) return;
+            const confirmMsg = this.app.i18n?.message
+                ? this.app.i18n.message("Are you sure you want to delete the name '{name}'?", { name })
+                : `Are you sure you want to delete the name '${name}'?`;
+            if (!confirm(confirmMsg)) return;
             this.app.settingsStore.update((settings) => {
                 settings.settings.savedNames = settings.settings.savedNames.filter((entry) => entry !== name);
             }, true);
@@ -14764,7 +15536,10 @@
                 .then(() => {
                     const displayName = name.length > 20 ? `${name.slice(0, 20)}...` : name;
                     const modal = this.app.features.get('modal');
-                    const dialog = modal?.alert(`Added the name ${displayName} to your clipboard!`, 'success');
+                    const message = this.app.i18n?.message
+                        ? this.app.i18n.message('Added the name {displayName} to your clipboard!', { displayName })
+                        : `Added the name ${displayName} to your clipboard!`;
+                    const dialog = modal?.alert(message, 'success');
                     const id = dialog?.dataset?.modalId;
                     if (id) this.resources.timeout(() => modal?.close(id), 2e3);
                 })
@@ -14976,10 +15751,16 @@
                 const external = !panel.matches('[data-mod-panel]');
                 const panelKey = panel.id || 'external-' + panels.filter((item) => !item.matches('[data-mod-panel]')).indexOf(panel);
                 const meta = this.menu.getNavigationTabMeta?.(panel.id);
+                const extRecord = panel.dataset.extensionId ? this.menu.otherExtensions?.get(panel.dataset.extensionId) : null;
                 const section =
+                    extRecord?.name ||
                     meta?.title ||
                     panel.getAttribute('aria-label') ||
-                    (external ? 'Sig Fixes' : panel.id.replace(/^mod_/, '').replace(/[-_]/g, ' '));
+                    (external
+                        ? panel.id?.includes('sigfix')
+                            ? 'Sig Fixes'
+                            : 'Extension'
+                        : panel.id.replace(/^mod_/, '').replace(/[-_]/g, ' '));
                 add({
                     token: 'panel:' + panelKey,
                     label: section,
@@ -15360,8 +16141,11 @@
                 this.menu.activeCategory = null;
                 this.menu.updateCategoryActiveState();
                 const panels = this.menu.getTabPanels().filter((panel) => !panel.matches('[data-mod-panel]'));
-                const buttons = this.root.querySelectorAll('[data-nav-external-slot] .mod_nav_btn');
-                this.menu.switchTabPanel(entry.panel, buttons[panels.indexOf(entry.panel)] || null, false);
+                const extRecord = entry.panel.dataset.extensionId ? this.menu.otherExtensions?.get(entry.panel.dataset.extensionId) : null;
+                const buttons = this.root.querySelectorAll(
+                    '[data-nav-other-extensions-slot] .mod_nav_btn, [data-nav-external-slot] .mod_nav_btn'
+                );
+                this.menu.switchTabPanel(entry.panel, extRecord?.button || buttons[panels.indexOf(entry.panel)] || null, false);
             }
             const parameters = entry.source.closest('.setting-parameters');
             if (parameters instanceof HTMLElement) parameters.style.display = 'block';
@@ -15997,6 +16781,7 @@
             }
         }
         openWheel(source = null) {
+            if (this.app.state.hudVisible === false) return;
             this.wheelOpen = true;
             this.wheelCancelled = false;
             this.pingSource = source;
@@ -16214,6 +16999,10 @@
         }
         drawPings() {
             if (this.activePings.size === 0) return;
+            if (this.app.state.hudVisible === false) {
+                this.activePings.forEach((p) => (p.element.style.display = 'none'));
+                return;
+            }
             const cam = this.getCamera();
             if (!cam || !cam.scale) {
                 this.activePings.forEach((p) => (p.element.style.display = 'none'));
@@ -16804,7 +17593,8 @@
                 });
             });
             scope?.listen(remove, 'click', async () => {
-                if (!confirm('Remove your profile picture?')) return;
+                const confirmMsg = this.app.i18n?.message('Remove your profile picture?') ?? 'Remove your profile picture?';
+                if (!confirm(confirmMsg)) return;
                 await this.runEditorAction(errorText, async () => {
                     const payload = await this.request('/me/remove');
                     if (!payload?.success || !isObject(payload.user)) throw new Error(String(payload?.message ?? 'Avatar removal failed.'));
@@ -17663,7 +18453,8 @@
             else if (action === 'chat-back') await this.openFriends();
             else if (action === 'edit-profile') this.profileController?.openEditor();
             else if (action === 'logout') {
-                if (confirm('Are you sure you want to logout?')) await this.profileController?.logout();
+                const confirmMsg = this.app.i18n?.message('Are you sure you want to logout?') ?? 'Are you sure you want to logout?';
+                if (confirm(confirmMsg)) await this.profileController?.logout();
             } else if (action === 'load-users') await this.loadMoreUsers();
         }
         handleSubmit(event) {
@@ -18050,7 +18841,9 @@
             appendGroup('Offline', offline);
         }
         async removeFriend(id) {
-            if (!id || !confirm('Are you sure you want to remove this friend?')) return;
+            const confirmMsg =
+                this.app.i18n?.message('Are you sure you want to remove this friend?') ?? 'Are you sure you want to remove this friend?';
+            if (!id || !confirm(confirmMsg)) return;
             try {
                 const payload = await this.request('/me/handle', {
                     method: 'POST',
@@ -18465,7 +19258,11 @@
             }
             select.value = option.value;
             select.dispatchEvent(new Event('change', { bubbles: true }));
-            this.notify(`Switched to ${option.textContent?.trim() || friend?.server}.`, 'success');
+            const serverName = option.textContent?.trim() || friend?.server;
+            const switchedMsg = this.app.i18n?.message
+                ? this.app.i18n.message('Switched to {server}.', { server: serverName })
+                : `Switched to ${serverName}.`;
+            this.notify(switchedMsg, 'success');
         }
         joinFriendTag(id) {
             const friend = this.findFriend(id);
@@ -18482,7 +19279,8 @@
             input.value = tag;
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.dispatchEvent(new Event('change', { bubbles: true }));
-            this.notify(`Joined #${tag}.`, 'success');
+            const joinedMsg = this.app.i18n?.message ? this.app.i18n.message('Joined #{tag}.', { tag }) : `Joined #${tag}.`;
+            this.notify(joinedMsg, 'success');
         }
         openFriendNote(id) {
             const friend = this.findFriend(id);
@@ -18499,9 +19297,12 @@
                 attributes: { type: 'button', 'aria-label': 'Close' },
             });
             close.innerHTML = icon('close', 20);
+            const noteTitle = this.app.i18n?.message
+                ? this.app.i18n.message('Note for {name}', { name: friend?.username ?? 'friend' })
+                : `Note for ${friend?.username ?? 'friend'}`;
             header.append(
                 createElement('h2', {
-                    text: `Note for ${friend?.username ?? 'friend'}`,
+                    text: noteTitle,
                 }),
                 close
             );
@@ -19434,12 +20235,38 @@
                 const value = app2.settingsStore.get(`macros.keys.${path}`);
                 return typeof value === 'string' ? value : null;
             };
+            const registerOtherExtension = (options) => {
+                const menu = app2.features.get('menu');
+                if (menu) return menu.registerOtherExtension(options);
+                app2.__pendingExtensions ?? (app2.__pendingExtensions = []);
+                app2.__pendingExtensions.push(options);
+                return {
+                    id: String(options?.id || ''),
+                    open: () => app2.features.get('menu')?.openOtherExtension(String(options?.id || '')),
+                    remove: () => app2.features.get('menu')?.unregisterOtherExtension(String(options?.id || '')),
+                };
+            };
+            const unregisterOtherExtension = (id) => app2.features.get('menu')?.unregisterOtherExtension(id) ?? false;
             const sigmodFacade = {
                 version: BUILD.version,
                 release: BUILD.release,
                 server_version: BUILD.serverVersion,
                 storageName: STORAGE.settings,
                 settings: this.settings,
+                registerExtension: registerOtherExtension,
+                unregisterExtension: unregisterOtherExtension,
+                addNavbarButton: registerOtherExtension,
+                extensions: {
+                    register: registerOtherExtension,
+                    unregister: unregisterOtherExtension,
+                    add: registerOtherExtension,
+                    remove: unregisterOtherExtension,
+                    get: (id) => app2.features.get('menu')?.getOtherExtension(id) ?? null,
+                    getAll: () => app2.features.get('menu')?.getAllOtherExtensions() ?? [],
+                    open: (id) => app2.features.get('menu')?.openOtherExtension(id) ?? false,
+                    createPanelTemplate: (template, ext) =>
+                        app2.features.get('menu')?.createExtensionPanelFromTemplate(template, ext) ?? null,
+                },
                 integration: Object.freeze({
                     version: 1,
                     getHostKind: () => app2.host.adapter?.kind ?? null,
@@ -19509,6 +20336,24 @@
             });
             window.sigmod = sigmodFacade;
             window.gameSettings = gameSettingsFacade;
+            const queue = Array.isArray(window.sigmodExtensions) ? window.sigmodExtensions : [];
+            window.sigmodExtensions = queue;
+            for (const item of queue) {
+                registerOtherExtension(item);
+            }
+            queue.push = (...items) => {
+                for (const item of items) {
+                    registerOtherExtension(item);
+                }
+                return queue.length;
+            };
+            window.sigmodRegisterExtension = registerOtherExtension;
+            const handleRegisterEvent = (event) => {
+                if (event?.detail) registerOtherExtension(event.detail);
+            };
+            window.addEventListener('sigmod:register-extension', handleRegisterEvent);
+            document.addEventListener('sigmod:register-extension', handleRegisterEvent);
+            window.dispatchEvent(new CustomEvent('sigmod:ready', { detail: sigmodFacade }));
             const sendPlay = (data) => {
                 try {
                     const payload = typeof data === 'string' ? JSON.parse(data) : data;
@@ -19558,6 +20403,9 @@
             window.sendMouseMove = sendMouseMove;
             window.sigModWsHandler = sigModWsHandler;
             this.resources.add(() => {
+                window.removeEventListener('sigmod:register-extension', handleRegisterEvent);
+                document.removeEventListener('sigmod:register-extension', handleRegisterEvent);
+                if (window.sigmodRegisterExtension === registerOtherExtension) delete window.sigmodRegisterExtension;
                 if (window.sigmod === sigmodFacade) window.sigmod = previous.sigmod;
                 if (window.gameSettings === gameSettingsFacade) window.gameSettings = previous.gameSettings;
                 if (window.sendPlay === sendPlay) window.sendPlay = previous.sendPlay;

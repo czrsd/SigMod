@@ -525,6 +525,7 @@
             partyPanel: { x: 4, y: 300 },
             showPartyPanel: true,
             partyScale: 1,
+            partyMaxWidth: 240,
             partyBgColor: 'rgba(0, 0, 0, 0.4)',
             partyTextColor: '#fafafa',
             partyBorderColor: 'transparent',
@@ -1803,6 +1804,7 @@
                 value.settings.partyPanel.y = currentPartyY;
             }
             value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
+            value.settings.partyMaxWidth = clamp(Number(value.settings.partyMaxWidth) || 240, 120, 1e3);
             value.settings.partyBgColor =
                 typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : 'rgba(0, 0, 0, 0.4)';
             value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
@@ -5088,6 +5090,13 @@
                                                 </div>
                                             </div>
                                             <div class="settings-item chat-menu-row">
+                                                <span class="text">Max width</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyMaxWidthText">240px</span>
+                                                    <input type="range" class="modSlider" id="partyMaxWidth" min="120" max="600" step="10" data-setting="settings.partyMaxWidth" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
                                                 <span class="text">Ping duration</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="pingDurationText">2.0s</span>
@@ -7682,6 +7691,7 @@
             if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
             if (
                 input.id === 'partyScale' ||
+                input.id === 'partyMaxWidth' ||
                 input.id === 'pingDuration' ||
                 input.id === 'partyBorderRadius' ||
                 input.id === 'partyBlur' ||
@@ -7757,6 +7767,11 @@
             if (scaleLabel) {
                 const v = this.app.settingsStore.get('settings.partyScale') ?? 1;
                 scaleLabel.textContent = `${Number(v).toFixed(2)}x`;
+            }
+            const maxWidthLabel = this.root?.querySelector('#partyMaxWidthText');
+            if (maxWidthLabel) {
+                const v = this.app.settingsStore.get('settings.partyMaxWidth') ?? 240;
+                maxWidthLabel.textContent = `${Number(v)}px`;
             }
             const pingLabel = this.root?.querySelector('#pingDurationText');
             if (pingLabel) {
@@ -12345,6 +12360,7 @@
                     if (
                         !path ||
                         path === 'settings.partyScale' ||
+                        path === 'settings.partyMaxWidth' ||
                         path === 'settings.partyBgColor' ||
                         path === 'settings.partyTextColor' ||
                         path === 'settings.partyBorderColor' ||
@@ -12390,6 +12406,9 @@
             this.panel.style.boxShadow = 'none';
             this.panel.style.transform = `scale(${settings.partyScale ?? 1})`;
             this.panel.style.transformOrigin = 'top left';
+            const maxWidth = clamp(Number(settings.partyMaxWidth) || 240, 120, 1e3);
+            this.panel.style.maxWidth = `${maxWidth}px`;
+            this.panel.style.setProperty('--party-max-width', `${maxWidth}px`);
             this.panel.style.backgroundColor = settings.partyBgColor ?? 'rgba(0, 0, 0, 0.4)';
             this.panel.style.color = settings.partyTextColor ?? '#fafafa';
             const borderColor = settings.partyBorderColor;
@@ -12863,8 +12882,7 @@
                     const indexBadge = createElement('span', { className: 'tag-member-index' });
                     const iconWrap = createElement('span', { className: 'party-status-wrap' });
                     const nickEl = createElement('span', {
-                        className: 'tag-member-nick centerY',
-                        attributes: { style: 'gap: 4px;' },
+                        className: 'tag-member-nick',
                     });
                     const wifiWrap = createElement('span', { className: 'party-wifi-wrap centerY' });
                     const scoreEl = createElement('span', { className: 'tag-member-score' });
@@ -12892,6 +12910,7 @@
                 }
                 if (row._nickEl.textContent !== member.nick) {
                     row._nickEl.textContent = member.nick;
+                    row._nickEl.title = member.nick;
                 }
                 if (settings.partyShowPing) {
                     row._wifiWrap.style.display = '';

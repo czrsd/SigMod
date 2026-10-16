@@ -13,19 +13,23 @@ class CanvasHooks extends FeatureController {
         const originalDrawImage = prototype.drawImage;
         const leaderboardCanvases = new WeakSet();
         const isGameContext = (context) => context?.canvas === this.app.dom?.canvas || context?.canvas?.id === SELECTORS.canvas.slice(1);
+        let cameraCaptureStage = 0;
+        let pendingScale = 1;
+        let inWorldSpace = false;
+        let hasEnteredWorldSpace = false;
         const fillRect = function (x, y, width, height) {
             if (!isGameContext(this)) return originalFillRect.call(this, x, y, width, height);
             if (visual.isBackgroundRect(this.canvas, x, y, width, height)) {
                 cameraCaptureStage = 0;
                 inWorldSpace = false;
+                hasEnteredWorldSpace = false;
                 visual.onFrameStart();
                 this.fillStyle = visual.getMapFill(this);
+            } else if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) {
+                return;
             }
             return originalFillRect.call(this, x, y, width, height);
         };
-        let cameraCaptureStage = 0;
-        let pendingScale = 1;
-        let inWorldSpace = false;
         const originalTranslate = prototype.translate;
         const originalScale = prototype.scale;
 
@@ -60,6 +64,7 @@ class CanvasHooks extends FeatureController {
                     // Sigmally S(t) Step 3: t.translate(-s.x, -s.y)
                     cameraCaptureStage = 0;
                     inWorldSpace = true;
+                    hasEnteredWorldSpace = true;
                     visual.awaitingGridStroke = false;
                     const camX = -x;
                     const camY = -y;
@@ -96,6 +101,7 @@ class CanvasHooks extends FeatureController {
 
         const arc = function (x, y, radius, startAngle, endAngle, counterclockwise) {
             if (!isGameContext(this)) return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
+            if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
             visual.applyCellColor(this, radius);
             return originalArc.call(this, x, y, radius, startAngle, endAngle, counterclockwise);
         };
@@ -107,6 +113,7 @@ class CanvasHooks extends FeatureController {
                     ? originalFillText.call(this, replacement, x, y)
                     : originalFillText.call(this, replacement, x, y, maxWidth);
             }
+            if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
             visual.observeNativeText(text);
             visual.applyTextStyle(this, text, x, y, false);
             const rendered = visual.renderedText(text);
@@ -121,6 +128,7 @@ class CanvasHooks extends FeatureController {
                     ? originalStrokeText.call(this, replacement, x, y)
                     : originalStrokeText.call(this, replacement, x, y, maxWidth);
             }
+            if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
             visual.applyTextStyle(this, text, x, y, true);
             const rendered = visual.renderedText(text);
             return maxWidth === undefined
@@ -128,13 +136,8 @@ class CanvasHooks extends FeatureController {
                 : originalStrokeText.call(this, rendered, x, y, maxWidth);
         };
         const stroke = function (path) {
-            const state = paths.get(this);
-            if (state && state.pending !== null) {
-                if (state.pending === undefined) originalFill.call(this);
-                else originalFill.call(this, state.pending);
-                state.pending = null;
-            }
             if (isGameContext(this)) {
+                if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                 if (visual.awaitingGridStroke) {
                     visual.awaitingGridStroke = false;
                     if (!document.getElementById('sf-canvas')) {
@@ -161,12 +164,7 @@ class CanvasHooks extends FeatureController {
                         return originalDrawImage.call(this, image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
                 }
             }
-            const state = paths.get(this);
-            if (state && state.pending !== null) {
-                if (state.pending === undefined) originalFill.call(this);
-                else originalFill.call(this, state.pending);
-                state.pending = null;
-            }
+            if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
             if (!visual.app.settings.game.showLeaderboard && leaderboardCanvases.has(image)) return;
             const replacement = visual.getReplacementImage(image);
             switch (arguments.length) {
@@ -190,6 +188,7 @@ class CanvasHooks extends FeatureController {
 }
 class VisualController extends FeatureController {
     drawMergeTimers(context) {
+        if (this.app.state.hudVisible === false) return;
         const mergeTimer = this.app.features.get('mergeTimer');
         if (mergeTimer && typeof mergeTimer.drawOnContext === 'function') {
             mergeTimer.drawOnContext(context, this.originalFillText, this.originalStrokeText);

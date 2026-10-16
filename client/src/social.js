@@ -408,7 +408,8 @@ class ProfileController extends FeatureController {
             });
         });
         scope?.listen(remove, 'click', async () => {
-            if (!confirm('Remove your profile picture?')) return;
+            const confirmMsg = this.app.i18n?.message('Remove your profile picture?') ?? 'Remove your profile picture?';
+            if (!confirm(confirmMsg)) return;
             await this.runEditorAction(errorText, async () => {
                 const payload = await this.request('/me/remove');
                 if (!payload?.success || !isObject(payload.user)) throw new Error(String(payload?.message ?? 'Avatar removal failed.'));
@@ -1280,7 +1281,8 @@ class FriendsController extends FeatureController {
         else if (action === 'chat-back') await this.openFriends();
         else if (action === 'edit-profile') this.profileController?.openEditor();
         else if (action === 'logout') {
-            if (confirm('Are you sure you want to logout?')) await this.profileController?.logout();
+            const confirmMsg = this.app.i18n?.message('Are you sure you want to logout?') ?? 'Are you sure you want to logout?';
+            if (confirm(confirmMsg)) await this.profileController?.logout();
         } else if (action === 'load-users') await this.loadMoreUsers();
     }
     handleSubmit(event) {
@@ -1667,7 +1669,9 @@ class FriendsController extends FeatureController {
         appendGroup('Offline', offline);
     }
     async removeFriend(id) {
-        if (!id || !confirm('Are you sure you want to remove this friend?')) return;
+        const confirmMsg =
+            this.app.i18n?.message('Are you sure you want to remove this friend?') ?? 'Are you sure you want to remove this friend?';
+        if (!id || !confirm(confirmMsg)) return;
         try {
             const payload = await this.request('/me/handle', {
                 method: 'POST',
@@ -2082,7 +2086,11 @@ class FriendsController extends FeatureController {
         }
         select.value = option.value;
         select.dispatchEvent(new Event('change', { bubbles: true }));
-        this.notify(`Switched to ${option.textContent?.trim() || friend?.server}.`, 'success');
+        const serverName = option.textContent?.trim() || friend?.server;
+        const switchedMsg = this.app.i18n?.message
+            ? this.app.i18n.message('Switched to {server}.', { server: serverName })
+            : `Switched to ${serverName}.`;
+        this.notify(switchedMsg, 'success');
     }
     joinFriendTag(id) {
         const friend = this.findFriend(id);
@@ -2099,7 +2107,8 @@ class FriendsController extends FeatureController {
         input.value = tag;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
-        this.notify(`Joined #${tag}.`, 'success');
+        const joinedMsg = this.app.i18n?.message ? this.app.i18n.message('Joined #{tag}.', { tag }) : `Joined #${tag}.`;
+        this.notify(joinedMsg, 'success');
     }
     openFriendNote(id) {
         const friend = this.findFriend(id);
@@ -2116,9 +2125,12 @@ class FriendsController extends FeatureController {
             attributes: { type: 'button', 'aria-label': 'Close' },
         });
         close.innerHTML = icon('close', 20);
+        const noteTitle = this.app.i18n?.message
+            ? this.app.i18n.message('Note for {name}', { name: friend?.username ?? 'friend' })
+            : `Note for ${friend?.username ?? 'friend'}`;
         header.append(
             createElement('h2', {
-                text: `Note for ${friend?.username ?? 'friend'}`,
+                text: noteTitle,
             }),
             close
         );

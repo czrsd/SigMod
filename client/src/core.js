@@ -822,6 +822,9 @@ class Localization {
                 detail: { locale: this.locale },
             })
         );
+        for (const element of document.querySelectorAll('[data-sigmod-localize]')) {
+            this.translateTree(element);
+        }
     }
 }
 
@@ -1233,6 +1236,7 @@ class RuntimeState {
         this.border = null;
         this.backend = { connected: false, sid: null, latency: null };
         this.friends = { settings: {}, names: new Set() };
+        this.hudVisible = true;
     }
 }
 class FeatureController {

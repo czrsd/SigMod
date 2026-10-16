@@ -1228,8 +1228,10 @@ class ChatController extends FeatureController {
         muteButton.addEventListener('click', () => {
             const confirmMsg =
                 name === 'Spectator'
-                    ? 'Are you sure you want to mute all spectators until you refresh the page?'
-                    : `Are you sure you want to mute '${name}' until you refresh the page?`;
+                    ? (this.app.i18n?.message('Are you sure you want to mute all spectators until you refresh the page?') ??
+                      'Are you sure you want to mute all spectators until you refresh the page?')
+                    : (this.app.i18n?.message("Are you sure you want to mute '{name}' until you refresh the page?", { name }) ??
+                      `Are you sure you want to mute '${name}' until you refresh the page?`);
             if (confirm(confirmMsg)) {
                 this.muted.add(name);
                 this.root?.querySelectorAll('.message').forEach((message) => {
@@ -2544,7 +2546,7 @@ class MinimapController extends FeatureController {
         const context = canvas.getContext('2d');
         if (!context) return;
         context.clearRect(0, 0, canvas.width, canvas.height);
-        if (!isMenuClosed() || isDeadScreenVisible()) return;
+        if (!isMenuClosed() || isDeadScreenVisible() || this.app.state.hudVisible === false) return;
         const width = border.right - border.left;
         const height = border.bottom - border.top;
         if (width <= 0 || height <= 0) return;
@@ -2633,6 +2635,7 @@ class MacroController extends FeatureController {
         if (this.app.inputOwnership) {
             this.resources.add(this.app.inputOwnership.on('change', () => this.cleanupRuntimeState()));
         }
+        this.ensureHudStyles();
         this.resources.add(() => this.cleanupRuntimeState());
     }
     /** @returns {HostAdapter|null} */
@@ -2803,6 +2806,10 @@ class MacroController extends FeatureController {
             const show = !this.app.settingsStore.get('settings.showPartyPanel');
             this.app.settingsStore.set('settings.showPartyPanel', show);
         }
+        if (this.matches(event, keys.toggle?.hud)) {
+            if (event.key === 'Dead') event.preventDefault();
+            this.toggleHud();
+        }
         if (this.matches(event, keys.respawn)) {
             if (event.key === 'Dead') event.preventDefault();
             this.fastRespawn();
@@ -2916,9 +2923,10 @@ class MacroController extends FeatureController {
         const overlay = createElement('div', {
             className: 'sigmod-movement-lock',
         });
+        const text = this.app.i18n?.message ? this.app.i18n.message(labels[kind]) : labels[kind];
         const label = createElement('span', {
             className: 'sigmod-movement-lock-label',
-            text: labels[kind],
+            text,
         });
         overlay.append(label);
         (this.app.dom?.page ?? document.body).append(overlay);
@@ -3014,6 +3022,148 @@ class MacroController extends FeatureController {
             this.resources.timeout(() => {
                 if (chat.style.opacity === '0') chat.style.display = 'none';
             }, TIMING.uiTransition);
+        }
+    }
+    ensureHudStyles() {
+        if (document.getElementById('sigmod-hud-toggle-style')) return;
+        const style = createElement('style', {
+            attributes: { id: 'sigmod-hud-toggle-style', 'data-sigmod-hud': BUILD.release },
+        });
+        style.textContent = `
+            body.sigmod-hud-hidden .modChat,
+            body.sigmod-hud-hidden .minimapContainer,
+            body.sigmod-hud-hidden #party_panel,
+            body.sigmod-hud-hidden .party_panel,
+            body.sigmod-hud-hidden #sigmod_stats,
+            body.sigmod-hud-hidden .tag-ping-container,
+            body.sigmod-hud-hidden .ping-wheel-container,
+            body.sigmod-hud-hidden #sf-leaderboard,
+            body.sigmod-hud-hidden .sf-stats-container,
+            body.sigmod-hud-hidden .sf-minimap-canvas,
+            body.sigmod-hud-hidden .sf-linesplit,
+            body.sigmod-hud-hidden .sf-perftab,
+            body.sigmod-hud-hidden #chat_block {
+                display: none !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+        `;
+        (document.head || document.documentElement).append(style);
+        this.resources.add(() => style.remove());
+    }
+    toggleHud(force = undefined) {
+        const current = this.app.state.hudVisible !== false;
+        const next = typeof force === 'boolean' ? force : !current;
+        this.app.state.hudVisible = next;
+
+        this.ensureHudStyles();
+
+        const isSigFixes = Boolean(window.sigfix || this.app.host.adapter?.kind === 'sigfix' || document.getElementById('sf-canvas'));
+
+        if (!next) {
+            document.body.classList.add('sigmod-hud-hidden');
+            this.app.features.get('chat')?.blurChat();
+        } else {
+            document.body.classList.remove('sigmod-hud-hidden');
+        }
+
+        if (isSigFixes) {
+            this.syncSigFixHud(next);
+        } else {
+            this.syncSigmallyHud(next);
+        }
+
+        this.syncSigModHud(next);
+    }
+    syncSigFixHud(visible) {
+        const sfLeaderboard = document.getElementById('sf-leaderboard');
+        if (sfLeaderboard instanceof HTMLElement) {
+            if (!visible) {
+                sfLeaderboard.style.setProperty('display', 'none', 'important');
+            } else {
+                sfLeaderboard.style.removeProperty('display');
+            }
+        }
+
+        const sfStats =
+            document.querySelector('div[style*="white-space: pre"]')?.parentElement ||
+            [...document.querySelectorAll('div')].find(
+                (el) =>
+                    el.style?.position === 'fixed' && el.style?.left === '10px' && el.style?.top === '10px' && el.style?.width === '400px'
+            );
+        if (sfStats instanceof HTMLElement) {
+            sfStats.classList.add('sf-stats-container');
+            if (!visible) {
+                sfStats.style.setProperty('display', 'none', 'important');
+            } else {
+                sfStats.style.removeProperty('display');
+            }
+        }
+
+        const sfMinimap =
+            window.sigfix?.ui?.minimap?.canvas ||
+            [...document.querySelectorAll('canvas')].find(
+                (c) => c.style?.position === 'fixed' && c.style?.bottom === '0px' && c.style?.right === '0px' && c.id !== 'sf-canvas'
+            );
+        if (sfMinimap instanceof HTMLElement) {
+            sfMinimap.classList.add('sf-minimap-canvas');
+            if (!visible) {
+                sfMinimap.style.setProperty('display', 'none', 'important');
+            } else {
+                sfMinimap.style.removeProperty('display');
+            }
+        }
+
+        const sfLinesplit = document.querySelector('div[style*="bottom: 10px"][style*="left: 50vw"]');
+        if (sfLinesplit instanceof HTMLElement) {
+            sfLinesplit.classList.add('sf-linesplit');
+            if (!visible) {
+                sfLinesplit.style.setProperty('display', 'none', 'important');
+            } else {
+                sfLinesplit.style.removeProperty('display');
+            }
+        }
+
+        const sfPerftab = document.querySelector('div[style*="top: 10px"][style*="left: 50vw"]');
+        if (sfPerftab instanceof HTMLElement) {
+            sfPerftab.classList.add('sf-perftab');
+            if (!visible) {
+                sfPerftab.style.setProperty('display', 'none', 'important');
+            } else {
+                sfPerftab.style.removeProperty('display');
+            }
+        }
+
+        const chatBlock = document.getElementById('chat_block');
+        if (chatBlock instanceof HTMLElement) {
+            if (!visible) {
+                chatBlock.style.setProperty('display', 'none', 'important');
+            } else {
+                chatBlock.style.removeProperty('display');
+            }
+        }
+    }
+    syncSigmallyHud(visible) {
+        const chatBlock = document.getElementById('chat_block');
+        if (chatBlock instanceof HTMLElement) {
+            if (!visible) {
+                chatBlock.style.setProperty('display', 'none', 'important');
+            } else {
+                chatBlock.style.removeProperty('display');
+            }
+        }
+    }
+    syncSigModHud(visible) {
+        const party = this.app.features.get('party');
+        const minimap = this.app.features.get('minimap');
+        if (visible) {
+            if (party && party.shouldShowPanel()) {
+                party.ensurePanel();
+                party.requestRender();
+            }
+            if (minimap) {
+                minimap.scheduleDraw();
+            }
         }
     }
     fastRespawn() {
@@ -4072,7 +4222,8 @@ class ScreenshotController extends FeatureController {
         }
     }
     async deleteAll() {
-        if (!confirm('Delete all saved screenshots?')) return;
+        const confirmMsg = this.app.i18n?.message('Delete all saved screenshots?') ?? 'Delete all saved screenshots?';
+        if (!confirm(confirmMsg)) return;
         try {
             if (!(await this.ensureDatabase())) return;
             await this.clear();
@@ -4204,7 +4355,10 @@ class SavedNamesController extends FeatureController {
         this.render();
     }
     remove(name) {
-        if (!confirm(`Are you sure you want to delete the name '${name}'?`)) return;
+        const confirmMsg = this.app.i18n?.message
+            ? this.app.i18n.message("Are you sure you want to delete the name '{name}'?", { name })
+            : `Are you sure you want to delete the name '${name}'?`;
+        if (!confirm(confirmMsg)) return;
         this.app.settingsStore.update((settings) => {
             settings.settings.savedNames = settings.settings.savedNames.filter((entry) => entry !== name);
         }, true);
@@ -4226,7 +4380,10 @@ class SavedNamesController extends FeatureController {
             .then(() => {
                 const displayName = name.length > 20 ? `${name.slice(0, 20)}...` : name;
                 const modal = this.app.features.get('modal');
-                const dialog = modal?.alert(`Added the name ${displayName} to your clipboard!`, 'success');
+                const message = this.app.i18n?.message
+                    ? this.app.i18n.message('Added the name {displayName} to your clipboard!', { displayName })
+                    : `Added the name ${displayName} to your clipboard!`;
+                const dialog = modal?.alert(message, 'success');
                 const id = dialog?.dataset?.modalId;
                 if (id) this.resources.timeout(() => modal?.close(id), 2_000);
             })
@@ -4454,10 +4611,16 @@ class QuickAccessController extends FeatureController {
             const external = !panel.matches('[data-mod-panel]');
             const panelKey = panel.id || 'external-' + panels.filter((item) => !item.matches('[data-mod-panel]')).indexOf(panel);
             const meta = this.menu.getNavigationTabMeta?.(panel.id);
+            const extRecord = panel.dataset.extensionId ? this.menu.otherExtensions?.get(panel.dataset.extensionId) : null;
             const section =
+                extRecord?.name ||
                 meta?.title ||
                 panel.getAttribute('aria-label') ||
-                (external ? 'Sig Fixes' : panel.id.replace(/^mod_/, '').replace(/[-_]/g, ' '));
+                (external
+                    ? panel.id?.includes('sigfix')
+                        ? 'Sig Fixes'
+                        : 'Extension'
+                    : panel.id.replace(/^mod_/, '').replace(/[-_]/g, ' '));
             add({
                 token: 'panel:' + panelKey,
                 label: section,
@@ -4850,8 +5013,11 @@ class QuickAccessController extends FeatureController {
             this.menu.activeCategory = null;
             this.menu.updateCategoryActiveState();
             const panels = this.menu.getTabPanels().filter((panel) => !panel.matches('[data-mod-panel]'));
-            const buttons = this.root.querySelectorAll('[data-nav-external-slot] .mod_nav_btn');
-            this.menu.switchTabPanel(entry.panel, buttons[panels.indexOf(entry.panel)] || null, false);
+            const extRecord = entry.panel.dataset.extensionId ? this.menu.otherExtensions?.get(entry.panel.dataset.extensionId) : null;
+            const buttons = this.root.querySelectorAll(
+                '[data-nav-other-extensions-slot] .mod_nav_btn, [data-nav-external-slot] .mod_nav_btn'
+            );
+            this.menu.switchTabPanel(entry.panel, extRecord?.button || buttons[panels.indexOf(entry.panel)] || null, false);
         }
         const parameters = entry.source.closest('.setting-parameters');
         if (parameters instanceof HTMLElement) parameters.style.display = 'block';
@@ -5512,6 +5678,7 @@ class SmartPingController extends FeatureController {
     }
 
     openWheel(source = null) {
+        if (this.app.state.hudVisible === false) return;
         this.wheelOpen = true;
         this.wheelCancelled = false;
         this.pingSource = source;
@@ -5767,6 +5934,10 @@ class SmartPingController extends FeatureController {
 
     drawPings() {
         if (this.activePings.size === 0) return;
+        if (this.app.state.hudVisible === false) {
+            this.activePings.forEach((p) => (p.element.style.display = 'none'));
+            return;
+        }
         const cam = this.getCamera();
         if (!cam || !cam.scale) {
             this.activePings.forEach((p) => (p.element.style.display = 'none'));

@@ -230,6 +230,11 @@ const ICONS = {
         content:
             '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 21v-1a2 2 0 0 0-2-2H6a4 4 0 0 1-4-4V11a8 8 0 1 1 16 0v3a4 4 0 0 1-4 4h-1a2 2 0 0 0-2 2v1M9 21h6M10 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM14 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>',
     },
+    puzzle: {
+        viewBox: '0 0 24 24',
+        content:
+            '<path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"></path>',
+    },
 };
 
 ICONS.camera.content = ICONS.camera.content.replace('<path fill=', '<path transform="translate(-258 -467)" fill=');
@@ -539,6 +544,7 @@ const DEFAULT_SETTINGS = {
                 skins: null,
                 autoRespawn: null,
                 party: null,
+                hud: null,
             },
         },
         mouse: { bindings: [] },
@@ -686,6 +692,7 @@ const ALL_KEYBIND_DEFINITIONS = [
     { path: 'macros.keys.toggle.skins', label: 'Toggle skins' },
     { path: 'macros.keys.toggle.autoRespawn', label: 'Toggle autorespawn' },
     { path: 'macros.keys.toggle.party', label: 'Toggle party panel' },
+    { path: 'macros.keys.toggle.hud', label: 'Toggle HUD' },
 ];
 const ALL_KEYBIND_PATHS = new Set(ALL_KEYBIND_DEFINITIONS.map((item) => item.path));
 const isKeybindSettingPath = (path) => typeof path === 'string' && ALL_KEYBIND_PATHS.has(path);

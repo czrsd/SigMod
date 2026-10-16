@@ -7340,6 +7340,103 @@ html.sigmod-hide-ads #modalfolks {
     }
 }
 
+.keybind-info {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+}
+
+.keybind-info-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #222;
+    border: 1px solid #444;
+    color: #888;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-style: normal;
+    font-family: 'Titillium Web', sans-serif;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.keybind-info:hover .keybind-info-icon,
+.keybind-info:focus-within .keybind-info-icon {
+    border-color: #607bff;
+    color: #fff;
+    background: #2a2a2a;
+}
+
+.keybind-info-popup {
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: -16px;
+    background: #181818;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 6px 8px;
+    color: #ddd;
+    font-size: 11px;
+    font-style: normal;
+    font-family: 'Titillium Web', sans-serif;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    width: max-content;
+    max-width: 210px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(3px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    text-align: left;
+}
+
+.keybind-info-popup::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 23px;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+}
+
+.keybind-info:hover .keybind-info-popup,
+.keybind-info:focus-within .keybind-info-popup {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.keybind-info.is-down .keybind-info-popup {
+    bottom: auto;
+    top: calc(100% + 7px);
+    transform: translateY(-3px);
+}
+
+.keybind-info.is-down .keybind-info-popup::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: #333;
+}
+
+.keybind-info.is-down:hover .keybind-info-popup,
+.keybind-info.is-down:focus-within .keybind-info-popup {
+    transform: translateY(0);
+}
+
 .keybinding-conflict-modal {
     max-width: 440px !important;
     width: 90vw !important;
@@ -7469,4 +7566,23 @@ html.sigmod-hide-ads #modalfolks {
     flex-wrap: wrap;
     align-items: center;
     gap: 4px 6px;
+}
+
+/* Global HUD toggle state */
+body.sigmod-hud-hidden .modChat,
+body.sigmod-hud-hidden .minimapContainer,
+body.sigmod-hud-hidden #party_panel,
+body.sigmod-hud-hidden .party_panel,
+body.sigmod-hud-hidden #sigmod_stats,
+body.sigmod-hud-hidden .tag-ping-container,
+body.sigmod-hud-hidden .ping-wheel-container,
+body.sigmod-hud-hidden #sf-leaderboard,
+body.sigmod-hud-hidden .sf-stats-container,
+body.sigmod-hud-hidden .sf-minimap-canvas,
+body.sigmod-hud-hidden .sf-linesplit,
+body.sigmod-hud-hidden .sf-perftab,
+body.sigmod-hud-hidden #chat_block {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }

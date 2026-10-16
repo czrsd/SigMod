@@ -177,12 +177,37 @@ class SigModApp {
             const value = app.settingsStore.get(`macros.keys.${path}`);
             return typeof value === 'string' ? value : null;
         };
+        const registerOtherExtension = (options) => {
+            const menu = app.features.get('menu');
+            if (menu) return menu.registerOtherExtension(options);
+            app.__pendingExtensions ??= [];
+            app.__pendingExtensions.push(options);
+            return {
+                id: String(options?.id || ''),
+                open: () => app.features.get('menu')?.openOtherExtension(String(options?.id || '')),
+                remove: () => app.features.get('menu')?.unregisterOtherExtension(String(options?.id || '')),
+            };
+        };
+        const unregisterOtherExtension = (id) => app.features.get('menu')?.unregisterOtherExtension(id) ?? false;
         const sigmodFacade = {
             version: BUILD.version,
             release: BUILD.release,
             server_version: BUILD.serverVersion,
             storageName: STORAGE.settings,
             settings: this.settings,
+            registerExtension: registerOtherExtension,
+            unregisterExtension: unregisterOtherExtension,
+            addNavbarButton: registerOtherExtension,
+            extensions: {
+                register: registerOtherExtension,
+                unregister: unregisterOtherExtension,
+                add: registerOtherExtension,
+                remove: unregisterOtherExtension,
+                get: (id) => app.features.get('menu')?.getOtherExtension(id) ?? null,
+                getAll: () => app.features.get('menu')?.getAllOtherExtensions() ?? [],
+                open: (id) => app.features.get('menu')?.openOtherExtension(id) ?? false,
+                createPanelTemplate: (template, ext) => app.features.get('menu')?.createExtensionPanelFromTemplate(template, ext) ?? null,
+            },
             integration: Object.freeze({
                 version: 1,
                 getHostKind: () => app.host.adapter?.kind ?? null,
@@ -250,6 +275,24 @@ class SigModApp {
         });
         window.sigmod = sigmodFacade;
         window.gameSettings = gameSettingsFacade;
+        const queue = Array.isArray(window.sigmodExtensions) ? window.sigmodExtensions : [];
+        window.sigmodExtensions = queue;
+        for (const item of queue) {
+            registerOtherExtension(item);
+        }
+        queue.push = (...items) => {
+            for (const item of items) {
+                registerOtherExtension(item);
+            }
+            return queue.length;
+        };
+        window.sigmodRegisterExtension = registerOtherExtension;
+        const handleRegisterEvent = (event) => {
+            if (event?.detail) registerOtherExtension(event.detail);
+        };
+        window.addEventListener('sigmod:register-extension', handleRegisterEvent);
+        document.addEventListener('sigmod:register-extension', handleRegisterEvent);
+        window.dispatchEvent(new CustomEvent('sigmod:ready', { detail: sigmodFacade }));
         const sendPlay = (data) => {
             try {
                 const payload = typeof data === 'string' ? JSON.parse(data) : data;
@@ -299,6 +342,9 @@ class SigModApp {
         window.sendMouseMove = sendMouseMove;
         window.sigModWsHandler = sigModWsHandler;
         this.resources.add(() => {
+            window.removeEventListener('sigmod:register-extension', handleRegisterEvent);
+            document.removeEventListener('sigmod:register-extension', handleRegisterEvent);
+            if (window.sigmodRegisterExtension === registerOtherExtension) delete window.sigmodRegisterExtension;
             if (window.sigmod === sigmodFacade) window.sigmod = previous.sigmod;
             if (window.gameSettings === gameSettingsFacade) window.gameSettings = previous.gameSettings;
             if (window.sendPlay === sendPlay) window.sendPlay = previous.sendPlay;

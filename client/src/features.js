@@ -1766,6 +1766,7 @@ class PartyController extends FeatureController {
                 if (
                     !path ||
                     path === 'settings.partyScale' ||
+                    path === 'settings.partyMaxWidth' ||
                     path === 'settings.partyBgColor' ||
                     path === 'settings.partyTextColor' ||
                     path === 'settings.partyBorderColor' ||
@@ -1813,6 +1814,9 @@ class PartyController extends FeatureController {
         this.panel.style.boxShadow = 'none';
         this.panel.style.transform = `scale(${settings.partyScale ?? 1})`;
         this.panel.style.transformOrigin = 'top left';
+        const maxWidth = clamp(Number(settings.partyMaxWidth) || 240, 120, 1000);
+        this.panel.style.maxWidth = `${maxWidth}px`;
+        this.panel.style.setProperty('--party-max-width', `${maxWidth}px`);
         this.panel.style.backgroundColor = settings.partyBgColor ?? 'rgba(0, 0, 0, 0.4)';
         this.panel.style.color = settings.partyTextColor ?? '#fafafa';
         const borderColor = settings.partyBorderColor;
@@ -2311,8 +2315,7 @@ class PartyController extends FeatureController {
                 const indexBadge = createElement('span', { className: 'tag-member-index' });
                 const iconWrap = createElement('span', { className: 'party-status-wrap' });
                 const nickEl = createElement('span', {
-                    className: 'tag-member-nick centerY',
-                    attributes: { style: 'gap: 4px;' },
+                    className: 'tag-member-nick',
                 });
                 const wifiWrap = createElement('span', { className: 'party-wifi-wrap centerY' });
                 const scoreEl = createElement('span', { className: 'tag-member-score' });
@@ -2350,6 +2353,7 @@ class PartyController extends FeatureController {
             // Update nickname
             if (row._nickEl.textContent !== member.nick) {
                 row._nickEl.textContent = member.nick;
+                row._nickEl.title = member.nick;
             }
 
             // Update Wifi indicator
@@ -5397,11 +5401,7 @@ class SmartPingController extends FeatureController {
             window,
             'contextmenu',
             (event) => {
-                if (
-                    this.wheelOpen ||
-                    Date.now() - (this.lastCancelTime || 0) < 500 ||
-                    Date.now() - (this.lastPingTime || 0) < 500
-                ) {
+                if (this.wheelOpen || Date.now() - (this.lastCancelTime || 0) < 500 || Date.now() - (this.lastPingTime || 0) < 500) {
                     event.preventDefault();
                     event.stopPropagation();
                 }

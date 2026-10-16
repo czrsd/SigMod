@@ -974,6 +974,7 @@ class SettingsStore {
             value.settings.partyPanel.y = currentPartyY;
         }
         value.settings.partyScale = clamp(Number(value.settings.partyScale) || 1, 0.5, 2);
+        value.settings.partyMaxWidth = clamp(Number(value.settings.partyMaxWidth) || 240, 120, 1000);
         value.settings.partyBgColor = typeof value.settings.partyBgColor === 'string' ? value.settings.partyBgColor : 'rgba(0, 0, 0, 0.4)';
         value.settings.partyTextColor = typeof value.settings.partyTextColor === 'string' ? value.settings.partyTextColor : '#fafafa';
         value.settings.partyBorderColor =

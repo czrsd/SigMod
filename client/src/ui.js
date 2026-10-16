@@ -1024,6 +1024,13 @@ class MenuController extends FeatureController {
                                                 </div>
                                             </div>
                                             <div class="settings-item chat-menu-row">
+                                                <span class="text">Max width</span>
+                                                <div class="centerXY g-10" style="min-width: 170px;">
+                                                    <span class="mod_badge" id="partyMaxWidthText">240px</span>
+                                                    <input type="range" class="modSlider" id="partyMaxWidth" min="120" max="600" step="10" data-setting="settings.partyMaxWidth" data-number style="width: 120px;">
+                                                </div>
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
                                                 <span class="text">Ping duration</span>
                                                 <div class="centerXY g-10" style="min-width: 170px;">
                                                     <span class="mod_badge" id="pingDurationText">2.0s</span>
@@ -2150,11 +2157,7 @@ class MenuController extends FeatureController {
     isOpen() {
         if (!this.root) return false;
         if (this.root.getAttribute('aria-hidden') === 'false') return true;
-        return (
-            this.root.style.display !== 'none' &&
-            this.root.style.opacity !== '0' &&
-            getComputedStyle(this.root).display !== 'none'
-        );
+        return this.root.style.display !== 'none' && this.root.style.opacity !== '0' && getComputedStyle(this.root).display !== 'none';
     }
     handleExternalTabClick(event) {
         const target = event.target;
@@ -3626,6 +3629,7 @@ class SettingsPorter {
         if (input.id === 'macroSpeed') this.updateMacroSpeedLabel();
         if (
             input.id === 'partyScale' ||
+            input.id === 'partyMaxWidth' ||
             input.id === 'pingDuration' ||
             input.id === 'partyBorderRadius' ||
             input.id === 'partyBlur' ||
@@ -3701,6 +3705,11 @@ class SettingsPorter {
         if (scaleLabel) {
             const v = this.app.settingsStore.get('settings.partyScale') ?? 1;
             scaleLabel.textContent = `${Number(v).toFixed(2)}x`;
+        }
+        const maxWidthLabel = this.root?.querySelector('#partyMaxWidthText');
+        if (maxWidthLabel) {
+            const v = this.app.settingsStore.get('settings.partyMaxWidth') ?? 240;
+            maxWidthLabel.textContent = `${Number(v)}px`;
         }
         const pingLabel = this.root?.querySelector('#pingDurationText');
         if (pingLabel) {

@@ -2430,6 +2430,7 @@ button:focus {
     border: none;
     border-radius: 6px;
     min-width: 120px;
+    max-width: var(--party-max-width, 240px);
     z-index: 3;
     box-shadow: none;
     user-select: none;
@@ -2460,12 +2461,25 @@ button:focus {
     margin-bottom: 3px;
     font-size: 13px;
     font-weight: 600;
+    min-width: 0;
 }
 
 .party_panel.is-compact .drag-handle {
     margin-bottom: 2px;
     font-size: 11.5px;
     font-weight: 600;
+}
+
+.party_panel #party_title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.party_panel #tag_totals {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .party_panel .tag-member-row {
@@ -2476,6 +2490,7 @@ button:focus {
     transition: background-color 0.15s ease;
     box-sizing: border-box;
     width: 100%;
+    min-width: 0;
 }
 
 .party_panel.is-compact .tag-member-row {
@@ -2561,6 +2576,7 @@ button:focus {
     opacity: 0.9;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .party-wifi-wrap + .tag-member-score {
@@ -2600,6 +2616,7 @@ button:focus {
     color: currentColor;
     font-size: 13px;
     font-weight: 600;
+    flex-shrink: 0;
 }
 
 .party_panel.is-compact .tag-member-index {
@@ -2611,6 +2628,16 @@ button:focus {
     margin-left: 2px;
     margin-right: 4px;
     font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.party_panel.is-compact .tag-member-nick {
+    font-size: 11.5px;
     font-weight: 600;
 }
 

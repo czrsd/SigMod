@@ -452,6 +452,7 @@ const STANDARD_MOUSE_BUTTONS = [
  * @property {{x: number, y: number}} partyPanel
  * @property {boolean} showPartyPanel
  * @property {number} partyScale
+ * @property {number} partyMaxWidth
  * @property {string} partyBgColor
  * @property {string} partyTextColor
  * @property {string} partyBorderColor
@@ -577,6 +578,7 @@ const DEFAULT_SETTINGS = {
         partyPanel: { x: 4, y: 300 },
         showPartyPanel: true,
         partyScale: 1,
+        partyMaxWidth: 240,
         partyBgColor: 'rgba(0, 0, 0, 0.4)',
         partyTextColor: '#fafafa',
         partyBorderColor: 'transparent',

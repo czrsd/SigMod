@@ -66,11 +66,11 @@ class SigModApp {
         }
 
         try {
+            this.host.start();
             this.exportCompatibility();
             this.createFeatureSkeleton();
             this.i18n.initialize();
             const authReady = this.mount('auth').catch((err) => this.logger.error('Auth mount failed', err));
-            this.host.start();
             await authReady;
             this.dom = await this.readiness.pageShell();
             for (const phase of FEATURE_PHASES) {
@@ -195,6 +195,7 @@ class SigModApp {
             server_version: BUILD.serverVersion,
             storageName: STORAGE.settings,
             settings: this.settings,
+            settingsStore: this.settingsStore,
             registerExtension: registerOtherExtension,
             unregisterExtension: unregisterOtherExtension,
             addNavbarButton: registerOtherExtension,
@@ -227,6 +228,14 @@ class SigModApp {
             privacy: {
                 getStatus: () => app.adProtection?.getStatus() ?? { enabled: false },
                 getStats: () => app.adProtection?.stats ?? { totalBlocked: 0 },
+            },
+            utils: {
+                rgbToHex,
+                formatScore,
+                formatNumber,
+                formatDuration,
+                formatTime,
+                calculateLuminance,
             },
         };
         Object.defineProperties(sigmodFacade, {
@@ -415,214 +424,225 @@ const warmUpStartPageMouse = (resources) => {
     tick();
 };
 
-let zigAdDismissed = false;
-let zigAdClosedForSession = false;
-let zigAdEnabled = DEFAULT_SETTINGS.themes.showZigPopup;
-let zigActive = false;
-let zigAdMenuWasVisible = false;
-let zigAdSyncFrame = 0;
-let zigAdDomObserver = null;
-let zigAdHostObserver = null;
-let zigAdObservedHosts = [];
-let zigAdObservedMutationRoot = null;
-let zigAdClickHandler = null;
-let zigAdEscapeHandler = null;
-let zigAdLifecycleResources = null;
-let zigAdGlobalCheckTimer = 0;
-
-// Zig exposes this marker on the page window when its userscript is active.
-const hasZigGlobal = () => typeof window !== 'undefined' && Boolean(window.__ZIG_COMBINED_USERSCRIPT__ || window.zig);
-
-const removeZigAd = () => {
-    const ad = document.querySelector('.zig-ad');
-    if (!(ad instanceof HTMLElement)) return;
-    setZigAdHidden(ad, true);
-    ad.remove();
-};
-
-const stopZigAdMonitoring = () => {
-    zigAdDomObserver?.disconnect();
-    zigAdHostObserver?.disconnect();
-    if (zigAdSyncFrame) cancelAnimationFrame(zigAdSyncFrame);
-    if (zigAdGlobalCheckTimer) clearInterval(zigAdGlobalCheckTimer);
-    if (zigAdClickHandler) document.removeEventListener('click', zigAdClickHandler, true);
-    if (zigAdEscapeHandler) document.removeEventListener('keydown', zigAdEscapeHandler, true);
-    zigAdDomObserver = null;
-    zigAdHostObserver = null;
-    zigAdObservedHosts = [];
-    zigAdObservedMutationRoot = null;
-    zigAdClickHandler = null;
-    zigAdEscapeHandler = null;
-    zigAdSyncFrame = 0;
-    zigAdGlobalCheckTimer = 0;
-};
-
-const getZigAdHostElements = () => ({
-    leftMenu: document.querySelector('#left-menu'),
-    menuWrapper: document.querySelector('#menu-wrapper'),
-});
-
-const isZigAdHostVisible = () => {
-    const { leftMenu, menuWrapper } = getZigAdHostElements();
-    if (!(leftMenu instanceof HTMLElement)) return null;
-    return (
-        getComputedStyle(leftMenu).display !== 'none' &&
-        (!(menuWrapper instanceof HTMLElement) || getComputedStyle(menuWrapper).display !== 'none')
-    );
-};
-
-const setZigAdHidden = (ad, hidden) => {
-    if (!(ad instanceof HTMLElement)) return;
-    ad.classList.toggle('hidden', hidden);
-    ad.hidden = hidden;
-    ad.style.display = hidden ? 'none' : 'flex';
-};
-
-const dismissZigAd = () => {
-    zigAdDismissed = true;
-    const ad = document.querySelector('.zig-ad');
-    if (!(ad instanceof HTMLElement)) return;
-    setZigAdHidden(ad, true);
-    ad.remove();
-};
-
-const bindZigAdHostObservers = () => {
-    const hosts = Object.values(getZigAdHostElements()).filter((element) => element instanceof HTMLElement);
-    if (hosts.length === zigAdObservedHosts.length && hosts.every((element, index) => element === zigAdObservedHosts[index])) return;
-    zigAdHostObserver?.disconnect();
-    zigAdObservedHosts = hosts;
-    if (!hosts.length) return;
-    zigAdHostObserver ??= new MutationObserver(() => scheduleZigAdSync());
-    for (const host of hosts) {
-        zigAdHostObserver.observe(host, {
-            attributes: true,
-            attributeFilter: ['class', 'hidden', 'style'],
-        });
+class ZigAdController {
+    constructor() {
+        this.dismissed = false;
+        this.closedForSession = false;
+        this.enabled = DEFAULT_SETTINGS.themes.showZigPopup;
+        this.active = false;
+        this.menuWasVisible = false;
+        this.syncFrame = 0;
+        this.domObserver = null;
+        this.hostObserver = null;
+        this.observedHosts = [];
+        this.observedMutationRoot = null;
+        this.clickHandler = null;
+        this.escapeHandler = null;
+        this.lifecycleResources = null;
+        this.globalCheckTimer = 0;
     }
-};
 
-const syncZigAd = () => {
-    zigAdSyncFrame = 0;
-    if (!zigActive || !zigAdEnabled) {
-        removeZigAd();
-        return;
+    hasGlobal() {
+        return typeof window !== 'undefined' && Boolean(window.__ZIG_COMBINED_USERSCRIPT__ || window.zig);
     }
-    if (hasZigGlobal()) {
-        stopZigAdMonitoring();
-        removeZigAd();
-        return;
-    }
-    bindZigAdHostObservers();
-    const hostVisible = isZigAdHostVisible();
-    if (hostVisible === null) return;
-    if (hostVisible && !zigAdMenuWasVisible && !zigAdClosedForSession) zigAdDismissed = false;
-    zigAdMenuWasVisible = hostVisible;
-    const ad = document.querySelector('.zig-ad');
-    if (!hostVisible || zigAdDismissed) {
-        setZigAdHidden(ad, true);
-        return;
-    }
-    if (!ad) {
-        insertZigAd();
-        return;
-    }
-    setZigAdHidden(ad, false);
-};
 
-function scheduleZigAdSync() {
-    if (zigAdSyncFrame) return;
-    zigAdSyncFrame = requestAnimationFrame(syncZigAd);
-}
+    remove() {
+        const ad = document.querySelector('.zig-ad');
+        if (!(ad instanceof HTMLElement)) return;
+        this.setHidden(ad, true);
+        ad.remove();
+    }
 
-const bindZigAdLifecycle = (resources = null) => {
-    if (hasZigGlobal()) {
-        stopZigAdMonitoring();
-        removeZigAd();
-        return;
+    stopMonitoring() {
+        this.domObserver?.disconnect();
+        this.hostObserver?.disconnect();
+        if (this.syncFrame) cancelAnimationFrame(this.syncFrame);
+        if (this.globalCheckTimer) clearInterval(this.globalCheckTimer);
+        if (this.clickHandler) document.removeEventListener('click', this.clickHandler, true);
+        if (this.escapeHandler) document.removeEventListener('keydown', this.escapeHandler, true);
+        this.domObserver = null;
+        this.hostObserver = null;
+        this.observedHosts = [];
+        this.observedMutationRoot = null;
+        this.clickHandler = null;
+        this.escapeHandler = null;
+        this.syncFrame = 0;
+        this.globalCheckTimer = 0;
     }
-    if (resources && resources !== zigAdLifecycleResources) {
-        zigAdLifecycleResources = resources;
-        resources.add(() => {
-            stopZigAdMonitoring();
-            document.querySelector('.zig-ad')?.remove();
-            zigAdLifecycleResources = null;
-            zigAdDismissed = false;
-            zigAdClosedForSession = false;
-            zigAdMenuWasVisible = false;
-        });
+
+    getHostElements() {
+        return {
+            leftMenu: document.querySelector('#left-menu'),
+            menuWrapper: document.querySelector('#menu-wrapper'),
+        };
     }
-    bindZigAdHostObservers();
-    if (!zigAdDomObserver) {
-        zigAdDomObserver = new MutationObserver(() => {
-            bindZigAdHostObservers();
-            const nextRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
-            if (nextRoot instanceof HTMLElement && nextRoot !== zigAdObservedMutationRoot) {
-                zigAdDomObserver.disconnect();
-                zigAdObservedMutationRoot = nextRoot;
-                zigAdDomObserver.observe(document.body, {
+
+    isHostVisible() {
+        const { leftMenu, menuWrapper } = this.getHostElements();
+        if (!(leftMenu instanceof HTMLElement)) return null;
+        return (
+            getComputedStyle(leftMenu).display !== 'none' &&
+            (!(menuWrapper instanceof HTMLElement) || getComputedStyle(menuWrapper).display !== 'none')
+        );
+    }
+
+    setHidden(ad, hidden) {
+        if (!(ad instanceof HTMLElement)) return;
+        ad.classList.toggle('hidden', hidden);
+        ad.hidden = hidden;
+        ad.style.display = hidden ? 'none' : 'flex';
+    }
+
+    dismiss() {
+        this.dismissed = true;
+        const ad = document.querySelector('.zig-ad');
+        if (!(ad instanceof HTMLElement)) return;
+        this.setHidden(ad, true);
+        ad.remove();
+    }
+
+    bindHostObservers() {
+        const hosts = Object.values(this.getHostElements()).filter((element) => element instanceof HTMLElement);
+        if (hosts.length === this.observedHosts.length && hosts.every((element, index) => element === this.observedHosts[index])) {
+            return;
+        }
+        this.hostObserver?.disconnect();
+        this.observedHosts = hosts;
+        if (!hosts.length) return;
+        this.hostObserver ??= new MutationObserver(() => this.scheduleSync());
+        for (const host of hosts) {
+            this.hostObserver.observe(host, {
+                attributes: true,
+                attributeFilter: ['class', 'hidden', 'style'],
+            });
+        }
+    }
+
+    sync() {
+        this.syncFrame = 0;
+        if (!this.active || !this.enabled) {
+            this.remove();
+            return;
+        }
+        if (this.hasGlobal()) {
+            this.stopMonitoring();
+            this.remove();
+            return;
+        }
+        this.bindHostObservers();
+        const hostVisible = this.isHostVisible();
+        if (hostVisible === null) return;
+        if (hostVisible && !this.menuWasVisible && !this.closedForSession) this.dismissed = false;
+        this.menuWasVisible = hostVisible;
+        const ad = document.querySelector('.zig-ad');
+        if (!hostVisible || this.dismissed) {
+            this.setHidden(ad, true);
+            return;
+        }
+        if (!ad) {
+            this.insert();
+            return;
+        }
+        this.setHidden(ad, false);
+    }
+
+    scheduleSync() {
+        if (this.syncFrame) return;
+        this.syncFrame = requestAnimationFrame(() => this.sync());
+    }
+
+    bindLifecycle(resources = null) {
+        if (this.hasGlobal()) {
+            this.stopMonitoring();
+            this.remove();
+            return;
+        }
+        if (resources && resources !== this.lifecycleResources) {
+            this.lifecycleResources = resources;
+            resources.add(() => {
+                this.stopMonitoring();
+                document.querySelector('.zig-ad')?.remove();
+                this.lifecycleResources = null;
+                this.dismissed = false;
+                this.closedForSession = false;
+                this.menuWasVisible = false;
+            });
+        }
+        this.bindHostObservers();
+        if (!this.domObserver) {
+            this.domObserver = new MutationObserver(() => {
+                this.bindHostObservers();
+                const nextRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
+                if (nextRoot instanceof HTMLElement && nextRoot !== this.observedMutationRoot) {
+                    this.domObserver.disconnect();
+                    this.observedMutationRoot = nextRoot;
+                    this.domObserver.observe(document.body, {
+                        childList: true,
+                    });
+                    if (nextRoot !== document.body) {
+                        this.domObserver.observe(nextRoot, {
+                            childList: true,
+                            subtree: true,
+                        });
+                    }
+                }
+                this.scheduleSync();
+            });
+            this.observedMutationRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
+            if (document.body instanceof HTMLElement) {
+                this.domObserver.observe(document.body, {
                     childList: true,
                 });
-                if (nextRoot !== document.body)
-                    zigAdDomObserver.observe(nextRoot, {
-                        childList: true,
-                        subtree: true,
-                    });
             }
-            scheduleZigAdSync();
-        });
-        zigAdObservedMutationRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
-        if (document.body instanceof HTMLElement)
-            zigAdDomObserver.observe(document.body, {
-                childList: true,
-            });
-        if (zigAdObservedMutationRoot instanceof HTMLElement && zigAdObservedMutationRoot !== document.body)
-            zigAdDomObserver.observe(zigAdObservedMutationRoot, {
-                childList: true,
-                subtree: true,
-            });
-    }
-    if (!zigAdClickHandler) {
-        zigAdClickHandler = (event) => {
-            const target = event.target;
-            if (target instanceof Element && target.closest(SELECTORS.play)) dismissZigAd();
-        };
-        document.addEventListener('click', zigAdClickHandler, true);
-    }
-    if (!zigAdEscapeHandler) {
-        zigAdEscapeHandler = (event) => {
-            if (event.key === 'Escape') dismissZigAd();
-        };
-        document.addEventListener('keydown', zigAdEscapeHandler, true);
-    }
-    if (!zigAdGlobalCheckTimer) {
-        zigAdGlobalCheckTimer = window.setInterval(() => {
-            if (hasZigGlobal()) {
-                stopZigAdMonitoring();
-                removeZigAd();
+            if (this.observedMutationRoot instanceof HTMLElement && this.observedMutationRoot !== document.body) {
+                this.domObserver.observe(this.observedMutationRoot, {
+                    childList: true,
+                    subtree: true,
+                });
             }
-        }, 1000);
+        }
+        if (!this.clickHandler) {
+            this.clickHandler = (event) => {
+                const target = event.target;
+                if (target instanceof Element && target.closest(SELECTORS.play)) this.dismiss();
+            };
+            document.addEventListener('click', this.clickHandler, true);
+        }
+        if (!this.escapeHandler) {
+            this.escapeHandler = (event) => {
+                if (event.key === 'Escape') this.dismiss();
+            };
+            document.addEventListener('keydown', this.escapeHandler, true);
+        }
+        if (!this.globalCheckTimer) {
+            this.globalCheckTimer = window.setInterval(() => {
+                if (this.hasGlobal()) {
+                    this.stopMonitoring();
+                    this.remove();
+                }
+            }, 1000);
+        }
     }
-};
 
-const insertZigAd = (resources = null) => {
-    bindZigAdLifecycle(resources);
-    if (!zigActive || !zigAdEnabled || hasZigGlobal() || zigAdDismissed || document.querySelector('.zig-ad')) {
-        if (!zigActive || hasZigGlobal()) removeZigAd();
-        return;
-    }
+    insert(resources = null) {
+        this.bindLifecycle(resources);
+        if (!this.active || !this.enabled || this.hasGlobal() || this.dismissed || document.querySelector('.zig-ad')) {
+            if (!this.active || this.hasGlobal()) this.remove();
+            return;
+        }
 
-    const leftMenu = document.querySelector('#left-menu');
-    const anchor = leftMenu?.closest('.menu-wrapper.top');
+        const leftMenu = document.querySelector('#left-menu');
+        const anchor = leftMenu?.closest('.menu-wrapper.top');
 
-    if (!(anchor instanceof HTMLElement)) return;
+        if (!(anchor instanceof HTMLElement)) return;
 
-    const card = document.createElement('div');
-    card.className = 'zig-ad';
-    card.setAttribute('data-sigmod-zig-ad', 'true');
-    card.style.backgroundColor = 'rgb(21, 21, 21)';
-    card.style.border = '0';
+        const card = document.createElement('div');
+        card.className = 'zig-ad';
+        card.setAttribute('data-sigmod-zig-ad', 'true');
+        card.style.backgroundColor = 'rgb(21, 21, 21)';
+        card.style.border = '0';
 
-    card.innerHTML = `
+        card.innerHTML = `
             <a class="zig-ad-content" href="https://zig.sigmally.xyz" target="_blank" rel="noopener noreferrer">
                 <img class="zig-ad-logo" src="https://czrsd.com/static/zig/zig.webp" alt="Zig" draggable="false">
 
@@ -635,21 +655,57 @@ const insertZigAd = (resources = null) => {
                 ${icon('close', 18)}
             </button>
         `;
-    const logo = card.querySelector('.zig-ad-logo');
-    if (logo instanceof HTMLImageElement) logo.classList.add('sigmod-zig-ad-logo');
+        const logo = card.querySelector('.zig-ad-logo');
+        if (logo instanceof HTMLImageElement) logo.classList.add('sigmod-zig-ad-logo');
 
-    const closeButton = card.querySelector('.zig-ad-close');
-    if (closeButton instanceof HTMLElement) {
-        closeButton.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            zigAdClosedForSession = true;
-            dismissZigAd();
-        });
+        const closeButton = card.querySelector('.zig-ad-close');
+        if (closeButton instanceof HTMLElement) {
+            closeButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closedForSession = true;
+                this.dismiss();
+            });
+        }
+
+        anchor.appendChild(card);
+        this.sync();
     }
 
-    anchor.appendChild(card);
-    syncZigAd();
+    setActive(active) {
+        this.active = Boolean(active);
+        zigActive = this.active;
+        if (!this.active) this.remove();
+        else this.sync();
+    }
+
+    setEnabled(enabled) {
+        this.enabled = Boolean(enabled);
+        zigAdEnabled = this.enabled;
+        if (!this.enabled) this.remove();
+        else this.sync();
+    }
+
+    destroy() {
+        this.stopMonitoring();
+        this.remove();
+        this.dismissed = false;
+        this.closedForSession = false;
+        this.menuWasVisible = false;
+    }
+}
+
+const zigAdController = new ZigAdController();
+
+// Compatibility shims for callers in ui.js (which runs in M3)
+let zigActive = false;
+let zigAdEnabled = DEFAULT_SETTINGS.themes.showZigPopup;
+const hasZigGlobal = () => zigAdController.hasGlobal();
+const removeZigAd = () => zigAdController.remove();
+const insertZigAd = (resources = null) => {
+    zigAdController.enabled = zigAdEnabled;
+    zigAdController.active = zigActive;
+    zigAdController.insert(resources);
 };
 
 const previousApp = window.__sigmodApp;
@@ -661,10 +717,9 @@ app.resources.add(() => {
 });
 app.resources.add(
     app.backend.on('zig-active', (active) => {
-        zigActive = Boolean(active);
-        if (!zigActive) removeZigAd();
-        else syncZigAd();
+        zigAdController.setActive(active);
     })
 );
+app.resources.add(() => zigAdController.destroy());
 warmUpStartPageMouse(app.resources);
 app.start();

@@ -36,6 +36,238 @@ const STORAGE = {
     friendsLocal: 'SigModClient-friends-local',
     localization: 'SigModClient-localization',
 };
+/**
+ * @typedef {'fastfeed'|'split'|'split2'|'split3'|'split4'|'freeze'|'dTrick'|'sTrick'|'ping'} MouseMacro
+ *
+ * @typedef {Object} SigModSettings
+ * @property {number} storageVersion
+ * @property {MacroSettings} macros
+ * @property {GameVisualSettings} game
+ * @property {ThemeSettings} themes
+ * @property {GeneralSettings} settings
+ * @property {ChatSettings} chat
+ * @property {{authorized: boolean}} modAccount
+ *
+ * @typedef {Object} MacroSettings
+ * @property {number} feedSpeed
+ * @property {Object} keys
+ * @property {{bindings: Array<{button: number, action: MouseMacro}>}} mouse
+ *
+ * @typedef {Object} GameVisualSettings
+ * @property {string} font
+ * @property {string|null} borderColor
+ * @property {string|null} foodColor
+ * @property {string|null} cellColor
+ * @property {string} virusImage
+ * @property {boolean} shortenNames
+ * @property {boolean} showLeaderboard
+ * @property {boolean} hideOwnName
+ * @property {boolean} botSkinsOnly
+ * @property {boolean} showOwnSkinWithBots
+ * @property {boolean} removeOutlines
+ * @property {{original: string|null, replacement: string|null}} skins
+ * @property {{color: string|null, image: string}} map
+ * @property {{color: string|null, gradient: {enabled: boolean, left: string|null, right: string|null}}} name
+ *
+ * @typedef {Object} ThemeSettings
+ * @property {string} current
+ * @property {Array<Record<string, unknown>>} custom
+ * @property {string|null} inputBorderRadius
+ * @property {string|null} menuBorderRadius
+ * @property {string} inputBorder
+ * @property {boolean} hideDiscordBtns
+ * @property {boolean} hideLangs
+ * @property {boolean} hideAds
+ * @property {boolean} showZigPopup
+ *
+ * @typedef {Object} GeneralSettings
+ * @property {string|null} tag
+ * @property {{x: number, y: number}} partyPanel
+ * @property {boolean} showPartyPanel
+ * @property {number} partyScale
+ * @property {number} partyMaxWidth
+ * @property {string} partyBgColor
+ * @property {string} partyTextColor
+ * @property {string} partyBorderColor
+ * @property {number} partyBorderRadius
+ * @property {number} partyBlur
+ * @property {boolean} partyCompact
+ * @property {'index'|'score'|'alpha'} partySort
+ * @property {boolean} partyHighlightSelf
+ * @property {boolean} partyShowSkins
+ * @property {boolean} partyShowScores
+ * @property {boolean} partyShowIndexes
+ * @property {boolean} partyShowHeader
+ * @property {boolean} partyShowHeaderTotals
+ * @property {boolean} partyShowPing
+ * @property {number} partyMaxMembers
+ * @property {number} pingDuration
+ * @property {string[]} savedNames
+ * @property {boolean} autoRespawn
+ * @property {boolean} playTimer
+ * @property {boolean} mouseTracker
+ * @property {boolean} autoClaimCoins
+ * @property {boolean} showChallenges
+ * @property {'center'|'left'|'right'|'top'|'bottom'} deathScreenPos
+ * @property {boolean} removeShopPopup
+ * @property {string[]} quickAccess
+ *
+ * @typedef {Object} ChatSettings
+ * @property {string} bgColor
+ * @property {string} textColor
+ * @property {boolean} compact
+ * @property {string} themeColor
+ * @property {boolean} showTime
+ * @property {boolean} showNameColors
+ * @property {boolean} showClientChat
+ * @property {boolean} showChatButtons
+ * @property {boolean} blurTag
+ * @property {string} locationText
+ *
+ * @typedef {{x: number, y: number}} Point
+ * @typedef {{left: number, top: number, right: number, bottom: number, width: number, height: number}} WorldBorder
+ * @typedef {'native'|'sigfix'} HostKind
+ * @typedef {'split'|'eject'|'qDown'|'qUp'} HostAction
+ *
+ * @typedef {Object} HostSnapshot
+ * @property {boolean} connected
+ * @property {boolean} playing
+ * @property {unknown} selectedView
+ * @property {Point|null} position
+ * @property {number} score
+ * @property {number} ownedCount
+ * @property {WorldBorder|null} border
+ * @property {number|null} latency
+ * @property {number|null} playerCount
+ */
+/** @type {SigModSettings} */
+const DEFAULT_SETTINGS = {
+    storageVersion: BUILD.settingsVersion,
+    macros: {
+        feedSpeed: 40,
+        keys: {
+            rapidFeed: 'w',
+            respawn: 'b',
+            ping: 'r',
+            location: 'y',
+            saveImage: null,
+            splits: {
+                double: 'd',
+                triple: 'f',
+                quad: 'g',
+                doubleTrick: null,
+                selfTrick: null,
+            },
+            line: {
+                horizontal: 's',
+                vertical: 't',
+                fixed: null,
+                instantSplit: 0,
+            },
+            toggle: {
+                menu: 'v',
+                chat: 'z',
+                names: null,
+                skins: null,
+                autoRespawn: null,
+                party: null,
+                hud: null,
+            },
+        },
+        mouse: { bindings: [] },
+    },
+    game: {
+        font: 'Ubuntu',
+        borderColor: null,
+        foodColor: null,
+        cellColor: null,
+        virusImage: '/assets/images/viruses/2.png',
+        shortenNames: false,
+        showLeaderboard: true,
+        hideOwnName: false,
+        botSkinsOnly: false,
+        showOwnSkinWithBots: true,
+        removeOutlines: false,
+        skins: { original: null, replacement: null },
+        map: { color: null, image: '' },
+        name: {
+            color: null,
+            gradient: { enabled: false, left: null, right: null },
+        },
+    },
+    themes: {
+        current: 'Dark',
+        custom: [],
+        inputBorderRadius: null,
+        menuBorderRadius: null,
+        inputBorder: '1px',
+        hideDiscordBtns: false,
+        hideLangs: false,
+        hideAds: true,
+        showZigPopup: false,
+    },
+    settings: {
+        tag: null,
+        partyPanel: { x: 4, y: 300 },
+        showPartyPanel: true,
+        partyScale: 1,
+        partyMaxWidth: 240,
+        partyBgColor: 'rgba(0, 0, 0, 0.4)',
+        partyTextColor: '#fafafa',
+        partyBorderColor: 'transparent',
+        partyBorderRadius: 6,
+        partyBlur: 0,
+        partyCompact: false,
+        partySort: 'index',
+        partyHighlightSelf: true,
+        partyShowSkins: true,
+        partyShowScores: true,
+        partyShowIndexes: true,
+        partyShowHeader: true,
+        partyShowHeaderTotals: true,
+        partyShowPing: false,
+        partyMaxMembers: 10,
+        pingDuration: 2_000,
+        savedNames: [],
+        autoRespawn: false,
+        playTimer: false,
+        mouseTracker: false,
+        autoClaimCoins: false,
+        showChallenges: false,
+        deathScreenPos: 'center',
+        removeShopPopup: true,
+        quickAccess: [
+            'host:showNames',
+            'host:showSkins',
+            'host:showMass',
+            'setting:chat.enabled',
+            'host:showMinimap',
+            'host:showLeaderboard',
+            'host:showBorder',
+            'host:showGrid',
+            'host:moreZoom',
+            'host:jellyPhysics',
+            'host:showClanmates',
+            'setting:settings.playTimer',
+            'host:autoRespawn',
+            'host:autoClaimCoins',
+        ],
+    },
+    chat: {
+        enabled: true,
+        bgColor: '#00000040',
+        textColor: '#ffffff',
+        compact: false,
+        themeColor: '#8a25e5',
+        showTime: true,
+        showNameColors: true,
+        showClientChat: false,
+        showChatButtons: true,
+        blurTag: false,
+        locationText: '{pos}',
+    },
+    modAccount: { authorized: false },
+};
 const ENDPOINTS = {
     app: SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl,
     socket: SIGMOD_DEV.enabled ? SIGMOD_DEV.socketUrl : SIGMOD_DEV.productionSocketUrl,
@@ -109,17 +341,17 @@ const ICONS = {
     export: {
         viewBox: '0 0 24 24',
         content:
-            '<path d="M17 17H17.01M15.6 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H8.4M12 15V4M12 4L15 7M12 4L9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+            '<path fill="none" d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
     },
     upload: {
         viewBox: '0 0 24 24',
         content:
-            '<path d="M17 17H17.01M15.6 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H8.4M12 15V4M12 4L15 7M12 4L9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+            '<path fill="none" d="M17 17H17.01M15.6 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H8.4M12 15V4M12 4L15 7M12 4L9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
     },
     download: {
         viewBox: '0 0 24 24',
         content:
-            '<path d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+            '<path fill="none" d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
     },
     plus: {
         viewBox: '0 0 24 24',
@@ -140,7 +372,7 @@ const ICONS = {
         content:
             '<path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.7848 0.449982C13.8239 0.449982 14.7167 1.16546 14.9122 2.15495L14.9991 2.59495C15.3408 4.32442 17.1859 5.35722 18.9016 4.7794L19.3383 4.63233C20.3199 4.30175 21.4054 4.69358 21.9249 5.56605L22.7097 6.88386C23.2293 7.75636 23.0365 8.86366 22.2504 9.52253L21.9008 9.81555C20.5267 10.9672 20.5267 13.0328 21.9008 14.1844L22.2504 14.4774C23.0365 15.1363 23.2293 16.2436 22.7097 17.1161L21.925 18.4339C21.4054 19.3064 20.3199 19.6982 19.3382 19.3676L18.9017 19.2205C17.1859 18.6426 15.3408 19.6754 14.9991 21.405L14.9122 21.845C14.7167 22.8345 13.8239 23.55 12.7848 23.55H11.2152C10.1761 23.55 9.28331 22.8345 9.08781 21.8451L9.00082 21.4048C8.65909 19.6754 6.81395 18.6426 5.09822 19.2205L4.66179 19.3675C3.68016 19.6982 2.59465 19.3063 2.07505 18.4338L1.2903 17.1161C0.770719 16.2436 0.963446 15.1363 1.74956 14.4774L2.09922 14.1844C3.47324 13.0327 3.47324 10.9672 2.09922 9.8156L1.74956 9.52254C0.963446 8.86366 0.77072 7.75638 1.2903 6.8839L2.07508 5.56608C2.59466 4.69359 3.68014 4.30176 4.66176 4.63236L5.09831 4.77939C6.81401 5.35722 8.65909 4.32449 9.00082 2.59506L9.0878 2.15487C9.28331 1.16542 10.176 0.449982 11.2152 0.449982H12.7848ZM12 15.3C13.8225 15.3 15.3 13.8225 15.3 12C15.3 10.1774 13.8225 8.69998 12 8.69998C10.1774 8.69998 8.69997 10.1774 8.69997 12C8.69997 13.8225 10.1774 15.3 12 15.3Z"></path>',
     },
-    smiley: {
+    refresh: {
         viewBox: '0 0 108.364 108.364',
         content:
             '<path fill="currentColor" d="M54.182,0C24.258,0,0,24.258,0,54.182c0,29.924,24.258,54.183,54.182,54.183c29.923,0,54.182-24.259,54.182-54.183 C108.364,24.258,84.105,0,54.182,0z M62.372,44.193l7.694-9.755c0.158-0.197,0.393-0.308,0.646-0.308s0.486,0.111,0.642,0.304 l7.697,9.757c0.188,0.237,0.229,0.58,0.1,0.859c-0.146,0.293-0.428,0.467-0.741,0.467h-3.554c-0.182,0-0.352-0.083-0.463-0.225 l-3.681-4.664l-3.681,4.664c-0.112,0.141-0.281,0.225-0.462,0.225h-3.552c-0.313,0-0.604-0.18-0.738-0.459 c-0.055-0.113-0.082-0.237-0.082-0.359C62.198,44.516,62.26,44.336,62.372,44.193z M30.253,44.193l7.695-9.755 c0.158-0.197,0.392-0.308,0.645-0.308s0.486,0.111,0.641,0.304l7.697,9.757c0.189,0.237,0.229,0.58,0.1,0.859 c-0.146,0.293-0.428,0.467-0.741,0.467h-3.554c-0.181,0-0.351-0.083-0.463-0.225l-3.68-4.664l-3.681,4.664 c-0.112,0.141-0.281,0.225-0.462,0.225h-3.552c-0.313,0-0.604-0.18-0.738-0.459c-0.055-0.113-0.082-0.237-0.082-0.359 C30.078,44.516,30.14,44.336,30.253,44.193z M80.318,63.574C76.033,73.479,66,79.878,54.755,79.878 c-11.486,0-21.58-6.431-25.714-16.382c-0.185-0.443-0.135-0.949,0.131-1.348c0.267-0.397,0.714-0.637,1.192-0.637 c0.001,0,0.001,0,0.002,0l48.638,0.061c0.482,0,0.932,0.244,1.196,0.646C80.465,62.622,80.51,63.131,80.318,63.574z"></path>',
@@ -173,7 +405,7 @@ const ICONS = {
     camera: {
         viewBox: '0 -2 32 32',
         content:
-            '<path fill="currentColor" d="M286,471 L283,471 L282,469 C281.411,467.837 281.104,467 280,467 L268,467 C266.896,467 266.53,467.954 266,469 L265,471 L262,471 C259.791,471 258,472.791 258,475 L258,491 C258,493.209 259.791,495 262,495 L286,495 C288.209,495 290,493.209 290,491 L290,475 C290,472.791 288.209,471 286,471 Z M274,491 C269.582,491 266,487.418 266,483 C266,478.582 269.582,475 274,475 C278.418,475 282,478.582 282,483 C282,487.418 278.418,491 274,491 Z M274,477 C270.687,477 268,479.687 268,483 C268,486.313 270.687,489 274,489 C277.313,489 280,486.313 280,483 C280,479.687 277.313,477 274,477 L274,477 Z"></path>',
+            '<path transform="translate(-258 -467)" fill="currentColor" d="M286,471 L283,471 L282,469 C281.411,467.837 281.104,467 280,467 L268,467 C266.896,467 266.53,467.954 266,469 L265,471 L262,471 C259.791,471 258,472.791 258,475 L258,491 C258,493.209 259.791,495 262,495 L286,495 C288.209,495 290,493.209 290,491 L290,475 C290,472.791 288.209,471 286,471 Z M274,491 C269.582,491 266,487.418 266,483 C266,478.582 269.582,475 274,475 C278.418,475 282,478.582 282,483 C282,487.418 278.418,491 274,491 Z M274,477 C270.687,477 268,479.687 268,483 C268,486.313 270.687,489 274,489 C277.313,489 280,486.313 280,483 C280,479.687 277.313,477 274,477 L274,477 Z"></path>',
     },
     trash: {
         viewBox: '0 0 24 24',
@@ -193,7 +425,7 @@ const ICONS = {
     check: {
         viewBox: '0 0 24 24',
         content:
-            '<path d="M4 12.6111L8.92308 17.5L20 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+            '<path d="M4 12.6111L8.92308 17.5L20 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
     },
     star: {
         viewBox: '0 0 64 64',
@@ -236,15 +468,6 @@ const ICONS = {
             '<path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"></path>',
     },
 };
-
-ICONS.camera.content = ICONS.camera.content.replace('<path fill=', '<path transform="translate(-258 -467)" fill=');
-ICONS.camera.content = ICONS.camera.content.replace('C266.896,467.954 266.53,467.954', 'C266.896,467 266.53,467.954');
-for (const name of ['export', 'upload', 'download']) {
-    ICONS[name].content = ICONS[name].content
-        .replace(/<path(?![^>]*\bfill=)/g, '<path fill="none"')
-        .replace('C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478', 'C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478');
-}
-ICONS.export.content = ICONS.download.content;
 
 /**
  * @param {string} name
@@ -408,241 +631,6 @@ const STANDARD_MOUSE_BUTTONS = [
     { button: 3, name: 'Back', code: 'Button 3' },
     { button: 4, name: 'Forward', code: 'Button 4' },
 ];
-/**
- * @typedef {'fastfeed'|'split'|'split2'|'split3'|'split4'|'freeze'|'dTrick'|'sTrick'|'ping'} MouseMacro
- *
- * @typedef {Object} SigModSettings
- * @property {number} storageVersion
- * @property {MacroSettings} macros
- * @property {GameVisualSettings} game
- * @property {ThemeSettings} themes
- * @property {GeneralSettings} settings
- * @property {ChatSettings} chat
- * @property {{authorized: boolean}} modAccount
- *
- * @typedef {Object} MacroSettings
- * @property {number} feedSpeed
- * @property {Object} keys
- * @property {{bindings: Array<{button: number, action: MouseMacro}>}} mouse
- *
- * @typedef {Object} GameVisualSettings
- * @property {string} font
- * @property {string|null} borderColor
- * @property {string|null} foodColor
- * @property {string|null} cellColor
- * @property {string} virusImage
- * @property {boolean} shortenNames
- * @property {boolean} showLeaderboard
- * @property {boolean} hideOwnName
- * @property {boolean} botSkinsOnly
- * @property {boolean} showOwnSkinWithBots
- * @property {boolean} removeOutlines
- * @property {{original: string|null, replacement: string|null}} skins
- * @property {{color: string|null, image: string}} map
- * @property {{color: string|null, gradient: {enabled: boolean, left: string|null, right: string|null}}} name
- *
- * @typedef {Object} ThemeSettings
- * @property {string} current
- * @property {Array<Record<string, unknown>>} custom
- * @property {string|null} inputBorderRadius
- * @property {string|null} menuBorderRadius
- * @property {string} inputBorder
- * @property {boolean} hideDiscordBtns
- * @property {boolean} hideLangs
- * @property {boolean} hideAds
- * @property {boolean} showZigPopup
- *
- * @typedef {Object} GeneralSettings
- * @property {string|null} tag
- * @property {{x: number, y: number}} partyPanel
- * @property {boolean} showPartyPanel
- * @property {number} partyScale
- * @property {number} partyMaxWidth
- * @property {string} partyBgColor
- * @property {string} partyTextColor
- * @property {string} partyBorderColor
- * @property {number} partyBorderRadius
- * @property {number} partyBlur
- * @property {boolean} partyCompact
- * @property {'index'|'score'|'alpha'} partySort
- * @property {boolean} partyHighlightSelf
- * @property {boolean} partyShowSkins
- * @property {boolean} partyShowScores
- * @property {boolean} partyShowIndexes
- * @property {boolean} partyShowHeader
- * @property {boolean} partyShowHeaderTotals
- * @property {boolean} partyShowPing
- * @property {number} partyMaxMembers
- * @property {number} pingDuration
- * @property {string[]} savedNames
- * @property {boolean} autoRespawn
- * @property {boolean} playTimer
- * @property {boolean} mouseTracker
- * @property {boolean} mergeTimer
- * @property {boolean} autoClaimCoins
- * @property {boolean} showChallenges
- * @property {'center'|'left'|'right'|'top'|'bottom'} deathScreenPos
- * @property {boolean} removeShopPopup
- * @property {string[]} quickAccess
- *
- * @typedef {Object} ChatSettings
- * @property {string} bgColor
- * @property {string} textColor
- * @property {boolean} compact
- * @property {string} themeColor
- * @property {boolean} showTime
- * @property {boolean} showNameColors
- * @property {boolean} showClientChat
- * @property {boolean} showChatButtons
- * @property {boolean} blurTag
- * @property {string} locationText
- *
- * @typedef {{x: number, y: number}} Point
- * @typedef {{left: number, top: number, right: number, bottom: number, width: number, height: number}} WorldBorder
- * @typedef {'native'|'sigfix'} HostKind
- * @typedef {'split'|'eject'|'qDown'|'qUp'} HostAction
- *
- * @typedef {Object} HostSnapshot
- * @property {boolean} connected
- * @property {boolean} playing
- * @property {unknown} selectedView
- * @property {Point|null} position
- * @property {number} score
- * @property {number} ownedCount
- * @property {WorldBorder|null} border
- * @property {number|null} latency
- * @property {number|null} playerCount
- */
-/** @type {SigModSettings} */
-const DEFAULT_SETTINGS = {
-    storageVersion: BUILD.settingsVersion,
-    macros: {
-        feedSpeed: 40,
-        keys: {
-            rapidFeed: 'w',
-            respawn: 'b',
-            ping: 'r',
-            location: 'y',
-            saveImage: null,
-            splits: {
-                double: 'd',
-                triple: 'f',
-                quad: 'g',
-                doubleTrick: null,
-                selfTrick: null,
-            },
-            line: {
-                horizontal: 's',
-                vertical: 't',
-                fixed: null,
-                instantSplit: 0,
-            },
-            toggle: {
-                menu: 'v',
-                chat: 'z',
-                names: null,
-                skins: null,
-                autoRespawn: null,
-                party: null,
-                hud: null,
-            },
-        },
-        mouse: { bindings: [] },
-    },
-    game: {
-        font: 'Ubuntu',
-        borderColor: null,
-        foodColor: null,
-        cellColor: null,
-        virusImage: '/assets/images/viruses/2.png',
-        shortenNames: false,
-        showLeaderboard: true,
-        hideOwnName: false,
-        botSkinsOnly: false,
-        showOwnSkinWithBots: true,
-        removeOutlines: false,
-        skins: { original: null, replacement: null },
-        map: { color: null, image: '' },
-        name: {
-            color: null,
-            gradient: { enabled: false, left: null, right: null },
-        },
-    },
-    themes: {
-        current: 'Dark',
-        custom: [],
-        inputBorderRadius: null,
-        menuBorderRadius: null,
-        inputBorder: '1px',
-        hideDiscordBtns: false,
-        hideLangs: false,
-        hideAds: true,
-        showZigPopup: false,
-    },
-    settings: {
-        tag: null,
-        partyPanel: { x: 4, y: 300 },
-        showPartyPanel: true,
-        partyScale: 1,
-        partyMaxWidth: 240,
-        partyBgColor: 'rgba(0, 0, 0, 0.4)',
-        partyTextColor: '#fafafa',
-        partyBorderColor: 'transparent',
-        partyBorderRadius: 6,
-        partyBlur: 0,
-        partyCompact: false,
-        partySort: 'index',
-        partyHighlightSelf: true,
-        partyShowSkins: true,
-        partyShowScores: true,
-        partyShowIndexes: true,
-        partyShowHeader: true,
-        partyShowHeaderTotals: true,
-        partyShowPing: false,
-        partyMaxMembers: 10,
-        pingDuration: 2_000,
-        savedNames: [],
-        autoRespawn: false,
-        playTimer: false,
-        mouseTracker: false,
-        mergeTimer: true,
-        autoClaimCoins: false,
-        showChallenges: false,
-        deathScreenPos: 'center',
-        removeShopPopup: true,
-        quickAccess: [
-            'host:showNames',
-            'host:showSkins',
-            'host:showMass',
-            'setting:chat.enabled',
-            'host:showMinimap',
-            'host:showBorder',
-            'host:showGrid',
-            'host:moreZoom',
-            'host:jellyPhysics',
-            'host:showClanmates',
-            'setting:settings.playTimer',
-            'setting:settings.mouseTracker',
-            'host:autoRespawn',
-            'host:showLeaderboard',
-            'host:autoClaimCoins',
-        ],
-    },
-    chat: {
-        enabled: true,
-        bgColor: '#00000040',
-        textColor: '#ffffff',
-        compact: false,
-        themeColor: '#8a25e5',
-        showTime: true,
-        showNameColors: true,
-        showClientChat: false,
-        showChatButtons: true,
-        blurTag: false,
-        locationText: '{pos}',
-    },
-    modAccount: { authorized: false },
-};
 const BOT_SKIN_NAMES = new Set([
     'Valeriy',
     'Mtch',
@@ -827,6 +815,16 @@ const extractKeybindsFromSettings = (settings) => {
         const normalized = val === null || val === undefined || val === '' ? null : typeof val === 'string' ? val.toLowerCase() : null;
         setPath(keys, path.slice('macros.keys.'.length), normalized);
     }
+    const rawInstantSplit =
+        getPath(settings, 'macros.keys.line.instantSplit') ??
+        (settings?.line?.instantSplit !== undefined ? settings.line.instantSplit : undefined);
+    if (rawInstantSplit !== undefined) {
+        const val = unwrapSettingScalar(rawInstantSplit);
+        const num = Number(val);
+        if (Number.isFinite(num)) {
+            keys.line.instantSplit = clamp(Math.trunc(num), 0, 4);
+        }
+    }
     return keys;
 };
 const replaceInPlace = (target, source) => {
@@ -873,6 +871,92 @@ const syncSigFixKeybindings = (keys) => {
         // Ignore host adapter access errors
     }
 };
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~ Consolidated shared formatting and math utilities                                ~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Converts RGB component values (0-255) to a 6-character lowercase hex string without leading '#'.
+ * @param {number} r
+ * @param {number} g
+ * @param {number} b
+ * @returns {string}
+ */
+function rgbToHex(r, g, b) {
+    const clamp = (val) => Math.max(0, Math.min(255, Math.round(Number(val) || 0)));
+    return [r, g, b].map((val) => clamp(val).toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Formats a numeric score or value with standard suffix abbreviations (k, m, b).
+ * @param {number} num
+ * @param {number} [decimals=1]
+ * @returns {string}
+ */
+function formatNumber(num, decimals = 1) {
+    const val = Number(num) || 0;
+    const abs = Math.abs(val);
+    const sign = val < 0 ? '-' : '';
+    if (abs >= 1_000_000_000) {
+        const d = abs >= 10_000_000_000 ? 0 : decimals;
+        return `${sign}${(abs / 1_000_000_000).toFixed(d)}b`;
+    }
+    if (abs >= 1_000_000) {
+        const d = abs >= 10_000_000 ? 0 : decimals;
+        return `${sign}${(abs / 1_000_000).toFixed(d)}m`;
+    }
+    if (abs >= 1_000) {
+        const d = abs >= 10_000 ? 0 : decimals;
+        return `${sign}${(abs / 1_000).toFixed(d)}k`;
+    }
+    return String(Math.round(val));
+}
+
+const formatScore = formatNumber;
+
+/**
+ * Formats duration in seconds into human-readable string (e.g. "1h 12m" or "02:15" / "mm:ss").
+ * Supports both standard padded format ("mm:ss" or "hh:mm:ss") and verbal summary ("Xh Ym").
+ * @param {number} seconds
+ * @param {boolean} [padZero=false]
+ * @returns {string}
+ */
+function formatDuration(seconds, padZero = false) {
+    const total = Math.max(0, Math.floor(Number(seconds) || 0));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    if (padZero) {
+        const pM = String(minutes).padStart(2, '0');
+        const pS = String(secs).padStart(2, '0');
+        return hours > 0 ? `${String(hours).padStart(2, '0')}:${pM}:${pS}` : `${pM}:${pS}`;
+    }
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return total > 0 ? `${total}s` : '0m';
+}
+
+/**
+ * Formats millisecond duration into "mm:ss" or "hh:mm:ss" with zero-padding.
+ * @param {number} ms
+ * @returns {string}
+ */
+function formatTime(ms) {
+    return formatDuration(Math.floor((Number(ms) || 0) / 1000), true);
+}
+
+/**
+ * Calculates relative luminance / perceived brightness from RGB components (0-255).
+ * Uses standard ITU-R BT.601 coefficients: 0.299 * R + 0.587 * G + 0.114 * B.
+ * @param {number} r
+ * @param {number} g
+ * @param {number} b
+ * @returns {number} Value in [0, 255]
+ */
+function calculateLuminance(r, g, b) {
+    return (Number(r) || 0) * 0.299 + (Number(g) || 0) * 0.587 + (Number(b) || 0) * 0.114;
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~ Persistent data stores                                                            ~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

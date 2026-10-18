@@ -33,17 +33,33 @@ class CanvasHooks extends FeatureController {
         const originalTranslate = prototype.translate;
         const originalScale = prototype.scale;
 
+        const cameraState =
+            visual.cameraState ||
+            (visual.cameraState = {
+                x: 0,
+                y: 0,
+                scale: 0,
+                offsetX: 0,
+                offsetY: 0,
+                cw: 0,
+                ch: 0,
+            });
+        if (visual.app.state.camera !== cameraState) {
+            visual.app.state.camera = cameraState;
+        }
+
         const updateCameraState = (cw, ch, scaleVal, camX, camY, offsetX, offsetY) => {
-            visual.app.state.camera = {
-                x: camX,
-                y: camY,
-                scale: scaleVal,
-                offsetX: offsetX,
-                offsetY: offsetY,
-                cw: cw,
-                ch: ch,
-            };
-            const smartPing = visual.app.features?.controllers?.get?.('smartPing') || visual.app.features?.get?.('smartPing');
+            cameraState.x = camX;
+            cameraState.y = camY;
+            cameraState.scale = scaleVal;
+            cameraState.offsetX = offsetX;
+            cameraState.offsetY = offsetY;
+            cameraState.cw = cw;
+            cameraState.ch = ch;
+            const smartPing =
+                visual.smartPingController ||
+                (visual.smartPingController =
+                    visual.app.features?.controllers?.get?.('smartPing') || visual.app.features?.get?.('smartPing'));
             if (smartPing && smartPing.activePings?.size > 0) {
                 smartPing.drawPings();
             }
@@ -57,7 +73,6 @@ class CanvasHooks extends FeatureController {
                 if (Math.abs(x - cw / 2) < 2 && Math.abs(y - ch / 2) < 2) {
                     if (inWorldSpace) {
                         inWorldSpace = false;
-                        visual.drawMergeTimers(this);
                     }
                     cameraCaptureStage = 1;
                 } else if (cameraCaptureStage === 2) {
@@ -78,7 +93,6 @@ class CanvasHooks extends FeatureController {
                 } else {
                     if (inWorldSpace) {
                         inWorldSpace = false;
-                        visual.drawMergeTimers(this);
                     }
                     cameraCaptureStage = 0;
                 }
@@ -140,7 +154,11 @@ class CanvasHooks extends FeatureController {
                 if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                 if (visual.awaitingGridStroke) {
                     visual.awaitingGridStroke = false;
-                    if (!document.getElementById('sf-canvas')) {
+                    const hasSfCanvas =
+                        typeof document.getElementById === 'function'
+                            ? document.getElementById('sf-canvas')
+                            : document.querySelector?.('#sf-canvas');
+                    if (!hasSfCanvas) {
                         visual.nativeGridWantedThisFrame = true;
                         const strokeStyle = String(this.strokeStyle).toLowerCase();
                         visual.lastGridStrokeWasDark =
@@ -187,13 +205,6 @@ class CanvasHooks extends FeatureController {
     }
 }
 class VisualController extends FeatureController {
-    drawMergeTimers(context) {
-        if (this.app.state.hudVisible === false) return;
-        const mergeTimer = this.app.features.get('mergeTimer');
-        if (mergeTimer && typeof mergeTimer.drawOnContext === 'function') {
-            mergeTimer.drawOnContext(context, this.originalFillText, this.originalStrokeText);
-        }
-    }
     constructor(app, name) {
         super(app, name);
         this.assets = {
@@ -216,6 +227,18 @@ class VisualController extends FeatureController {
         this.sigFixCellDisplays = new Map();
         this.sigFixCellMaps = new WeakSet();
         this.sigFixSkinRenders = new WeakSet();
+        this.cameraState = {
+            x: 0,
+            y: 0,
+            scale: 0,
+            offsetX: 0,
+            offsetY: 0,
+            cw: 0,
+            ch: 0,
+        };
+        this.app.state.camera = this.cameraState;
+        this.smartPingController = null;
+        this.nicknameEl = null;
     }
     async mount() {
         this.syncAssets();
@@ -245,6 +268,7 @@ class VisualController extends FeatureController {
             this.refreshRenderConfig();
         });
         const nickname = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
+        this.nicknameEl = nickname;
         if (nickname instanceof HTMLInputElement) {
             const updateNickname = () => {
                 this.app.state.nickname = nickname.value.trim() || 'Guest';
@@ -639,7 +663,9 @@ class VisualController extends FeatureController {
      * @param {number} camY
      */
     maybeDrawProperGrid(context, cw, ch, scaleVal, camX, camY) {
-        if (document.getElementById('sf-canvas')) return;
+        const sfCanvas =
+            typeof document.getElementById === 'function' ? document.getElementById('sf-canvas') : document.querySelector?.('#sf-canvas');
+        if (sfCanvas) return;
         if (this.gridDrawnThisFrame) return;
 
         const showGrid = this.nativeGridWantedThisFrame || Boolean(this.app.settings.game?.showGrid ?? true);
@@ -790,8 +816,10 @@ class VisualController extends FeatureController {
     }
     /** @param {string} text */
     isOwnName(text) {
-        const nickname = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
-        const playedName = nickname instanceof HTMLInputElement ? nickname.value.trim() : '';
+        if (!this.nicknameEl || !this.nicknameEl.isConnected) {
+            this.nicknameEl = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
+        }
+        const playedName = typeof this.nicknameEl?.value === 'string' ? this.nicknameEl.value.trim() : '';
         return Boolean(playedName && text === playedName);
     }
     /** @param {unknown} text */

@@ -8,12 +8,7 @@ class ProfileController extends FeatureController {
     async mount() {
         this.menu = this.app.features.get('menu');
         this.modal = this.app.features.get('modal');
-        this.root = this.menu?.root ?? null;
         this.resources.add(this.app.backend.on('auth-required', (sid) => this.authenticate(sid)));
-        if (this.root instanceof HTMLElement) {
-            this.resources.listen(this.root, 'click', (event) => this.handleMenuClick(event));
-        }
-        this.renderSummary(null);
     }
     /** Subscribe to profile changes. @param {(profile: object|null) => void} listener */
     onChange(listener) {
@@ -75,7 +70,6 @@ class ProfileController extends FeatureController {
         this.profile = profile;
         if (isObject(settings)) this.app.state.friends.settings = { ...settings };
         this.app.settingsStore.set('modAccount.authorized', true, true);
-        this.renderSummary(profile);
         this.events.emit('change', profile);
     }
     clearAccount() {
@@ -83,50 +77,7 @@ class ProfileController extends FeatureController {
         this.app.state.friends.settings = {};
         this.app.state.friends.names = new Set();
         this.app.settingsStore.set('modAccount.authorized', false, true);
-        this.renderSummary(null);
         this.events.emit('change', null);
-    }
-    renderSummary(profile) {
-        if (!(this.root instanceof HTMLElement)) return;
-        const imageRoot = this.root.querySelector('#mod-profile-img');
-        const name = this.root.querySelector('#my-profile-name');
-        const role = this.root.querySelector('#my-profile-role');
-        const bio = this.root.querySelector('#my-profile-bio');
-        const badges = this.root.querySelector('#my-profile-badges');
-        if (imageRoot instanceof HTMLElement) {
-            imageRoot.replaceChildren();
-            if (profile) {
-                imageRoot.append(this.createAvatar(profile, 50));
-            } else {
-                imageRoot.innerHTML = icon('userCircle', 24);
-            }
-        }
-        if (name) name.textContent = String(profile?.username ?? 'Guest');
-        if (role) {
-            role.textContent = String(profile?.role ?? 'Guest');
-            role.className = profile?.role ? `${String(profile.role)}_role` : '';
-        }
-        if (bio) bio.textContent = String(profile?.bio || (profile ? 'No bio.' : 'No Bio.'));
-        if (badges instanceof HTMLElement) {
-            badges.replaceChildren();
-            if (profile) {
-                const values = Array.isArray(profile.badges) ? profile.badges : [];
-                if (values.length) {
-                    for (const badge of values)
-                        badges.append(
-                            createElement('span', {
-                                className: 'mod_badge',
-                                text: badge,
-                            })
-                        );
-                } else
-                    badges.append(
-                        createElement('span', {
-                            text: 'User has no badges.',
-                        })
-                    );
-            }
-        }
     }
     createAvatar(user, size = 44) {
         const image = createElement('img', {
@@ -148,10 +99,6 @@ class ProfileController extends FeatureController {
     safeImageUrl(value) {
         const source = String(value ?? '');
         return safeHttpUrl(source, true) ?? (/^data:image\/(?:png|jpe?g|gif|webp);/i.test(source) ? source : '');
-    }
-    handleMenuClick(event) {
-        const target = event.target instanceof Element ? event.target.closest('[data-profile-edit]') : null;
-        if (target) this.openEditor();
     }
     /** Display a public profile returned by /profile/:id. */
     async showProfile(id) {
@@ -568,15 +515,24 @@ class ProfileController extends FeatureController {
                     this.app.settingsStore.set('modAccount.authorized', true, true);
                 }
             };
-            window.addEventListener('message', messageHandler);
+            const removeListener =
+                scope?.listen(window, 'message', messageHandler) ?? (() => window.removeEventListener('message', messageHandler));
+            if (!scope) window.addEventListener('message', messageHandler);
 
-            const interval = window.setInterval(() => {
+            let interval = null;
+            const cleanup = () => {
+                if (interval !== null) {
+                    window.clearInterval(interval);
+                    interval = null;
+                }
+                removeListener();
+            };
+            interval = window.setInterval(() => {
                 if (!popup.closed) return;
-                window.clearInterval(interval);
-                window.removeEventListener('message', messageHandler);
+                cleanup();
                 this.resources.timeout(() => location.reload(), 1_500);
             }, 1_000);
-            scope?.add(() => window.clearInterval(interval));
+            scope?.add(cleanup);
         });
         scope?.listen(form, 'submit', async (event) => {
             event.preventDefault();
@@ -2492,20 +2448,33 @@ class StatisticsController extends FeatureController {
         timeCanvas = document.querySelector('#statistics-time-chart'),
         massCanvas = document.querySelector('#statistics-mass-chart')
     ) {
-        if (this.chartPromise) return this.chartPromise;
         if (
-            !(homeCanvas instanceof HTMLCanvasElement) ||
-            !(timeCanvas instanceof HTMLCanvasElement) ||
-            !(massCanvas instanceof HTMLCanvasElement)
-        )
-            return Promise.resolve();
+            this.chartPromise &&
+            this.homeChart &&
+            this.homeChart.canvas === homeCanvas &&
+            this.homeChart.canvas.isConnected &&
+            this.timeChart &&
+            this.timeChart.canvas === timeCanvas &&
+            this.timeChart.canvas.isConnected &&
+            this.massChart &&
+            this.massChart.canvas === massCanvas &&
+            this.massChart.canvas.isConnected
+        ) {
+            return this.chartPromise;
+        }
         this.chartPromise = this.app.dependencies
             .load('chart')
             .then((Chart) => {
                 if (this.resources.disposed) return;
-                if (!this.homeChart) this.createHomeChart(Chart, homeCanvas);
-                if (!this.timeChart) this.createTimeChart(Chart, timeCanvas);
-                if (!this.massChart) this.createMassChart(Chart, massCanvas);
+                if (!this.homeChart || this.homeChart.canvas !== homeCanvas || !this.homeChart.canvas.isConnected) {
+                    this.createHomeChart(Chart, homeCanvas);
+                }
+                if (!this.timeChart || this.timeChart.canvas !== timeCanvas || !this.timeChart.canvas.isConnected) {
+                    this.createTimeChart(Chart, timeCanvas);
+                }
+                if (!this.massChart || this.massChart.canvas !== massCanvas || !this.massChart.canvas.isConnected) {
+                    this.createMassChart(Chart, massCanvas);
+                }
             })
             .catch((error) => {
                 this.chartPromise = null;
@@ -2533,17 +2502,17 @@ class StatisticsController extends FeatureController {
         if (this.resources.disposed || token !== this.refreshToken) return;
         const count = Math.max(0, Math.round(Number(summary?.count) || 0));
 
-        this.setText('home-stats-time', this.formatDuration(stats['time-played']));
-        this.setText('statistics-time-played', this.formatDuration(stats['time-played']));
-        this.setText('statistics-highest-mass', this.formatNumber(stats['highest-mass']));
-        this.setText('statistics-total-deaths', this.formatNumber(stats['total-deaths']));
-        this.setText('statistics-total-mass', this.formatNumber(stats['total-mass']));
+        this.setText('home-stats-time', formatDuration(stats['time-played']));
+        this.setText('statistics-time-played', formatDuration(stats['time-played']));
+        this.setText('statistics-highest-mass', formatNumber(stats['highest-mass']));
+        this.setText('statistics-total-deaths', formatNumber(stats['total-deaths']));
+        this.setText('statistics-total-mass', formatNumber(stats['total-mass']));
 
-        this.setText('statistics-average-time', `${count ? this.formatDuration(summary.totalDuration / count) : '0m'} avg.`);
-        this.setText('statistics-kills', this.formatNumber(summary.totalKills));
+        this.setText('statistics-average-time', `${count ? formatDuration(summary.totalDuration / count) : '0m'} avg.`);
+        this.setText('statistics-kills', formatNumber(summary.totalKills));
         this.setText('statistics-avg-kills', count ? (summary.totalKills / count).toFixed(summary.totalKills / count >= 10 ? 0 : 1) : '0');
-        this.setText('statistics-pellets', this.formatNumber(summary.totalPellets));
-        this.setText('statistics-splits', this.formatNumber(summary.totalSplits));
+        this.setText('statistics-pellets', formatNumber(summary.totalPellets));
+        this.setText('statistics-splits', formatNumber(summary.totalSplits));
         this.setText('statistics-best-position', summary.bestPosition !== null ? `#${summary.bestPosition}` : '—');
         this.setText('statistics-average-ping', summary.pingCount ? `${Math.round(summary.pingTotal / summary.pingCount)} ms` : '—');
 
@@ -2582,6 +2551,12 @@ class StatisticsController extends FeatureController {
         }
     }
     createHomeChart(Chart, canvas) {
+        if (this.homeChart) {
+            try {
+                this.homeChart.destroy();
+            } catch {}
+            this.homeChart = null;
+        }
         const context = canvas.getContext('2d');
         const gradient = context?.createLinearGradient(0, 0, canvas.width, 0);
         gradient?.addColorStop(0, 'rgba(104, 113, 241, .2)');
@@ -2622,18 +2597,20 @@ class StatisticsController extends FeatureController {
                         displayColors: false,
                         callbacks: {
                             title: () => '',
-                            label: (context) => this.formatDuration((context.raw || 0) * 60),
+                            label: (context) => formatDuration((context.raw || 0) * 60),
                         },
                     },
                 },
             },
         });
-        this.resources.add(() => {
-            this.homeChart?.destroy();
-            this.homeChart = null;
-        });
     }
     createTimeChart(Chart, canvas) {
+        if (this.timeChart) {
+            try {
+                this.timeChart.destroy();
+            } catch {}
+            this.timeChart = null;
+        }
         this.timeChart = new Chart(canvas, {
             type: 'line',
             data: {
@@ -2684,18 +2661,20 @@ class StatisticsController extends FeatureController {
                     tooltip: {
                         displayColors: false,
                         callbacks: {
-                            label: (context) => `Played ${this.formatDuration((context.raw || 0) * 60)}`,
+                            label: (context) => `Played ${formatDuration((context.raw || 0) * 60)}`,
                         },
                     },
                 },
             },
         });
-        this.resources.add(() => {
-            this.timeChart?.destroy();
-            this.timeChart = null;
-        });
     }
     createMassChart(Chart, canvas) {
+        if (this.massChart) {
+            try {
+                this.massChart.destroy();
+            } catch {}
+            this.massChart = null;
+        }
         this.massChart = new Chart(canvas, {
             type: 'bar',
             data: {
@@ -2730,7 +2709,7 @@ class StatisticsController extends FeatureController {
                             color: '#606060',
                             font: { size: 9 },
                             maxTicksLimit: 4,
-                            callback: (value) => this.formatNumber(value),
+                            callback: (value) => formatNumber(value),
                         },
                     },
                 },
@@ -2740,15 +2719,11 @@ class StatisticsController extends FeatureController {
                         displayColors: false,
                         callbacks: {
                             title: (context) => `Match ${context[0].label}`,
-                            label: (context) => `Peak ${this.formatNumber(context.raw)}`,
+                            label: (context) => `Peak ${formatNumber(context.raw)}`,
                         },
                     },
                 },
             },
-        });
-        this.resources.add(() => {
-            this.massChart?.destroy();
-            this.massChart = null;
         });
     }
     renderMatches(history) {
@@ -2782,9 +2757,9 @@ class StatisticsController extends FeatureController {
             );
             row.append(
                 main,
-                this.matchStat('Time', this.formatDuration(match.duration)),
-                this.matchStat('Mass', this.formatNumber(match.highestMass)),
-                this.matchStat('Kills', this.formatNumber(match.kills)),
+                this.matchStat('Time', formatDuration(match.duration)),
+                this.matchStat('Mass', formatNumber(match.highestMass)),
+                this.matchStat('Kills', formatNumber(match.kills)),
                 this.matchStat('Ping', match.averagePing > 0 ? `${match.averagePing} ms` : '—')
             );
             root.append(row);
@@ -2799,12 +2774,8 @@ class StatisticsController extends FeatureController {
     }
     formatHistoryLabel(item, fallbackIndex) {
         if (!item.at) return `#${fallbackIndex}`;
-        const date = new Date(item.at);
-        if (Number.isNaN(date.getTime())) return `#${fallbackIndex}`;
-        return date.toLocaleDateString(undefined, {
-            month: 'short',
-            day: 'numeric',
-        });
+        const formatted = this.formatMatchDate(item.at);
+        return formatted === 'Match' ? `#${fallbackIndex}` : formatted;
     }
     formatMatchDate(timestamp) {
         const date = new Date(timestamp);
@@ -2823,25 +2794,35 @@ class StatisticsController extends FeatureController {
         });
     }
     formatDuration(seconds) {
-        const total = Math.max(0, Math.floor(Number(seconds) || 0));
-        const hours = Math.floor(total / 3600);
-        const minutes = Math.floor((total % 3600) / 60);
-        if (hours > 0) return `${hours}h ${minutes}m`;
-        if (minutes > 0) return `${minutes}m`;
-        return total > 0 ? `${total}s` : '0m';
+        return formatDuration(seconds);
     }
     formatNumber(value) {
-        const number = Math.max(0, Math.round(Number(value) || 0));
-        if (number >= 1_000_000_000) return `${(number / 1_000_000_000).toFixed(number >= 10_000_000_000 ? 0 : 1)}b`;
-        if (number >= 1_000_000) return `${(number / 1_000_000).toFixed(number >= 10_000_000 ? 0 : 1)}m`;
-        if (number >= 1_000) return `${(number / 1_000).toFixed(number >= 10_000 ? 0 : 1)}k`;
-        return String(number);
+        return formatNumber(value);
+    }
+    destroyCharts() {
+        if (this.homeChart) {
+            try {
+                this.homeChart.destroy();
+            } catch {}
+            this.homeChart = null;
+        }
+        if (this.timeChart) {
+            try {
+                this.timeChart.destroy();
+            } catch {}
+            this.timeChart = null;
+        }
+        if (this.massChart) {
+            try {
+                this.massChart.destroy();
+            } catch {}
+            this.massChart = null;
+        }
+        this.chartPromise = null;
     }
     destroy() {
+        this.destroyCharts();
         super.destroy();
-        this.homeChart = null;
-        this.timeChart = null;
-        this.massChart = null;
     }
 }
 class ShopController extends FeatureController {
@@ -2879,7 +2860,6 @@ const FEATURE_PHASES = [
         ['session', SessionController],
         ['macros', MacroController],
         ['smartPing', SmartPingController],
-        ['mergeTimer', MergeTimerController],
     ],
     [
         ['chat', ChatController],

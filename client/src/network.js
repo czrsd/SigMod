@@ -39,18 +39,6 @@ class PacketReader {
         this.offset += 4;
         return value;
     }
-    float32LE() {
-        this.ensure(4);
-        const value = this.view.getFloat32(this.offset, true);
-        this.offset += 4;
-        return value;
-    }
-    bytes(size) {
-        this.ensure(size);
-        const value = new Uint8Array(this.view.buffer, this.view.byteOffset + this.offset, size);
-        this.offset += size;
-        return value;
-    }
     float64LE() {
         this.ensure(8);
         const value = this.view.getFloat64(this.offset, true);
@@ -152,11 +140,6 @@ class OpcodeMap {
         if (!this.ready) throw new Error('Opcode map is not ready');
         if (!Number.isInteger(opcode) || opcode < 0 || opcode > 255) throw new RangeError('Invalid opcode');
         return this.incoming[opcode];
-    }
-    reset() {
-        this.outgoing.fill(0);
-        this.incoming.fill(0);
-        this.ready = false;
     }
 }
 class HostAdapter extends Emitter {
@@ -278,7 +261,7 @@ const readChatMessage = (reader) => {
     const blue = reader.uint8();
     const name = reader.utf8z();
     const message = reader.utf8z();
-    const color = `#${[red, green, blue].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+    const color = `#${rgbToHex(red, green, blue)}`;
     return { name: name.trim() || 'Unnamed', message, color };
 };
 class NativeProtocol extends Emitter {
@@ -299,6 +282,7 @@ class NativeProtocol extends Emitter {
         this.leaderboard = new LeaderboardTracker((type, payload) => this.emit(type, payload));
         this.rawSend = socket.send.bind(socket);
         this.snapshotCache = null;
+        this.cachedPosition = null;
         this.snapshotDirty = true;
         const protocol = this;
         const sendFacade = function (data) {
@@ -482,7 +466,6 @@ class NativeProtocol extends Emitter {
                 this.emit('play-state', false);
                 break;
             case 0x12:
-                this.emit('world', this.worldSnapshot());
                 break;
             case OPCODE.border:
                 this.decodeBorder(reader);
@@ -554,26 +537,46 @@ class NativeProtocol extends Emitter {
                 oy = existing.oy + (existing.ny - existing.oy) * progress;
                 os = existing.os + (existing.ns - existing.os) * progress;
             }
-            this.cells.set(id, {
-                id,
-                ox,
-                oy,
-                os,
-                nx: x,
-                ny: y,
-                ns: radius,
-                updatedAt: now,
-                x,
-                y,
-                radius,
-                flags,
-                clan,
-                color,
-                skin,
-                name,
-                eject,
-                pellet,
-            });
+            if (existing) {
+                existing.ox = ox;
+                existing.oy = oy;
+                existing.os = os;
+                existing.nx = x;
+                existing.ny = y;
+                existing.ns = radius;
+                existing.updatedAt = now;
+                existing.x = x;
+                existing.y = y;
+                existing.radius = radius;
+                existing.flags = flags;
+                existing.clan = clan;
+                existing.color = color;
+                existing.skin = skin;
+                existing.name = name;
+                existing.eject = eject;
+                existing.pellet = pellet;
+            } else {
+                this.cells.set(id, {
+                    id,
+                    ox,
+                    oy,
+                    os,
+                    nx: x,
+                    ny: y,
+                    ns: radius,
+                    updatedAt: now,
+                    x,
+                    y,
+                    radius,
+                    flags,
+                    clan,
+                    color,
+                    skin,
+                    name,
+                    eject,
+                    pellet,
+                });
+            }
         }
         const deleteCount = reader.uint16LE();
         if (deleteCount > 100_000 || deleteCount * 4 > reader.remaining) {
@@ -587,7 +590,6 @@ class NativeProtocol extends Emitter {
         this.snapshotDirty = true;
         const snapshot = this.worldSnapshot();
         this.emit('world-update', snapshot);
-        this.emit('world', snapshot);
         const isPlaying = Boolean(snapshot.playing);
         if (this.lastPlayState !== isPlaying) {
             this.lastPlayState = isPlaying;
@@ -605,11 +607,7 @@ class NativeProtocol extends Emitter {
         this.emit('kill', { name: playerName });
     }
     worldSnapshot() {
-        if (!this.snapshotDirty && this.snapshotCache)
-            return {
-                ...this.snapshotCache,
-                position: this.snapshotCache.position ? { ...this.snapshotCache.position } : null,
-            };
+        if (!this.snapshotDirty && this.snapshotCache) return this.snapshotCache;
         let score = 0;
         let x = 0;
         let y = 0;
@@ -622,17 +620,31 @@ class NativeProtocol extends Emitter {
             y += cell.y;
             count += 1;
         }
-        this.snapshotCache = {
-            playing: count > 0,
-            position: count ? { x: x / count, y: y / count } : null,
-            score,
-            ownedCount: count,
-        };
+        let position = null;
+        if (count > 0) {
+            if (!this.cachedPosition) {
+                this.cachedPosition = { x: x / count, y: y / count };
+            } else {
+                this.cachedPosition.x = x / count;
+                this.cachedPosition.y = y / count;
+            }
+            position = this.cachedPosition;
+        }
+        if (!this.snapshotCache) {
+            this.snapshotCache = {
+                playing: count > 0,
+                position,
+                score,
+                ownedCount: count,
+            };
+        } else {
+            this.snapshotCache.playing = count > 0;
+            this.snapshotCache.position = position;
+            this.snapshotCache.score = score;
+            this.snapshotCache.ownedCount = count;
+        }
         this.snapshotDirty = false;
-        return {
-            ...this.snapshotCache,
-            position: this.snapshotCache.position ? { ...this.snapshotCache.position } : null,
-        };
+        return this.snapshotCache;
     }
     decodeBorder(reader) {
         this.border = readWorldBorder(reader);
@@ -1045,7 +1057,6 @@ class SigFixHostAdapter extends HostAdapter {
         const snapshot = this.snapshot();
         this.lastOwnedCount = snapshot.ownedCount;
         this.emit('world-update', snapshot);
-        this.emit('world', snapshot);
         const isPlaying = Boolean(snapshot.playing);
         if (this.lastPlayState !== isPlaying) {
             this.lastPlayState = isPlaying;

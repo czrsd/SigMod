@@ -656,7 +656,7 @@ class ChatController extends FeatureController {
         (document.head || document.documentElement).append(style);
         this.resources.add(() => style.remove());
 
-        setTimeout(() => {
+        this.resources.timeout(() => {
             const showChat = document.querySelector('#showChat');
             if (showChat instanceof HTMLInputElement && showChat.checked) {
                 showChat.click();
@@ -772,8 +772,8 @@ class ChatController extends FeatureController {
             return { wrapper, input };
         };
         const keys = makeSection('Keybindings');
-        const locValue = this.app.settingsStore.get('macros.keys.location');
-        const toggleValue = this.app.settingsStore.get('macros.keys.toggle.chat');
+        const locValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.location'));
+        const toggleValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.toggle.chat'));
         const locationKey = createElement('input', {
             className: 'keybinding',
             attributes: {
@@ -868,7 +868,7 @@ class ChatController extends FeatureController {
         panel.append(page);
         this.settingsPanel = panel;
         const bindBoolean = (input, path) => {
-            input.checked = Boolean(this.app.settingsStore.get(path));
+            input.checked = Boolean(unwrapSettingScalar(this.app.settingsStore.get(path)));
             this.resources.listen(input, 'change', () => {
                 this.app.settingsStore.set(path, input.checked);
                 this.applyChatPreferences();
@@ -892,7 +892,7 @@ class ChatController extends FeatureController {
         ]) {
             const input = panel.querySelector(`#${id}`);
             if (!(input instanceof HTMLInputElement)) continue;
-            input.value = normalizePickerColor(this.app.settingsStore.get(path), fallback);
+            input.value = normalizePickerColor(unwrapSettingScalar(this.app.settingsStore.get(path)), fallback);
             this.resources.listen(input, 'input', () => {
                 this.app.settingsStore.set(path, input.value);
                 this.applyColors();
@@ -927,7 +927,7 @@ class ChatController extends FeatureController {
             try {
                 picker = new Alwan(`#${id}`, {
                     id: `edit-${id}`,
-                    color: this.app.settingsStore.get(path) || fallback,
+                    color: unwrapSettingScalar(this.app.settingsStore.get(path)) || fallback,
                     theme: 'dark',
                     opacity,
                     format: 'hex',
@@ -1058,7 +1058,7 @@ class ChatController extends FeatureController {
         const user = this.app.state.user || (isObject(window.gameSettings) ? window.gameSettings.user : null);
         const requiresLogin = this.mode === 'main' && !user;
         const partyUnavailable = this.mode === 'party' && !this.app.settings.settings.tag;
-        this.input.disabled = requiresLogin || partyUnavailable;
+        this.input.disabled = partyUnavailable;
         this.input.placeholder = requiresLogin ? 'Login to use the chat' : partyUnavailable ? 'Join a tag to use party chat' : 'Message...';
         const send = this.root?.querySelector('#sendButton');
         if (send instanceof HTMLButtonElement) send.disabled = this.input.disabled;
@@ -1108,13 +1108,14 @@ class ChatController extends FeatureController {
         this.scrollToBottom(true);
     }
     queueGameChat(message) {
+        const limit = location.search.startsWith('?ip=') ? 64 : 16;
         const parts = [];
         let current = '';
         const words = message.split(/\s+/).filter(Boolean);
         for (let word of words) {
-            while (word.length > 15) {
-                const sub = word.slice(0, 15);
-                word = word.slice(15);
+            while (word.length > limit) {
+                const sub = word.slice(0, limit);
+                word = word.slice(limit);
                 if (current) {
                     parts.push(current);
                     current = '';
@@ -1124,7 +1125,7 @@ class ChatController extends FeatureController {
             if (!word) continue;
             if (!current) {
                 current = word;
-            } else if (current.length + word.length + 1 <= 15) {
+            } else if (current.length + word.length + 1 <= limit) {
                 current += ` ${word}`;
             } else {
                 parts.push(current);
@@ -1240,15 +1241,25 @@ class ChatController extends FeatureController {
             }
             contextMenu.remove();
             this.onContext = null;
+            if (this.contextMenuDisposer) {
+                this.contextMenuDisposer();
+                this.contextMenuDisposer = null;
+            }
         });
         const closeMenu = (e) => {
             if (!contextMenu.contains(e.target)) {
                 contextMenu.remove();
                 this.onContext = null;
-                document.removeEventListener('click', closeMenu);
+                if (this.contextMenuDisposer) {
+                    this.contextMenuDisposer();
+                    this.contextMenuDisposer = null;
+                }
             }
         };
-        setTimeout(() => document.addEventListener('click', closeMenu), 0);
+        this.resources.timeout(() => {
+            document.addEventListener('click', closeMenu);
+            this.contextMenuDisposer = () => document.removeEventListener('click', closeMenu);
+        }, 0);
     }
     isBlocked(name, message) {
         const normalizedName = name.toLowerCase();
@@ -1338,6 +1349,10 @@ class ChatController extends FeatureController {
     destroy() {
         this.onContext?.remove();
         this.onContext = null;
+        if (this.contextMenuDisposer) {
+            this.contextMenuDisposer();
+            this.contextMenuDisposer = null;
+        }
         this.root = null;
         this.messages = null;
         this.input = null;
@@ -1567,9 +1582,6 @@ class PartyController extends FeatureController {
         }
         return Boolean(this.app.state.player.alive);
     }
-    isLocalAlive() {
-        return this.isLocalPlaying();
-    }
     resolveLocalColor() {
         // 1. Check SigFixes world cells if SigFixes is active
         const sigfixApi = window.sigfix || this.app.host.adapter?.api;
@@ -1580,10 +1592,7 @@ class PartyController extends FeatureController {
                 for (const id of owned) {
                     const cell = sigfixApi.world.cells.get(id);
                     if (cell && typeof cell.red === 'number' && typeof cell.green === 'number' && typeof cell.blue === 'number') {
-                        const r = Math.min(255, Math.max(0, Math.round(cell.red * 255)));
-                        const g = Math.min(255, Math.max(0, Math.round(cell.green * 255)));
-                        const b = Math.min(255, Math.max(0, Math.round(cell.blue * 255)));
-                        return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+                        return `#${rgbToHex(cell.red * 255, cell.green * 255, cell.blue * 255)}`;
                     }
                 }
             }
@@ -1595,8 +1604,7 @@ class PartyController extends FeatureController {
             for (const id of adapter.protocol.owned) {
                 const cell = adapter.protocol.cells.get(id);
                 if (cell?.color && Array.isArray(cell.color)) {
-                    const [r, g, b] = cell.color;
-                    return `#${[r, g, b].map((v) => Number(v).toString(16).padStart(2, '0')).join('')}`;
+                    return `#${rgbToHex(...cell.color)}`;
                 }
             }
         }
@@ -1702,7 +1710,7 @@ class PartyController extends FeatureController {
             const onTagChange = (event) => {
                 event.stopPropagation();
                 if (tagDebounceTimer) clearTimeout(tagDebounceTimer);
-                tagDebounceTimer = setTimeout(() => {
+                tagDebounceTimer = this.resources.timeout(() => {
                     const value = input.value.trim() ? input.value.trim().slice(0, 3) : null;
                     this.app.settingsStore.set('settings.tag', value, true);
                 }, 150);
@@ -2374,7 +2382,7 @@ class PartyController extends FeatureController {
             // Update score
             if (settings.partyShowScores !== false) {
                 row._scoreEl.style.display = '';
-                const scoreText = member.score > 0 ? this.formatScore(member.score) : '';
+                const scoreText = member.score > 0 ? formatScore(member.score) : '';
                 if (row._scoreEl.textContent !== scoreText) {
                     row._scoreEl.textContent = scoreText;
                 }
@@ -2435,10 +2443,10 @@ class PartyController extends FeatureController {
         }
 
         count.textContent = String(sorted.length);
-        total.textContent = this.formatScore(sorted.reduce((sum, member) => sum + (member.score || 0), 0));
+        total.textContent = formatScore(sorted.reduce((sum, member) => sum + (member.score || 0), 0));
     }
     formatScore(score) {
-        return score >= 1_000 ? `${(score / 1_000).toFixed(1)}k` : String(score);
+        return formatScore(score);
     }
     destroy() {
         document.body.style.userSelect = '';
@@ -2664,14 +2672,16 @@ class MacroController extends FeatureController {
     }
     /** @param {number} count */
     split(count = 1) {
-        const total = Math.max(0, Math.trunc(Number(count) || 0));
+        const rawCount = unwrapSettingScalar(count);
+        const total = Math.max(0, Math.trunc(Number(rawCount) || 0));
         if (total <= 0) return;
         this.app.state.lastSplitAt = Date.now();
         for (let index = 0; index < total; index += 1) this.sendAction('split');
     }
     /** @param {number} count */
     trickSplit(count) {
-        let remaining = Math.max(0, Math.trunc(count));
+        const rawCount = unwrapSettingScalar(count);
+        let remaining = Math.max(0, Math.trunc(Number(rawCount) || 0));
         const run = () => {
             if (remaining <= 0 || this.resources.disposed) return;
             remaining -= 1;
@@ -2682,8 +2692,10 @@ class MacroController extends FeatureController {
     }
     startRapidFeed(key) {
         if (this.rapidFeedTimer !== null) return;
-        this.rapidFeedKey = key;
-        const delay = Math.max(0, Number(this.app.settings.macros.feedSpeed) || 40);
+        const unwrappedKey = unwrapSettingScalar(key);
+        this.rapidFeedKey = typeof unwrappedKey === 'string' ? unwrappedKey.toLowerCase() : unwrappedKey;
+        const rawDelay = unwrapSettingScalar(this.app.settings?.macros?.feedSpeed);
+        const delay = Math.max(0, Number(rawDelay) || 40);
         this.rapidFeedTimer = window.setInterval(() => {
             if (!this.canFeed()) return this.stopRapidFeed();
             this.sendAction('eject');
@@ -2726,58 +2738,60 @@ class MacroController extends FeatureController {
         }
         if (this.app.inputOwnership?.ownsKeyEvent(event)) return;
         const key = String(event.key).toLowerCase();
-        const keys = this.app.settings.macros.keys;
+        const keys = this.app.settings?.macros?.keys;
+        if (!keys) return;
         if (key === 'p') event.stopPropagation();
         if (key === 'tab' && !window.screenTop && !window.screenY) event.preventDefault();
-        const rapidFeedBinding = this.app.settingsStore.get('macros.keys.rapidFeed');
+        const rapidFeedBinding = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.rapidFeed'));
+        const activeRapidKey = this.adapter?.kind === 'sigfix' ? rapidFeedBinding : unwrapSettingScalar(keys.rapidFeed);
         if (this.adapter?.kind === 'sigfix' && key === 'w') {
             this.syncSigFixHeldFeed();
             return;
-        } else if (this.matches(event, this.adapter?.kind === 'sigfix' ? rapidFeedBinding : keys.rapidFeed)) {
+        } else if (this.matches(event, activeRapidKey)) {
             event.stopPropagation();
             if (event.key === 'Dead') event.preventDefault();
-            this.startRapidFeed(rapidFeedBinding);
+            this.startRapidFeed(activeRapidKey);
             return;
         }
         if (key === ' ') this.app.state.lastSplitAt = Date.now();
         if (
             this.lock === 'vertical' &&
             (key === ' ' ||
-                this.matches(event, keys.splits.double) ||
-                this.matches(event, keys.splits.triple) ||
-                this.matches(event, keys.splits.quad))
+                this.matches(event, keys.splits?.double) ||
+                this.matches(event, keys.splits?.triple) ||
+                this.matches(event, keys.splits?.quad))
         ) {
             this.nudgeVertical();
         }
-        if (this.matches(event, keys.toggle.menu)) {
+        if (this.matches(event, keys.toggle?.menu)) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleMenu();
         }
-        if (this.matches(event, keys.splits.double)) {
+        if (this.matches(event, keys.splits?.double)) {
             if (event.key === 'Dead') event.preventDefault();
             this.split(2);
-        } else if (this.matches(event, keys.splits.triple)) {
+        } else if (this.matches(event, keys.splits?.triple)) {
             if (event.key === 'Dead') event.preventDefault();
             this.split(3);
-        } else if (this.matches(event, keys.splits.quad)) {
+        } else if (this.matches(event, keys.splits?.quad)) {
             if (event.key === 'Dead') event.preventDefault();
             this.split(4);
-        } else if (this.matches(event, keys.splits.doubleTrick)) {
+        } else if (this.matches(event, keys.splits?.doubleTrick)) {
             if (event.key === 'Dead') event.preventDefault();
             this.trickSplit(2);
-        } else if (this.matches(event, keys.splits.selfTrick)) {
+        } else if (this.matches(event, keys.splits?.selfTrick)) {
             if (event.key === 'Dead') event.preventDefault();
             this.trickSplit(4);
         }
-        if (this.matches(event, keys.line.horizontal) && isMenuClosed()) {
+        if (this.matches(event, keys.line?.horizontal) && isMenuClosed()) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleLock('horizontal');
         }
-        if (this.matches(event, keys.line.vertical) && isMenuClosed()) {
+        if (this.matches(event, keys.line?.vertical) && isMenuClosed()) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleLock('vertical');
         }
-        if (this.matches(event, keys.line.fixed) && isMenuClosed()) {
+        if (this.matches(event, keys.line?.fixed) && isMenuClosed()) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleLock('fixed');
         }
@@ -2785,25 +2799,25 @@ class MacroController extends FeatureController {
             if (event.key === 'Dead') event.preventDefault();
             this.sendLocation();
         }
-        if (this.matches(event, keys.toggle.chat)) {
+        if (this.matches(event, keys.toggle?.chat)) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleChat();
         }
-        if (this.matches(event, keys.toggle.names)) {
+        if (this.matches(event, keys.toggle?.names)) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleSetting('showNames');
         }
-        if (this.matches(event, keys.toggle.skins)) {
+        if (this.matches(event, keys.toggle?.skins)) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleSetting('showSkins');
         }
-        if (this.matches(event, keys.toggle.autoRespawn)) {
+        if (this.matches(event, keys.toggle?.autoRespawn)) {
             if (event.key === 'Dead') event.preventDefault();
             this.toggleSetting('autoRespawn');
         }
-        if (this.matches(event, keys.toggle.party)) {
+        if (this.matches(event, keys.toggle?.party)) {
             if (event.key === 'Dead') event.preventDefault();
-            const show = !this.app.settingsStore.get('settings.showPartyPanel');
+            const show = !unwrapSettingScalar(this.app.settingsStore.get('settings.showPartyPanel'));
             this.app.settingsStore.set('settings.showPartyPanel', show);
         }
         if (this.matches(event, keys.toggle?.hud)) {
@@ -2865,7 +2879,12 @@ class MacroController extends FeatureController {
         if (event.button === this.pointerFeedButton) this.stopPointerFeed();
     }
     mouseBinding(button) {
-        return this.app.settings.macros.mouse.bindings.find((binding) => binding.button === button)?.action ?? null;
+        const targetButton = Number(button);
+        const bindings = this.app.settings?.macros?.mouse?.bindings;
+        if (!Array.isArray(bindings)) return null;
+        const match = bindings.find((binding) => Number(binding?.button) === targetButton);
+        const action = unwrapSettingScalar(match?.action);
+        return typeof action === 'string' ? action : null;
     }
     /** @param {Event} event */
     isGamePointerEvent(event) {
@@ -2881,7 +2900,7 @@ class MacroController extends FeatureController {
     }
     /** @param {KeyboardEvent} event @param {unknown} binding */
     matches(event, binding) {
-        return keybindMatchesEvent(event, binding);
+        return keybindMatchesEvent(event, unwrapSettingScalar(binding));
     }
     /** @param {'horizontal'|'vertical'|'fixed'} kind */
     toggleLock(kind) {
@@ -2897,8 +2916,9 @@ class MacroController extends FeatureController {
         this.lockPosition = position;
         this.adapter?.setMovementOverride({ ...position, lock: kind });
         this.showLockOverlay(kind);
-        const instantSplit = this.app.settings.macros.keys.line.instantSplit;
-        if (Number(instantSplit) > 0) {
+        const rawInstantSplit = unwrapSettingScalar(this.app.settings?.macros?.keys?.line?.instantSplit);
+        const instantSplit = clamp(Math.trunc(Number(rawInstantSplit) || 0), 0, 4);
+        if (instantSplit > 0) {
             this.resources.timeout(() => {
                 if (this.lock === kind) this.split(instantSplit);
             }, 300);
@@ -3461,7 +3481,7 @@ class SessionController extends FeatureController {
             timerEl.textContent = '0m0s played';
             overlay.append(timerEl);
             let sec = 0;
-            this.playTimerInterval = setInterval(() => {
+            this.playTimerInterval = this.resources.interval(() => {
                 sec += 1;
                 const m = Math.floor(sec / 60);
                 const s = sec % 60;
@@ -4291,16 +4311,15 @@ class ScreenshotController extends FeatureController {
             if (this.previewUrl === href) this.previewUrl = null;
         };
         const scope = modal?.modals.get('gallery-preview')?.scope;
-        if (scope) scope.add(release);
-        else release();
-        close.addEventListener(
-            'click',
-            () => {
-                modal?.close('gallery-preview');
-            },
-            { once: true }
-        );
-        download.addEventListener('click', () => this.downloadImage(timestamp));
+        if (scope) {
+            scope.add(release);
+            scope.listen(close, 'click', () => modal?.close('gallery-preview'));
+            scope.listen(download, 'click', () => this.downloadImage(timestamp));
+        } else {
+            release();
+            close.addEventListener('click', () => modal?.close('gallery-preview'), { once: true });
+            download.addEventListener('click', () => this.downloadImage(timestamp));
+        }
     }
     async handleGalleryClick(event) {
         const target = event.target instanceof Element ? event.target : null;
@@ -5265,16 +5284,17 @@ class MainMenuController extends FeatureController {
                 new Promise((resolve) => {
                     const host = this.app.host;
                     if (host?.adapter?.connected) return resolve();
-                    const interval = setInterval(() => {
-                        if (host?.adapter?.connected) {
-                            clearInterval(interval);
-                            resolve();
-                        }
-                    }, 50);
-                    this.resources.timeout(() => {
-                        clearInterval(interval);
+                    let interval = null;
+                    let timeout = null;
+                    const finish = () => {
+                        if (interval) clearInterval(interval);
+                        if (timeout) clearTimeout(timeout);
                         resolve();
-                    }, 5000);
+                    };
+                    interval = this.resources.interval(() => {
+                        if (host?.adapter?.connected) finish();
+                    }, 50);
+                    timeout = this.resources.timeout(finish, 5000);
                 });
             waitForConnection()
                 .then(() => {
@@ -5297,7 +5317,7 @@ class MainMenuController extends FeatureController {
                     this.app.host.adapter?.sendPlay?.(payload);
                     const errormodal = document.querySelector('#errormodal');
                     if (!(errormodal instanceof HTMLElement)) return;
-                    const interval = setInterval(() => {
+                    const interval = this.resources.interval(() => {
                         if (errormodal.style.display !== 'none') errormodal.style.display = 'none';
                     }, 100);
                     this.resources.timeout(() => clearInterval(interval), 1000);
@@ -5388,7 +5408,7 @@ class SmartPingController extends FeatureController {
             { id: 'defend', name: 'Defend', icon: 'shield', color: '#2196F3' },
         ];
         this.hoveredPing = null;
-        this.frameId = null;
+        this.cachedCam = { x: 0, y: 0, scale: 0 };
     }
 
     async mount() {
@@ -5576,13 +5596,6 @@ class SmartPingController extends FeatureController {
         );
 
         this.resources.add(this.app.backend.on('tag-ping', (data) => this.receivePing(data)));
-
-        const loop = () => {
-            this.drawPings();
-            this.frameId = requestAnimationFrame(loop);
-        };
-        this.frameId = requestAnimationFrame(loop);
-        this.resources.add(() => cancelAnimationFrame(this.frameId));
         this.resources.add(() => this.closeWheel());
         this.resources.add(() => {
             this.activePings.forEach((p) => p.element.remove());
@@ -5598,7 +5611,7 @@ class SmartPingController extends FeatureController {
         const macros = this.app.features.get('macros');
         if (event instanceof KeyboardEvent && macros) {
             if (event.ctrlKey || event.metaKey) return false;
-            return macros.matches(event, this.app.settings.macros.keys.ping);
+            return macros.matches(event, unwrapSettingScalar(this.app.settings?.macros?.keys?.ping));
         } else if (event instanceof MouseEvent && macros) {
             if (!macros.isGamePointerEvent(event)) return false;
             const action = macros.mouseBinding(event.button);
@@ -5631,7 +5644,7 @@ class SmartPingController extends FeatureController {
 
         if (this.wheelOpen && this.pingSource?.type === 'key') {
             const macros = this.app.features.get('macros');
-            if (macros?.matches(event, this.app.settings.macros.keys.ping)) {
+            if (macros?.matches(event, unwrapSettingScalar(this.app.settings?.macros?.keys?.ping))) {
                 event.preventDefault();
                 this.closeWheel();
                 if (!this.wheelCancelled) {
@@ -5823,30 +5836,27 @@ class SmartPingController extends FeatureController {
             const vision = (world.views instanceof Map && (world.views.get(world.selected) || world.views.values()?.next()?.value)) || null;
             if (vision && vision.camera) {
                 const camScale = vision.camera.scale > 0 ? vision.camera.scale : 1;
-                return {
-                    x: vision.camera.x,
-                    y: vision.camera.y,
-                    scale: (window.innerHeight / 1080) * camScale,
-                };
+                this.cachedCam.x = vision.camera.x;
+                this.cachedCam.y = vision.camera.y;
+                this.cachedCam.scale = (window.innerHeight / 1080) * camScale;
+                return this.cachedCam;
             }
         }
         if (this.app.state.camera && this.app.state.camera.scale > 0) {
             const { scale, x, y, offsetX, offsetY, cw, ch } = this.app.state.camera;
             const canvasW = cw > 0 ? cw : window.innerWidth;
             const canvasH = ch > 0 ? ch : window.innerHeight;
-            return {
-                x: x !== undefined ? x : (canvasW / 2 - offsetX) / scale,
-                y: y !== undefined ? y : (canvasH / 2 - offsetY) / scale,
-                scale: scale * (window.innerWidth / canvasW),
-            };
+            this.cachedCam.x = x !== undefined ? x : (canvasW / 2 - offsetX) / scale;
+            this.cachedCam.y = y !== undefined ? y : (canvasH / 2 - offsetY) / scale;
+            this.cachedCam.scale = scale * (window.innerWidth / canvasW);
+            return this.cachedCam;
         }
         const position = this.app.host.adapter?.snapshot().position;
         if (position) {
-            return {
-                x: position.x,
-                y: position.y,
-                scale: (window.innerHeight / 1080) * 0.25,
-            };
+            this.cachedCam.x = position.x;
+            this.cachedCam.y = position.y;
+            this.cachedCam.scale = (window.innerHeight / 1080) * 0.25;
+            return this.cachedCam;
         }
         return null;
     }
@@ -5926,7 +5936,7 @@ class SmartPingController extends FeatureController {
 
         const duration = this.app.settings.settings.pingDuration ?? 2000;
 
-        setTimeout(() => {
+        this.resources.timeout(() => {
             element.remove();
             this.activePings.delete(id);
         }, duration);
@@ -5975,177 +5985,16 @@ class SmartPingController extends FeatureController {
             }
         });
     }
-}
-
-class MergeTimerController extends FeatureController {
-    constructor(app, name) {
-        super(app, name);
-        this.trackedCells = new Map();
-    }
-
-    async mount() {
-        const bindHost = (adapter) => {
-            this.resources.child('merge-host-events')?.dispose();
-            this.trackedCells.clear();
-            if (!adapter) return;
-            const events = this.resources.child('merge-host-events');
-            events.add(
-                adapter.on('play-state', (playing) => {
-                    if (!playing) this.trackedCells.clear();
-                })
-            );
-            events.add(
-                adapter.on('owned-cell', ({ id, split }) => {
-                    if (split) {
-                        this.trackedCells.set(id, {
-                            id,
-                            splitAt: performance.now(),
-                            lastRadius: 0,
-                            readyNotified: false,
-                            fadeUntil: 0,
-                        });
-                    }
-                })
-            );
-        };
-
-        this.resources.add(this.app.host.on('change', (adapter) => bindHost(adapter)));
-        if (this.app.host.adapter) bindHost(this.app.host.adapter);
-    }
-
-    isSigFixActive() {
-        return Boolean(window.sigfix || this.app.host.adapter?.kind === 'sigfix' || document.getElementById('sf-canvas'));
-    }
-
-    drawOnContext(context, fillTextFn, strokeTextFn) {
-        if (!this.app.settings.settings.mergeTimer) return;
-        if (this.isSigFixActive()) return;
-
-        const adapter = this.app.host.adapter;
-        if (!adapter || adapter.kind !== 'native') return;
-
-        const protocol = adapter.protocol;
-        if (!protocol || !protocol.cells) return;
-
-        const nickname = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
-        const playedName = nickname instanceof HTMLInputElement ? nickname.value.trim() : '';
-
-        const myCellIds = new Set(protocol.owned || []);
-        if (playedName) {
-            for (const [id, cell] of protocol.cells) {
-                if (cell && cell.name === playedName && !cell.pellet && !cell.eject) {
-                    myCellIds.add(id);
-                }
-            }
-        }
-
-        if (myCellIds.size <= 1) {
-            if (this.trackedCells.size > 0) this.trackedCells.clear();
-            return;
-        }
-
-        const now = performance.now();
-        for (const id of this.trackedCells.keys()) {
-            if (!myCellIds.has(id)) {
-                this.trackedCells.delete(id);
-            }
-        }
-
-        const showNames =
-            document.getElementById('showNames')?.checked ??
-            this.app.settings.game?.showNames ??
-            readLocalJson(STORAGE.gameSettings, {})?.showNames !== false;
-        const showMass = Boolean(
-            document.getElementById('showMass')?.checked ??
-            this.app.settings.game?.showMass ??
-            readLocalJson(STORAGE.gameSettings, {})?.showMass
-        );
-        const fontName = this.app.settings.game?.font || 'Ubuntu';
-        const fill = fillTextFn ?? context.fillText;
-        const stroke = strokeTextFn ?? context.strokeText;
-
-        for (const id of myCellIds) {
-            const cell = protocol.cells.get(id);
-            if (!cell) continue;
-
-            let cx = cell.x;
-            let cy = cell.y;
-            let cr = cell.radius;
-            if (cell.updatedAt) {
-                const elapsed = Math.max(0, Math.min(120, now - cell.updatedAt));
-                const progress = elapsed / 120;
-                cx = cell.ox + (cell.nx - cell.ox) * progress;
-                cy = cell.oy + (cell.ny - cell.oy) * progress;
-                cr = cell.os + (cell.ns - cell.os) * progress;
-            }
-
-            if (!Number.isFinite(cx) || !Number.isFinite(cy) || cr <= 0) continue;
-
-            let info = this.trackedCells.get(id);
-            if (!info) {
-                info = {
-                    id,
-                    splitAt: now,
-                    lastRadius: cr,
-                    readyNotified: false,
-                    fadeUntil: 0,
-                };
-                this.trackedCells.set(id, info);
-            } else if (info.lastRadius && cr < info.lastRadius * 0.82) {
-                info.splitAt = now;
-                info.readyNotified = false;
-                info.fadeUntil = 0;
-            }
-            info.lastRadius = cr;
-
-            const cooldownMs = (30 + 0.02 * Math.max(0, cr)) * 1000;
-            const elapsedMs = now - info.splitAt;
-            const remaining = Math.max(0, (cooldownMs - elapsedMs) / 1000);
-
-            let text;
-            let fillStyle;
-            let alpha = 1;
-
-            if (remaining > 0) {
-                if (remaining < 5.0) {
-                    text = `${remaining.toFixed(1)}s`;
-                    fillStyle = '#ffcc00';
-                } else {
-                    text = `${Math.ceil(remaining)}s`;
-                    fillStyle = '#ffffff';
-                }
-            } else {
-                if (!info.readyNotified) {
-                    info.readyNotified = true;
-                    info.fadeUntil = now + 1500;
-                }
-                if (now > info.fadeUntil) continue;
-                text = 'READY';
-                fillStyle = '#00ff88';
-                alpha = Math.max(0, (info.fadeUntil - now) / 1500);
-            }
-
-            const fontSize = Math.max(14, Math.round(cr * 0.18));
-            const timerY = cy + (showNames && showMass ? cr * 0.44 : showNames || showMass ? cr * 0.32 : 0);
-
-            context.save();
-            context.textAlign = 'center';
-            context.textBaseline = 'middle';
-            context.font = `500 ${fontSize}px ${fontName}, sans-serif`;
-            context.globalAlpha = alpha;
-            context.shadowBlur = 0;
-            context.shadowColor = 'transparent';
-            context.lineWidth = Math.max(2, fontSize * 0.16);
-            context.strokeStyle = '#000000';
-            context.fillStyle = fillStyle;
-            stroke.call(context, text, cx, timerY);
-            fill.call(context, text, cx, timerY);
-            context.restore();
-        }
-    }
 
     destroy() {
-        this.trackedCells.clear();
+        if (this.wheelElement) {
+            this.wheelElement.remove();
+            this.wheelElement = null;
+        }
+        for (const ping of this.activePings.values()) {
+            ping.element?.remove();
+        }
+        this.activePings.clear();
         super.destroy();
     }
 }

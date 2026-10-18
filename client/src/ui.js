@@ -375,11 +375,20 @@ class ModalController extends FeatureController {
         toast.append(createElement('span', { text: localizedMessage }));
         toast.append(createElement('div', { className: 'modAlert-loader' }));
         overlay.append(toast);
-        const timer = window.setTimeout(() => toast.remove(), 2_000);
-        this.resources?.add?.(() => {
+        let disposer = null;
+        const removeToast = () => {
+            if (disposer) {
+                this.resources?.remove?.(disposer);
+                disposer = null;
+            }
+            toast.remove();
+        };
+        const timer = window.setTimeout(removeToast, 2_000);
+        disposer = () => {
             window.clearTimeout(timer);
             toast.remove();
-        });
+        };
+        this.resources?.add?.(disposer);
         return toast;
     }
     showUpdate(value) {
@@ -564,6 +573,7 @@ class MenuController extends FeatureController {
         const root = createElement('div', {
             className: 'mod_menu',
             attributes: {
+                id: 'sigmod-menu',
                 'data-sigmod-root': '',
                 'aria-hidden': 'true',
                 role: 'dialog',
@@ -629,16 +639,16 @@ class MenuController extends FeatureController {
         this.setupNavigationArchitecture();
         this.syncSigFixSkinOptions();
         this.setupMouseBindingEditor();
-        this.setupKeybindRecorder();
-        this.syncSettings();
+        this.keybinds.setupKeybindRecorder();
+        this.settingsIO.syncSettings();
         this.settingsIO.syncSettingsActions();
         this.renderRecentAccess();
         this.openTab(this.activeTab, false, false);
         this.bindLauncher();
         this.resources.listen(root, 'click', (event) => this.handleOtherExtensionsTabClick(event), true);
         this.resources.listen(root, 'click', (event) => this.handleClick(event));
-        this.resources.listen(root, 'input', (event) => this.handleSettingInput(event));
-        this.resources.listen(root, 'change', (event) => this.handleSettingInput(event));
+        this.resources.listen(root, 'input', (event) => this.settingsIO.handleSettingInput(event));
+        this.resources.listen(root, 'change', (event) => this.settingsIO.handleSettingInput(event));
         this.resources.listen(root, 'change', (event) => {
             const select = event.target;
             if (select instanceof HTMLSelectElement && select.matches('[data-localization-language]')) {
@@ -657,7 +667,7 @@ class MenuController extends FeatureController {
             this.resources.listen(importInput, 'change', () => {
                 const file = importInput.files?.[0];
                 importInput.value = '';
-                if (file) void this.importSettings(file);
+                if (file) void this.settingsIO.importSettings(file);
             });
         }
         // Intercept SigFixes' and Sigmally's window-level zoom handlers without preventing menu scrolling.
@@ -675,7 +685,7 @@ class MenuController extends FeatureController {
         this.resources.listen(window, 'wheel', handleWheel, { capture: true, passive: true });
         this.resources.listen(root, 'wheel', handleWheel, { capture: true, passive: true });
         this.resources.listen(root, 'wheel', handleWheel, { capture: false, passive: true });
-        this.setupHomeSearch();
+        this.homeSearch.setupHomeSearch();
         this.app.i18n?.apply();
         this.resources.listen(document, 'keydown', (event) => {
             if (event.key === 'Escape' && this.isOpen()) this.close();
@@ -716,7 +726,7 @@ class MenuController extends FeatureController {
                     <div class="mod_menu_inner">
                         <nav class="mod_menu_navbar" aria-label="SigMod sections" data-sigmod-localize>
                             <div class="mod_nav_home">
-                                <button type="button" class="mod_nav_btn mod_selected" id="tab_home_btn" data-mod-tab="mod_home" data-nav-managed>
+                                <button type="button" class="mod_nav_btn mod_selected" data-mod-tab="mod_home" data-nav-managed>
                                     ${icon('house', 14)}
                                     <span class="mod_nav_label">Home</span>
                                 </button>
@@ -752,7 +762,7 @@ class MenuController extends FeatureController {
                                     </div>
                                 </div>
 
-                                <button type="button" class="mod_nav_btn" id="tab_friends_btn" data-mod-tab="mod_friends" data-nav-managed>
+                                <button type="button" class="mod_nav_btn" data-mod-tab="mod_friends" data-nav-managed>
                                     ${icon('users', 14)}
                                     <span class="mod_nav_label">Friends</span>
                                 </button>
@@ -769,7 +779,7 @@ class MenuController extends FeatureController {
                                 <div class="mod_nav_misc-children">
                                     <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_settings_data" data-nav-managed>Data</button>
                                     <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_statistics" data-nav-managed>Statistics</button>
-                                    <button type="button" class="mod_nav_btn mod_nav_subbtn" id="tab_info_btn" data-mod-tab="mod_info" data-nav-managed>Info</button>
+                                    <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_info" data-nav-managed>Info</button>
                                 </div>
                             </div>
                         </nav>
@@ -1012,7 +1022,6 @@ class MenuController extends FeatureController {
                                         <div class="justify-sb w-100 rounded" style="padding: 5px 10px;"><span class="text">Death screen Position</span><select id="deathScreenPos" class="form-control" data-setting="settings.deathScreenPos" style="width: 30%"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option><option value="top">Top</option><option value="bottom">Bottom</option></select></div>
                                         <div class="justify-sb w-100 accent_row p-10 rounded">${this.checkRowInline('Play timer', 'playTimerToggle', 'settings.playTimer')}</div>
                                         <div class="justify-sb w-100 p-10 rounded">${this.checkRowInline('Mouse tracker', 'mouseTrackerToggle', 'settings.mouseTracker')}</div>
-                                        <div class="justify-sb w-100 accent_row p-10 rounded">${this.checkRowInline('Merge timer', 'mergeTimerToggle', 'settings.mergeTimer')}</div>
                                     </div>
                                     <div class="settings-actions" id="settingsActions">
                                         <div class="settings-actions-heading"><span class="settings-actions-title">Settings</span></div>
@@ -1067,9 +1076,7 @@ class MenuController extends FeatureController {
                                             <span class="modDescText">Save your names locally</span>
                                             <div class="flex g-5">
                                                 <input class="modInput" placeholder="Enter a name..." id="saveNameValue" />
-                                                <button type="button" id="saveName" class="modButton-secondary centerXY" style="border-radius: 5px; padding: 5px 10px;">
-                                                    ${icon('plus', 18)}
-                                                </button>
+                                                <button type="button" id="saveName" class="modButton-secondary centerXY">Save</button>
                                             </div>
                                             <div id="savedNames" class="f-column scroll"></div>
                                         </div>
@@ -1343,6 +1350,12 @@ class MenuController extends FeatureController {
     renderMouseBindingEditor() {
         return this.mouseBinder.renderMouseBindingEditor();
     }
+    bindingDisplay(value) {
+        return this.keybinds.bindingDisplay(value);
+    }
+    updateKeybindingConflicts() {
+        return this.keybinds.updateKeybindingConflicts();
+    }
     infoBtn(text, position = 'up') {
         const posClass = position === 'down' ? ' is-down' : '';
         return `<span class="keybind-info${posClass}" tabindex="0" role="button" aria-label="Info" onclick="event.preventDefault();event.stopPropagation();"><span class="keybind-info-icon">i</span><span class="keybind-info-popup">${text}</span></span>`;
@@ -1352,11 +1365,6 @@ class MenuController extends FeatureController {
             ? `<span class="flex align-center g-5"><span>${label}</span>${this.infoBtn(info)}</span>`
             : `<span>${label}</span>`;
         return `<div class="stats-line justify-sb">${titleHtml}<input id="${id}" class="keybinding" name="${name}" data-label="${label}" data-setting="${path}" maxlength="1" placeholder="..."></div>`;
-    }
-    checkRow(label, id, path = '', checkedValue = '', uncheckedValue = '') {
-        const setting = path ? ` data-setting="${path}"` : '';
-        const values = checkedValue ? ` data-checked-value="${checkedValue}" data-unchecked-value="${uncheckedValue}"` : '';
-        return `<div class="stats-line justify-sb"><span>${label}</span><div class="modCheckbox"><input id="${id}" type="checkbox"${setting}${values}><label class="cbx" for="${id}"></label></div></div>`;
     }
     checkboxHtml(id, path = '', checkedValue = '', uncheckedValue = '') {
         const setting = path ? ` data-setting="${path}"` : '';
@@ -1500,12 +1508,6 @@ class MenuController extends FeatureController {
         content.append(panel);
         return panel;
     }
-    createPanelColumn() {
-        const outer = createElement('div', { className: 'modColItems' });
-        const inner = createElement('div', { className: 'modColItems_2' });
-        outer.append(inner);
-        return { outer, inner };
-    }
     findRowByControl(panel, selector) {
         const control = panel?.querySelector(selector);
         if (!(control instanceof HTMLElement)) return null;
@@ -1579,14 +1581,16 @@ class MenuController extends FeatureController {
                 : [];
         const interfaceHudRows =
             gamePanel instanceof HTMLElement
-                ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle', '#mergeTimerToggle']
-                      .map((selector) => row(gamePanel, selector))
-                      .filter(Boolean)
+                ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle'].map((selector) => row(gamePanel, selector)).filter(Boolean)
                 : [];
         let screenshotRow = null;
         if (galleryPanel instanceof HTMLElement) screenshotRow = row(galleryPanel, '#modinput17');
         if (keyboardPanel instanceof HTMLElement) {
             const keyboard = page();
+            const headerBar = keyboardPanel.querySelector('.macros-header-bar');
+            const conflictBanner = keyboardPanel.querySelector('#sigmod-keybind-conflict-banner');
+            if (headerBar) keyboard.append(headerBar);
+            if (conflictBanner) keyboard.append(conflictBanner);
             const actions = ['#modinput1', '#modinput15', '#modinput18'].map((selector) => row(keyboardPanel, selector)).filter(Boolean);
             if (screenshotRow instanceof HTMLElement) actions.push(screenshotRow);
             const splits = ['#modinput2', '#modinput3', '#modinput4'].map((selector) => row(keyboardPanel, selector)).filter(Boolean);
@@ -1731,7 +1735,6 @@ class MenuController extends FeatureController {
                 galleryPanel.remove();
             }
             interfacePanel.replaceChildren(interfacePage);
-            content.querySelector('#mod_settings_general')?.remove();
             dataPanel.replaceChildren(dataPage);
         }
         if (namePanel instanceof HTMLElement) {
@@ -1739,10 +1742,6 @@ class MenuController extends FeatureController {
             const saveInput = namePanel.querySelector('#saveNameValue');
             const saveButton = namePanel.querySelector('#saveName');
             const savedNames = namePanel.querySelector('#savedNames');
-            if (saveButton instanceof HTMLButtonElement) {
-                saveButton.replaceChildren(document.createTextNode('Save'));
-                saveButton.removeAttribute('style');
-            }
             const saveSection = createElement('section', {
                 className: 'settings-section',
             });
@@ -2286,9 +2285,6 @@ class MenuController extends FeatureController {
             slot.append(button);
         }
     }
-    adoptExternalNavButtons() {
-        return this.adoptOtherExtensionsNavButtons();
-    }
     registerExtension(def) {
         return this.registerOtherExtension(def);
     }
@@ -2511,7 +2507,7 @@ class MenuController extends FeatureController {
         if (!(target instanceof Element)) return;
         const searchResult = target.closest('[data-home-search-result]');
         if (searchResult instanceof HTMLButtonElement) {
-            this.openHomeSearchResult(searchResult.dataset.homeSearchResult);
+            this.homeSearch.openHomeSearchResult(searchResult.dataset.homeSearchResult);
             return;
         }
         const recent = target.closest('[data-recent-tab]');
@@ -2553,7 +2549,7 @@ class MenuController extends FeatureController {
             return;
         }
         if (target.closest('#resetSettings')) {
-            const scopes = this.getSelectedScopes('reset');
+            const scopes = this.settingsIO.getSelectedScopes('reset');
             if (!scopes.length) return;
             if (confirm(this.message('Reset selected settings? The page will reload.'))) {
                 if (scopes.includes('sigmod')) this.app.settingsStore.reset();
@@ -2585,9 +2581,9 @@ class MenuController extends FeatureController {
             return;
         }
         if (target.closest('#exportSettings')) {
-            const scopes = this.getSelectedScopes('backup');
+            const scopes = this.settingsIO.getSelectedScopes('backup');
             if (!scopes.length) return;
-            this.exportSettings(scopes);
+            this.settingsIO.exportSettings(scopes);
             return;
         }
         if (target.closest('#importSettings')) {
@@ -2597,88 +2593,13 @@ class MenuController extends FeatureController {
         }
         if (target.closest('#reset_input_radius')) {
             this.app.settingsStore.set('themes.inputBorderRadius', '4px');
-            this.syncSettings();
+            this.settingsIO.syncSettings();
             return;
         }
         if (target.closest('#reset_menu_radius')) {
             this.app.settingsStore.set('themes.menuBorderRadius', '15px');
-            this.syncSettings();
+            this.settingsIO.syncSettings();
         }
-    }
-    readStoredSettings(key) {
-        return this.settingsIO.readStoredSettings(key);
-    }
-    getSelectedScopes(row) {
-        return this.settingsIO.getSelectedScopes(row);
-    }
-    selectedScopePayload(scopes) {
-        return this.settingsIO.selectedScopePayload(scopes);
-    }
-    buildSettingsExport() {
-        return this.settingsIO.buildSettingsExport();
-    }
-    exportSettings(scopes = ['game', 'sigmod', 'sigfix']) {
-        return this.settingsIO.exportSettings(scopes);
-    }
-    importSections(payload) {
-        return this.settingsIO.importSections(payload);
-    }
-    get homeSearchTargets() {
-        return this.homeSearch.targets;
-    }
-    get homeSearchSequence() {
-        return this.homeSearch.sequence;
-    }
-    set homeSearchSequence(value) {
-        this.homeSearch.sequence = value;
-    }
-    setupHomeSearch() {
-        return this.homeSearch.setupHomeSearch();
-    }
-    closeHomeSearch() {
-        return this.homeSearch.closeHomeSearch();
-    }
-    renderHomeSearch(rawQuery) {
-        return this.homeSearch.renderHomeSearch(rawQuery);
-    }
-    openHomeSearchResult(id) {
-        return this.homeSearch.openHomeSearchResult(id);
-    }
-    bindingDisplay(value) {
-        return this.keybinds.bindingDisplay(value);
-    }
-    isManagedKeybind(input) {
-        return this.keybinds.isManagedKeybind(input);
-    }
-    setupKeybindRecorder() {
-        return this.keybinds.setupKeybindRecorder();
-    }
-    updateKeybindingConflicts() {
-        return this.keybinds.updateKeybindingConflicts();
-    }
-    findKeybindingConflicts(path, value) {
-        return this.keybinds.findKeybindingConflicts(path, value);
-    }
-    askKeybindingConflict(path, value, labels) {
-        return this.keybinds.askKeybindingConflict(path, value, labels);
-    }
-    handleSettingInput(event) {
-        return this.settingsIO.handleSettingInput(event);
-    }
-    updateInstantSplit(source) {
-        return this.settingsIO.updateInstantSplit(source);
-    }
-    syncSettings() {
-        return this.settingsIO.syncSettings();
-    }
-    readGameSettings() {
-        return this.settingsIO.readGameSettings();
-    }
-    updateMacroSpeedLabel() {
-        return this.settingsIO.updateMacroSpeedLabel();
-    }
-    updatePartySliderLabels() {
-        return this.settingsIO.updatePartySliderLabels();
     }
     open() {
         if (!this.root) return;
@@ -2716,7 +2637,8 @@ class MenuController extends FeatureController {
     isOpen() {
         if (!this.root) return false;
         if (this.root.getAttribute('aria-hidden') === 'false') return true;
-        return this.root.style.display !== 'none' && this.root.style.opacity !== '0' && getComputedStyle(this.root).display !== 'none';
+        if (this.root.getAttribute('aria-hidden') === 'true') return false;
+        return this.root.style.display !== 'none' && this.root.style.opacity !== '0';
     }
     handleOtherExtensionsTabClick(event) {
         const target = event.target;
@@ -2767,9 +2689,6 @@ class MenuController extends FeatureController {
         this.updateCategoryActiveState();
         this.switchTabPanel(panel, button, true);
     }
-    handleExternalTabClick(event) {
-        return this.handleOtherExtensionsTabClick(event);
-    }
     getTabPanels() {
         if (!this.root) return [];
         const content = this.root.querySelector('.mod_menu_content');
@@ -2778,11 +2697,15 @@ class MenuController extends FeatureController {
         return [...nodes].filter((item) => item instanceof HTMLElement);
     }
     getVisibleTabPanel() {
-        return (
+        if (this.visibleTabPanel && !this.visibleTabPanel.hidden && this.visibleTabPanel.style.display !== 'none') {
+            return this.visibleTabPanel;
+        }
+        const panel =
             this.getTabPanels().find(
-                (item) => !item.hidden && item.style.display !== 'none' && getComputedStyle(item).display !== 'none'
-            ) ?? null
-        );
+                (item) => !item.hidden && item.style.display !== 'none' && item.getAttribute('aria-hidden') !== 'true'
+            ) ?? null;
+        if (panel) this.visibleTabPanel = panel;
+        return panel;
     }
     switchTabPanel(panel, navButton = null, animate = true) {
         if (!this.root || !(panel instanceof HTMLElement)) return;
@@ -2807,6 +2730,7 @@ class MenuController extends FeatureController {
             }
             panel.hidden = false;
             panel.style.display = 'flex';
+            this.visibleTabPanel = panel;
             if (!shouldAnimate) {
                 panel.style.opacity = '1';
                 panel.style.transform = 'translateX(0)';
@@ -3515,10 +3439,11 @@ class KeybindRecorder {
 
         return new Promise((resolve) => {
             let finished = false;
+            const scope = this.resources.child('keybinding-conflict');
             const finish = (result) => {
                 if (finished) return;
                 finished = true;
-                document.removeEventListener('keydown', handleModalKeys, true);
+                scope.dispose();
                 modal.close('keybinding-conflict');
                 resolve(result);
             };
@@ -3543,12 +3468,21 @@ class KeybindRecorder {
                 }
             };
 
-            document.addEventListener('keydown', handleModalKeys, true);
+            scope.listen(document, 'keydown', handleModalKeys, true);
 
-            body.querySelector('#kb-conflict-cancel')?.addEventListener('click', () => finish('cancel'), { once: true });
-            body.querySelector('#kb-conflict-swap')?.addEventListener('click', () => finish('swap'), { once: true });
-            body.querySelector('#kb-conflict-both')?.addEventListener('click', () => finish('both'), { once: true });
-            body.querySelector('#kb-conflict-reassign')?.addEventListener('click', () => finish('reassign'), { once: true });
+            const modalInfo = modal.modals.get('keybinding-conflict');
+            if (modalInfo?.scope) {
+                modalInfo.scope.add(() => finish('cancel'));
+            }
+
+            const cancelBtn = body.querySelector('#kb-conflict-cancel');
+            if (cancelBtn) scope.listen(cancelBtn, 'click', () => finish('cancel'), { once: true });
+            const swapBtn = body.querySelector('#kb-conflict-swap');
+            if (swapBtn) scope.listen(swapBtn, 'click', () => finish('swap'), { once: true });
+            const bothBtn = body.querySelector('#kb-conflict-both');
+            if (bothBtn) scope.listen(bothBtn, 'click', () => finish('both'), { once: true });
+            const reassignBtn = body.querySelector('#kb-conflict-reassign');
+            if (reassignBtn) scope.listen(reassignBtn, 'click', () => finish('reassign'), { once: true });
         });
     }
 }
@@ -3618,9 +3552,33 @@ class HomeSearch {
         const wrap = this.root.querySelector('.home-search-wrap');
         if (!(input instanceof HTMLInputElement) || !(results instanceof HTMLElement) || !(wrap instanceof HTMLElement)) return;
         this.syncSearchLabel();
-        this.resources.listen(input, 'input', () => this.renderHomeSearch(input.value));
+        const flushSearch = (immediateValue = null) => {
+            if (this.searchDebounceTimer) {
+                clearTimeout(this.searchDebounceTimer);
+                this.searchDebounceTimer = null;
+            }
+            const query = immediateValue ?? input.value;
+            this.renderHomeSearch(query);
+        };
+        this.resources.listen(input, 'input', () => {
+            if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+            if (!input.value.trim()) {
+                this.closeHomeSearch();
+                return;
+            }
+            this.searchDebounceTimer = setTimeout(() => {
+                this.searchDebounceTimer = null;
+                this.renderHomeSearch(input.value);
+            }, 120);
+        });
+        this.resources.add(() => {
+            if (this.searchDebounceTimer) {
+                clearTimeout(this.searchDebounceTimer);
+                this.searchDebounceTimer = null;
+            }
+        });
         this.resources.listen(input, 'focus', () => {
-            if (input.value.trim()) this.renderHomeSearch(input.value);
+            if (input.value.trim()) flushSearch();
         });
         this.resources.listen(input, 'keydown', (event) => {
             if (event.key === 'Escape') {
@@ -3629,6 +3587,7 @@ class HomeSearch {
                 return;
             }
             if (event.key === 'Enter') {
+                flushSearch();
                 const first = results.querySelector('[data-home-search-result]');
                 if (first instanceof HTMLButtonElement) {
                     event.preventDefault();
@@ -3670,6 +3629,10 @@ class HomeSearch {
         });
     }
     closeHomeSearch() {
+        if (this.searchDebounceTimer) {
+            clearTimeout(this.searchDebounceTimer);
+            this.searchDebounceTimer = null;
+        }
         const results = this.root?.querySelector('#sigmod-home-search-results');
         const input = this.root?.querySelector('#sigmod-home-search');
         if (results instanceof HTMLElement) {
@@ -3745,24 +3708,34 @@ class HomeSearch {
             }
             return [...variants].filter(Boolean);
         });
+        const distRow = new Int32Array(64);
         const distance = (a, b, max) => {
-            if (Math.abs(a.length - b.length) > max) return max + 1;
-            const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
-            for (let i = 1; i <= a.length; i += 1) {
+            const la = a.length;
+            const lb = b.length;
+            if (Math.abs(la - lb) > max) return max + 1;
+            if (la === 0) return lb;
+            if (lb === 0) return la;
+            if (lb >= 64) return max + 1;
+            for (let j = 0; j <= lb; j += 1) distRow[j] = j;
+            for (let i = 1; i <= la; i += 1) {
                 let left = i;
                 let diagonal = i - 1;
                 let rowMin = left;
-                for (let j = 1; j <= b.length; j += 1) {
-                    const up = previous[j];
-                    const next = a[i - 1] === b[j - 1] ? diagonal : Math.min(diagonal, up, left) + 1;
+                const codeA = a.charCodeAt(i - 1);
+                for (let j = 1; j <= lb; j += 1) {
+                    const up = distRow[j];
+                    const next =
+                        codeA === b.charCodeAt(j - 1)
+                            ? diagonal
+                            : (diagonal < up ? (diagonal < left ? diagonal : left) : up < left ? up : left) + 1;
                     diagonal = up;
-                    previous[j] = next;
+                    distRow[j] = next;
                     left = next;
-                    rowMin = Math.min(rowMin, next);
+                    if (next < rowMin) rowMin = next;
                 }
                 if (rowMin > max) return max + 1;
             }
-            return previous[b.length];
+            return distRow[lb] > max ? max + 1 : distRow[lb];
         };
         const matchVariant = (variant, title, haystack, titleTokens, allTokens) => {
             if (!variant) return 0;
@@ -4068,11 +4041,14 @@ class SettingsPorter {
     get root() {
         return this.menu.root;
     }
+    message(source, parameters = null) {
+        return this.menu.message(source, parameters);
+    }
     bindingDisplay(value) {
-        return this.menu.bindingDisplay(value);
+        return this.menu.keybinds.bindingDisplay(value);
     }
     updateKeybindingConflicts() {
-        return this.menu.updateKeybindingConflicts();
+        return this.menu.keybinds.updateKeybindingConflicts();
     }
     renderMouseBindingEditor() {
         return this.menu.renderMouseBindingEditor();
@@ -4819,14 +4795,6 @@ class GameSettingsController extends FeatureController {
             this.app.logger.warnOnce('skin-list', 'Unable to load the skin list', error);
         }
     }
-    updateImagePreview(button, kind) {
-        const path = kind === 'map' ? 'game.map.image' : kind === 'virus' ? 'game.virusImage' : 'game.skins.replacement';
-        const source = this.app.settingsStore.get(path);
-        const safe = this.safeImageUrl(source, true);
-        button.style.backgroundImage = safe ? `url("${safe}")` : '';
-        button.style.backgroundPosition = 'center';
-        button.style.backgroundSize = 'cover';
-    }
     safeImageUrl(value, allowRelative = false) {
         return safeHttpUrl(value, allowRelative);
     }
@@ -5072,13 +5040,14 @@ class GradientEditor {
             });
             const remove = createElement('button', {
                 className: 'theme-gradient-remove',
+                icon: 'trash',
+                iconSize: 12,
                 attributes: {
                     type: 'button',
                     'data-remove-gradient-stop': index,
                     'aria-label':
                         this.app.i18n?.message('Remove gradient stop {index}', { index: index + 1 }) ?? `Remove gradient stop ${index + 1}`,
                 },
-                text: '×',
             });
             if (this.gradientStops.length <= 2) remove.disabled = true;
             row.append(number, color, position, suffix, remove);
@@ -5090,8 +5059,10 @@ class GradientEditor {
     addGradientStop() {
         if (this.gradientStops.length >= 6) {
             const hint = this.editor?.querySelector('#theme-editor-hint');
-            if (hint)
+            if (hint) {
                 hint.textContent = this.app.i18n?.message('A gradient can have up to 6 stops.') ?? 'A gradient can have up to 6 stops.';
+                hint.classList.add('is-error');
+            }
             return;
         }
         const sorted = [...this.gradientStops].sort((a, b) => a.position - b.position);
@@ -5195,13 +5166,17 @@ class GradientEditor {
         }
         this.editorPickers.set(key, picker);
         if (typeof picker.on === 'function') {
-            picker.on('change', (event) => {
+            const handleColorChange = (event) => {
                 const value = typeof event?.hex === 'string' ? event.hex.slice(0, 7) : null;
                 if (!value) return;
                 input.value = value;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
                 onChange(value);
                 this.onUpdatePreview();
-            });
+            };
+            picker.on('change', handleColorChange);
+            picker.on('color', handleColorChange);
         }
     }
     upgradeEditorColorPickers() {
@@ -5258,8 +5233,9 @@ class ThemeController extends FeatureController {
         this.editorAnimationRevision = 0;
         this.container = null;
         this.editor = null;
-        this.originalStyles = new Map();
-        this.originalClasses = new Map();
+        this.originalStyles = new WeakMap();
+        this.originalClasses = new WeakMap();
+        this.trackedElements = new Set();
         this.editorType = 'gradient';
         this.gradientEditor = new GradientEditor(
             app,
@@ -5564,7 +5540,67 @@ class ThemeController extends FeatureController {
             '#updates',
             '#shop-area',
         ];
-        this.textSelectors = ['#challenge-coins .alert-heading', '#sigma-pass h3', '.alert *'];
+        this.textSelectors = [
+            '#challenge-coins .alert-heading',
+            '#sigma-pass h3',
+            '.alert *',
+            '#menu h1',
+            '#menu h2',
+            '#menu h3',
+            '#menu p',
+            '#menu label',
+            '#title',
+            '.stats__item > span',
+            '.stats-btn__text',
+            '.top-users table',
+            '.top-users th',
+            '.top-users td:not(.sub)',
+            '.menu-links a.link',
+            '.menu-links .link_btn',
+            '#left-menu .profile-name',
+            '#left-menu p',
+            '#left-menu span',
+            '#text-block p',
+            '#text-block span',
+        ];
+        this.menuTextSelector = [
+            '#title',
+            'h1',
+            'h2',
+            'h3',
+            'h4',
+            'h5',
+            'h6',
+            'p',
+            'label',
+            'strong',
+            'b',
+            'table',
+            'th',
+            'td:not(.sub)',
+            '.top-users__title',
+            '.profile-name',
+            '.user-level',
+            'a.link',
+            '.link_btn',
+            '.menu__desc-texts',
+            '.menu__title',
+            '.instructions__texts',
+            '.skin-select__icon-text',
+            '.stats__item-title',
+            '.stats__item-value',
+            '.stats-btn__text',
+            '.stats__item > span',
+            '#menu__bonus',
+            '#menu__bonus *',
+            '#top_leaderboard_position',
+            '#highest_mass',
+            '#time_alive',
+            '#food_eaten',
+            '#sigma-progress',
+            '#progress-next',
+            'span:not(.btn *):not(button *):not(.badge):not(.badge *)',
+        ].join(', ');
         this.modalRootSelector = '.connecting, .chest-modal, #payments-modal, .ctrl-modal';
         this.modalPanelSelector = [
             '.connecting__content',
@@ -5607,14 +5643,14 @@ class ThemeController extends FeatureController {
         if (!(this.container instanceof HTMLElement)) throw new Error('Theme container is unavailable');
         this.installCompatibility();
         this.createEditor();
-        this.setupGradientDrag();
+        this.gradientEditor.setupGradientDrag();
         this.renderThemes();
         this.app.dependencies
             .load('colorPicker')
             .then((Alwan) => {
                 if (this.resources.disposed || typeof Alwan !== 'function') return;
-                this.editorAlwan = Alwan;
-                this.upgradeEditorColorPickers();
+                this.gradientEditor.editorAlwan = Alwan;
+                this.gradientEditor.upgradeEditorColorPickers();
             })
             .catch((error) =>
                 this.app.logger.warnOnce(
@@ -5706,10 +5742,11 @@ class ThemeController extends FeatureController {
         });
         editor.innerHTML = `
                 <div class="theme-editor-topbar">
-                    <div>
-                        <div class="theme-editor-title">Theme Editor</div>
+                    <div class="theme-editor-header-title">
+                        ${icon('palette', 18)}
+                        <span class="theme-editor-title">Theme Editor</span>
                     </div>
-                    <button type="button" class="theme-editor-close" id="closeThemeEditor" aria-label="Close theme editor">×</button>
+                    <button type="button" class="theme-editor-close" id="closeThemeEditor" aria-label="Close theme editor">${icon('close', 16)}</button>
                 </div>
                 <div class="theme-editor-type-switch" role="tablist" aria-label="Theme type">
                     <button type="button" data-theme-editor-type="color">Color</button>
@@ -5727,7 +5764,7 @@ class ThemeController extends FeatureController {
                         <section id="theme_editor_gradient" class="theme-editor-tab">
                             <div class="theme-editor-section-head">
                                 <div class="theme-editor-section-title">Gradient</div>
-                                <button type="button" class="theme-editor-small-btn" id="theme-editor-add-stop">+ Stop</button>
+                                <button type="button" class="theme-editor-small-btn" id="theme-editor-add-stop">${icon('plus', 12)}<span>Stop</span></button>
                             </div>
                             <label class="theme-editor-row">
                                 <span>Type</span>
@@ -5739,20 +5776,20 @@ class ThemeController extends FeatureController {
                             </label>
                             <label class="theme-editor-row" id="theme-editor-gradient_angle">
                                 <span id="gradient_angle_text">Angle · 135°</span>
-                                <input type="range" class="modSlider" id="g_angle" value="135" min="0" max="360" step="1">
+                                <input type="range" class="modSlider theme-editor-angle-slider" id="g_angle" value="135" min="0" max="360" step="1">
                             </label>
                             <div class="theme-gradient-track" id="theme-gradient-stop-track" aria-label="Gradient stop positions">
                                 <div class="theme-gradient-marker-layer" id="theme-gradient-marker-layer"></div>
                             </div>
-                            <div class="theme-gradient-stop-list" id="theme-gradient-stop-list"></div>
+                            <div class="theme-gradient-stop-list scroll" id="theme-gradient-stop-list"></div>
                             <label class="theme-editor-row"><span>Text</span><input type="color" value="#ffffff" id="theme-editor-gcolor2"></label>
                         </section>
 
                         <section id="theme_editor_image" class="theme-editor-tab" hidden>
-                            <div class="theme-editor-section-title">Image</div>
+                            <div class="theme-editor-section-title">Background Image</div>
                             <label class="theme-editor-field">
                                 <span>Image or GIF URL</span>
-                                <input type="url" id="theme-editor-imagelink" class="form-control" placeholder="https://example.com/background.jpg">
+                                <input type="url" id="theme-editor-imagelink" class="form-control theme-editor-input" placeholder="https://example.com/background.jpg">
                             </label>
                             <label class="theme-editor-row"><span>Text</span><input type="color" value="#ffffff" id="theme-editor-textcolorImage"></label>
                         </section>
@@ -5761,7 +5798,11 @@ class ThemeController extends FeatureController {
                     <aside class="theme-editor-preview-column">
                         <div class="theme-editor-preview-label">Preview</div>
                         <div class="theme-editor-preview" id="theme_editor_preview">
-                            <div class="theme-editor-preview-sidebar"></div>
+                            <div class="theme-editor-preview-sidebar">
+                                <div class="theme-preview-nav-dot is-active"></div>
+                                <div class="theme-preview-nav-dot"></div>
+                                <div class="theme-preview-nav-dot"></div>
+                            </div>
                             <div class="theme-editor-preview-content">
                                 <span class="theme-editor-preview-title">SigMod</span>
                                 <span class="theme-editor-preview-copy">Preview text</span>
@@ -5769,20 +5810,23 @@ class ThemeController extends FeatureController {
                             </div>
                         </div>
                         <label class="theme-editor-field theme-editor-name-field">
-                            <span>Name</span>
-                            <input type="text" class="form-control" maxlength="20" placeholder="Theme name" id="themeEditorName">
+                            <span>Theme Name</span>
+                            <input type="text" class="form-control theme-editor-input" maxlength="20" placeholder="My Custom Theme" id="themeEditorName">
                         </label>
-                        <button type="button" class="modButton-primary theme-editor-save" id="saveTheme">Save theme</button>
+                        <button type="button" class="modButton-primary theme-editor-save" id="saveTheme">
+                            ${icon('check', 14)}
+                            <span>Save theme</span>
+                        </button>
                         <div class="theme-editor-hint" id="theme-editor-hint">Right-click a custom preset later to delete it.</div>
                     </aside>
                 </div>
             `;
         this.editor = editor;
-        this.renderGradientStops();
+        this.gradientEditor.renderGradientStops();
         this.updateEditorPreview();
         this.resources.add(() => {
             this.editorAnimation?.cancel();
-            this.destroyEditorPickers();
+            this.gradientEditor.destroyEditorPickers();
             editor.remove();
             if (this.editor === editor) this.editor = null;
         });
@@ -5873,15 +5917,16 @@ class ThemeController extends FeatureController {
         if (typeButton instanceof HTMLButtonElement) {
             this.editorType = typeButton.dataset.themeEditorType || 'gradient';
             this.updateEditorPreview();
+            this.gradientEditor.upgradeEditorColorPickers();
             return;
         }
         if (target.closest('#theme-editor-add-stop')) {
-            this.addGradientStop();
+            this.gradientEditor.addGradientStop();
             return;
         }
         const remove = target.closest('[data-remove-gradient-stop]');
         if (remove instanceof HTMLElement) {
-            this.removeGradientStop(Number(remove.dataset.removeGradientStop));
+            this.gradientEditor.removeGradientStop(Number(remove.dataset.removeGradientStop));
             return;
         }
         if (target.closest('#saveTheme')) this.saveEditorTheme(this.editorType);
@@ -5897,17 +5942,22 @@ class ThemeController extends FeatureController {
             closeOnBackdrop: true,
         });
         // Alwan must be connected before its picker mounts.
-        this.upgradeEditorColorPickers();
+        this.gradientEditor.upgradeEditorColorPickers();
         this.updateEditorPreview();
+        const hint = this.editor.querySelector('#theme-editor-hint');
+        if (hint) {
+            hint.textContent = 'Right-click a custom preset later to delete it.';
+            hint.classList.remove('is-error');
+        }
         this.editor.querySelector('#themeEditorName')?.focus();
     }
     hideEditor() {
         this.app.features.get('modal')?.close('theme-editor');
-        this.gradientDrag = null;
+        this.gradientEditor.gradientDrag = null;
     }
     updateEditorPreview() {
         if (!this.editor) return;
-        this.syncGradientStopInputs();
+        this.gradientEditor.syncGradientStopInputs();
         for (const button of this.editor.querySelectorAll('[data-theme-editor-type]')) {
             button.classList.toggle('is-active', button.dataset.themeEditorType === this.editorType);
         }
@@ -5926,10 +5976,10 @@ class ThemeController extends FeatureController {
             angleText.textContent = this.app.i18n?.message('Angle · {angle}°', { angle }) ?? `Angle · ${angle}°`;
         }
         const track = this.editor.querySelector('#theme-gradient-stop-track');
-        if (track instanceof HTMLElement) track.style.background = this.gradientValue();
+        if (track instanceof HTMLElement) track.style.background = this.gradientEditor.gradientValue();
         for (const marker of this.editor.querySelectorAll('[data-gradient-marker]')) {
             const index = Number(marker.getAttribute('data-gradient-marker'));
-            const stop = this.gradientStops[index];
+            const stop = this.gradientEditor.gradientStops[index];
             if (!(marker instanceof HTMLElement) || !stop) continue;
             marker.style.left = `${clamp(stop.position, 0, 100)}%`;
             marker.style.background = stop.color;
@@ -5940,7 +5990,7 @@ class ThemeController extends FeatureController {
             background = this.value('theme-editor-bgcolorinput') || '#111111';
             text = this.value('theme-editor-colorinput') || '#ffffff';
         } else if (this.editorType === 'gradient') {
-            background = this.gradientValue();
+            background = this.gradientEditor.gradientValue();
             text = this.value('theme-editor-gcolor2') || '#ffffff';
         } else {
             const image = this.safeImageUrl(this.value('theme-editor-imagelink'));
@@ -5952,9 +6002,11 @@ class ThemeController extends FeatureController {
             preview.style.background = background;
             preview.style.backgroundPosition = 'center';
             preview.style.backgroundSize = 'cover';
-            preview.style.color = text;
-            for (const child of preview.querySelectorAll('.theme-editor-preview-title, .theme-editor-preview-copy')) {
-                if (child instanceof HTMLElement) child.style.color = text;
+            preview.style.setProperty('color', text, 'important');
+            for (const child of preview.querySelectorAll(
+                '.theme-editor-preview-title, .theme-editor-preview-copy, .theme-editor-preview-button, .theme-editor-preview-content *'
+            )) {
+                if (child instanceof HTMLElement) child.style.setProperty('color', text, 'important');
             }
         }
     }
@@ -5962,11 +6014,17 @@ class ThemeController extends FeatureController {
         const name = this.value('themeEditorName').trim().slice(0, 20);
         const hint = this.editor?.querySelector('#theme-editor-hint');
         if (!name) {
-            if (hint) hint.textContent = 'Give the theme a name first.';
+            if (hint) {
+                hint.textContent = 'Give the theme a name first.';
+                hint.classList.add('is-error');
+            }
             return;
         }
         if (this.findTheme(name)) {
-            if (hint) hint.textContent = 'That theme name is already used.';
+            if (hint) {
+                hint.textContent = 'That theme name is already used.';
+                hint.classList.add('is-error');
+            }
             return;
         }
         let background;
@@ -5975,14 +6033,17 @@ class ThemeController extends FeatureController {
             background = this.value('theme-editor-bgcolorinput') || '#111111';
             text = this.value('theme-editor-colorinput') || '#ffffff';
         } else if (type === 'gradient') {
-            if (this.gradientStops.length < 2) return;
-            background = this.gradientValue();
+            if (this.gradientEditor.gradientStops.length < 2) return;
+            background = this.gradientEditor.gradientValue();
             text = this.value('theme-editor-gcolor2') || '#ffffff';
         } else {
             background = this.safeImageUrl(this.value('theme-editor-imagelink'));
             text = this.value('theme-editor-textcolorImage') || '#ffffff';
             if (!background) {
-                if (hint) hint.textContent = 'Enter a valid http(s) image URL.';
+                if (hint) {
+                    hint.textContent = 'Enter a valid http(s) image URL.';
+                    hint.classList.add('is-error');
+                }
                 return;
             }
         }
@@ -5994,7 +6055,10 @@ class ThemeController extends FeatureController {
         this.container.scrollTop = this.container.scrollHeight;
         const nameInput = this.editor?.querySelector('#themeEditorName');
         if (nameInput instanceof HTMLInputElement) nameInput.value = '';
-        if (hint) hint.textContent = 'Right-click a custom preset later to delete it.';
+        if (hint) {
+            hint.textContent = 'Right-click a custom preset later to delete it.';
+            hint.classList.remove('is-error');
+        }
     }
     removeCustomTheme(name) {
         const selected = this.current?.name === name;
@@ -6029,9 +6093,32 @@ class ThemeController extends FeatureController {
                 this.setStyle(element, 'color', this.current.text, 'important');
             }
         }
+        if (root instanceof Element) {
+            const themedAncestor = root.closest(this.themeSelectors.join(', '));
+            if (themedAncestor) {
+                if (
+                    root.matches(this.menuTextSelector) &&
+                    !root.closest(
+                        '.btn, button:not(.link_btn), select, input, textarea, .theme-editor-content, #discord_link, #tournament_link'
+                    )
+                ) {
+                    this.setStyle(root, 'color', this.current.text, 'important');
+                }
+                for (const child of root.querySelectorAll(this.menuTextSelector)) {
+                    if (
+                        child.closest(
+                            '.btn, button:not(.link_btn), select, input, textarea, .theme-editor-content, #discord_link, #tournament_link'
+                        )
+                    ) {
+                        continue;
+                    }
+                    this.setStyle(child, 'color', this.current.text, 'important');
+                }
+            }
+        }
         const page = document.querySelector(SELECTORS.page);
         if (page) {
-            for (const element of page.children) this.setStyle(element, 'color', this.current.text);
+            for (const element of page.children) this.setStyle(element, 'color', this.current.text, 'important');
         }
         this.applyLauncherColor();
         this.applyModalTheme(root);
@@ -6131,7 +6218,7 @@ class ThemeController extends FeatureController {
     }
     applyThemeElement(element) {
         if (element.matches('#title')) {
-            this.setStyle(element, 'color', this.current.text);
+            this.setStyle(element, 'color', this.current.text, 'important');
             return;
         }
         const image = this.safeImageUrl(this.current.background);
@@ -6146,7 +6233,17 @@ class ThemeController extends FeatureController {
             this.setStyle(element, 'background-size', '');
             this.setStyle(element, 'background-repeat', 'no-repeat');
         }
-        this.setStyle(element, 'color', this.current.text);
+        this.setStyle(element, 'color', this.current.text, 'important');
+        for (const child of element.querySelectorAll(this.menuTextSelector)) {
+            if (
+                child.closest(
+                    '.btn, button:not(.link_btn), select, input, textarea, .theme-editor-content, #discord_link, #tournament_link'
+                )
+            ) {
+                continue;
+            }
+            this.setStyle(child, 'color', this.current.text, 'important');
+        }
     }
     applyLayout() {
         this.applyLayoutToTree(document);
@@ -6208,6 +6305,7 @@ class ThemeController extends FeatureController {
     }
     setStyle(element, property, value, priority = '') {
         if (!(element instanceof HTMLElement || element instanceof SVGElement)) return;
+        this.trackedElements.add(element);
         let properties = this.originalStyles.get(element);
         if (!properties) {
             properties = new Map();
@@ -6222,27 +6320,26 @@ class ThemeController extends FeatureController {
         element.style.setProperty(property, value, priority);
     }
     setHidden(element, hidden) {
+        this.trackedElements.add(element);
         if (!this.originalClasses.has(element)) this.originalClasses.set(element, element.classList.contains('hidden_full'));
         element.classList.toggle('hidden_full', hidden);
     }
     restoreMutations() {
-        for (const [element, properties] of this.originalStyles) {
-            this.restoreElementStyles(element, properties);
+        for (const element of this.trackedElements) {
+            const properties = this.originalStyles.get(element);
+            if (properties) this.restoreElementStyles(element, properties);
+            if (this.originalClasses.has(element)) element.classList.toggle('hidden_full', this.originalClasses.get(element));
         }
-        for (const [element, hidden] of this.originalClasses) element.classList.toggle('hidden_full', hidden);
-        this.originalStyles.clear();
-        this.originalClasses.clear();
+        this.trackedElements.clear();
     }
     restoreTree(root) {
-        for (const [element, properties] of this.originalStyles) {
-            if (element !== root && !root.contains(element)) continue;
-            this.restoreElementStyles(element, properties);
-            this.originalStyles.delete(element);
-        }
-        for (const [element, hidden] of this.originalClasses) {
-            if (element !== root && !root.contains(element)) continue;
-            element.classList.toggle('hidden_full', hidden);
-            this.originalClasses.delete(element);
+        for (const element of this.trackedElements) {
+            if (!element.isConnected || element === root || root.contains(element)) {
+                const properties = this.originalStyles.get(element);
+                if (properties) this.restoreElementStyles(element, properties);
+                if (this.originalClasses.has(element)) element.classList.toggle('hidden_full', this.originalClasses.get(element));
+                this.trackedElements.delete(element);
+            }
         }
     }
     restoreElementStyles(element, properties) {
@@ -6250,60 +6347,6 @@ class ThemeController extends FeatureController {
             if (original.value) element.style.setProperty(property, original.value, original.priority);
             else element.style.removeProperty(property);
         }
-    }
-    get gradientStops() {
-        return this.gradientEditor.gradientStops;
-    }
-    get editorPickers() {
-        return this.gradientEditor.editorPickers;
-    }
-    get editorAlwan() {
-        return this.gradientEditor.editorAlwan;
-    }
-    set editorAlwan(value) {
-        this.gradientEditor.editorAlwan = value;
-    }
-    get gradientDrag() {
-        return this.gradientEditor.gradientDrag;
-    }
-    set gradientDrag(value) {
-        this.gradientEditor.gradientDrag = value;
-    }
-    syncGradientStopInputs() {
-        return this.gradientEditor.syncGradientStopInputs();
-    }
-    renderGradientStops() {
-        return this.gradientEditor.renderGradientStops();
-    }
-    addGradientStop() {
-        return this.gradientEditor.addGradientStop();
-    }
-    removeGradientStop(index) {
-        return this.gradientEditor.removeGradientStop(index);
-    }
-    setupGradientDrag() {
-        return this.gradientEditor.setupGradientDrag();
-    }
-    updateGradientDrag(event) {
-        return this.gradientEditor.updateGradientDrag(event);
-    }
-    destroyGradientStopPickers() {
-        return this.gradientEditor.destroyGradientStopPickers();
-    }
-    destroyEditorPickers() {
-        return this.gradientEditor.destroyEditorPickers();
-    }
-    createEditorPicker(key, input, color, onChange) {
-        return this.gradientEditor.createEditorPicker(key, input, color, onChange);
-    }
-    upgradeEditorColorPickers() {
-        return this.gradientEditor.upgradeEditorColorPickers();
-    }
-    upgradeGradientStopPickers() {
-        return this.gradientEditor.upgradeGradientStopPickers();
-    }
-    gradientValue() {
-        return this.gradientEditor.gradientValue();
     }
     value(id) {
         const input = this.editor?.querySelector(`#${id}`);

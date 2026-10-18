@@ -30,34 +30,34 @@
 //
 // @version      11.0.0
 //
-// @description     Advanced Sigmally mod: Rapid feed macro, split tricks, live teammate radar, cell merge timer, freeze line-splits, mouse macros & instant respawn.
-// @description:de  Erweiterter Sigmally-Mod: Rapid-Feed-Makro, Split-Tricks, Teammate-Party-Radar, Zell-Merge-Timer, Freeze-Linesplits, Maus-Makros und Instant-Respawn.
-// @description:es  Mod avanzado para Sigmally: Macro de feed rápido, trucos de split, radar de equipo, temporizador de merge, congelar líneas, macros de ratón y respawn rápido.
-// @description:pt  Mod avançado para Sigmally: Macro de feed rápido, truques de split, radar de equipe, merge timer, congelamento, macros de mouse e respawn instantâneo.
-// @description:ru  Продвинутый мод для Sigmally: быстрый фид-макрос, сплиты, радар тиммейтов, таймер слияния клеток, фриз/лайнсплит, макросы мыши и быстрый респавн.
-// @description:tr  Gelişmiş Sigmally modu: Hızlı feed makrosu, split ve trickler, takım radarı, hücre merge timer, dondurma (freeze), mouse makroları ve hızlı respawn.
-// @description:ar  مود متقدم لـ Sigmally: ماكرو تغذية سريع، حيل الانقسام، رادار الفريق الحي، مؤقت اندماج الخلايا، تجميد الحركة، ماكرو الفأرة ورسبون فوري.
-// @description:cs  Pokročilý mod pro Sigmally: Rychlé krmení, split triky, živý radar týmu, časovač sloučení buněk, freeze linky, makra myši a okamžitý respawn.
-// @description:da  Avanceret Sigmally-mod: Hurtigt feed-makro, split-tricks, live holdradar, celle-merge-timer, freeze line-splits, musemakroer og instant respawn.
-// @description:el  Προηγμένο mod για το Sigmally: Rapid feed macro, κόλπα split, live ραντάρ ομάδας, χρονόμετρο ένωσης, πάγωμα κίνησης, macros ποντικιού & instant respawn.
-// @description:fi  Edistynyt Sigmally-modi: Nopea feed-makro, split-temput, tiimitutka, solujen merge-ajastin, liikejäädytys, hiirimakrot ja välitön respawn.
-// @description:fr  Mod avancé pour Sigmally : Macro feed rapide, tricks de split, radar d'équipe en direct, merge timer, freeze de trajectoire, macros souris et respawn rapide.
-// @description:hi  Sigmally के लिए उन्नत मॉड: रैपिड फीड मैक्रो, स्प्लिट ट्रिक्स, लाइव टीममेट रडार, मर्ज टाइमर, मूवमेंट फ्रीज, माउस मैक्रोज़ और तुरंत रीस्पॉन।
-// @description:hu  Fejlett Sigmally mod: Gyors feed makró, split trükkök, élő csapattárs radar, sejt merge időzítő, freeze line-split, egérmakrók és azonnali respawn.
-// @description:id  Mod canggih untuk Sigmally: Makro feed cepat, trik split, radar teman tim live, timer merge sel, freeze gerakan, makro mouse & respawn instan.
-// @description:it  Mod avanzato per Sigmally: Macro feed rapido, trucchi di split, radar compagni live, timer merge celle, freeze movimento, macro mouse e respawn rapido.
-// @description:ja  Sigmally 向け高度な Mod: 高速フィードマクロ、スプリットトリック、味方レーダー、合体タイマー、移動フリーズ、マウス操作マクロ、即時リスポーン。
-// @description:ko  Sigmally 고급 모드: 빠른 피드 매크로, 스플릿 트릭, 실시간 팀원 레이더, 머지 타이머, 무브먼트 프리즈, 마우스 매크로 및 즉시 리스폰.
-// @description:nl  Geavanceerde Sigmally-mod: Snelle feedmacro, split-trucs, live teamgenotenradar, cel-merge-timer, bewegingsfreeze, muismacro's en directe respawn.
-// @description:no  Avansert Sigmally-mod: Rask feed-makro, split-triks, live lagkamerat-radar, celle-merge-timer, bevegelsesfrys, musemakroer og umiddelbar respawn.
-// @description:pl  Zaawansowany mod do Sigmally: Szybkie makro karmienia, triki splitu, radar drużyny na żywo, licznik łączenia komórek, freeze, makra myszy i szybki respawn.
-// @description:ro  Mod avansat pentru Sigmally: Macro rapid de feed, trucuri split, radar de echipă live, cronometru de unire celule, freeze, macro-uri de mouse și respawn instant.
-// @description:sv  Avancerad Sigmally-mod: Snabbt feed-makro, split-trick, lagkamratradar i realtid, cell-merge-timer, freeze line-splits, musmakron och direkt respawn.
-// @description:th  ม็อด Sigmally ขั้นสูง: มาโครป้อนอาหารเร็ว, ทริกสปลิต, เรดาร์เพื่อนร่วมทีมสด, ตัวจับเวลารวมเซลล์, ฟรีซล็อกทิศทาง, มาโครเมาส์ และเกิดใหม่ทันที.
-// @description:uk  Просунутий мод для Sigmally: швидкий фід-макрос, трюки зі сплітами, радар тімейтів, таймер злиття клітин, фриз руху, макроси миші та миттєвий респавн.
-// @description:vi  Mod Sigmally nâng cao: Macro feed nhanh, mẹo split, radar đồng đội trực tiếp, hẹn giờ hợp nhất tế bào, đóng băng di chuyển, macro chuột và hồi sinh tức thì.
-// @description:zh-CN Sigmally 高级模组：极速喂食宏、分裂技巧、队友实时雷达、细胞合并计时器、轨迹锁定、鼠标宏与即时复活。
-// @description:zh-TW Sigmally 進階模組：極速餵食巨集、分裂技巧、隊友即時雷達、細胞合併計時器、軌跡鎖定、滑鼠巨集與即時復活。
+// @description     Advanced Sigmally mod: Rapid feed macro, split tricks, live teammate radar, freeze line-splits, mouse macros & instant respawn.
+// @description:de  Erweiterter Sigmally-Mod: Rapid-Feed-Makro, Split-Tricks, Teammate-Party-Radar, Freeze-Linesplits, Maus-Makros und Instant-Respawn.
+// @description:es  Mod avanzado para Sigmally: Macro de feed rápido, trucos de split, radar de equipo, congelar líneas, macros de ratón y respawn rápido.
+// @description:pt  Mod avançado para Sigmally: Macro de feed rápido, truques de split, radar de equipe, congelamento, macros de mouse e respawn instantâneo.
+// @description:ru  Продвинутый мод для Sigmally: быстрый фид-макрос, сплиты, радар тиммейтов, фриз/лайнсплит, макросы мыши и быстрый респавн.
+// @description:tr  Gelişmiş Sigmally modu: Hızlı feed makrosu, split ve trickler, takım radarı, dondurma (freeze), mouse makroları ve hızlı respawn.
+// @description:ar  مود متقدم لـ Sigmally: ماكرو تغذية سريع، حيل الانقسام، رادار الفريق الحي، تجميد الحركة، ماكرو الفأرة ورسبون فوري.
+// @description:cs  Pokročilý mod pro Sigmally: Rychlé krmení, split triky, živý radar týmu, freeze linky, makra myši a okamžitý respawn.
+// @description:da  Avanceret Sigmally-mod: Hurtigt feed-makro, split-tricks, live holdradar, freeze line-splits, musemakroer og instant respawn.
+// @description:el  Προηγμένο mod για το Sigmally: Rapid feed macro, κόλπα split, live ραντάρ ομάδας, πάγωμα κίνησης, macros ποντικιού & instant respawn.
+// @description:fi  Edistynyt Sigmally-modi: Nopea feed-makro, split-temput, tiimitutka, liikejäädytys, hiirimakrot ja välitön respawn.
+// @description:fr  Mod avancé pour Sigmally : Macro feed rapide, tricks de split, radar d'équipe en direct, freeze de trajectoire, macros souris et respawn rapide.
+// @description:hi  Sigmally के लिए उन्नत मॉड: रैपिड फीड मैक्रो, स्प्लिट ट्रिक्स, लाइव टीममेट रडार, मूवमेंट फ्रीज, माउस मैक्रोज़ और तुरंत रीस्पॉन।
+// @description:hu  Fejlett Sigmally mod: Gyors feed makró, split trükkök, élő csapattárs radar, freeze line-split, egérmakrók és azonnali respawn.
+// @description:id  Mod canggih untuk Sigmally: Makro feed cepat, trik split, radar teman tim live, freeze gerakan, makro mouse & respawn instan.
+// @description:it  Mod avanzato per Sigmally: Macro feed rapido, trucchi di split, radar compagni live, freeze movimento, macro mouse e respawn rapido.
+// @description:ja  Sigmally 向け高度な Mod: 高速フィードマクロ、スプリットトリック、味方レーダー、移動フリーズ、マウス操作マクロ、即時リスポーン。
+// @description:ko  Sigmally 고급 모드: 빠른 피드 매크로, 스플릿 트릭, 실시간 팀원 레이더, 무브먼트 프리즈, 마우스 매크로 및 즉시 리스폰.
+// @description:nl  Geavanceerde Sigmally-mod: Snelle feedmacro, split-trucs, live teamgenotenradar, bewegingsfreeze, muismacro's en directe respawn.
+// @description:no  Avansert Sigmally-mod: Rask feed-makro, split-triks, live lagkamerat-radar, bevegelsesfrys, musemakroer og umiddelbar respawn.
+// @description:pl  Zaawansowany mod do Sigmally: Szybkie makro karmienia, triki splitu, radar drużyny na żywo, freeze, makra myszy i szybki respawn.
+// @description:ro  Mod avansat pentru Sigmally: Macro rapid de feed, trucuri split, radar de echipă live, freeze, macro-uri de mouse și respawn instant.
+// @description:sv  Avancerad Sigmally-mod: Snabbt feed-makro, split-trick, lagkamratradar i realtid, freeze line-splits, musmakron och direkt respawn.
+// @description:th  ม็อด Sigmally ขั้นสูง: มาโครป้อนอาหารเร็ว, ทริกสปลิต, เรดาร์เพื่อนร่วมทีมสด, ฟรีซล็อกทิศทาง, มาโครเมาส์ และเกิดใหม่ทันที.
+// @description:uk  Просунутий мод для Sigmally: швидкий фід-макрос, трюки зі сплітами, радар тімейтів, фриз руху, макроси миші та миттєвий респавн.
+// @description:vi  Mod Sigmally nâng cao: Macro feed nhanh, mẹo split, radar đồng đội trực tiếp, đóng băng di chuyển, macro chuột và hồi sinh tức thì.
+// @description:zh-CN Sigmally 高级模组：极速喂食宏、分裂技巧、队友实时雷达、轨迹锁定、鼠标宏与即时复活。
+// @description:zh-TW Sigmally 進階模組：極速餵食巨集、分裂技巧、隊友即時雷達、軌跡鎖定、滑鼠巨集與即時復活。
 //
 // @author       Cursed
 // @namespace    https://greasyfork.org/users/981958
@@ -107,6 +107,133 @@
         recentTabs: 'SigModClient-recent-tabs',
         friendsLocal: 'SigModClient-friends-local',
         localization: 'SigModClient-localization',
+    };
+    const DEFAULT_SETTINGS = {
+        storageVersion: BUILD.settingsVersion,
+        macros: {
+            feedSpeed: 40,
+            keys: {
+                rapidFeed: 'w',
+                respawn: 'b',
+                ping: 'r',
+                location: 'y',
+                saveImage: null,
+                splits: {
+                    double: 'd',
+                    triple: 'f',
+                    quad: 'g',
+                    doubleTrick: null,
+                    selfTrick: null,
+                },
+                line: {
+                    horizontal: 's',
+                    vertical: 't',
+                    fixed: null,
+                    instantSplit: 0,
+                },
+                toggle: {
+                    menu: 'v',
+                    chat: 'z',
+                    names: null,
+                    skins: null,
+                    autoRespawn: null,
+                    party: null,
+                    hud: null,
+                },
+            },
+            mouse: { bindings: [] },
+        },
+        game: {
+            font: 'Ubuntu',
+            borderColor: null,
+            foodColor: null,
+            cellColor: null,
+            virusImage: '/assets/images/viruses/2.png',
+            shortenNames: false,
+            showLeaderboard: true,
+            hideOwnName: false,
+            botSkinsOnly: false,
+            showOwnSkinWithBots: true,
+            removeOutlines: false,
+            skins: { original: null, replacement: null },
+            map: { color: null, image: '' },
+            name: {
+                color: null,
+                gradient: { enabled: false, left: null, right: null },
+            },
+        },
+        themes: {
+            current: 'Dark',
+            custom: [],
+            inputBorderRadius: null,
+            menuBorderRadius: null,
+            inputBorder: '1px',
+            hideDiscordBtns: false,
+            hideLangs: false,
+            hideAds: true,
+            showZigPopup: false,
+        },
+        settings: {
+            tag: null,
+            partyPanel: { x: 4, y: 300 },
+            showPartyPanel: true,
+            partyScale: 1,
+            partyMaxWidth: 240,
+            partyBgColor: 'rgba(0, 0, 0, 0.4)',
+            partyTextColor: '#fafafa',
+            partyBorderColor: 'transparent',
+            partyBorderRadius: 6,
+            partyBlur: 0,
+            partyCompact: false,
+            partySort: 'index',
+            partyHighlightSelf: true,
+            partyShowSkins: true,
+            partyShowScores: true,
+            partyShowIndexes: true,
+            partyShowHeader: true,
+            partyShowHeaderTotals: true,
+            partyShowPing: false,
+            partyMaxMembers: 10,
+            pingDuration: 2e3,
+            savedNames: [],
+            autoRespawn: false,
+            playTimer: false,
+            mouseTracker: false,
+            autoClaimCoins: false,
+            showChallenges: false,
+            deathScreenPos: 'center',
+            removeShopPopup: true,
+            quickAccess: [
+                'host:showNames',
+                'host:showSkins',
+                'host:showMass',
+                'setting:chat.enabled',
+                'host:showMinimap',
+                'host:showLeaderboard',
+                'host:showBorder',
+                'host:showGrid',
+                'host:moreZoom',
+                'host:jellyPhysics',
+                'host:showClanmates',
+                'setting:settings.playTimer',
+                'host:autoRespawn',
+                'host:autoClaimCoins',
+            ],
+        },
+        chat: {
+            enabled: true,
+            bgColor: '#00000040',
+            textColor: '#ffffff',
+            compact: false,
+            themeColor: '#8a25e5',
+            showTime: true,
+            showNameColors: true,
+            showClientChat: false,
+            showChatButtons: true,
+            blurTag: false,
+            locationText: '{pos}',
+        },
+        modAccount: { authorized: false },
     };
     const ENDPOINTS = {
         app: SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl,
@@ -179,17 +306,17 @@
         export: {
             viewBox: '0 0 24 24',
             content:
-                '<path d="M17 17H17.01M15.6 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H8.4M12 15V4M12 4L15 7M12 4L9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+                '<path fill="none" d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
         },
         upload: {
             viewBox: '0 0 24 24',
             content:
-                '<path d="M17 17H17.01M15.6 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H8.4M12 15V4M12 4L15 7M12 4L9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+                '<path fill="none" d="M17 17H17.01M15.6 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H8.4M12 15V4M12 4L15 7M12 4L9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
         },
         download: {
             viewBox: '0 0 24 24',
             content:
-                '<path d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+                '<path fill="none" d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
         },
         plus: {
             viewBox: '0 0 24 24',
@@ -211,7 +338,7 @@
             content:
                 '<path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.7848 0.449982C13.8239 0.449982 14.7167 1.16546 14.9122 2.15495L14.9991 2.59495C15.3408 4.32442 17.1859 5.35722 18.9016 4.7794L19.3383 4.63233C20.3199 4.30175 21.4054 4.69358 21.9249 5.56605L22.7097 6.88386C23.2293 7.75636 23.0365 8.86366 22.2504 9.52253L21.9008 9.81555C20.5267 10.9672 20.5267 13.0328 21.9008 14.1844L22.2504 14.4774C23.0365 15.1363 23.2293 16.2436 22.7097 17.1161L21.925 18.4339C21.4054 19.3064 20.3199 19.6982 19.3382 19.3676L18.9017 19.2205C17.1859 18.6426 15.3408 19.6754 14.9991 21.405L14.9122 21.845C14.7167 22.8345 13.8239 23.55 12.7848 23.55H11.2152C10.1761 23.55 9.28331 22.8345 9.08781 21.8451L9.00082 21.4048C8.65909 19.6754 6.81395 18.6426 5.09822 19.2205L4.66179 19.3675C3.68016 19.6982 2.59465 19.3063 2.07505 18.4338L1.2903 17.1161C0.770719 16.2436 0.963446 15.1363 1.74956 14.4774L2.09922 14.1844C3.47324 13.0327 3.47324 10.9672 2.09922 9.8156L1.74956 9.52254C0.963446 8.86366 0.77072 7.75638 1.2903 6.8839L2.07508 5.56608C2.59466 4.69359 3.68014 4.30176 4.66176 4.63236L5.09831 4.77939C6.81401 5.35722 8.65909 4.32449 9.00082 2.59506L9.0878 2.15487C9.28331 1.16542 10.176 0.449982 11.2152 0.449982H12.7848ZM12 15.3C13.8225 15.3 15.3 13.8225 15.3 12C15.3 10.1774 13.8225 8.69998 12 8.69998C10.1774 8.69998 8.69997 10.1774 8.69997 12C8.69997 13.8225 10.1774 15.3 12 15.3Z"></path>',
         },
-        smiley: {
+        refresh: {
             viewBox: '0 0 108.364 108.364',
             content:
                 '<path fill="currentColor" d="M54.182,0C24.258,0,0,24.258,0,54.182c0,29.924,24.258,54.183,54.182,54.183c29.923,0,54.182-24.259,54.182-54.183 C108.364,24.258,84.105,0,54.182,0z M62.372,44.193l7.694-9.755c0.158-0.197,0.393-0.308,0.646-0.308s0.486,0.111,0.642,0.304 l7.697,9.757c0.188,0.237,0.229,0.58,0.1,0.859c-0.146,0.293-0.428,0.467-0.741,0.467h-3.554c-0.182,0-0.352-0.083-0.463-0.225 l-3.681-4.664l-3.681,4.664c-0.112,0.141-0.281,0.225-0.462,0.225h-3.552c-0.313,0-0.604-0.18-0.738-0.459 c-0.055-0.113-0.082-0.237-0.082-0.359C62.198,44.516,62.26,44.336,62.372,44.193z M30.253,44.193l7.695-9.755 c0.158-0.197,0.392-0.308,0.645-0.308s0.486,0.111,0.641,0.304l7.697,9.757c0.189,0.237,0.229,0.58,0.1,0.859 c-0.146,0.293-0.428,0.467-0.741,0.467h-3.554c-0.181,0-0.351-0.083-0.463-0.225l-3.68-4.664l-3.681,4.664 c-0.112,0.141-0.281,0.225-0.462,0.225h-3.552c-0.313,0-0.604-0.18-0.738-0.459c-0.055-0.113-0.082-0.237-0.082-0.359 C30.078,44.516,30.14,44.336,30.253,44.193z M80.318,63.574C76.033,73.479,66,79.878,54.755,79.878 c-11.486,0-21.58-6.431-25.714-16.382c-0.185-0.443-0.135-0.949,0.131-1.348c0.267-0.397,0.714-0.637,1.192-0.637 c0.001,0,0.001,0,0.002,0l48.638,0.061c0.482,0,0.932,0.244,1.196,0.646C80.465,62.622,80.51,63.131,80.318,63.574z"></path>',
@@ -244,7 +371,7 @@
         camera: {
             viewBox: '0 -2 32 32',
             content:
-                '<path fill="currentColor" d="M286,471 L283,471 L282,469 C281.411,467.837 281.104,467 280,467 L268,467 C266.896,467 266.53,467.954 266,469 L265,471 L262,471 C259.791,471 258,472.791 258,475 L258,491 C258,493.209 259.791,495 262,495 L286,495 C288.209,495 290,493.209 290,491 L290,475 C290,472.791 288.209,471 286,471 Z M274,491 C269.582,491 266,487.418 266,483 C266,478.582 269.582,475 274,475 C278.418,475 282,478.582 282,483 C282,487.418 278.418,491 274,491 Z M274,477 C270.687,477 268,479.687 268,483 C268,486.313 270.687,489 274,489 C277.313,489 280,486.313 280,483 C280,479.687 277.313,477 274,477 L274,477 Z"></path>',
+                '<path transform="translate(-258 -467)" fill="currentColor" d="M286,471 L283,471 L282,469 C281.411,467.837 281.104,467 280,467 L268,467 C266.896,467 266.53,467.954 266,469 L265,471 L262,471 C259.791,471 258,472.791 258,475 L258,491 C258,493.209 259.791,495 262,495 L286,495 C288.209,495 290,493.209 290,491 L290,475 C290,472.791 288.209,471 286,471 Z M274,491 C269.582,491 266,487.418 266,483 C266,478.582 269.582,475 274,475 C278.418,475 282,478.582 282,483 C282,487.418 278.418,491 274,491 Z M274,477 C270.687,477 268,479.687 268,483 C268,486.313 270.687,489 274,489 C277.313,489 280,486.313 280,483 C280,479.687 277.313,477 274,477 L274,477 Z"></path>',
         },
         trash: {
             viewBox: '0 0 24 24',
@@ -264,7 +391,7 @@
         check: {
             viewBox: '0 0 24 24',
             content:
-                '<path d="M4 12.6111L8.92308 17.5L20 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
+                '<path d="M4 12.6111L8.92308 17.5L20 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
         },
         star: {
             viewBox: '0 0 64 64',
@@ -307,14 +434,6 @@
                 '<path fill="currentColor" d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"></path>',
         },
     };
-    ICONS.camera.content = ICONS.camera.content.replace('<path fill=', '<path transform="translate(-258 -467)" fill=');
-    ICONS.camera.content = ICONS.camera.content.replace('C266.896,467.954 266.53,467.954', 'C266.896,467 266.53,467.954');
-    for (const name of ['export', 'upload', 'download']) {
-        ICONS[name].content = ICONS[name].content
-            .replace(/<path(?![^>]*\bfill=)/g, '<path fill="none"')
-            .replace('C20.6448 19.2554 20.6448 19.2554 20.8478 19.8478', 'C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478');
-    }
-    ICONS.export.content = ICONS.download.content;
     function icon(name, size = 20) {
         const definition = ICONS[name];
         if (!definition) return '';
@@ -461,135 +580,6 @@
         { button: 3, name: 'Back', code: 'Button 3' },
         { button: 4, name: 'Forward', code: 'Button 4' },
     ];
-    const DEFAULT_SETTINGS = {
-        storageVersion: BUILD.settingsVersion,
-        macros: {
-            feedSpeed: 40,
-            keys: {
-                rapidFeed: 'w',
-                respawn: 'b',
-                ping: 'r',
-                location: 'y',
-                saveImage: null,
-                splits: {
-                    double: 'd',
-                    triple: 'f',
-                    quad: 'g',
-                    doubleTrick: null,
-                    selfTrick: null,
-                },
-                line: {
-                    horizontal: 's',
-                    vertical: 't',
-                    fixed: null,
-                    instantSplit: 0,
-                },
-                toggle: {
-                    menu: 'v',
-                    chat: 'z',
-                    names: null,
-                    skins: null,
-                    autoRespawn: null,
-                    party: null,
-                    hud: null,
-                },
-            },
-            mouse: { bindings: [] },
-        },
-        game: {
-            font: 'Ubuntu',
-            borderColor: null,
-            foodColor: null,
-            cellColor: null,
-            virusImage: '/assets/images/viruses/2.png',
-            shortenNames: false,
-            showLeaderboard: true,
-            hideOwnName: false,
-            botSkinsOnly: false,
-            showOwnSkinWithBots: true,
-            removeOutlines: false,
-            skins: { original: null, replacement: null },
-            map: { color: null, image: '' },
-            name: {
-                color: null,
-                gradient: { enabled: false, left: null, right: null },
-            },
-        },
-        themes: {
-            current: 'Dark',
-            custom: [],
-            inputBorderRadius: null,
-            menuBorderRadius: null,
-            inputBorder: '1px',
-            hideDiscordBtns: false,
-            hideLangs: false,
-            hideAds: true,
-            showZigPopup: false,
-        },
-        settings: {
-            tag: null,
-            partyPanel: { x: 4, y: 300 },
-            showPartyPanel: true,
-            partyScale: 1,
-            partyMaxWidth: 240,
-            partyBgColor: 'rgba(0, 0, 0, 0.4)',
-            partyTextColor: '#fafafa',
-            partyBorderColor: 'transparent',
-            partyBorderRadius: 6,
-            partyBlur: 0,
-            partyCompact: false,
-            partySort: 'index',
-            partyHighlightSelf: true,
-            partyShowSkins: true,
-            partyShowScores: true,
-            partyShowIndexes: true,
-            partyShowHeader: true,
-            partyShowHeaderTotals: true,
-            partyShowPing: false,
-            partyMaxMembers: 10,
-            pingDuration: 2e3,
-            savedNames: [],
-            autoRespawn: false,
-            playTimer: false,
-            mouseTracker: false,
-            mergeTimer: true,
-            autoClaimCoins: false,
-            showChallenges: false,
-            deathScreenPos: 'center',
-            removeShopPopup: true,
-            quickAccess: [
-                'host:showNames',
-                'host:showSkins',
-                'host:showMass',
-                'setting:chat.enabled',
-                'host:showMinimap',
-                'host:showBorder',
-                'host:showGrid',
-                'host:moreZoom',
-                'host:jellyPhysics',
-                'host:showClanmates',
-                'setting:settings.playTimer',
-                'setting:settings.mouseTracker',
-                'host:autoRespawn',
-                'host:showLeaderboard',
-                'host:autoClaimCoins',
-            ],
-        },
-        chat: {
-            enabled: true,
-            bgColor: '#00000040',
-            textColor: '#ffffff',
-            compact: false,
-            themeColor: '#8a25e5',
-            showTime: true,
-            showNameColors: true,
-            showClientChat: false,
-            showChatButtons: true,
-            blurTag: false,
-            locationText: '{pos}',
-        },
-        modAccount: { authorized: false },
-    };
     const BOT_SKIN_NAMES = /* @__PURE__ */ new Set([
         'Valeriy',
         'Mtch',
@@ -771,6 +761,16 @@
             const normalized = val === null || val === void 0 || val === '' ? null : typeof val === 'string' ? val.toLowerCase() : null;
             setPath(keys, path.slice('macros.keys.'.length), normalized);
         }
+        const rawInstantSplit =
+            getPath(settings, 'macros.keys.line.instantSplit') ??
+            (settings?.line?.instantSplit !== void 0 ? settings.line.instantSplit : void 0);
+        if (rawInstantSplit !== void 0) {
+            const val = unwrapSettingScalar(rawInstantSplit);
+            const num = Number(val);
+            if (Number.isFinite(num)) {
+                keys.line.instantSplit = clamp(Math.trunc(num), 0, 4);
+            }
+        }
         return keys;
     };
     const replaceInPlace = (target, source) => {
@@ -814,6 +814,49 @@
             if (rapidKey && sigfixSettings.rapidFeedKey !== rapidKey) sigfixSettings.rapidFeedKey = rapidKey;
         } catch {}
     };
+    function rgbToHex(r, g, b) {
+        const clamp2 = (val) => Math.max(0, Math.min(255, Math.round(Number(val) || 0)));
+        return [r, g, b].map((val) => clamp2(val).toString(16).padStart(2, '0')).join('');
+    }
+    function formatNumber(num, decimals = 1) {
+        const val = Number(num) || 0;
+        const abs = Math.abs(val);
+        const sign = val < 0 ? '-' : '';
+        if (abs >= 1e9) {
+            const d = abs >= 1e10 ? 0 : decimals;
+            return `${sign}${(abs / 1e9).toFixed(d)}b`;
+        }
+        if (abs >= 1e6) {
+            const d = abs >= 1e7 ? 0 : decimals;
+            return `${sign}${(abs / 1e6).toFixed(d)}m`;
+        }
+        if (abs >= 1e3) {
+            const d = abs >= 1e4 ? 0 : decimals;
+            return `${sign}${(abs / 1e3).toFixed(d)}k`;
+        }
+        return String(Math.round(val));
+    }
+    const formatScore = formatNumber;
+    function formatDuration(seconds, padZero = false) {
+        const total = Math.max(0, Math.floor(Number(seconds) || 0));
+        const hours = Math.floor(total / 3600);
+        const minutes = Math.floor((total % 3600) / 60);
+        const secs = total % 60;
+        if (padZero) {
+            const pM = String(minutes).padStart(2, '0');
+            const pS = String(secs).padStart(2, '0');
+            return hours > 0 ? `${String(hours).padStart(2, '0')}:${pM}:${pS}` : `${pM}:${pS}`;
+        }
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        if (minutes > 0) return `${minutes}m`;
+        return total > 0 ? `${total}s` : '0m';
+    }
+    function formatTime(ms) {
+        return formatDuration(Math.floor((Number(ms) || 0) / 1e3), true);
+    }
+    function calculateLuminance(r, g, b) {
+        return (Number(r) || 0) * 0.299 + (Number(g) || 0) * 0.587 + (Number(b) || 0) * 0.114;
+    }
     class MatchHistoryStore {
         constructor(logger) {
             this.logger = logger;
@@ -951,30 +994,6 @@
                 transaction.addEventListener('error', () => reject(transaction.error ?? new Error('Unable to migrate legacy statistics')), {
                     once: true,
                 });
-            });
-        }
-        request(database, mode, action) {
-            return new Promise((resolve, reject) => {
-                const transaction = database.transaction(STORAGE.statsMatchStore, mode);
-                const store = transaction.objectStore(STORAGE.statsMatchStore);
-                let request;
-                try {
-                    request = action(store);
-                } catch (error) {
-                    reject(error);
-                    return;
-                }
-                request?.addEventListener('success', () => resolve(request.result), {
-                    once: true,
-                });
-                request?.addEventListener('error', () => reject(request.error ?? new Error('Statistics database request failed')), {
-                    once: true,
-                });
-                if (!request) {
-                    transaction.addEventListener('complete', () => resolve(void 0), {
-                        once: true,
-                    });
-                }
             });
         }
         async add(entry) {
@@ -1874,6 +1893,23 @@
                     'setting:settings.playTimer',
                     'setting:settings.mouseTracker',
                 ],
+                [
+                    'host:showNames',
+                    'host:showSkins',
+                    'host:showMass',
+                    'setting:chat.enabled',
+                    'host:showMinimap',
+                    'host:showBorder',
+                    'host:showGrid',
+                    'host:moreZoom',
+                    'host:jellyPhysics',
+                    'host:showClanmates',
+                    'setting:settings.playTimer',
+                    'setting:settings.mouseTracker',
+                    'host:autoRespawn',
+                    'host:showLeaderboard',
+                    'host:autoClaimCoins',
+                ],
             ];
             if (previousDefaults.some((defaults) => JSON.stringify(value.settings.quickAccess) === JSON.stringify(defaults))) {
                 value.settings.quickAccess = clone(this.defaults.settings.quickAccess);
@@ -1904,7 +1940,6 @@
                 'partyShowHeader',
                 'partyShowHeaderTotals',
                 'partyShowPing',
-                'mergeTimer',
             ]) {
                 value.settings[key] = normalizeBoolean(value.settings[key], this.defaults.settings[key]);
             }
@@ -2423,6 +2458,7 @@
                     disarmNode(node);
                     return true;
                 }
+                if (!node.childElementCount || node.childElementCount === 0) return false;
                 const children = node.querySelectorAll ? node.querySelectorAll('script, iframe, embed, object') : [];
                 for (let i = 0; i < children.length; i += 1) {
                     const child = children[i];
@@ -2754,18 +2790,6 @@
             this.offset += 4;
             return value;
         }
-        float32LE() {
-            this.ensure(4);
-            const value = this.view.getFloat32(this.offset, true);
-            this.offset += 4;
-            return value;
-        }
-        bytes(size) {
-            this.ensure(size);
-            const value = new Uint8Array(this.view.buffer, this.view.byteOffset + this.offset, size);
-            this.offset += size;
-            return value;
-        }
         float64LE() {
             this.ensure(8);
             const value = this.view.getFloat64(this.offset, true);
@@ -2867,11 +2891,6 @@
             if (!this.ready) throw new Error('Opcode map is not ready');
             if (!Number.isInteger(opcode) || opcode < 0 || opcode > 255) throw new RangeError('Invalid opcode');
             return this.incoming[opcode];
-        }
-        reset() {
-            this.outgoing.fill(0);
-            this.incoming.fill(0);
-            this.ready = false;
         }
     }
     class HostAdapter extends Emitter {
@@ -2993,7 +3012,7 @@
         const blue = reader.uint8();
         const name = reader.utf8z();
         const message = reader.utf8z();
-        const color = `#${[red, green, blue].map((value) => value.toString(16).padStart(2, '0')).join('')}`;
+        const color = `#${rgbToHex(red, green, blue)}`;
         return { name: name.trim() || 'Unnamed', message, color };
     };
     class NativeProtocol extends Emitter {
@@ -3014,6 +3033,7 @@
             this.leaderboard = new LeaderboardTracker((type, payload) => this.emit(type, payload));
             this.rawSend = socket.send.bind(socket);
             this.snapshotCache = null;
+            this.cachedPosition = null;
             this.snapshotDirty = true;
             const protocol = this;
             const sendFacade = function (data) {
@@ -3201,7 +3221,6 @@
                     this.emit('play-state', false);
                     break;
                 case 18:
-                    this.emit('world', this.worldSnapshot());
                     break;
                 case OPCODE.border:
                     this.decodeBorder(reader);
@@ -3273,26 +3292,46 @@
                     oy = existing.oy + (existing.ny - existing.oy) * progress;
                     os = existing.os + (existing.ns - existing.os) * progress;
                 }
-                this.cells.set(id, {
-                    id,
-                    ox,
-                    oy,
-                    os,
-                    nx: x,
-                    ny: y,
-                    ns: radius,
-                    updatedAt: now,
-                    x,
-                    y,
-                    radius,
-                    flags,
-                    clan,
-                    color,
-                    skin,
-                    name,
-                    eject,
-                    pellet,
-                });
+                if (existing) {
+                    existing.ox = ox;
+                    existing.oy = oy;
+                    existing.os = os;
+                    existing.nx = x;
+                    existing.ny = y;
+                    existing.ns = radius;
+                    existing.updatedAt = now;
+                    existing.x = x;
+                    existing.y = y;
+                    existing.radius = radius;
+                    existing.flags = flags;
+                    existing.clan = clan;
+                    existing.color = color;
+                    existing.skin = skin;
+                    existing.name = name;
+                    existing.eject = eject;
+                    existing.pellet = pellet;
+                } else {
+                    this.cells.set(id, {
+                        id,
+                        ox,
+                        oy,
+                        os,
+                        nx: x,
+                        ny: y,
+                        ns: radius,
+                        updatedAt: now,
+                        x,
+                        y,
+                        radius,
+                        flags,
+                        clan,
+                        color,
+                        skin,
+                        name,
+                        eject,
+                        pellet,
+                    });
+                }
             }
             const deleteCount = reader.uint16LE();
             if (deleteCount > 1e5 || deleteCount * 4 > reader.remaining) {
@@ -3306,7 +3345,6 @@
             this.snapshotDirty = true;
             const snapshot = this.worldSnapshot();
             this.emit('world-update', snapshot);
-            this.emit('world', snapshot);
             const isPlaying = Boolean(snapshot.playing);
             if (this.lastPlayState !== isPlaying) {
                 this.lastPlayState = isPlaying;
@@ -3324,11 +3362,7 @@
             this.emit('kill', { name: playerName });
         }
         worldSnapshot() {
-            if (!this.snapshotDirty && this.snapshotCache)
-                return {
-                    ...this.snapshotCache,
-                    position: this.snapshotCache.position ? { ...this.snapshotCache.position } : null,
-                };
+            if (!this.snapshotDirty && this.snapshotCache) return this.snapshotCache;
             let score = 0;
             let x = 0;
             let y = 0;
@@ -3341,17 +3375,31 @@
                 y += cell.y;
                 count += 1;
             }
-            this.snapshotCache = {
-                playing: count > 0,
-                position: count ? { x: x / count, y: y / count } : null,
-                score,
-                ownedCount: count,
-            };
+            let position = null;
+            if (count > 0) {
+                if (!this.cachedPosition) {
+                    this.cachedPosition = { x: x / count, y: y / count };
+                } else {
+                    this.cachedPosition.x = x / count;
+                    this.cachedPosition.y = y / count;
+                }
+                position = this.cachedPosition;
+            }
+            if (!this.snapshotCache) {
+                this.snapshotCache = {
+                    playing: count > 0,
+                    position,
+                    score,
+                    ownedCount: count,
+                };
+            } else {
+                this.snapshotCache.playing = count > 0;
+                this.snapshotCache.position = position;
+                this.snapshotCache.score = score;
+                this.snapshotCache.ownedCount = count;
+            }
             this.snapshotDirty = false;
-            return {
-                ...this.snapshotCache,
-                position: this.snapshotCache.position ? { ...this.snapshotCache.position } : null,
-            };
+            return this.snapshotCache;
         }
         decodeBorder(reader) {
             this.border = readWorldBorder(reader);
@@ -3761,7 +3809,6 @@
             const snapshot = this.snapshot();
             this.lastOwnedCount = snapshot.ownedCount;
             this.emit('world-update', snapshot);
-            this.emit('world', snapshot);
             const isPlaying = Boolean(snapshot.playing);
             if (this.lastPlayState !== isPlaying) {
                 this.lastPlayState = isPlaying;
@@ -4457,11 +4504,20 @@
             toast.append(createElement('span', { text: localizedMessage }));
             toast.append(createElement('div', { className: 'modAlert-loader' }));
             overlay.append(toast);
-            const timer = window.setTimeout(() => toast.remove(), 2e3);
-            this.resources?.add?.(() => {
+            let disposer = null;
+            const removeToast = () => {
+                if (disposer) {
+                    this.resources?.remove?.(disposer);
+                    disposer = null;
+                }
+                toast.remove();
+            };
+            const timer = window.setTimeout(removeToast, 2e3);
+            disposer = () => {
                 window.clearTimeout(timer);
                 toast.remove();
-            });
+            };
+            this.resources?.add?.(disposer);
             return toast;
         }
         showUpdate(value) {
@@ -4643,6 +4699,7 @@
             const root = createElement('div', {
                 className: 'mod_menu',
                 attributes: {
+                    id: 'sigmod-menu',
                     'data-sigmod-root': '',
                     'aria-hidden': 'true',
                     role: 'dialog',
@@ -4708,16 +4765,16 @@
             this.setupNavigationArchitecture();
             this.syncSigFixSkinOptions();
             this.setupMouseBindingEditor();
-            this.setupKeybindRecorder();
-            this.syncSettings();
+            this.keybinds.setupKeybindRecorder();
+            this.settingsIO.syncSettings();
             this.settingsIO.syncSettingsActions();
             this.renderRecentAccess();
             this.openTab(this.activeTab, false, false);
             this.bindLauncher();
             this.resources.listen(root, 'click', (event) => this.handleOtherExtensionsTabClick(event), true);
             this.resources.listen(root, 'click', (event) => this.handleClick(event));
-            this.resources.listen(root, 'input', (event) => this.handleSettingInput(event));
-            this.resources.listen(root, 'change', (event) => this.handleSettingInput(event));
+            this.resources.listen(root, 'input', (event) => this.settingsIO.handleSettingInput(event));
+            this.resources.listen(root, 'change', (event) => this.settingsIO.handleSettingInput(event));
             this.resources.listen(root, 'change', (event) => {
                 const select = event.target;
                 if (select instanceof HTMLSelectElement && select.matches('[data-localization-language]')) {
@@ -4736,7 +4793,7 @@
                 this.resources.listen(importInput, 'change', () => {
                     const file = importInput.files?.[0];
                     importInput.value = '';
-                    if (file) void this.importSettings(file);
+                    if (file) void this.settingsIO.importSettings(file);
                 });
             }
             const handleWheel = (event) => {
@@ -4753,7 +4810,7 @@
             this.resources.listen(window, 'wheel', handleWheel, { capture: true, passive: true });
             this.resources.listen(root, 'wheel', handleWheel, { capture: true, passive: true });
             this.resources.listen(root, 'wheel', handleWheel, { capture: false, passive: true });
-            this.setupHomeSearch();
+            this.homeSearch.setupHomeSearch();
             this.app.i18n?.apply();
             this.resources.listen(document, 'keydown', (event) => {
                 if (event.key === 'Escape' && this.isOpen()) this.close();
@@ -4793,7 +4850,7 @@
                     <div class="mod_menu_inner">
                         <nav class="mod_menu_navbar" aria-label="SigMod sections" data-sigmod-localize>
                             <div class="mod_nav_home">
-                                <button type="button" class="mod_nav_btn mod_selected" id="tab_home_btn" data-mod-tab="mod_home" data-nav-managed>
+                                <button type="button" class="mod_nav_btn mod_selected" data-mod-tab="mod_home" data-nav-managed>
                                     ${icon('house', 14)}
                                     <span class="mod_nav_label">Home</span>
                                 </button>
@@ -4829,7 +4886,7 @@
                                     </div>
                                 </div>
 
-                                <button type="button" class="mod_nav_btn" id="tab_friends_btn" data-mod-tab="mod_friends" data-nav-managed>
+                                <button type="button" class="mod_nav_btn" data-mod-tab="mod_friends" data-nav-managed>
                                     ${icon('users', 14)}
                                     <span class="mod_nav_label">Friends</span>
                                 </button>
@@ -4846,7 +4903,7 @@
                                 <div class="mod_nav_misc-children">
                                     <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_settings_data" data-nav-managed>Data</button>
                                     <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_statistics" data-nav-managed>Statistics</button>
-                                    <button type="button" class="mod_nav_btn mod_nav_subbtn" id="tab_info_btn" data-mod-tab="mod_info" data-nav-managed>Info</button>
+                                    <button type="button" class="mod_nav_btn mod_nav_subbtn" data-mod-tab="mod_info" data-nav-managed>Info</button>
                                 </div>
                             </div>
                         </nav>
@@ -5089,7 +5146,6 @@
                                         <div class="justify-sb w-100 rounded" style="padding: 5px 10px;"><span class="text">Death screen Position</span><select id="deathScreenPos" class="form-control" data-setting="settings.deathScreenPos" style="width: 30%"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option><option value="top">Top</option><option value="bottom">Bottom</option></select></div>
                                         <div class="justify-sb w-100 accent_row p-10 rounded">${this.checkRowInline('Play timer', 'playTimerToggle', 'settings.playTimer')}</div>
                                         <div class="justify-sb w-100 p-10 rounded">${this.checkRowInline('Mouse tracker', 'mouseTrackerToggle', 'settings.mouseTracker')}</div>
-                                        <div class="justify-sb w-100 accent_row p-10 rounded">${this.checkRowInline('Merge timer', 'mergeTimerToggle', 'settings.mergeTimer')}</div>
                                     </div>
                                     <div class="settings-actions" id="settingsActions">
                                         <div class="settings-actions-heading"><span class="settings-actions-title">Settings</span></div>
@@ -5144,9 +5200,7 @@
                                             <span class="modDescText">Save your names locally</span>
                                             <div class="flex g-5">
                                                 <input class="modInput" placeholder="Enter a name..." id="saveNameValue" />
-                                                <button type="button" id="saveName" class="modButton-secondary centerXY" style="border-radius: 5px; padding: 5px 10px;">
-                                                    ${icon('plus', 18)}
-                                                </button>
+                                                <button type="button" id="saveName" class="modButton-secondary centerXY">Save</button>
                                             </div>
                                             <div id="savedNames" class="f-column scroll"></div>
                                         </div>
@@ -5420,6 +5474,12 @@
         renderMouseBindingEditor() {
             return this.mouseBinder.renderMouseBindingEditor();
         }
+        bindingDisplay(value) {
+            return this.keybinds.bindingDisplay(value);
+        }
+        updateKeybindingConflicts() {
+            return this.keybinds.updateKeybindingConflicts();
+        }
         infoBtn(text, position = 'up') {
             const posClass = position === 'down' ? ' is-down' : '';
             return `<span class="keybind-info${posClass}" tabindex="0" role="button" aria-label="Info" onclick="event.preventDefault();event.stopPropagation();"><span class="keybind-info-icon">i</span><span class="keybind-info-popup">${text}</span></span>`;
@@ -5429,11 +5489,6 @@
                 ? `<span class="flex align-center g-5"><span>${label}</span>${this.infoBtn(info)}</span>`
                 : `<span>${label}</span>`;
             return `<div class="stats-line justify-sb">${titleHtml}<input id="${id}" class="keybinding" name="${name}" data-label="${label}" data-setting="${path}" maxlength="1" placeholder="..."></div>`;
-        }
-        checkRow(label, id, path = '', checkedValue = '', uncheckedValue = '') {
-            const setting = path ? ` data-setting="${path}"` : '';
-            const values = checkedValue ? ` data-checked-value="${checkedValue}" data-unchecked-value="${uncheckedValue}"` : '';
-            return `<div class="stats-line justify-sb"><span>${label}</span><div class="modCheckbox"><input id="${id}" type="checkbox"${setting}${values}><label class="cbx" for="${id}"></label></div></div>`;
         }
         checkboxHtml(id, path = '', checkedValue = '', uncheckedValue = '') {
             const setting = path ? ` data-setting="${path}"` : '';
@@ -5577,12 +5632,6 @@
             content.append(panel);
             return panel;
         }
-        createPanelColumn() {
-            const outer = createElement('div', { className: 'modColItems' });
-            const inner = createElement('div', { className: 'modColItems_2' });
-            outer.append(inner);
-            return { outer, inner };
-        }
         findRowByControl(panel, selector) {
             const control = panel?.querySelector(selector);
             if (!(control instanceof HTMLElement)) return null;
@@ -5656,7 +5705,7 @@
                     : [];
             const interfaceHudRows =
                 gamePanel instanceof HTMLElement
-                    ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle', '#mergeTimerToggle']
+                    ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle']
                           .map((selector) => row(gamePanel, selector))
                           .filter(Boolean)
                     : [];
@@ -5664,6 +5713,10 @@
             if (galleryPanel instanceof HTMLElement) screenshotRow = row(galleryPanel, '#modinput17');
             if (keyboardPanel instanceof HTMLElement) {
                 const keyboard = page();
+                const headerBar = keyboardPanel.querySelector('.macros-header-bar');
+                const conflictBanner = keyboardPanel.querySelector('#sigmod-keybind-conflict-banner');
+                if (headerBar) keyboard.append(headerBar);
+                if (conflictBanner) keyboard.append(conflictBanner);
                 const actions = ['#modinput1', '#modinput15', '#modinput18']
                     .map((selector) => row(keyboardPanel, selector))
                     .filter(Boolean);
@@ -5811,7 +5864,6 @@
                     galleryPanel.remove();
                 }
                 interfacePanel.replaceChildren(interfacePage);
-                content.querySelector('#mod_settings_general')?.remove();
                 dataPanel.replaceChildren(dataPage);
             }
             if (namePanel instanceof HTMLElement) {
@@ -5819,10 +5871,6 @@
                 const saveInput = namePanel.querySelector('#saveNameValue');
                 const saveButton = namePanel.querySelector('#saveName');
                 const savedNames = namePanel.querySelector('#savedNames');
-                if (saveButton instanceof HTMLButtonElement) {
-                    saveButton.replaceChildren(document.createTextNode('Save'));
-                    saveButton.removeAttribute('style');
-                }
                 const saveSection = createElement('section', {
                     className: 'settings-section',
                 });
@@ -6366,9 +6414,6 @@
                 slot.append(button);
             }
         }
-        adoptExternalNavButtons() {
-            return this.adoptOtherExtensionsNavButtons();
-        }
         registerExtension(def) {
             return this.registerOtherExtension(def);
         }
@@ -6589,7 +6634,7 @@
             if (!(target instanceof Element)) return;
             const searchResult = target.closest('[data-home-search-result]');
             if (searchResult instanceof HTMLButtonElement) {
-                this.openHomeSearchResult(searchResult.dataset.homeSearchResult);
+                this.homeSearch.openHomeSearchResult(searchResult.dataset.homeSearchResult);
                 return;
             }
             const recent = target.closest('[data-recent-tab]');
@@ -6631,7 +6676,7 @@
                 return;
             }
             if (target.closest('#resetSettings')) {
-                const scopes = this.getSelectedScopes('reset');
+                const scopes = this.settingsIO.getSelectedScopes('reset');
                 if (!scopes.length) return;
                 if (confirm(this.message('Reset selected settings? The page will reload.'))) {
                     if (scopes.includes('sigmod')) this.app.settingsStore.reset();
@@ -6663,9 +6708,9 @@
                 return;
             }
             if (target.closest('#exportSettings')) {
-                const scopes = this.getSelectedScopes('backup');
+                const scopes = this.settingsIO.getSelectedScopes('backup');
                 if (!scopes.length) return;
-                this.exportSettings(scopes);
+                this.settingsIO.exportSettings(scopes);
                 return;
             }
             if (target.closest('#importSettings')) {
@@ -6675,88 +6720,13 @@
             }
             if (target.closest('#reset_input_radius')) {
                 this.app.settingsStore.set('themes.inputBorderRadius', '4px');
-                this.syncSettings();
+                this.settingsIO.syncSettings();
                 return;
             }
             if (target.closest('#reset_menu_radius')) {
                 this.app.settingsStore.set('themes.menuBorderRadius', '15px');
-                this.syncSettings();
+                this.settingsIO.syncSettings();
             }
-        }
-        readStoredSettings(key) {
-            return this.settingsIO.readStoredSettings(key);
-        }
-        getSelectedScopes(row) {
-            return this.settingsIO.getSelectedScopes(row);
-        }
-        selectedScopePayload(scopes) {
-            return this.settingsIO.selectedScopePayload(scopes);
-        }
-        buildSettingsExport() {
-            return this.settingsIO.buildSettingsExport();
-        }
-        exportSettings(scopes = ['game', 'sigmod', 'sigfix']) {
-            return this.settingsIO.exportSettings(scopes);
-        }
-        importSections(payload) {
-            return this.settingsIO.importSections(payload);
-        }
-        get homeSearchTargets() {
-            return this.homeSearch.targets;
-        }
-        get homeSearchSequence() {
-            return this.homeSearch.sequence;
-        }
-        set homeSearchSequence(value) {
-            this.homeSearch.sequence = value;
-        }
-        setupHomeSearch() {
-            return this.homeSearch.setupHomeSearch();
-        }
-        closeHomeSearch() {
-            return this.homeSearch.closeHomeSearch();
-        }
-        renderHomeSearch(rawQuery) {
-            return this.homeSearch.renderHomeSearch(rawQuery);
-        }
-        openHomeSearchResult(id) {
-            return this.homeSearch.openHomeSearchResult(id);
-        }
-        bindingDisplay(value) {
-            return this.keybinds.bindingDisplay(value);
-        }
-        isManagedKeybind(input) {
-            return this.keybinds.isManagedKeybind(input);
-        }
-        setupKeybindRecorder() {
-            return this.keybinds.setupKeybindRecorder();
-        }
-        updateKeybindingConflicts() {
-            return this.keybinds.updateKeybindingConflicts();
-        }
-        findKeybindingConflicts(path, value) {
-            return this.keybinds.findKeybindingConflicts(path, value);
-        }
-        askKeybindingConflict(path, value, labels) {
-            return this.keybinds.askKeybindingConflict(path, value, labels);
-        }
-        handleSettingInput(event) {
-            return this.settingsIO.handleSettingInput(event);
-        }
-        updateInstantSplit(source) {
-            return this.settingsIO.updateInstantSplit(source);
-        }
-        syncSettings() {
-            return this.settingsIO.syncSettings();
-        }
-        readGameSettings() {
-            return this.settingsIO.readGameSettings();
-        }
-        updateMacroSpeedLabel() {
-            return this.settingsIO.updateMacroSpeedLabel();
-        }
-        updatePartySliderLabels() {
-            return this.settingsIO.updatePartySliderLabels();
         }
         open() {
             if (!this.root) return;
@@ -6796,7 +6766,8 @@
         isOpen() {
             if (!this.root) return false;
             if (this.root.getAttribute('aria-hidden') === 'false') return true;
-            return this.root.style.display !== 'none' && this.root.style.opacity !== '0' && getComputedStyle(this.root).display !== 'none';
+            if (this.root.getAttribute('aria-hidden') === 'true') return false;
+            return this.root.style.display !== 'none' && this.root.style.opacity !== '0';
         }
         handleOtherExtensionsTabClick(event) {
             const target = event.target;
@@ -6847,9 +6818,6 @@
             this.updateCategoryActiveState();
             this.switchTabPanel(panel, button, true);
         }
-        handleExternalTabClick(event) {
-            return this.handleOtherExtensionsTabClick(event);
-        }
         getTabPanels() {
             if (!this.root) return [];
             const content = this.root.querySelector('.mod_menu_content');
@@ -6858,11 +6826,15 @@
             return [...nodes].filter((item) => item instanceof HTMLElement);
         }
         getVisibleTabPanel() {
-            return (
+            if (this.visibleTabPanel && !this.visibleTabPanel.hidden && this.visibleTabPanel.style.display !== 'none') {
+                return this.visibleTabPanel;
+            }
+            const panel =
                 this.getTabPanels().find(
-                    (item) => !item.hidden && item.style.display !== 'none' && getComputedStyle(item).display !== 'none'
-                ) ?? null
-            );
+                    (item) => !item.hidden && item.style.display !== 'none' && item.getAttribute('aria-hidden') !== 'true'
+                ) ?? null;
+            if (panel) this.visibleTabPanel = panel;
+            return panel;
         }
         switchTabPanel(panel, navButton = null, animate = true) {
             if (!this.root || !(panel instanceof HTMLElement)) return;
@@ -6887,6 +6859,7 @@
                 }
                 panel.hidden = false;
                 panel.style.display = 'flex';
+                this.visibleTabPanel = panel;
                 if (!shouldAnimate) {
                     panel.style.opacity = '1';
                     panel.style.transform = 'translateX(0)';
@@ -7593,10 +7566,11 @@
             });
             return new Promise((resolve) => {
                 let finished = false;
+                const scope = this.resources.child('keybinding-conflict');
                 const finish = (result) => {
                     if (finished) return;
                     finished = true;
-                    document.removeEventListener('keydown', handleModalKeys, true);
+                    scope.dispose();
                     modal.close('keybinding-conflict');
                     resolve(result);
                 };
@@ -7619,11 +7593,19 @@
                         finish('both');
                     }
                 };
-                document.addEventListener('keydown', handleModalKeys, true);
-                body.querySelector('#kb-conflict-cancel')?.addEventListener('click', () => finish('cancel'), { once: true });
-                body.querySelector('#kb-conflict-swap')?.addEventListener('click', () => finish('swap'), { once: true });
-                body.querySelector('#kb-conflict-both')?.addEventListener('click', () => finish('both'), { once: true });
-                body.querySelector('#kb-conflict-reassign')?.addEventListener('click', () => finish('reassign'), { once: true });
+                scope.listen(document, 'keydown', handleModalKeys, true);
+                const modalInfo = modal.modals.get('keybinding-conflict');
+                if (modalInfo?.scope) {
+                    modalInfo.scope.add(() => finish('cancel'));
+                }
+                const cancelBtn = body.querySelector('#kb-conflict-cancel');
+                if (cancelBtn) scope.listen(cancelBtn, 'click', () => finish('cancel'), { once: true });
+                const swapBtn = body.querySelector('#kb-conflict-swap');
+                if (swapBtn) scope.listen(swapBtn, 'click', () => finish('swap'), { once: true });
+                const bothBtn = body.querySelector('#kb-conflict-both');
+                if (bothBtn) scope.listen(bothBtn, 'click', () => finish('both'), { once: true });
+                const reassignBtn = body.querySelector('#kb-conflict-reassign');
+                if (reassignBtn) scope.listen(reassignBtn, 'click', () => finish('reassign'), { once: true });
             });
         }
     }
@@ -7693,9 +7675,33 @@
             const wrap = this.root.querySelector('.home-search-wrap');
             if (!(input instanceof HTMLInputElement) || !(results instanceof HTMLElement) || !(wrap instanceof HTMLElement)) return;
             this.syncSearchLabel();
-            this.resources.listen(input, 'input', () => this.renderHomeSearch(input.value));
+            const flushSearch = (immediateValue = null) => {
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer);
+                    this.searchDebounceTimer = null;
+                }
+                const query = immediateValue ?? input.value;
+                this.renderHomeSearch(query);
+            };
+            this.resources.listen(input, 'input', () => {
+                if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+                if (!input.value.trim()) {
+                    this.closeHomeSearch();
+                    return;
+                }
+                this.searchDebounceTimer = setTimeout(() => {
+                    this.searchDebounceTimer = null;
+                    this.renderHomeSearch(input.value);
+                }, 120);
+            });
+            this.resources.add(() => {
+                if (this.searchDebounceTimer) {
+                    clearTimeout(this.searchDebounceTimer);
+                    this.searchDebounceTimer = null;
+                }
+            });
             this.resources.listen(input, 'focus', () => {
-                if (input.value.trim()) this.renderHomeSearch(input.value);
+                if (input.value.trim()) flushSearch();
             });
             this.resources.listen(input, 'keydown', (event) => {
                 if (event.key === 'Escape') {
@@ -7704,6 +7710,7 @@
                     return;
                 }
                 if (event.key === 'Enter') {
+                    flushSearch();
                     const first = results.querySelector('[data-home-search-result]');
                     if (first instanceof HTMLButtonElement) {
                         event.preventDefault();
@@ -7745,6 +7752,10 @@
             });
         }
         closeHomeSearch() {
+            if (this.searchDebounceTimer) {
+                clearTimeout(this.searchDebounceTimer);
+                this.searchDebounceTimer = null;
+            }
             const results = this.root?.querySelector('#sigmod-home-search-results');
             const input = this.root?.querySelector('#sigmod-home-search');
             if (results instanceof HTMLElement) {
@@ -7820,24 +7831,34 @@
                 }
                 return [...variants].filter(Boolean);
             });
+            const distRow = new Int32Array(64);
             const distance = (a, b, max) => {
-                if (Math.abs(a.length - b.length) > max) return max + 1;
-                const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
-                for (let i = 1; i <= a.length; i += 1) {
+                const la = a.length;
+                const lb = b.length;
+                if (Math.abs(la - lb) > max) return max + 1;
+                if (la === 0) return lb;
+                if (lb === 0) return la;
+                if (lb >= 64) return max + 1;
+                for (let j = 0; j <= lb; j += 1) distRow[j] = j;
+                for (let i = 1; i <= la; i += 1) {
                     let left = i;
                     let diagonal = i - 1;
                     let rowMin = left;
-                    for (let j = 1; j <= b.length; j += 1) {
-                        const up = previous[j];
-                        const next = a[i - 1] === b[j - 1] ? diagonal : Math.min(diagonal, up, left) + 1;
+                    const codeA = a.charCodeAt(i - 1);
+                    for (let j = 1; j <= lb; j += 1) {
+                        const up = distRow[j];
+                        const next =
+                            codeA === b.charCodeAt(j - 1)
+                                ? diagonal
+                                : (diagonal < up ? (diagonal < left ? diagonal : left) : up < left ? up : left) + 1;
                         diagonal = up;
-                        previous[j] = next;
+                        distRow[j] = next;
                         left = next;
-                        rowMin = Math.min(rowMin, next);
+                        if (next < rowMin) rowMin = next;
                     }
                     if (rowMin > max) return max + 1;
                 }
-                return previous[b.length];
+                return distRow[lb] > max ? max + 1 : distRow[lb];
             };
             const matchVariant = (variant, title, haystack, titleTokens, allTokens) => {
                 if (!variant) return 0;
@@ -8141,11 +8162,14 @@
         get root() {
             return this.menu.root;
         }
+        message(source, parameters = null) {
+            return this.menu.message(source, parameters);
+        }
         bindingDisplay(value) {
-            return this.menu.bindingDisplay(value);
+            return this.menu.keybinds.bindingDisplay(value);
         }
         updateKeybindingConflicts() {
-            return this.menu.updateKeybindingConflicts();
+            return this.menu.keybinds.updateKeybindingConflicts();
         }
         renderMouseBindingEditor() {
             return this.menu.renderMouseBindingEditor();
@@ -8889,14 +8913,6 @@
                 this.app.logger.warnOnce('skin-list', 'Unable to load the skin list', error);
             }
         }
-        updateImagePreview(button, kind) {
-            const path = kind === 'map' ? 'game.map.image' : kind === 'virus' ? 'game.virusImage' : 'game.skins.replacement';
-            const source = this.app.settingsStore.get(path);
-            const safe = this.safeImageUrl(source, true);
-            button.style.backgroundImage = safe ? `url("${safe}")` : '';
-            button.style.backgroundPosition = 'center';
-            button.style.backgroundSize = 'cover';
-        }
         safeImageUrl(value, allowRelative = false) {
             return safeHttpUrl(value, allowRelative);
         }
@@ -9142,6 +9158,8 @@
                 });
                 const remove = createElement('button', {
                     className: 'theme-gradient-remove',
+                    icon: 'trash',
+                    iconSize: 12,
                     attributes: {
                         type: 'button',
                         'data-remove-gradient-stop': index,
@@ -9149,7 +9167,6 @@
                             this.app.i18n?.message('Remove gradient stop {index}', { index: index + 1 }) ??
                             `Remove gradient stop ${index + 1}`,
                     },
-                    text: '\xD7',
                 });
                 if (this.gradientStops.length <= 2) remove.disabled = true;
                 row.append(number, color, position, suffix, remove);
@@ -9161,8 +9178,10 @@
         addGradientStop() {
             if (this.gradientStops.length >= 6) {
                 const hint = this.editor?.querySelector('#theme-editor-hint');
-                if (hint)
+                if (hint) {
                     hint.textContent = this.app.i18n?.message('A gradient can have up to 6 stops.') ?? 'A gradient can have up to 6 stops.';
+                    hint.classList.add('is-error');
+                }
                 return;
             }
             const sorted = [...this.gradientStops].sort((a, b) => a.position - b.position);
@@ -9266,13 +9285,17 @@
             }
             this.editorPickers.set(key, picker);
             if (typeof picker.on === 'function') {
-                picker.on('change', (event) => {
+                const handleColorChange = (event) => {
                     const value = typeof event?.hex === 'string' ? event.hex.slice(0, 7) : null;
                     if (!value) return;
                     input.value = value;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
                     onChange(value);
                     this.onUpdatePreview();
-                });
+                };
+                picker.on('change', handleColorChange);
+                picker.on('color', handleColorChange);
             }
         }
         upgradeEditorColorPickers() {
@@ -9329,8 +9352,9 @@
             this.editorAnimationRevision = 0;
             this.container = null;
             this.editor = null;
-            this.originalStyles = /* @__PURE__ */ new Map();
-            this.originalClasses = /* @__PURE__ */ new Map();
+            this.originalStyles = /* @__PURE__ */ new WeakMap();
+            this.originalClasses = /* @__PURE__ */ new WeakMap();
+            this.trackedElements = /* @__PURE__ */ new Set();
             this.editorType = 'gradient';
             this.gradientEditor = new GradientEditor(
                 app2,
@@ -9644,7 +9668,67 @@
                 '#updates',
                 '#shop-area',
             ];
-            this.textSelectors = ['#challenge-coins .alert-heading', '#sigma-pass h3', '.alert *'];
+            this.textSelectors = [
+                '#challenge-coins .alert-heading',
+                '#sigma-pass h3',
+                '.alert *',
+                '#menu h1',
+                '#menu h2',
+                '#menu h3',
+                '#menu p',
+                '#menu label',
+                '#title',
+                '.stats__item > span',
+                '.stats-btn__text',
+                '.top-users table',
+                '.top-users th',
+                '.top-users td:not(.sub)',
+                '.menu-links a.link',
+                '.menu-links .link_btn',
+                '#left-menu .profile-name',
+                '#left-menu p',
+                '#left-menu span',
+                '#text-block p',
+                '#text-block span',
+            ];
+            this.menuTextSelector = [
+                '#title',
+                'h1',
+                'h2',
+                'h3',
+                'h4',
+                'h5',
+                'h6',
+                'p',
+                'label',
+                'strong',
+                'b',
+                'table',
+                'th',
+                'td:not(.sub)',
+                '.top-users__title',
+                '.profile-name',
+                '.user-level',
+                'a.link',
+                '.link_btn',
+                '.menu__desc-texts',
+                '.menu__title',
+                '.instructions__texts',
+                '.skin-select__icon-text',
+                '.stats__item-title',
+                '.stats__item-value',
+                '.stats-btn__text',
+                '.stats__item > span',
+                '#menu__bonus',
+                '#menu__bonus *',
+                '#top_leaderboard_position',
+                '#highest_mass',
+                '#time_alive',
+                '#food_eaten',
+                '#sigma-progress',
+                '#progress-next',
+                'span:not(.btn *):not(button *):not(.badge):not(.badge *)',
+            ].join(', ');
             this.modalRootSelector = '.connecting, .chest-modal, #payments-modal, .ctrl-modal';
             this.modalPanelSelector = [
                 '.connecting__content',
@@ -9687,14 +9771,14 @@
             if (!(this.container instanceof HTMLElement)) throw new Error('Theme container is unavailable');
             this.installCompatibility();
             this.createEditor();
-            this.setupGradientDrag();
+            this.gradientEditor.setupGradientDrag();
             this.renderThemes();
             this.app.dependencies
                 .load('colorPicker')
                 .then((Alwan) => {
                     if (this.resources.disposed || typeof Alwan !== 'function') return;
-                    this.editorAlwan = Alwan;
-                    this.upgradeEditorColorPickers();
+                    this.gradientEditor.editorAlwan = Alwan;
+                    this.gradientEditor.upgradeEditorColorPickers();
                 })
                 .catch((error) =>
                     this.app.logger.warnOnce(
@@ -9786,10 +9870,11 @@
             });
             editor.innerHTML = `
                 <div class="theme-editor-topbar">
-                    <div>
-                        <div class="theme-editor-title">Theme Editor</div>
+                    <div class="theme-editor-header-title">
+                        ${icon('palette', 18)}
+                        <span class="theme-editor-title">Theme Editor</span>
                     </div>
-                    <button type="button" class="theme-editor-close" id="closeThemeEditor" aria-label="Close theme editor">\xD7</button>
+                    <button type="button" class="theme-editor-close" id="closeThemeEditor" aria-label="Close theme editor">${icon('close', 16)}</button>
                 </div>
                 <div class="theme-editor-type-switch" role="tablist" aria-label="Theme type">
                     <button type="button" data-theme-editor-type="color">Color</button>
@@ -9807,7 +9892,7 @@
                         <section id="theme_editor_gradient" class="theme-editor-tab">
                             <div class="theme-editor-section-head">
                                 <div class="theme-editor-section-title">Gradient</div>
-                                <button type="button" class="theme-editor-small-btn" id="theme-editor-add-stop">+ Stop</button>
+                                <button type="button" class="theme-editor-small-btn" id="theme-editor-add-stop">${icon('plus', 12)}<span>Stop</span></button>
                             </div>
                             <label class="theme-editor-row">
                                 <span>Type</span>
@@ -9819,20 +9904,20 @@
                             </label>
                             <label class="theme-editor-row" id="theme-editor-gradient_angle">
                                 <span id="gradient_angle_text">Angle \xB7 135\xB0</span>
-                                <input type="range" class="modSlider" id="g_angle" value="135" min="0" max="360" step="1">
+                                <input type="range" class="modSlider theme-editor-angle-slider" id="g_angle" value="135" min="0" max="360" step="1">
                             </label>
                             <div class="theme-gradient-track" id="theme-gradient-stop-track" aria-label="Gradient stop positions">
                                 <div class="theme-gradient-marker-layer" id="theme-gradient-marker-layer"></div>
                             </div>
-                            <div class="theme-gradient-stop-list" id="theme-gradient-stop-list"></div>
+                            <div class="theme-gradient-stop-list scroll" id="theme-gradient-stop-list"></div>
                             <label class="theme-editor-row"><span>Text</span><input type="color" value="#ffffff" id="theme-editor-gcolor2"></label>
                         </section>
 
                         <section id="theme_editor_image" class="theme-editor-tab" hidden>
-                            <div class="theme-editor-section-title">Image</div>
+                            <div class="theme-editor-section-title">Background Image</div>
                             <label class="theme-editor-field">
                                 <span>Image or GIF URL</span>
-                                <input type="url" id="theme-editor-imagelink" class="form-control" placeholder="https://example.com/background.jpg">
+                                <input type="url" id="theme-editor-imagelink" class="form-control theme-editor-input" placeholder="https://example.com/background.jpg">
                             </label>
                             <label class="theme-editor-row"><span>Text</span><input type="color" value="#ffffff" id="theme-editor-textcolorImage"></label>
                         </section>
@@ -9841,7 +9926,11 @@
                     <aside class="theme-editor-preview-column">
                         <div class="theme-editor-preview-label">Preview</div>
                         <div class="theme-editor-preview" id="theme_editor_preview">
-                            <div class="theme-editor-preview-sidebar"></div>
+                            <div class="theme-editor-preview-sidebar">
+                                <div class="theme-preview-nav-dot is-active"></div>
+                                <div class="theme-preview-nav-dot"></div>
+                                <div class="theme-preview-nav-dot"></div>
+                            </div>
                             <div class="theme-editor-preview-content">
                                 <span class="theme-editor-preview-title">SigMod</span>
                                 <span class="theme-editor-preview-copy">Preview text</span>
@@ -9849,20 +9938,23 @@
                             </div>
                         </div>
                         <label class="theme-editor-field theme-editor-name-field">
-                            <span>Name</span>
-                            <input type="text" class="form-control" maxlength="20" placeholder="Theme name" id="themeEditorName">
+                            <span>Theme Name</span>
+                            <input type="text" class="form-control theme-editor-input" maxlength="20" placeholder="My Custom Theme" id="themeEditorName">
                         </label>
-                        <button type="button" class="modButton-primary theme-editor-save" id="saveTheme">Save theme</button>
+                        <button type="button" class="modButton-primary theme-editor-save" id="saveTheme">
+                            ${icon('check', 14)}
+                            <span>Save theme</span>
+                        </button>
                         <div class="theme-editor-hint" id="theme-editor-hint">Right-click a custom preset later to delete it.</div>
                     </aside>
                 </div>
             `;
             this.editor = editor;
-            this.renderGradientStops();
+            this.gradientEditor.renderGradientStops();
             this.updateEditorPreview();
             this.resources.add(() => {
                 this.editorAnimation?.cancel();
-                this.destroyEditorPickers();
+                this.gradientEditor.destroyEditorPickers();
                 editor.remove();
                 if (this.editor === editor) this.editor = null;
             });
@@ -9958,15 +10050,16 @@
             if (typeButton instanceof HTMLButtonElement) {
                 this.editorType = typeButton.dataset.themeEditorType || 'gradient';
                 this.updateEditorPreview();
+                this.gradientEditor.upgradeEditorColorPickers();
                 return;
             }
             if (target.closest('#theme-editor-add-stop')) {
-                this.addGradientStop();
+                this.gradientEditor.addGradientStop();
                 return;
             }
             const remove = target.closest('[data-remove-gradient-stop]');
             if (remove instanceof HTMLElement) {
-                this.removeGradientStop(Number(remove.dataset.removeGradientStop));
+                this.gradientEditor.removeGradientStop(Number(remove.dataset.removeGradientStop));
                 return;
             }
             if (target.closest('#saveTheme')) this.saveEditorTheme(this.editorType);
@@ -9981,17 +10074,22 @@
                 className: 'modAlert theme-editor-modal',
                 closeOnBackdrop: true,
             });
-            this.upgradeEditorColorPickers();
+            this.gradientEditor.upgradeEditorColorPickers();
             this.updateEditorPreview();
+            const hint = this.editor.querySelector('#theme-editor-hint');
+            if (hint) {
+                hint.textContent = 'Right-click a custom preset later to delete it.';
+                hint.classList.remove('is-error');
+            }
             this.editor.querySelector('#themeEditorName')?.focus();
         }
         hideEditor() {
             this.app.features.get('modal')?.close('theme-editor');
-            this.gradientDrag = null;
+            this.gradientEditor.gradientDrag = null;
         }
         updateEditorPreview() {
             if (!this.editor) return;
-            this.syncGradientStopInputs();
+            this.gradientEditor.syncGradientStopInputs();
             for (const button of this.editor.querySelectorAll('[data-theme-editor-type]')) {
                 button.classList.toggle('is-active', button.dataset.themeEditorType === this.editorType);
             }
@@ -10010,10 +10108,10 @@
                 angleText.textContent = this.app.i18n?.message('Angle \xB7 {angle}\xB0', { angle }) ?? `Angle \xB7 ${angle}\xB0`;
             }
             const track = this.editor.querySelector('#theme-gradient-stop-track');
-            if (track instanceof HTMLElement) track.style.background = this.gradientValue();
+            if (track instanceof HTMLElement) track.style.background = this.gradientEditor.gradientValue();
             for (const marker of this.editor.querySelectorAll('[data-gradient-marker]')) {
                 const index = Number(marker.getAttribute('data-gradient-marker'));
-                const stop = this.gradientStops[index];
+                const stop = this.gradientEditor.gradientStops[index];
                 if (!(marker instanceof HTMLElement) || !stop) continue;
                 marker.style.left = `${clamp(stop.position, 0, 100)}%`;
                 marker.style.background = stop.color;
@@ -10024,7 +10122,7 @@
                 background = this.value('theme-editor-bgcolorinput') || '#111111';
                 text = this.value('theme-editor-colorinput') || '#ffffff';
             } else if (this.editorType === 'gradient') {
-                background = this.gradientValue();
+                background = this.gradientEditor.gradientValue();
                 text = this.value('theme-editor-gcolor2') || '#ffffff';
             } else {
                 const image = this.safeImageUrl(this.value('theme-editor-imagelink'));
@@ -10036,9 +10134,11 @@
                 preview.style.background = background;
                 preview.style.backgroundPosition = 'center';
                 preview.style.backgroundSize = 'cover';
-                preview.style.color = text;
-                for (const child of preview.querySelectorAll('.theme-editor-preview-title, .theme-editor-preview-copy')) {
-                    if (child instanceof HTMLElement) child.style.color = text;
+                preview.style.setProperty('color', text, 'important');
+                for (const child of preview.querySelectorAll(
+                    '.theme-editor-preview-title, .theme-editor-preview-copy, .theme-editor-preview-button, .theme-editor-preview-content *'
+                )) {
+                    if (child instanceof HTMLElement) child.style.setProperty('color', text, 'important');
                 }
             }
         }
@@ -10046,11 +10146,17 @@
             const name = this.value('themeEditorName').trim().slice(0, 20);
             const hint = this.editor?.querySelector('#theme-editor-hint');
             if (!name) {
-                if (hint) hint.textContent = 'Give the theme a name first.';
+                if (hint) {
+                    hint.textContent = 'Give the theme a name first.';
+                    hint.classList.add('is-error');
+                }
                 return;
             }
             if (this.findTheme(name)) {
-                if (hint) hint.textContent = 'That theme name is already used.';
+                if (hint) {
+                    hint.textContent = 'That theme name is already used.';
+                    hint.classList.add('is-error');
+                }
                 return;
             }
             let background;
@@ -10059,14 +10165,17 @@
                 background = this.value('theme-editor-bgcolorinput') || '#111111';
                 text = this.value('theme-editor-colorinput') || '#ffffff';
             } else if (type === 'gradient') {
-                if (this.gradientStops.length < 2) return;
-                background = this.gradientValue();
+                if (this.gradientEditor.gradientStops.length < 2) return;
+                background = this.gradientEditor.gradientValue();
                 text = this.value('theme-editor-gcolor2') || '#ffffff';
             } else {
                 background = this.safeImageUrl(this.value('theme-editor-imagelink'));
                 text = this.value('theme-editor-textcolorImage') || '#ffffff';
                 if (!background) {
-                    if (hint) hint.textContent = 'Enter a valid http(s) image URL.';
+                    if (hint) {
+                        hint.textContent = 'Enter a valid http(s) image URL.';
+                        hint.classList.add('is-error');
+                    }
                     return;
                 }
             }
@@ -10078,7 +10187,10 @@
             this.container.scrollTop = this.container.scrollHeight;
             const nameInput = this.editor?.querySelector('#themeEditorName');
             if (nameInput instanceof HTMLInputElement) nameInput.value = '';
-            if (hint) hint.textContent = 'Right-click a custom preset later to delete it.';
+            if (hint) {
+                hint.textContent = 'Right-click a custom preset later to delete it.';
+                hint.classList.remove('is-error');
+            }
         }
         removeCustomTheme(name) {
             const selected = this.current?.name === name;
@@ -10113,9 +10225,32 @@
                     this.setStyle(element, 'color', this.current.text, 'important');
                 }
             }
+            if (root instanceof Element) {
+                const themedAncestor = root.closest(this.themeSelectors.join(', '));
+                if (themedAncestor) {
+                    if (
+                        root.matches(this.menuTextSelector) &&
+                        !root.closest(
+                            '.btn, button:not(.link_btn), select, input, textarea, .theme-editor-content, #discord_link, #tournament_link'
+                        )
+                    ) {
+                        this.setStyle(root, 'color', this.current.text, 'important');
+                    }
+                    for (const child of root.querySelectorAll(this.menuTextSelector)) {
+                        if (
+                            child.closest(
+                                '.btn, button:not(.link_btn), select, input, textarea, .theme-editor-content, #discord_link, #tournament_link'
+                            )
+                        ) {
+                            continue;
+                        }
+                        this.setStyle(child, 'color', this.current.text, 'important');
+                    }
+                }
+            }
             const page = document.querySelector(SELECTORS.page);
             if (page) {
-                for (const element of page.children) this.setStyle(element, 'color', this.current.text);
+                for (const element of page.children) this.setStyle(element, 'color', this.current.text, 'important');
             }
             this.applyLauncherColor();
             this.applyModalTheme(root);
@@ -10210,7 +10345,7 @@
         }
         applyThemeElement(element) {
             if (element.matches('#title')) {
-                this.setStyle(element, 'color', this.current.text);
+                this.setStyle(element, 'color', this.current.text, 'important');
                 return;
             }
             const image = this.safeImageUrl(this.current.background);
@@ -10225,7 +10360,17 @@
                 this.setStyle(element, 'background-size', '');
                 this.setStyle(element, 'background-repeat', 'no-repeat');
             }
-            this.setStyle(element, 'color', this.current.text);
+            this.setStyle(element, 'color', this.current.text, 'important');
+            for (const child of element.querySelectorAll(this.menuTextSelector)) {
+                if (
+                    child.closest(
+                        '.btn, button:not(.link_btn), select, input, textarea, .theme-editor-content, #discord_link, #tournament_link'
+                    )
+                ) {
+                    continue;
+                }
+                this.setStyle(child, 'color', this.current.text, 'important');
+            }
         }
         applyLayout() {
             this.applyLayoutToTree(document);
@@ -10287,6 +10432,7 @@
         }
         setStyle(element, property, value, priority = '') {
             if (!(element instanceof HTMLElement || element instanceof SVGElement)) return;
+            this.trackedElements.add(element);
             let properties = this.originalStyles.get(element);
             if (!properties) {
                 properties = /* @__PURE__ */ new Map();
@@ -10301,27 +10447,26 @@
             element.style.setProperty(property, value, priority);
         }
         setHidden(element, hidden) {
+            this.trackedElements.add(element);
             if (!this.originalClasses.has(element)) this.originalClasses.set(element, element.classList.contains('hidden_full'));
             element.classList.toggle('hidden_full', hidden);
         }
         restoreMutations() {
-            for (const [element, properties] of this.originalStyles) {
-                this.restoreElementStyles(element, properties);
+            for (const element of this.trackedElements) {
+                const properties = this.originalStyles.get(element);
+                if (properties) this.restoreElementStyles(element, properties);
+                if (this.originalClasses.has(element)) element.classList.toggle('hidden_full', this.originalClasses.get(element));
             }
-            for (const [element, hidden] of this.originalClasses) element.classList.toggle('hidden_full', hidden);
-            this.originalStyles.clear();
-            this.originalClasses.clear();
+            this.trackedElements.clear();
         }
         restoreTree(root) {
-            for (const [element, properties] of this.originalStyles) {
-                if (element !== root && !root.contains(element)) continue;
-                this.restoreElementStyles(element, properties);
-                this.originalStyles.delete(element);
-            }
-            for (const [element, hidden] of this.originalClasses) {
-                if (element !== root && !root.contains(element)) continue;
-                element.classList.toggle('hidden_full', hidden);
-                this.originalClasses.delete(element);
+            for (const element of this.trackedElements) {
+                if (!element.isConnected || element === root || root.contains(element)) {
+                    const properties = this.originalStyles.get(element);
+                    if (properties) this.restoreElementStyles(element, properties);
+                    if (this.originalClasses.has(element)) element.classList.toggle('hidden_full', this.originalClasses.get(element));
+                    this.trackedElements.delete(element);
+                }
             }
         }
         restoreElementStyles(element, properties) {
@@ -10329,60 +10474,6 @@
                 if (original.value) element.style.setProperty(property, original.value, original.priority);
                 else element.style.removeProperty(property);
             }
-        }
-        get gradientStops() {
-            return this.gradientEditor.gradientStops;
-        }
-        get editorPickers() {
-            return this.gradientEditor.editorPickers;
-        }
-        get editorAlwan() {
-            return this.gradientEditor.editorAlwan;
-        }
-        set editorAlwan(value) {
-            this.gradientEditor.editorAlwan = value;
-        }
-        get gradientDrag() {
-            return this.gradientEditor.gradientDrag;
-        }
-        set gradientDrag(value) {
-            this.gradientEditor.gradientDrag = value;
-        }
-        syncGradientStopInputs() {
-            return this.gradientEditor.syncGradientStopInputs();
-        }
-        renderGradientStops() {
-            return this.gradientEditor.renderGradientStops();
-        }
-        addGradientStop() {
-            return this.gradientEditor.addGradientStop();
-        }
-        removeGradientStop(index) {
-            return this.gradientEditor.removeGradientStop(index);
-        }
-        setupGradientDrag() {
-            return this.gradientEditor.setupGradientDrag();
-        }
-        updateGradientDrag(event) {
-            return this.gradientEditor.updateGradientDrag(event);
-        }
-        destroyGradientStopPickers() {
-            return this.gradientEditor.destroyGradientStopPickers();
-        }
-        destroyEditorPickers() {
-            return this.gradientEditor.destroyEditorPickers();
-        }
-        createEditorPicker(key, input, color, onChange) {
-            return this.gradientEditor.createEditorPicker(key, input, color, onChange);
-        }
-        upgradeEditorColorPickers() {
-            return this.gradientEditor.upgradeEditorColorPickers();
-        }
-        upgradeGradientStopPickers() {
-            return this.gradientEditor.upgradeGradientStopPickers();
-        }
-        gradientValue() {
-            return this.gradientEditor.gradientValue();
         }
         value(id) {
             const input = this.editor?.querySelector(`#${id}`);
@@ -10442,17 +10533,32 @@
             };
             const originalTranslate = prototype.translate;
             const originalScale = prototype.scale;
+            const cameraState =
+                visual.cameraState ||
+                (visual.cameraState = {
+                    x: 0,
+                    y: 0,
+                    scale: 0,
+                    offsetX: 0,
+                    offsetY: 0,
+                    cw: 0,
+                    ch: 0,
+                });
+            if (visual.app.state.camera !== cameraState) {
+                visual.app.state.camera = cameraState;
+            }
             const updateCameraState = (cw, ch, scaleVal, camX, camY, offsetX, offsetY) => {
-                visual.app.state.camera = {
-                    x: camX,
-                    y: camY,
-                    scale: scaleVal,
-                    offsetX,
-                    offsetY,
-                    cw,
-                    ch,
-                };
-                const smartPing = visual.app.features?.controllers?.get?.('smartPing') || visual.app.features?.get?.('smartPing');
+                cameraState.x = camX;
+                cameraState.y = camY;
+                cameraState.scale = scaleVal;
+                cameraState.offsetX = offsetX;
+                cameraState.offsetY = offsetY;
+                cameraState.cw = cw;
+                cameraState.ch = ch;
+                const smartPing =
+                    visual.smartPingController ||
+                    (visual.smartPingController =
+                        visual.app.features?.controllers?.get?.('smartPing') || visual.app.features?.get?.('smartPing'));
                 if (smartPing && smartPing.activePings?.size > 0) {
                     smartPing.drawPings();
                 }
@@ -10464,7 +10570,6 @@
                     if (Math.abs(x - cw / 2) < 2 && Math.abs(y - ch / 2) < 2) {
                         if (inWorldSpace) {
                             inWorldSpace = false;
-                            visual.drawMergeTimers(this);
                         }
                         cameraCaptureStage = 1;
                     } else if (cameraCaptureStage === 2) {
@@ -10484,7 +10589,6 @@
                     } else {
                         if (inWorldSpace) {
                             inWorldSpace = false;
-                            visual.drawMergeTimers(this);
                         }
                         cameraCaptureStage = 0;
                     }
@@ -10543,7 +10647,11 @@
                     if (hasEnteredWorldSpace && !inWorldSpace && visual.app.state.hudVisible === false) return;
                     if (visual.awaitingGridStroke) {
                         visual.awaitingGridStroke = false;
-                        if (!document.getElementById('sf-canvas')) {
+                        const hasSfCanvas =
+                            typeof document.getElementById === 'function'
+                                ? document.getElementById('sf-canvas')
+                                : document.querySelector?.('#sf-canvas');
+                        if (!hasSfCanvas) {
                             visual.nativeGridWantedThisFrame = true;
                             const strokeStyle = String(this.strokeStyle).toLowerCase();
                             visual.lastGridStrokeWasDark =
@@ -10590,13 +10698,6 @@
         }
     }
     class VisualController extends FeatureController {
-        drawMergeTimers(context) {
-            if (this.app.state.hudVisible === false) return;
-            const mergeTimer = this.app.features.get('mergeTimer');
-            if (mergeTimer && typeof mergeTimer.drawOnContext === 'function') {
-                mergeTimer.drawOnContext(context, this.originalFillText, this.originalStrokeText);
-            }
-        }
         constructor(app2, name) {
             super(app2, name);
             this.assets = {
@@ -10619,6 +10720,18 @@
             this.sigFixCellDisplays = /* @__PURE__ */ new Map();
             this.sigFixCellMaps = /* @__PURE__ */ new WeakSet();
             this.sigFixSkinRenders = /* @__PURE__ */ new WeakSet();
+            this.cameraState = {
+                x: 0,
+                y: 0,
+                scale: 0,
+                offsetX: 0,
+                offsetY: 0,
+                cw: 0,
+                ch: 0,
+            };
+            this.app.state.camera = this.cameraState;
+            this.smartPingController = null;
+            this.nicknameEl = null;
         }
         async mount() {
             this.syncAssets();
@@ -10648,6 +10761,7 @@
                 this.refreshRenderConfig();
             });
             const nickname = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
+            this.nicknameEl = nickname;
             if (nickname instanceof HTMLInputElement) {
                 const updateNickname = () => {
                     this.app.state.nickname = nickname.value.trim() || 'Guest';
@@ -11045,7 +11159,11 @@
          * @param {number} camY
          */
         maybeDrawProperGrid(context, cw, ch, scaleVal, camX, camY) {
-            if (document.getElementById('sf-canvas')) return;
+            const sfCanvas =
+                typeof document.getElementById === 'function'
+                    ? document.getElementById('sf-canvas')
+                    : document.querySelector?.('#sf-canvas');
+            if (sfCanvas) return;
             if (this.gridDrawnThisFrame) return;
             const showGrid = this.nativeGridWantedThisFrame || Boolean(this.app.settings.game?.showGrid ?? true);
             if (!showGrid) return;
@@ -11185,8 +11303,10 @@
         }
         /** @param {string} text */
         isOwnName(text) {
-            const nickname = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
-            const playedName = nickname instanceof HTMLInputElement ? nickname.value.trim() : '';
+            if (!this.nicknameEl || !this.nicknameEl.isConnected) {
+                this.nicknameEl = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
+            }
+            const playedName = typeof this.nicknameEl?.value === 'string' ? this.nicknameEl.value.trim() : '';
             return Boolean(playedName && text === playedName);
         }
         /** @param {unknown} text */
@@ -11892,7 +12012,7 @@
             style.textContent = `${SELECTORS.chatBlock} { display: none !important; visibility: hidden !important; pointer-events: none !important; }`;
             (document.head || document.documentElement).append(style);
             this.resources.add(() => style.remove());
-            setTimeout(() => {
+            this.resources.timeout(() => {
                 const showChat = document.querySelector('#showChat');
                 if (showChat instanceof HTMLInputElement && showChat.checked) {
                     showChat.click();
@@ -12006,8 +12126,8 @@
                 return { wrapper, input };
             };
             const keys = makeSection('Keybindings');
-            const locValue = this.app.settingsStore.get('macros.keys.location');
-            const toggleValue = this.app.settingsStore.get('macros.keys.toggle.chat');
+            const locValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.location'));
+            const toggleValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.toggle.chat'));
             const locationKey = createElement('input', {
                 className: 'keybinding',
                 attributes: {
@@ -12102,7 +12222,7 @@
             panel.append(page);
             this.settingsPanel = panel;
             const bindBoolean = (input, path) => {
-                input.checked = Boolean(this.app.settingsStore.get(path));
+                input.checked = Boolean(unwrapSettingScalar(this.app.settingsStore.get(path)));
                 this.resources.listen(input, 'change', () => {
                     this.app.settingsStore.set(path, input.checked);
                     this.applyChatPreferences();
@@ -12126,7 +12246,7 @@
             ]) {
                 const input = panel.querySelector(`#${id}`);
                 if (!(input instanceof HTMLInputElement)) continue;
-                input.value = normalizePickerColor(this.app.settingsStore.get(path), fallback);
+                input.value = normalizePickerColor(unwrapSettingScalar(this.app.settingsStore.get(path)), fallback);
                 this.resources.listen(input, 'input', () => {
                     this.app.settingsStore.set(path, input.value);
                     this.applyColors();
@@ -12160,7 +12280,7 @@
                 try {
                     picker = new Alwan(`#${id}`, {
                         id: `edit-${id}`,
-                        color: this.app.settingsStore.get(path) || fallback,
+                        color: unwrapSettingScalar(this.app.settingsStore.get(path)) || fallback,
                         theme: 'dark',
                         opacity,
                         format: 'hex',
@@ -12292,7 +12412,7 @@
             const user = this.app.state.user || (isObject(window.gameSettings) ? window.gameSettings.user : null);
             const requiresLogin = this.mode === 'main' && !user;
             const partyUnavailable = this.mode === 'party' && !this.app.settings.settings.tag;
-            this.input.disabled = requiresLogin || partyUnavailable;
+            this.input.disabled = partyUnavailable;
             this.input.placeholder = requiresLogin
                 ? 'Login to use the chat'
                 : partyUnavailable
@@ -12346,13 +12466,14 @@
             this.scrollToBottom(true);
         }
         queueGameChat(message) {
+            const limit = location.search.startsWith('?ip=') ? 64 : 16;
             const parts = [];
             let current = '';
             const words = message.split(/\s+/).filter(Boolean);
             for (let word of words) {
-                while (word.length > 15) {
-                    const sub = word.slice(0, 15);
-                    word = word.slice(15);
+                while (word.length > limit) {
+                    const sub = word.slice(0, limit);
+                    word = word.slice(limit);
                     if (current) {
                         parts.push(current);
                         current = '';
@@ -12362,7 +12483,7 @@
                 if (!word) continue;
                 if (!current) {
                     current = word;
-                } else if (current.length + word.length + 1 <= 15) {
+                } else if (current.length + word.length + 1 <= limit) {
                     current += ` ${word}`;
                 } else {
                     parts.push(current);
@@ -12478,15 +12599,25 @@
                 }
                 contextMenu.remove();
                 this.onContext = null;
+                if (this.contextMenuDisposer) {
+                    this.contextMenuDisposer();
+                    this.contextMenuDisposer = null;
+                }
             });
             const closeMenu = (e) => {
                 if (!contextMenu.contains(e.target)) {
                     contextMenu.remove();
                     this.onContext = null;
-                    document.removeEventListener('click', closeMenu);
+                    if (this.contextMenuDisposer) {
+                        this.contextMenuDisposer();
+                        this.contextMenuDisposer = null;
+                    }
                 }
             };
-            setTimeout(() => document.addEventListener('click', closeMenu), 0);
+            this.resources.timeout(() => {
+                document.addEventListener('click', closeMenu);
+                this.contextMenuDisposer = () => document.removeEventListener('click', closeMenu);
+            }, 0);
         }
         isBlocked(name, message) {
             const normalizedName = name.toLowerCase();
@@ -12576,6 +12707,10 @@
         destroy() {
             this.onContext?.remove();
             this.onContext = null;
+            if (this.contextMenuDisposer) {
+                this.contextMenuDisposer();
+                this.contextMenuDisposer = null;
+            }
             this.root = null;
             this.messages = null;
             this.input = null;
@@ -12800,9 +12935,6 @@
             }
             return Boolean(this.app.state.player.alive);
         }
-        isLocalAlive() {
-            return this.isLocalPlaying();
-        }
         resolveLocalColor() {
             const sigfixApi = window.sigfix || this.app.host.adapter?.api;
             if (sigfixApi?.world?.cells instanceof Map && sigfixApi.world.views) {
@@ -12812,10 +12944,7 @@
                     for (const id of owned) {
                         const cell = sigfixApi.world.cells.get(id);
                         if (cell && typeof cell.red === 'number' && typeof cell.green === 'number' && typeof cell.blue === 'number') {
-                            const r = Math.min(255, Math.max(0, Math.round(cell.red * 255)));
-                            const g = Math.min(255, Math.max(0, Math.round(cell.green * 255)));
-                            const b = Math.min(255, Math.max(0, Math.round(cell.blue * 255)));
-                            return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+                            return `#${rgbToHex(cell.red * 255, cell.green * 255, cell.blue * 255)}`;
                         }
                     }
                 }
@@ -12825,8 +12954,7 @@
                 for (const id of adapter.protocol.owned) {
                     const cell = adapter.protocol.cells.get(id);
                     if (cell?.color && Array.isArray(cell.color)) {
-                        const [r, g, b] = cell.color;
-                        return `#${[r, g, b].map((v) => Number(v).toString(16).padStart(2, '0')).join('')}`;
+                        return `#${rgbToHex(...cell.color)}`;
                     }
                 }
             }
@@ -12924,7 +13052,7 @@
                 const onTagChange = (event) => {
                     event.stopPropagation();
                     if (tagDebounceTimer) clearTimeout(tagDebounceTimer);
-                    tagDebounceTimer = setTimeout(() => {
+                    tagDebounceTimer = this.resources.timeout(() => {
                         const value = input.value.trim() ? input.value.trim().slice(0, 3) : null;
                         this.app.settingsStore.set('settings.tag', value, true);
                     }, 150);
@@ -13554,7 +13682,7 @@
                 }
                 if (settings.partyShowScores !== false) {
                     row._scoreEl.style.display = '';
-                    const scoreText = member.score > 0 ? this.formatScore(member.score) : '';
+                    const scoreText = member.score > 0 ? formatScore(member.score) : '';
                     if (row._scoreEl.textContent !== scoreText) {
                         row._scoreEl.textContent = scoreText;
                     }
@@ -13606,10 +13734,10 @@
                 expandBtn.remove();
             }
             count.textContent = String(sorted.length);
-            total.textContent = this.formatScore(sorted.reduce((sum, member) => sum + (member.score || 0), 0));
+            total.textContent = formatScore(sorted.reduce((sum, member) => sum + (member.score || 0), 0));
         }
         formatScore(score) {
-            return score >= 1e3 ? `${(score / 1e3).toFixed(1)}k` : String(score);
+            return formatScore(score);
         }
         destroy() {
             document.body.style.userSelect = '';
@@ -13834,14 +13962,16 @@
         }
         /** @param {number} count */
         split(count = 1) {
-            const total = Math.max(0, Math.trunc(Number(count) || 0));
+            const rawCount = unwrapSettingScalar(count);
+            const total = Math.max(0, Math.trunc(Number(rawCount) || 0));
             if (total <= 0) return;
             this.app.state.lastSplitAt = Date.now();
             for (let index = 0; index < total; index += 1) this.sendAction('split');
         }
         /** @param {number} count */
         trickSplit(count) {
-            let remaining = Math.max(0, Math.trunc(count));
+            const rawCount = unwrapSettingScalar(count);
+            let remaining = Math.max(0, Math.trunc(Number(rawCount) || 0));
             const run = () => {
                 if (remaining <= 0 || this.resources.disposed) return;
                 remaining -= 1;
@@ -13852,8 +13982,10 @@
         }
         startRapidFeed(key) {
             if (this.rapidFeedTimer !== null) return;
-            this.rapidFeedKey = key;
-            const delay = Math.max(0, Number(this.app.settings.macros.feedSpeed) || 40);
+            const unwrappedKey = unwrapSettingScalar(key);
+            this.rapidFeedKey = typeof unwrappedKey === 'string' ? unwrappedKey.toLowerCase() : unwrappedKey;
+            const rawDelay = unwrapSettingScalar(this.app.settings?.macros?.feedSpeed);
+            const delay = Math.max(0, Number(rawDelay) || 40);
             this.rapidFeedTimer = window.setInterval(() => {
                 if (!this.canFeed()) return this.stopRapidFeed();
                 this.sendAction('eject');
@@ -13896,58 +14028,60 @@
             }
             if (this.app.inputOwnership?.ownsKeyEvent(event)) return;
             const key = String(event.key).toLowerCase();
-            const keys = this.app.settings.macros.keys;
+            const keys = this.app.settings?.macros?.keys;
+            if (!keys) return;
             if (key === 'p') event.stopPropagation();
             if (key === 'tab' && !window.screenTop && !window.screenY) event.preventDefault();
-            const rapidFeedBinding = this.app.settingsStore.get('macros.keys.rapidFeed');
+            const rapidFeedBinding = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.rapidFeed'));
+            const activeRapidKey = this.adapter?.kind === 'sigfix' ? rapidFeedBinding : unwrapSettingScalar(keys.rapidFeed);
             if (this.adapter?.kind === 'sigfix' && key === 'w') {
                 this.syncSigFixHeldFeed();
                 return;
-            } else if (this.matches(event, this.adapter?.kind === 'sigfix' ? rapidFeedBinding : keys.rapidFeed)) {
+            } else if (this.matches(event, activeRapidKey)) {
                 event.stopPropagation();
                 if (event.key === 'Dead') event.preventDefault();
-                this.startRapidFeed(rapidFeedBinding);
+                this.startRapidFeed(activeRapidKey);
                 return;
             }
             if (key === ' ') this.app.state.lastSplitAt = Date.now();
             if (
                 this.lock === 'vertical' &&
                 (key === ' ' ||
-                    this.matches(event, keys.splits.double) ||
-                    this.matches(event, keys.splits.triple) ||
-                    this.matches(event, keys.splits.quad))
+                    this.matches(event, keys.splits?.double) ||
+                    this.matches(event, keys.splits?.triple) ||
+                    this.matches(event, keys.splits?.quad))
             ) {
                 this.nudgeVertical();
             }
-            if (this.matches(event, keys.toggle.menu)) {
+            if (this.matches(event, keys.toggle?.menu)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleMenu();
             }
-            if (this.matches(event, keys.splits.double)) {
+            if (this.matches(event, keys.splits?.double)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.split(2);
-            } else if (this.matches(event, keys.splits.triple)) {
+            } else if (this.matches(event, keys.splits?.triple)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.split(3);
-            } else if (this.matches(event, keys.splits.quad)) {
+            } else if (this.matches(event, keys.splits?.quad)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.split(4);
-            } else if (this.matches(event, keys.splits.doubleTrick)) {
+            } else if (this.matches(event, keys.splits?.doubleTrick)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.trickSplit(2);
-            } else if (this.matches(event, keys.splits.selfTrick)) {
+            } else if (this.matches(event, keys.splits?.selfTrick)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.trickSplit(4);
             }
-            if (this.matches(event, keys.line.horizontal) && isMenuClosed()) {
+            if (this.matches(event, keys.line?.horizontal) && isMenuClosed()) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleLock('horizontal');
             }
-            if (this.matches(event, keys.line.vertical) && isMenuClosed()) {
+            if (this.matches(event, keys.line?.vertical) && isMenuClosed()) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleLock('vertical');
             }
-            if (this.matches(event, keys.line.fixed) && isMenuClosed()) {
+            if (this.matches(event, keys.line?.fixed) && isMenuClosed()) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleLock('fixed');
             }
@@ -13955,25 +14089,25 @@
                 if (event.key === 'Dead') event.preventDefault();
                 this.sendLocation();
             }
-            if (this.matches(event, keys.toggle.chat)) {
+            if (this.matches(event, keys.toggle?.chat)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleChat();
             }
-            if (this.matches(event, keys.toggle.names)) {
+            if (this.matches(event, keys.toggle?.names)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleSetting('showNames');
             }
-            if (this.matches(event, keys.toggle.skins)) {
+            if (this.matches(event, keys.toggle?.skins)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleSetting('showSkins');
             }
-            if (this.matches(event, keys.toggle.autoRespawn)) {
+            if (this.matches(event, keys.toggle?.autoRespawn)) {
                 if (event.key === 'Dead') event.preventDefault();
                 this.toggleSetting('autoRespawn');
             }
-            if (this.matches(event, keys.toggle.party)) {
+            if (this.matches(event, keys.toggle?.party)) {
                 if (event.key === 'Dead') event.preventDefault();
-                const show = !this.app.settingsStore.get('settings.showPartyPanel');
+                const show = !unwrapSettingScalar(this.app.settingsStore.get('settings.showPartyPanel'));
                 this.app.settingsStore.set('settings.showPartyPanel', show);
             }
             if (this.matches(event, keys.toggle?.hud)) {
@@ -14031,7 +14165,12 @@
             if (event.button === this.pointerFeedButton) this.stopPointerFeed();
         }
         mouseBinding(button) {
-            return this.app.settings.macros.mouse.bindings.find((binding) => binding.button === button)?.action ?? null;
+            const targetButton = Number(button);
+            const bindings = this.app.settings?.macros?.mouse?.bindings;
+            if (!Array.isArray(bindings)) return null;
+            const match = bindings.find((binding) => Number(binding?.button) === targetButton);
+            const action = unwrapSettingScalar(match?.action);
+            return typeof action === 'string' ? action : null;
         }
         /** @param {Event} event */
         isGamePointerEvent(event) {
@@ -14047,7 +14186,7 @@
         }
         /** @param {KeyboardEvent} event @param {unknown} binding */
         matches(event, binding) {
-            return keybindMatchesEvent(event, binding);
+            return keybindMatchesEvent(event, unwrapSettingScalar(binding));
         }
         /** @param {'horizontal'|'vertical'|'fixed'} kind */
         toggleLock(kind) {
@@ -14063,8 +14202,9 @@
             this.lockPosition = position;
             this.adapter?.setMovementOverride({ ...position, lock: kind });
             this.showLockOverlay(kind);
-            const instantSplit = this.app.settings.macros.keys.line.instantSplit;
-            if (Number(instantSplit) > 0) {
+            const rawInstantSplit = unwrapSettingScalar(this.app.settings?.macros?.keys?.line?.instantSplit);
+            const instantSplit = clamp(Math.trunc(Number(rawInstantSplit) || 0), 0, 4);
+            if (instantSplit > 0) {
                 this.resources.timeout(() => {
                     if (this.lock === kind) this.split(instantSplit);
                 }, 300);
@@ -14619,7 +14759,7 @@
                 timerEl.textContent = '0m0s played';
                 overlay.append(timerEl);
                 let sec = 0;
-                this.playTimerInterval = setInterval(() => {
+                this.playTimerInterval = this.resources.interval(() => {
                     sec += 1;
                     const m = Math.floor(sec / 60);
                     const s = sec % 60;
@@ -15446,16 +15586,15 @@
                 if (this.previewUrl === href) this.previewUrl = null;
             };
             const scope = modal?.modals.get('gallery-preview')?.scope;
-            if (scope) scope.add(release);
-            else release();
-            close.addEventListener(
-                'click',
-                () => {
-                    modal?.close('gallery-preview');
-                },
-                { once: true }
-            );
-            download.addEventListener('click', () => this.downloadImage(timestamp));
+            if (scope) {
+                scope.add(release);
+                scope.listen(close, 'click', () => modal?.close('gallery-preview'));
+                scope.listen(download, 'click', () => this.downloadImage(timestamp));
+            } else {
+                release();
+                close.addEventListener('click', () => modal?.close('gallery-preview'), { once: true });
+                download.addEventListener('click', () => this.downloadImage(timestamp));
+            }
         }
         async handleGalleryClick(event) {
             const target = event.target instanceof Element ? event.target : null;
@@ -16389,16 +16528,17 @@
                     new Promise((resolve) => {
                         const host = this.app.host;
                         if (host?.adapter?.connected) return resolve();
-                        const interval = setInterval(() => {
-                            if (host?.adapter?.connected) {
-                                clearInterval(interval);
-                                resolve();
-                            }
-                        }, 50);
-                        this.resources.timeout(() => {
-                            clearInterval(interval);
+                        let interval = null;
+                        let timeout = null;
+                        const finish = () => {
+                            if (interval) clearInterval(interval);
+                            if (timeout) clearTimeout(timeout);
                             resolve();
-                        }, 5e3);
+                        };
+                        interval = this.resources.interval(() => {
+                            if (host?.adapter?.connected) finish();
+                        }, 50);
+                        timeout = this.resources.timeout(finish, 5e3);
                     });
                 waitForConnection()
                     .then(() => {
@@ -16421,7 +16561,7 @@
                         this.app.host.adapter?.sendPlay?.(payload);
                         const errormodal = document.querySelector('#errormodal');
                         if (!(errormodal instanceof HTMLElement)) return;
-                        const interval = setInterval(() => {
+                        const interval = this.resources.interval(() => {
                             if (errormodal.style.display !== 'none') errormodal.style.display = 'none';
                         }, 100);
                         this.resources.timeout(() => clearInterval(interval), 1e3);
@@ -16508,7 +16648,7 @@
                 { id: 'defend', name: 'Defend', icon: 'shield', color: '#2196F3' },
             ];
             this.hoveredPing = null;
-            this.frameId = null;
+            this.cachedCam = { x: 0, y: 0, scale: 0 };
         }
         async mount() {
             const style = createElement('style', {
@@ -16692,12 +16832,6 @@
                 { capture: true }
             );
             this.resources.add(this.app.backend.on('tag-ping', (data) => this.receivePing(data)));
-            const loop = () => {
-                this.drawPings();
-                this.frameId = requestAnimationFrame(loop);
-            };
-            this.frameId = requestAnimationFrame(loop);
-            this.resources.add(() => cancelAnimationFrame(this.frameId));
             this.resources.add(() => this.closeWheel());
             this.resources.add(() => {
                 this.activePings.forEach((p) => p.element.remove());
@@ -16712,7 +16846,7 @@
             const macros = this.app.features.get('macros');
             if (event instanceof KeyboardEvent && macros) {
                 if (event.ctrlKey || event.metaKey) return false;
-                return macros.matches(event, this.app.settings.macros.keys.ping);
+                return macros.matches(event, unwrapSettingScalar(this.app.settings?.macros?.keys?.ping));
             } else if (event instanceof MouseEvent && macros) {
                 if (!macros.isGamePointerEvent(event)) return false;
                 const action = macros.mouseBinding(event.button);
@@ -16740,7 +16874,7 @@
             if (!event.isTrusted) return;
             if (this.wheelOpen && this.pingSource?.type === 'key') {
                 const macros = this.app.features.get('macros');
-                if (macros?.matches(event, this.app.settings.macros.keys.ping)) {
+                if (macros?.matches(event, unwrapSettingScalar(this.app.settings?.macros?.keys?.ping))) {
                     event.preventDefault();
                     this.closeWheel();
                     if (!this.wheelCancelled) {
@@ -16904,30 +17038,27 @@
                     (world.views instanceof Map && (world.views.get(world.selected) || world.views.values()?.next()?.value)) || null;
                 if (vision && vision.camera) {
                     const camScale = vision.camera.scale > 0 ? vision.camera.scale : 1;
-                    return {
-                        x: vision.camera.x,
-                        y: vision.camera.y,
-                        scale: (window.innerHeight / 1080) * camScale,
-                    };
+                    this.cachedCam.x = vision.camera.x;
+                    this.cachedCam.y = vision.camera.y;
+                    this.cachedCam.scale = (window.innerHeight / 1080) * camScale;
+                    return this.cachedCam;
                 }
             }
             if (this.app.state.camera && this.app.state.camera.scale > 0) {
                 const { scale, x, y, offsetX, offsetY, cw, ch } = this.app.state.camera;
                 const canvasW = cw > 0 ? cw : window.innerWidth;
                 const canvasH = ch > 0 ? ch : window.innerHeight;
-                return {
-                    x: x !== void 0 ? x : (canvasW / 2 - offsetX) / scale,
-                    y: y !== void 0 ? y : (canvasH / 2 - offsetY) / scale,
-                    scale: scale * (window.innerWidth / canvasW),
-                };
+                this.cachedCam.x = x !== void 0 ? x : (canvasW / 2 - offsetX) / scale;
+                this.cachedCam.y = y !== void 0 ? y : (canvasH / 2 - offsetY) / scale;
+                this.cachedCam.scale = scale * (window.innerWidth / canvasW);
+                return this.cachedCam;
             }
             const position = this.app.host.adapter?.snapshot().position;
             if (position) {
-                return {
-                    x: position.x,
-                    y: position.y,
-                    scale: (window.innerHeight / 1080) * 0.25,
-                };
+                this.cachedCam.x = position.x;
+                this.cachedCam.y = position.y;
+                this.cachedCam.scale = (window.innerHeight / 1080) * 0.25;
+                return this.cachedCam;
             }
             return null;
         }
@@ -16992,7 +17123,7 @@
             });
             this.drawPings();
             const duration = this.app.settings.settings.pingDuration ?? 2e3;
-            setTimeout(() => {
+            this.resources.timeout(() => {
                 element.remove();
                 this.activePings.delete(id);
             }, duration);
@@ -17034,155 +17165,15 @@
                 }
             });
         }
-    }
-    class MergeTimerController extends FeatureController {
-        constructor(app2, name) {
-            super(app2, name);
-            this.trackedCells = /* @__PURE__ */ new Map();
-        }
-        async mount() {
-            const bindHost = (adapter) => {
-                this.resources.child('merge-host-events')?.dispose();
-                this.trackedCells.clear();
-                if (!adapter) return;
-                const events = this.resources.child('merge-host-events');
-                events.add(
-                    adapter.on('play-state', (playing) => {
-                        if (!playing) this.trackedCells.clear();
-                    })
-                );
-                events.add(
-                    adapter.on('owned-cell', ({ id, split }) => {
-                        if (split) {
-                            this.trackedCells.set(id, {
-                                id,
-                                splitAt: performance.now(),
-                                lastRadius: 0,
-                                readyNotified: false,
-                                fadeUntil: 0,
-                            });
-                        }
-                    })
-                );
-            };
-            this.resources.add(this.app.host.on('change', (adapter) => bindHost(adapter)));
-            if (this.app.host.adapter) bindHost(this.app.host.adapter);
-        }
-        isSigFixActive() {
-            return Boolean(window.sigfix || this.app.host.adapter?.kind === 'sigfix' || document.getElementById('sf-canvas'));
-        }
-        drawOnContext(context, fillTextFn, strokeTextFn) {
-            if (!this.app.settings.settings.mergeTimer) return;
-            if (this.isSigFixActive()) return;
-            const adapter = this.app.host.adapter;
-            if (!adapter || adapter.kind !== 'native') return;
-            const protocol = adapter.protocol;
-            if (!protocol || !protocol.cells) return;
-            const nickname = this.app.dom?.nickname ?? document.querySelector(SELECTORS.nickname);
-            const playedName = nickname instanceof HTMLInputElement ? nickname.value.trim() : '';
-            const myCellIds = new Set(protocol.owned || []);
-            if (playedName) {
-                for (const [id, cell] of protocol.cells) {
-                    if (cell && cell.name === playedName && !cell.pellet && !cell.eject) {
-                        myCellIds.add(id);
-                    }
-                }
-            }
-            if (myCellIds.size <= 1) {
-                if (this.trackedCells.size > 0) this.trackedCells.clear();
-                return;
-            }
-            const now = performance.now();
-            for (const id of this.trackedCells.keys()) {
-                if (!myCellIds.has(id)) {
-                    this.trackedCells.delete(id);
-                }
-            }
-            const showNames =
-                document.getElementById('showNames')?.checked ??
-                this.app.settings.game?.showNames ??
-                readLocalJson(STORAGE.gameSettings, {})?.showNames !== false;
-            const showMass = Boolean(
-                document.getElementById('showMass')?.checked ??
-                this.app.settings.game?.showMass ??
-                readLocalJson(STORAGE.gameSettings, {})?.showMass
-            );
-            const fontName = this.app.settings.game?.font || 'Ubuntu';
-            const fill = fillTextFn ?? context.fillText;
-            const stroke = strokeTextFn ?? context.strokeText;
-            for (const id of myCellIds) {
-                const cell = protocol.cells.get(id);
-                if (!cell) continue;
-                let cx = cell.x;
-                let cy = cell.y;
-                let cr = cell.radius;
-                if (cell.updatedAt) {
-                    const elapsed = Math.max(0, Math.min(120, now - cell.updatedAt));
-                    const progress = elapsed / 120;
-                    cx = cell.ox + (cell.nx - cell.ox) * progress;
-                    cy = cell.oy + (cell.ny - cell.oy) * progress;
-                    cr = cell.os + (cell.ns - cell.os) * progress;
-                }
-                if (!Number.isFinite(cx) || !Number.isFinite(cy) || cr <= 0) continue;
-                let info = this.trackedCells.get(id);
-                if (!info) {
-                    info = {
-                        id,
-                        splitAt: now,
-                        lastRadius: cr,
-                        readyNotified: false,
-                        fadeUntil: 0,
-                    };
-                    this.trackedCells.set(id, info);
-                } else if (info.lastRadius && cr < info.lastRadius * 0.82) {
-                    info.splitAt = now;
-                    info.readyNotified = false;
-                    info.fadeUntil = 0;
-                }
-                info.lastRadius = cr;
-                const cooldownMs = (30 + 0.02 * Math.max(0, cr)) * 1e3;
-                const elapsedMs = now - info.splitAt;
-                const remaining = Math.max(0, (cooldownMs - elapsedMs) / 1e3);
-                let text;
-                let fillStyle;
-                let alpha = 1;
-                if (remaining > 0) {
-                    if (remaining < 5) {
-                        text = `${remaining.toFixed(1)}s`;
-                        fillStyle = '#ffcc00';
-                    } else {
-                        text = `${Math.ceil(remaining)}s`;
-                        fillStyle = '#ffffff';
-                    }
-                } else {
-                    if (!info.readyNotified) {
-                        info.readyNotified = true;
-                        info.fadeUntil = now + 1500;
-                    }
-                    if (now > info.fadeUntil) continue;
-                    text = 'READY';
-                    fillStyle = '#00ff88';
-                    alpha = Math.max(0, (info.fadeUntil - now) / 1500);
-                }
-                const fontSize = Math.max(14, Math.round(cr * 0.18));
-                const timerY = cy + (showNames && showMass ? cr * 0.44 : showNames || showMass ? cr * 0.32 : 0);
-                context.save();
-                context.textAlign = 'center';
-                context.textBaseline = 'middle';
-                context.font = `500 ${fontSize}px ${fontName}, sans-serif`;
-                context.globalAlpha = alpha;
-                context.shadowBlur = 0;
-                context.shadowColor = 'transparent';
-                context.lineWidth = Math.max(2, fontSize * 0.16);
-                context.strokeStyle = '#000000';
-                context.fillStyle = fillStyle;
-                stroke.call(context, text, cx, timerY);
-                fill.call(context, text, cx, timerY);
-                context.restore();
-            }
-        }
         destroy() {
-            this.trackedCells.clear();
+            if (this.wheelElement) {
+                this.wheelElement.remove();
+                this.wheelElement = null;
+            }
+            for (const ping of this.activePings.values()) {
+                ping.element?.remove();
+            }
+            this.activePings.clear();
             super.destroy();
         }
     }
@@ -17196,12 +17187,7 @@
         async mount() {
             this.menu = this.app.features.get('menu');
             this.modal = this.app.features.get('modal');
-            this.root = this.menu?.root ?? null;
             this.resources.add(this.app.backend.on('auth-required', (sid) => this.authenticate(sid)));
-            if (this.root instanceof HTMLElement) {
-                this.resources.listen(this.root, 'click', (event) => this.handleMenuClick(event));
-            }
-            this.renderSummary(null);
         }
         /** Subscribe to profile changes. @param {(profile: object|null) => void} listener */
         onChange(listener) {
@@ -17260,7 +17246,6 @@
             this.profile = profile;
             if (isObject(settings)) this.app.state.friends.settings = { ...settings };
             this.app.settingsStore.set('modAccount.authorized', true, true);
-            this.renderSummary(profile);
             this.events.emit('change', profile);
         }
         clearAccount() {
@@ -17268,50 +17253,7 @@
             this.app.state.friends.settings = {};
             this.app.state.friends.names = /* @__PURE__ */ new Set();
             this.app.settingsStore.set('modAccount.authorized', false, true);
-            this.renderSummary(null);
             this.events.emit('change', null);
-        }
-        renderSummary(profile) {
-            if (!(this.root instanceof HTMLElement)) return;
-            const imageRoot = this.root.querySelector('#mod-profile-img');
-            const name = this.root.querySelector('#my-profile-name');
-            const role = this.root.querySelector('#my-profile-role');
-            const bio = this.root.querySelector('#my-profile-bio');
-            const badges = this.root.querySelector('#my-profile-badges');
-            if (imageRoot instanceof HTMLElement) {
-                imageRoot.replaceChildren();
-                if (profile) {
-                    imageRoot.append(this.createAvatar(profile, 50));
-                } else {
-                    imageRoot.innerHTML = icon('userCircle', 24);
-                }
-            }
-            if (name) name.textContent = String(profile?.username ?? 'Guest');
-            if (role) {
-                role.textContent = String(profile?.role ?? 'Guest');
-                role.className = profile?.role ? `${String(profile.role)}_role` : '';
-            }
-            if (bio) bio.textContent = String(profile?.bio || (profile ? 'No bio.' : 'No Bio.'));
-            if (badges instanceof HTMLElement) {
-                badges.replaceChildren();
-                if (profile) {
-                    const values = Array.isArray(profile.badges) ? profile.badges : [];
-                    if (values.length) {
-                        for (const badge of values)
-                            badges.append(
-                                createElement('span', {
-                                    className: 'mod_badge',
-                                    text: badge,
-                                })
-                            );
-                    } else
-                        badges.append(
-                            createElement('span', {
-                                text: 'User has no badges.',
-                            })
-                        );
-                }
-            }
         }
         createAvatar(user, size = 44) {
             const image = createElement('img', {
@@ -17333,10 +17275,6 @@
         safeImageUrl(value) {
             const source = String(value ?? '');
             return safeHttpUrl(source, true) ?? (/^data:image\/(?:png|jpe?g|gif|webp);/i.test(source) ? source : '');
-        }
-        handleMenuClick(event) {
-            const target = event.target instanceof Element ? event.target.closest('[data-profile-edit]') : null;
-            if (target) this.openEditor();
         }
         /** Display a public profile returned by /profile/:id. */
         async showProfile(id) {
@@ -17753,14 +17691,23 @@
                         this.app.settingsStore.set('modAccount.authorized', true, true);
                     }
                 };
-                window.addEventListener('message', messageHandler);
-                const interval = window.setInterval(() => {
+                const removeListener =
+                    scope?.listen(window, 'message', messageHandler) ?? (() => window.removeEventListener('message', messageHandler));
+                if (!scope) window.addEventListener('message', messageHandler);
+                let interval = null;
+                const cleanup = () => {
+                    if (interval !== null) {
+                        window.clearInterval(interval);
+                        interval = null;
+                    }
+                    removeListener();
+                };
+                interval = window.setInterval(() => {
                     if (!popup.closed) return;
-                    window.clearInterval(interval);
-                    window.removeEventListener('message', messageHandler);
+                    cleanup();
                     this.resources.timeout(() => location.reload(), 1500);
                 }, 1e3);
-                scope?.add(() => window.clearInterval(interval));
+                scope?.add(cleanup);
             });
             scope?.listen(form, 'submit', async (event) => {
                 event.preventDefault();
@@ -19655,20 +19602,33 @@
             timeCanvas = document.querySelector('#statistics-time-chart'),
             massCanvas = document.querySelector('#statistics-mass-chart')
         ) {
-            if (this.chartPromise) return this.chartPromise;
             if (
-                !(homeCanvas instanceof HTMLCanvasElement) ||
-                !(timeCanvas instanceof HTMLCanvasElement) ||
-                !(massCanvas instanceof HTMLCanvasElement)
-            )
-                return Promise.resolve();
+                this.chartPromise &&
+                this.homeChart &&
+                this.homeChart.canvas === homeCanvas &&
+                this.homeChart.canvas.isConnected &&
+                this.timeChart &&
+                this.timeChart.canvas === timeCanvas &&
+                this.timeChart.canvas.isConnected &&
+                this.massChart &&
+                this.massChart.canvas === massCanvas &&
+                this.massChart.canvas.isConnected
+            ) {
+                return this.chartPromise;
+            }
             this.chartPromise = this.app.dependencies
                 .load('chart')
                 .then((Chart) => {
                     if (this.resources.disposed) return;
-                    if (!this.homeChart) this.createHomeChart(Chart, homeCanvas);
-                    if (!this.timeChart) this.createTimeChart(Chart, timeCanvas);
-                    if (!this.massChart) this.createMassChart(Chart, massCanvas);
+                    if (!this.homeChart || this.homeChart.canvas !== homeCanvas || !this.homeChart.canvas.isConnected) {
+                        this.createHomeChart(Chart, homeCanvas);
+                    }
+                    if (!this.timeChart || this.timeChart.canvas !== timeCanvas || !this.timeChart.canvas.isConnected) {
+                        this.createTimeChart(Chart, timeCanvas);
+                    }
+                    if (!this.massChart || this.massChart.canvas !== massCanvas || !this.massChart.canvas.isConnected) {
+                        this.createMassChart(Chart, massCanvas);
+                    }
                 })
                 .catch((error) => {
                     this.chartPromise = null;
@@ -19695,19 +19655,19 @@
             const [history, summary] = await Promise.all([this.readHistory(120), this.app.matchHistory.getSummary()]);
             if (this.resources.disposed || token !== this.refreshToken) return;
             const count = Math.max(0, Math.round(Number(summary?.count) || 0));
-            this.setText('home-stats-time', this.formatDuration(stats['time-played']));
-            this.setText('statistics-time-played', this.formatDuration(stats['time-played']));
-            this.setText('statistics-highest-mass', this.formatNumber(stats['highest-mass']));
-            this.setText('statistics-total-deaths', this.formatNumber(stats['total-deaths']));
-            this.setText('statistics-total-mass', this.formatNumber(stats['total-mass']));
-            this.setText('statistics-average-time', `${count ? this.formatDuration(summary.totalDuration / count) : '0m'} avg.`);
-            this.setText('statistics-kills', this.formatNumber(summary.totalKills));
+            this.setText('home-stats-time', formatDuration(stats['time-played']));
+            this.setText('statistics-time-played', formatDuration(stats['time-played']));
+            this.setText('statistics-highest-mass', formatNumber(stats['highest-mass']));
+            this.setText('statistics-total-deaths', formatNumber(stats['total-deaths']));
+            this.setText('statistics-total-mass', formatNumber(stats['total-mass']));
+            this.setText('statistics-average-time', `${count ? formatDuration(summary.totalDuration / count) : '0m'} avg.`);
+            this.setText('statistics-kills', formatNumber(summary.totalKills));
             this.setText(
                 'statistics-avg-kills',
                 count ? (summary.totalKills / count).toFixed(summary.totalKills / count >= 10 ? 0 : 1) : '0'
             );
-            this.setText('statistics-pellets', this.formatNumber(summary.totalPellets));
-            this.setText('statistics-splits', this.formatNumber(summary.totalSplits));
+            this.setText('statistics-pellets', formatNumber(summary.totalPellets));
+            this.setText('statistics-splits', formatNumber(summary.totalSplits));
             this.setText('statistics-best-position', summary.bestPosition !== null ? `#${summary.bestPosition}` : '\u2014');
             this.setText(
                 'statistics-average-ping',
@@ -19745,6 +19705,12 @@
             }
         }
         createHomeChart(Chart, canvas) {
+            if (this.homeChart) {
+                try {
+                    this.homeChart.destroy();
+                } catch {}
+                this.homeChart = null;
+            }
             const context = canvas.getContext('2d');
             const gradient = context?.createLinearGradient(0, 0, canvas.width, 0);
             gradient?.addColorStop(0, 'rgba(104, 113, 241, .2)');
@@ -19785,18 +19751,20 @@
                             displayColors: false,
                             callbacks: {
                                 title: () => '',
-                                label: (context2) => this.formatDuration((context2.raw || 0) * 60),
+                                label: (context2) => formatDuration((context2.raw || 0) * 60),
                             },
                         },
                     },
                 },
             });
-            this.resources.add(() => {
-                this.homeChart?.destroy();
-                this.homeChart = null;
-            });
         }
         createTimeChart(Chart, canvas) {
+            if (this.timeChart) {
+                try {
+                    this.timeChart.destroy();
+                } catch {}
+                this.timeChart = null;
+            }
             this.timeChart = new Chart(canvas, {
                 type: 'line',
                 data: {
@@ -19847,18 +19815,20 @@
                         tooltip: {
                             displayColors: false,
                             callbacks: {
-                                label: (context) => `Played ${this.formatDuration((context.raw || 0) * 60)}`,
+                                label: (context) => `Played ${formatDuration((context.raw || 0) * 60)}`,
                             },
                         },
                     },
                 },
             });
-            this.resources.add(() => {
-                this.timeChart?.destroy();
-                this.timeChart = null;
-            });
         }
         createMassChart(Chart, canvas) {
+            if (this.massChart) {
+                try {
+                    this.massChart.destroy();
+                } catch {}
+                this.massChart = null;
+            }
             this.massChart = new Chart(canvas, {
                 type: 'bar',
                 data: {
@@ -19893,7 +19863,7 @@
                                 color: '#606060',
                                 font: { size: 9 },
                                 maxTicksLimit: 4,
-                                callback: (value) => this.formatNumber(value),
+                                callback: (value) => formatNumber(value),
                             },
                         },
                     },
@@ -19903,15 +19873,11 @@
                             displayColors: false,
                             callbacks: {
                                 title: (context) => `Match ${context[0].label}`,
-                                label: (context) => `Peak ${this.formatNumber(context.raw)}`,
+                                label: (context) => `Peak ${formatNumber(context.raw)}`,
                             },
                         },
                     },
                 },
-            });
-            this.resources.add(() => {
-                this.massChart?.destroy();
-                this.massChart = null;
             });
         }
         renderMatches(history) {
@@ -19945,9 +19911,9 @@
                 );
                 row.append(
                     main,
-                    this.matchStat('Time', this.formatDuration(match.duration)),
-                    this.matchStat('Mass', this.formatNumber(match.highestMass)),
-                    this.matchStat('Kills', this.formatNumber(match.kills)),
+                    this.matchStat('Time', formatDuration(match.duration)),
+                    this.matchStat('Mass', formatNumber(match.highestMass)),
+                    this.matchStat('Kills', formatNumber(match.kills)),
                     this.matchStat('Ping', match.averagePing > 0 ? `${match.averagePing} ms` : '\u2014')
                 );
                 root.append(row);
@@ -19962,12 +19928,8 @@
         }
         formatHistoryLabel(item, fallbackIndex) {
             if (!item.at) return `#${fallbackIndex}`;
-            const date = new Date(item.at);
-            if (Number.isNaN(date.getTime())) return `#${fallbackIndex}`;
-            return date.toLocaleDateString(void 0, {
-                month: 'short',
-                day: 'numeric',
-            });
+            const formatted = this.formatMatchDate(item.at);
+            return formatted === 'Match' ? `#${fallbackIndex}` : formatted;
         }
         formatMatchDate(timestamp) {
             const date = new Date(timestamp);
@@ -19986,25 +19948,35 @@
             });
         }
         formatDuration(seconds) {
-            const total = Math.max(0, Math.floor(Number(seconds) || 0));
-            const hours = Math.floor(total / 3600);
-            const minutes = Math.floor((total % 3600) / 60);
-            if (hours > 0) return `${hours}h ${minutes}m`;
-            if (minutes > 0) return `${minutes}m`;
-            return total > 0 ? `${total}s` : '0m';
+            return formatDuration(seconds);
         }
         formatNumber(value) {
-            const number = Math.max(0, Math.round(Number(value) || 0));
-            if (number >= 1e9) return `${(number / 1e9).toFixed(number >= 1e10 ? 0 : 1)}b`;
-            if (number >= 1e6) return `${(number / 1e6).toFixed(number >= 1e7 ? 0 : 1)}m`;
-            if (number >= 1e3) return `${(number / 1e3).toFixed(number >= 1e4 ? 0 : 1)}k`;
-            return String(number);
+            return formatNumber(value);
+        }
+        destroyCharts() {
+            if (this.homeChart) {
+                try {
+                    this.homeChart.destroy();
+                } catch {}
+                this.homeChart = null;
+            }
+            if (this.timeChart) {
+                try {
+                    this.timeChart.destroy();
+                } catch {}
+                this.timeChart = null;
+            }
+            if (this.massChart) {
+                try {
+                    this.massChart.destroy();
+                } catch {}
+                this.massChart = null;
+            }
+            this.chartPromise = null;
         }
         destroy() {
+            this.destroyCharts();
             super.destroy();
-            this.homeChart = null;
-            this.timeChart = null;
-            this.massChart = null;
         }
     }
     class ShopController extends FeatureController {
@@ -20039,7 +20011,6 @@
             ['session', SessionController],
             ['macros', MacroController],
             ['smartPing', SmartPingController],
-            ['mergeTimer', MergeTimerController],
         ],
         [
             ['chat', ChatController],
@@ -20126,11 +20097,11 @@
                 return;
             }
             try {
+                this.host.start();
                 this.exportCompatibility();
                 this.createFeatureSkeleton();
                 this.i18n.initialize();
                 const authReady = this.mount('auth').catch((err) => this.logger.error('Auth mount failed', err));
-                this.host.start();
                 await authReady;
                 this.dom = await this.readiness.pageShell();
                 for (const phase of FEATURE_PHASES) {
@@ -20253,6 +20224,7 @@
                 server_version: BUILD.serverVersion,
                 storageName: STORAGE.settings,
                 settings: this.settings,
+                settingsStore: this.settingsStore,
                 registerExtension: registerOtherExtension,
                 unregisterExtension: unregisterOtherExtension,
                 addNavbarButton: registerOtherExtension,
@@ -20287,6 +20259,14 @@
                 privacy: {
                     getStatus: () => app2.adProtection?.getStatus() ?? { enabled: false },
                     getStats: () => app2.adProtection?.stats ?? { totalBlocked: 0 },
+                },
+                utils: {
+                    rgbToHex,
+                    formatScore,
+                    formatNumber,
+                    formatDuration,
+                    formatTime,
+                    calculateLuminance,
                 },
             };
             Object.defineProperties(sigmodFacade, {
@@ -20471,197 +20451,209 @@
         };
         tick();
     };
-    let zigAdDismissed = false;
-    let zigAdClosedForSession = false;
-    let zigAdEnabled = DEFAULT_SETTINGS.themes.showZigPopup;
-    let zigActive = false;
-    let zigAdMenuWasVisible = false;
-    let zigAdSyncFrame = 0;
-    let zigAdDomObserver = null;
-    let zigAdHostObserver = null;
-    let zigAdObservedHosts = [];
-    let zigAdObservedMutationRoot = null;
-    let zigAdClickHandler = null;
-    let zigAdEscapeHandler = null;
-    let zigAdLifecycleResources = null;
-    let zigAdGlobalCheckTimer = 0;
-    const hasZigGlobal = () => typeof window !== 'undefined' && Boolean(window.__ZIG_COMBINED_USERSCRIPT__ || window.zig);
-    const removeZigAd = () => {
-        const ad = document.querySelector('.zig-ad');
-        if (!(ad instanceof HTMLElement)) return;
-        setZigAdHidden(ad, true);
-        ad.remove();
-    };
-    const stopZigAdMonitoring = () => {
-        zigAdDomObserver?.disconnect();
-        zigAdHostObserver?.disconnect();
-        if (zigAdSyncFrame) cancelAnimationFrame(zigAdSyncFrame);
-        if (zigAdGlobalCheckTimer) clearInterval(zigAdGlobalCheckTimer);
-        if (zigAdClickHandler) document.removeEventListener('click', zigAdClickHandler, true);
-        if (zigAdEscapeHandler) document.removeEventListener('keydown', zigAdEscapeHandler, true);
-        zigAdDomObserver = null;
-        zigAdHostObserver = null;
-        zigAdObservedHosts = [];
-        zigAdObservedMutationRoot = null;
-        zigAdClickHandler = null;
-        zigAdEscapeHandler = null;
-        zigAdSyncFrame = 0;
-        zigAdGlobalCheckTimer = 0;
-    };
-    const getZigAdHostElements = () => ({
-        leftMenu: document.querySelector('#left-menu'),
-        menuWrapper: document.querySelector('#menu-wrapper'),
-    });
-    const isZigAdHostVisible = () => {
-        const { leftMenu, menuWrapper } = getZigAdHostElements();
-        if (!(leftMenu instanceof HTMLElement)) return null;
-        return (
-            getComputedStyle(leftMenu).display !== 'none' &&
-            (!(menuWrapper instanceof HTMLElement) || getComputedStyle(menuWrapper).display !== 'none')
-        );
-    };
-    const setZigAdHidden = (ad, hidden) => {
-        if (!(ad instanceof HTMLElement)) return;
-        ad.classList.toggle('hidden', hidden);
-        ad.hidden = hidden;
-        ad.style.display = hidden ? 'none' : 'flex';
-    };
-    const dismissZigAd = () => {
-        zigAdDismissed = true;
-        const ad = document.querySelector('.zig-ad');
-        if (!(ad instanceof HTMLElement)) return;
-        setZigAdHidden(ad, true);
-        ad.remove();
-    };
-    const bindZigAdHostObservers = () => {
-        const hosts = Object.values(getZigAdHostElements()).filter((element) => element instanceof HTMLElement);
-        if (hosts.length === zigAdObservedHosts.length && hosts.every((element, index) => element === zigAdObservedHosts[index])) return;
-        zigAdHostObserver?.disconnect();
-        zigAdObservedHosts = hosts;
-        if (!hosts.length) return;
-        zigAdHostObserver ?? (zigAdHostObserver = new MutationObserver(() => scheduleZigAdSync()));
-        for (const host of hosts) {
-            zigAdHostObserver.observe(host, {
-                attributes: true,
-                attributeFilter: ['class', 'hidden', 'style'],
-            });
+    class ZigAdController {
+        constructor() {
+            this.dismissed = false;
+            this.closedForSession = false;
+            this.enabled = DEFAULT_SETTINGS.themes.showZigPopup;
+            this.active = false;
+            this.menuWasVisible = false;
+            this.syncFrame = 0;
+            this.domObserver = null;
+            this.hostObserver = null;
+            this.observedHosts = [];
+            this.observedMutationRoot = null;
+            this.clickHandler = null;
+            this.escapeHandler = null;
+            this.lifecycleResources = null;
+            this.globalCheckTimer = 0;
         }
-    };
-    const syncZigAd = () => {
-        zigAdSyncFrame = 0;
-        if (!zigActive || !zigAdEnabled) {
-            removeZigAd();
-            return;
+        hasGlobal() {
+            return typeof window !== 'undefined' && Boolean(window.__ZIG_COMBINED_USERSCRIPT__ || window.zig);
         }
-        if (hasZigGlobal()) {
-            stopZigAdMonitoring();
-            removeZigAd();
-            return;
+        remove() {
+            const ad = document.querySelector('.zig-ad');
+            if (!(ad instanceof HTMLElement)) return;
+            this.setHidden(ad, true);
+            ad.remove();
         }
-        bindZigAdHostObservers();
-        const hostVisible = isZigAdHostVisible();
-        if (hostVisible === null) return;
-        if (hostVisible && !zigAdMenuWasVisible && !zigAdClosedForSession) zigAdDismissed = false;
-        zigAdMenuWasVisible = hostVisible;
-        const ad = document.querySelector('.zig-ad');
-        if (!hostVisible || zigAdDismissed) {
-            setZigAdHidden(ad, true);
-            return;
+        stopMonitoring() {
+            this.domObserver?.disconnect();
+            this.hostObserver?.disconnect();
+            if (this.syncFrame) cancelAnimationFrame(this.syncFrame);
+            if (this.globalCheckTimer) clearInterval(this.globalCheckTimer);
+            if (this.clickHandler) document.removeEventListener('click', this.clickHandler, true);
+            if (this.escapeHandler) document.removeEventListener('keydown', this.escapeHandler, true);
+            this.domObserver = null;
+            this.hostObserver = null;
+            this.observedHosts = [];
+            this.observedMutationRoot = null;
+            this.clickHandler = null;
+            this.escapeHandler = null;
+            this.syncFrame = 0;
+            this.globalCheckTimer = 0;
         }
-        if (!ad) {
-            insertZigAd();
-            return;
+        getHostElements() {
+            return {
+                leftMenu: document.querySelector('#left-menu'),
+                menuWrapper: document.querySelector('#menu-wrapper'),
+            };
         }
-        setZigAdHidden(ad, false);
-    };
-    function scheduleZigAdSync() {
-        if (zigAdSyncFrame) return;
-        zigAdSyncFrame = requestAnimationFrame(syncZigAd);
-    }
-    const bindZigAdLifecycle = (resources = null) => {
-        if (hasZigGlobal()) {
-            stopZigAdMonitoring();
-            removeZigAd();
-            return;
+        isHostVisible() {
+            const { leftMenu, menuWrapper } = this.getHostElements();
+            if (!(leftMenu instanceof HTMLElement)) return null;
+            return (
+                getComputedStyle(leftMenu).display !== 'none' &&
+                (!(menuWrapper instanceof HTMLElement) || getComputedStyle(menuWrapper).display !== 'none')
+            );
         }
-        if (resources && resources !== zigAdLifecycleResources) {
-            zigAdLifecycleResources = resources;
-            resources.add(() => {
-                stopZigAdMonitoring();
-                document.querySelector('.zig-ad')?.remove();
-                zigAdLifecycleResources = null;
-                zigAdDismissed = false;
-                zigAdClosedForSession = false;
-                zigAdMenuWasVisible = false;
-            });
+        setHidden(ad, hidden) {
+            if (!(ad instanceof HTMLElement)) return;
+            ad.classList.toggle('hidden', hidden);
+            ad.hidden = hidden;
+            ad.style.display = hidden ? 'none' : 'flex';
         }
-        bindZigAdHostObservers();
-        if (!zigAdDomObserver) {
-            zigAdDomObserver = new MutationObserver(() => {
-                bindZigAdHostObservers();
-                const nextRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
-                if (nextRoot instanceof HTMLElement && nextRoot !== zigAdObservedMutationRoot) {
-                    zigAdDomObserver.disconnect();
-                    zigAdObservedMutationRoot = nextRoot;
-                    zigAdDomObserver.observe(document.body, {
+        dismiss() {
+            this.dismissed = true;
+            const ad = document.querySelector('.zig-ad');
+            if (!(ad instanceof HTMLElement)) return;
+            this.setHidden(ad, true);
+            ad.remove();
+        }
+        bindHostObservers() {
+            const hosts = Object.values(this.getHostElements()).filter((element) => element instanceof HTMLElement);
+            if (hosts.length === this.observedHosts.length && hosts.every((element, index) => element === this.observedHosts[index])) {
+                return;
+            }
+            this.hostObserver?.disconnect();
+            this.observedHosts = hosts;
+            if (!hosts.length) return;
+            this.hostObserver ?? (this.hostObserver = new MutationObserver(() => this.scheduleSync()));
+            for (const host of hosts) {
+                this.hostObserver.observe(host, {
+                    attributes: true,
+                    attributeFilter: ['class', 'hidden', 'style'],
+                });
+            }
+        }
+        sync() {
+            this.syncFrame = 0;
+            if (!this.active || !this.enabled) {
+                this.remove();
+                return;
+            }
+            if (this.hasGlobal()) {
+                this.stopMonitoring();
+                this.remove();
+                return;
+            }
+            this.bindHostObservers();
+            const hostVisible = this.isHostVisible();
+            if (hostVisible === null) return;
+            if (hostVisible && !this.menuWasVisible && !this.closedForSession) this.dismissed = false;
+            this.menuWasVisible = hostVisible;
+            const ad = document.querySelector('.zig-ad');
+            if (!hostVisible || this.dismissed) {
+                this.setHidden(ad, true);
+                return;
+            }
+            if (!ad) {
+                this.insert();
+                return;
+            }
+            this.setHidden(ad, false);
+        }
+        scheduleSync() {
+            if (this.syncFrame) return;
+            this.syncFrame = requestAnimationFrame(() => this.sync());
+        }
+        bindLifecycle(resources = null) {
+            if (this.hasGlobal()) {
+                this.stopMonitoring();
+                this.remove();
+                return;
+            }
+            if (resources && resources !== this.lifecycleResources) {
+                this.lifecycleResources = resources;
+                resources.add(() => {
+                    this.stopMonitoring();
+                    document.querySelector('.zig-ad')?.remove();
+                    this.lifecycleResources = null;
+                    this.dismissed = false;
+                    this.closedForSession = false;
+                    this.menuWasVisible = false;
+                });
+            }
+            this.bindHostObservers();
+            if (!this.domObserver) {
+                this.domObserver = new MutationObserver(() => {
+                    this.bindHostObservers();
+                    const nextRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
+                    if (nextRoot instanceof HTMLElement && nextRoot !== this.observedMutationRoot) {
+                        this.domObserver.disconnect();
+                        this.observedMutationRoot = nextRoot;
+                        this.domObserver.observe(document.body, {
+                            childList: true,
+                        });
+                        if (nextRoot !== document.body) {
+                            this.domObserver.observe(nextRoot, {
+                                childList: true,
+                                subtree: true,
+                            });
+                        }
+                    }
+                    this.scheduleSync();
+                });
+                this.observedMutationRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
+                if (document.body instanceof HTMLElement) {
+                    this.domObserver.observe(document.body, {
                         childList: true,
                     });
-                    if (nextRoot !== document.body)
-                        zigAdDomObserver.observe(nextRoot, {
-                            childList: true,
-                            subtree: true,
-                        });
                 }
-                scheduleZigAdSync();
-            });
-            zigAdObservedMutationRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
-            if (document.body instanceof HTMLElement)
-                zigAdDomObserver.observe(document.body, {
-                    childList: true,
-                });
-            if (zigAdObservedMutationRoot instanceof HTMLElement && zigAdObservedMutationRoot !== document.body)
-                zigAdDomObserver.observe(zigAdObservedMutationRoot, {
-                    childList: true,
-                    subtree: true,
-                });
-        }
-        if (!zigAdClickHandler) {
-            zigAdClickHandler = (event) => {
-                const target = event.target;
-                if (target instanceof Element && target.closest(SELECTORS.play)) dismissZigAd();
-            };
-            document.addEventListener('click', zigAdClickHandler, true);
-        }
-        if (!zigAdEscapeHandler) {
-            zigAdEscapeHandler = (event) => {
-                if (event.key === 'Escape') dismissZigAd();
-            };
-            document.addEventListener('keydown', zigAdEscapeHandler, true);
-        }
-        if (!zigAdGlobalCheckTimer) {
-            zigAdGlobalCheckTimer = window.setInterval(() => {
-                if (hasZigGlobal()) {
-                    stopZigAdMonitoring();
-                    removeZigAd();
+                if (this.observedMutationRoot instanceof HTMLElement && this.observedMutationRoot !== document.body) {
+                    this.domObserver.observe(this.observedMutationRoot, {
+                        childList: true,
+                        subtree: true,
+                    });
                 }
-            }, 1e3);
+            }
+            if (!this.clickHandler) {
+                this.clickHandler = (event) => {
+                    const target = event.target;
+                    if (target instanceof Element && target.closest(SELECTORS.play)) this.dismiss();
+                };
+                document.addEventListener('click', this.clickHandler, true);
+            }
+            if (!this.escapeHandler) {
+                this.escapeHandler = (event) => {
+                    if (event.key === 'Escape') this.dismiss();
+                };
+                document.addEventListener('keydown', this.escapeHandler, true);
+            }
+            if (!this.globalCheckTimer) {
+                this.globalCheckTimer = window.setInterval(() => {
+                    if (this.hasGlobal()) {
+                        this.stopMonitoring();
+                        this.remove();
+                    }
+                }, 1e3);
+            }
         }
-    };
-    const insertZigAd = (resources = null) => {
-        bindZigAdLifecycle(resources);
-        if (!zigActive || !zigAdEnabled || hasZigGlobal() || zigAdDismissed || document.querySelector('.zig-ad')) {
-            if (!zigActive || hasZigGlobal()) removeZigAd();
-            return;
-        }
-        const leftMenu = document.querySelector('#left-menu');
-        const anchor = leftMenu?.closest('.menu-wrapper.top');
-        if (!(anchor instanceof HTMLElement)) return;
-        const card = document.createElement('div');
-        card.className = 'zig-ad';
-        card.setAttribute('data-sigmod-zig-ad', 'true');
-        card.style.backgroundColor = 'rgb(21, 21, 21)';
-        card.style.border = '0';
-        card.innerHTML = `
+        insert(resources = null) {
+            this.bindLifecycle(resources);
+            if (!this.active || !this.enabled || this.hasGlobal() || this.dismissed || document.querySelector('.zig-ad')) {
+                if (!this.active || this.hasGlobal()) this.remove();
+                return;
+            }
+            const leftMenu = document.querySelector('#left-menu');
+            const anchor = leftMenu?.closest('.menu-wrapper.top');
+            if (!(anchor instanceof HTMLElement)) return;
+            const card = document.createElement('div');
+            card.className = 'zig-ad';
+            card.setAttribute('data-sigmod-zig-ad', 'true');
+            card.style.backgroundColor = 'rgb(21, 21, 21)';
+            card.style.border = '0';
+            card.innerHTML = `
             <a class="zig-ad-content" href="https://zig.sigmally.xyz" target="_blank" rel="noopener noreferrer">
                 <img class="zig-ad-logo" src="https://czrsd.com/static/zig/zig.webp" alt="Zig" draggable="false">
 
@@ -20674,19 +20666,49 @@
                 ${icon('close', 18)}
             </button>
         `;
-        const logo = card.querySelector('.zig-ad-logo');
-        if (logo instanceof HTMLImageElement) logo.classList.add('sigmod-zig-ad-logo');
-        const closeButton = card.querySelector('.zig-ad-close');
-        if (closeButton instanceof HTMLElement) {
-            closeButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                zigAdClosedForSession = true;
-                dismissZigAd();
-            });
+            const logo = card.querySelector('.zig-ad-logo');
+            if (logo instanceof HTMLImageElement) logo.classList.add('sigmod-zig-ad-logo');
+            const closeButton = card.querySelector('.zig-ad-close');
+            if (closeButton instanceof HTMLElement) {
+                closeButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.closedForSession = true;
+                    this.dismiss();
+                });
+            }
+            anchor.appendChild(card);
+            this.sync();
         }
-        anchor.appendChild(card);
-        syncZigAd();
+        setActive(active) {
+            this.active = Boolean(active);
+            zigActive = this.active;
+            if (!this.active) this.remove();
+            else this.sync();
+        }
+        setEnabled(enabled) {
+            this.enabled = Boolean(enabled);
+            zigAdEnabled = this.enabled;
+            if (!this.enabled) this.remove();
+            else this.sync();
+        }
+        destroy() {
+            this.stopMonitoring();
+            this.remove();
+            this.dismissed = false;
+            this.closedForSession = false;
+            this.menuWasVisible = false;
+        }
+    }
+    const zigAdController = new ZigAdController();
+    let zigActive = false;
+    let zigAdEnabled = DEFAULT_SETTINGS.themes.showZigPopup;
+    const hasZigGlobal = () => zigAdController.hasGlobal();
+    const removeZigAd = () => zigAdController.remove();
+    const insertZigAd = (resources = null) => {
+        zigAdController.enabled = zigAdEnabled;
+        zigAdController.active = zigActive;
+        zigAdController.insert(resources);
     };
     const previousApp = window.__sigmodApp;
     if (previousApp && typeof previousApp.destroy === 'function') previousApp.destroy();
@@ -20697,11 +20719,10 @@
     });
     app.resources.add(
         app.backend.on('zig-active', (active) => {
-            zigActive = Boolean(active);
-            if (!zigActive) removeZigAd();
-            else syncZigAd();
+            zigAdController.setActive(active);
         })
     );
+    app.resources.add(() => zigAdController.destroy());
     warmUpStartPageMouse(app.resources);
     app.start();
 })();

@@ -133,30 +133,6 @@ class MatchHistoryStore {
             });
         });
     }
-    request(database, mode, action) {
-        return new Promise((resolve, reject) => {
-            const transaction = database.transaction(STORAGE.statsMatchStore, mode);
-            const store = transaction.objectStore(STORAGE.statsMatchStore);
-            let request;
-            try {
-                request = action(store);
-            } catch (error) {
-                reject(error);
-                return;
-            }
-            request?.addEventListener('success', () => resolve(request.result), {
-                once: true,
-            });
-            request?.addEventListener('error', () => reject(request.error ?? new Error('Statistics database request failed')), {
-                once: true,
-            });
-            if (!request) {
-                transaction.addEventListener('complete', () => resolve(undefined), {
-                    once: true,
-                });
-            }
-        });
-    }
     async add(entry) {
         const normalized = this.normalize(entry);
         if (!normalized) return false;
@@ -1036,6 +1012,23 @@ class SettingsStore {
                 'setting:settings.playTimer',
                 'setting:settings.mouseTracker',
             ],
+            [
+                'host:showNames',
+                'host:showSkins',
+                'host:showMass',
+                'setting:chat.enabled',
+                'host:showMinimap',
+                'host:showBorder',
+                'host:showGrid',
+                'host:moreZoom',
+                'host:jellyPhysics',
+                'host:showClanmates',
+                'setting:settings.playTimer',
+                'setting:settings.mouseTracker',
+                'host:autoRespawn',
+                'host:showLeaderboard',
+                'host:autoClaimCoins',
+            ],
         ];
         if (previousDefaults.some((defaults) => JSON.stringify(value.settings.quickAccess) === JSON.stringify(defaults))) {
             value.settings.quickAccess = clone(this.defaults.settings.quickAccess);
@@ -1066,7 +1059,6 @@ class SettingsStore {
             'partyShowHeader',
             'partyShowHeaderTotals',
             'partyShowPing',
-            'mergeTimer',
         ]) {
             value.settings[key] = normalizeBoolean(value.settings[key], this.defaults.settings[key]);
         }
@@ -1610,6 +1602,7 @@ class AdTrackerProtector {
                 disarmNode(node);
                 return true;
             }
+            if (!node.childElementCount || node.childElementCount === 0) return false;
             const children = node.querySelectorAll ? node.querySelectorAll('script, iframe, embed, object') : [];
             for (let i = 0; i < children.length; i += 1) {
                 const child = children[i];

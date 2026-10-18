@@ -34,7 +34,6 @@ Completely overhaul the Sigmally client to match your style:
 ### Extra Utilities
 - **Daily Rewards:** Automatic daily coin claiming.
 - **Gameplay Stats:** Track your performance with the play timer and gameplay statistics.
-- **Media Tools:** Image capture, gallery, and saved image downloads.
 - **Quick Access Menu:** Search for settings, keybindings, and tools instantly.
 
 ---
@@ -45,7 +44,7 @@ Once installed, you can open the SigMod configuration menu by:
 - Pressing the **V** key on your keyboard.
 - Clicking the **gear icon** on the main Sigmally screen.
 
-From here, you can customize your macros, visual settings, name presets, themes, gallery, and friend list.
+From here, you can customize your macros, visual settings, name presets, themes, and friend list.
 
 ![SigMod Client menu](https://czrsd.com/static/sigmod/advertising/sigmod_menu.png)
 

@@ -2873,7 +2873,6 @@ const FEATURE_PHASES = [
     ],
     [
         ['challenges', ChallengeController],
-        ['screenshots', ScreenshotController],
         ['announcements', AnnouncementsController],
         ['statistics', StatisticsController],
         ['quickAccess', QuickAccessController],

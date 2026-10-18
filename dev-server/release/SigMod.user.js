@@ -101,9 +101,6 @@
         statsDatabase: 'SigModStatisticsDB',
         statsMatchStore: 'matches',
         statsMetaStore: 'meta',
-        galleryDatabase: 'imageGalleryDB',
-        galleryStore: 'images',
-        galleryMetaStore: 'imageMeta',
         recentTabs: 'SigModClient-recent-tabs',
         friendsLocal: 'SigModClient-friends-local',
         localization: 'SigModClient-localization',
@@ -117,7 +114,6 @@
                 respawn: 'b',
                 ping: 'r',
                 location: 'y',
-                saveImage: null,
                 splits: {
                     double: 'd',
                     triple: 'f',
@@ -251,10 +247,6 @@
             script: 'https://unpkg.com/alwan@2.2.0/dist/js/alwan.min.js',
             style: 'https://unpkg.com/alwan@2.2.0/dist/css/alwan.min.css',
             global: 'Alwan',
-        },
-        jszip: {
-            script: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-            global: 'JSZip',
         },
     };
     const ICONS = {
@@ -614,7 +606,6 @@
         { path: 'macros.keys.respawn', label: 'Respawn' },
         { path: 'macros.keys.ping', label: 'Ping' },
         { path: 'macros.keys.location', label: 'Send location' },
-        { path: 'macros.keys.saveImage', label: 'Make screenshot' },
         { path: 'macros.keys.splits.double', label: 'Double split' },
         { path: 'macros.keys.splits.triple', label: 'Triple split' },
         { path: 'macros.keys.splits.quad', label: 'Quad split' },
@@ -5246,17 +5237,6 @@
                                 </div>
                             </section>
 
-                            <section class="mod_tab scroll" id="mod_gallery" data-mod-panel>
-                                <div class="modColItems_2">
-                                    <label class="macroRow w-100"><span class="text">Make screenshot</span><input type="text" name="saveImage" data-label="Save image" id="modinput17" class="keybinding" data-setting="macros.keys.saveImage" maxlength="1" placeholder="..."></label>
-                                </div>
-                                <div class="modColItems_2">
-                                    <span>Image gallery</span>
-                                    <div class="flex g-5"><button type="button" class="modButton" id="gallery-download">Download all</button><button type="button" class="modButton" id="gallery-delete">Delete all</button></div>
-                                    <div id="image-gallery"></div>
-                                </div>
-                            </section>
-
                             <section class="mod_tab scroll" id="mod_friends" data-mod-panel>
                                 <div id="friends-guest-intro" class="friends-guest-intro">
                                     <div class="friends-guest-icon">${icon('users', 24)}</div>
@@ -5509,7 +5489,7 @@
                         {
                             id: 'mod_macros',
                             title: 'Keyboard',
-                            description: 'Game actions, split keys, toggles and screenshot keybinds.',
+                            description: 'Game actions, split keys and toggle keybinds.',
                         },
                         {
                             id: 'mod_controls_mouse',
@@ -5566,7 +5546,7 @@
                         {
                             id: 'mod_settings_data',
                             title: 'Data',
-                            description: 'Statistics, reset options and captured screenshots.',
+                            description: 'Settings backup, import, export and reset options.',
                         },
                         {
                             id: 'mod_statistics',
@@ -5642,7 +5622,6 @@
             const gamePanel = content.querySelector('#mod_game');
             const namePanel = content.querySelector('#mod_name');
             const themesPanel = content.querySelector('#mod_themes');
-            const galleryPanel = content.querySelector('#mod_gallery');
             const mousePanel = this.ensureNavigationPanel(content, 'mod_controls_mouse');
             const advancedPanel = this.ensureNavigationPanel(content, 'mod_controls_advanced');
             const interfacePanel = this.ensureNavigationPanel(content, 'mod_settings_interface');
@@ -5709,8 +5688,6 @@
                           .map((selector) => row(gamePanel, selector))
                           .filter(Boolean)
                     : [];
-            let screenshotRow = null;
-            if (galleryPanel instanceof HTMLElement) screenshotRow = row(galleryPanel, '#modinput17');
             if (keyboardPanel instanceof HTMLElement) {
                 const keyboard = page();
                 const headerBar = keyboardPanel.querySelector('.macros-header-bar');
@@ -5720,7 +5697,6 @@
                 const actions = ['#modinput1', '#modinput15', '#modinput18']
                     .map((selector) => row(keyboardPanel, selector))
                     .filter(Boolean);
-                if (screenshotRow instanceof HTMLElement) actions.push(screenshotRow);
                 const splits = ['#modinput2', '#modinput3', '#modinput4'].map((selector) => row(keyboardPanel, selector)).filter(Boolean);
                 splits.push(...trickRows);
                 const movement = ['#modinput5', '#modinput7', '#modinput16']
@@ -5843,25 +5819,6 @@
                 );
                 if (settingsRow instanceof HTMLElement) {
                     dataPage.append(section('Settings', [settingsRow]));
-                }
-                if (galleryPanel instanceof HTMLElement) {
-                    const gallery = galleryPanel.querySelector('#image-gallery');
-                    const galleryBlock = gallery?.closest('.modColItems_2');
-                    if (galleryBlock instanceof HTMLElement) {
-                        const galleryTitle = galleryBlock.querySelector(':scope > span');
-                        galleryTitle?.remove();
-                        const galleryActions = galleryBlock.querySelector(':scope > .flex');
-                        if (galleryActions instanceof HTMLElement) galleryActions.classList.add('data-screenshots-actions');
-                        galleryBlock.className = 'settings-section';
-                        galleryBlock.prepend(
-                            createElement('div', {
-                                className: 'settings-section-title',
-                                text: 'Screenshots',
-                            })
-                        );
-                        dataPage.append(galleryBlock);
-                    }
-                    galleryPanel.remove();
                 }
                 interfacePanel.replaceChildren(interfacePage);
                 dataPanel.replaceChildren(dataPage);
@@ -7813,7 +7770,6 @@
                 ['spectator', 'spectate', 'spectating'],
                 ['name', 'nickname', 'nick'],
                 ['macro', 'macros', 'control', 'controls', 'keyboard', 'keybind'],
-                ['gallery', 'screenshot', 'screenshots', 'capture', 'image gallery'],
                 ['interface', 'ui', 'hud', 'menu'],
                 ['settings', 'general', 'preferences', 'options'],
                 ['social', 'friends', 'discover', 'users', 'requests', 'profile', 'account'],
@@ -14118,10 +14074,6 @@
                 if (event.key === 'Dead') event.preventDefault();
                 this.fastRespawn();
             }
-            if (this.matches(event, keys.saveImage)) {
-                if (event.key === 'Dead') event.preventDefault();
-                this.captureScreenshot();
-            }
         }
         /** @param {KeyboardEvent} event */
         handleKeyUp(event) {
@@ -14497,15 +14449,6 @@
         getPlayButton() {
             const button = document.querySelector(SELECTORS.play);
             return button instanceof HTMLElement ? button : null;
-        }
-        captureScreenshot() {
-            const controller = this.app.features.get('screenshots');
-            const capture = controller?.saveImage ?? controller?.capture;
-            if (typeof capture === 'function') {
-                Promise.resolve(capture.call(controller)).catch((error) => {
-                    this.app.logger.warnOnce('macro-screenshot', 'Unable to capture a screenshot', error);
-                });
-            }
         }
         cleanupRuntimeState() {
             this.stopFeeding();
@@ -15055,573 +14998,6 @@
             output.textContent =
                 this.app.i18n?.message('New challenges in {hours}h {minutes}m {seconds}s', { hours, minutes, seconds }) ??
                 `New challenges in ${hours}h ${minutes}m ${seconds}s`;
-        }
-    }
-    class ScreenshotController extends FeatureController {
-        constructor(app2, name) {
-            super(app2, name);
-            this.database = null;
-            this.databasePromise = null;
-            this.renderLimit = 20;
-            this.objectUrls = /* @__PURE__ */ new Set();
-            this.previewUrl = null;
-            this.galleryContainer = null;
-        }
-        mount() {
-            const downloadAll = document.querySelector('#gallery-download');
-            const deleteAll = document.querySelector('#gallery-delete');
-            if (downloadAll instanceof HTMLButtonElement) this.resources.listen(downloadAll, 'click', () => this.downloadAll());
-            if (deleteAll instanceof HTMLButtonElement) this.resources.listen(deleteAll, 'click', () => this.deleteAll());
-            const menu = this.app.features.get('menu');
-            if (menu?.root) {
-                this.resources.listen(menu.root, 'sigmod:tabchange', (event) => {
-                    if (event.detail?.tabId === 'mod_settings_data') void this.ensureDatabase();
-                });
-            }
-            this.resources.add(() => {
-                this.revokeObjectUrls();
-                if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
-                this.previewUrl = null;
-                this.database?.close();
-                this.galleryContainer = null;
-            });
-        }
-        async ensureDatabase() {
-            if (this.database) return this.database;
-            if (!this.databasePromise) {
-                this.databasePromise = this.openDatabase()
-                    .then(async (database) => {
-                        if (this.resources.disposed) {
-                            database.close();
-                            return null;
-                        }
-                        this.database = database;
-                        await this.migrateLegacyEntries();
-                        const gallery = document.querySelector('#image-gallery, #gallery, #gallery-container, .gallery');
-                        if (gallery instanceof HTMLElement) {
-                            if (this.galleryContainer !== gallery) {
-                                this.resources.listen(gallery, 'click', (event) => this.handleGalleryClick(event));
-                                this.galleryContainer = gallery;
-                            }
-                            await this.renderGallery(gallery, true);
-                        }
-                        return database;
-                    })
-                    .catch((error) => {
-                        this.database?.close();
-                        this.database = null;
-                        this.databasePromise = null;
-                        this.app.logger.warnOnce('gallery-database', 'The screenshot gallery is unavailable', error);
-                        return null;
-                    });
-            }
-            return this.databasePromise;
-        }
-        openDatabase() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(STORAGE.galleryDatabase, 2);
-                request.addEventListener('upgradeneeded', () => {
-                    const database = request.result;
-                    if (!database.objectStoreNames.contains(STORAGE.galleryStore)) {
-                        database.createObjectStore(STORAGE.galleryStore, {
-                            keyPath: 'timestamp',
-                        });
-                    }
-                    if (!database.objectStoreNames.contains(STORAGE.galleryMetaStore)) {
-                        database.createObjectStore(STORAGE.galleryMetaStore, {
-                            keyPath: 'timestamp',
-                        });
-                    }
-                });
-                request.addEventListener('success', () => resolve(request.result), {
-                    once: true,
-                });
-                request.addEventListener('error', () => reject(request.error ?? new Error('Unable to open gallery')), { once: true });
-                request.addEventListener('blocked', () => reject(new Error('Gallery database upgrade is blocked')), { once: true });
-            });
-        }
-        requestStore(storeName, mode, operation) {
-            return new Promise((resolve, reject) => {
-                if (!this.database) {
-                    reject(new Error('Gallery database is not ready'));
-                    return;
-                }
-                const transaction = this.database.transaction(storeName, mode);
-                let request;
-                try {
-                    request = operation(transaction.objectStore(storeName));
-                } catch (error) {
-                    reject(error);
-                    return;
-                }
-                if (request) {
-                    request.addEventListener('success', () => resolve(request.result), {
-                        once: true,
-                    });
-                    request.addEventListener('error', () => reject(request.error ?? new Error('Gallery operation failed')), { once: true });
-                } else {
-                    transaction.addEventListener('complete', () => resolve(void 0), {
-                        once: true,
-                    });
-                }
-                transaction.addEventListener('abort', () => reject(transaction.error ?? new Error('Gallery transaction aborted')), {
-                    once: true,
-                });
-            });
-        }
-        saveRecord(image, meta) {
-            return new Promise((resolve, reject) => {
-                if (!this.database) {
-                    reject(new Error('Gallery database is not ready'));
-                    return;
-                }
-                const transaction = this.database.transaction([STORAGE.galleryStore, STORAGE.galleryMetaStore], 'readwrite');
-                transaction.objectStore(STORAGE.galleryStore).put(image);
-                transaction.objectStore(STORAGE.galleryMetaStore).put(meta);
-                transaction.addEventListener('complete', resolve, {
-                    once: true,
-                });
-                transaction.addEventListener('abort', () => reject(transaction.error ?? new Error('Unable to save screenshot')), {
-                    once: true,
-                });
-                transaction.addEventListener('error', () => reject(transaction.error ?? new Error('Unable to save screenshot')), {
-                    once: true,
-                });
-            });
-        }
-        remove(timestamp) {
-            return new Promise((resolve, reject) => {
-                if (!this.database) {
-                    reject(new Error('Gallery database is not ready'));
-                    return;
-                }
-                const transaction = this.database.transaction([STORAGE.galleryStore, STORAGE.galleryMetaStore], 'readwrite');
-                transaction.objectStore(STORAGE.galleryStore).delete(timestamp);
-                transaction.objectStore(STORAGE.galleryMetaStore).delete(timestamp);
-                transaction.addEventListener('complete', resolve, {
-                    once: true,
-                });
-                transaction.addEventListener('abort', () => reject(transaction.error ?? new Error('Unable to delete screenshot')), {
-                    once: true,
-                });
-            });
-        }
-        async clear() {
-            if (!this.database) throw new Error('Gallery database is not ready');
-            await new Promise((resolve, reject) => {
-                const transaction = this.database.transaction([STORAGE.galleryStore, STORAGE.galleryMetaStore], 'readwrite');
-                transaction.objectStore(STORAGE.galleryStore).clear();
-                transaction.objectStore(STORAGE.galleryMetaStore).clear();
-                transaction.objectStore(STORAGE.galleryMetaStore).put({
-                    timestamp: '__v2_migrated__',
-                    migrated: true,
-                });
-                transaction.addEventListener('complete', resolve, {
-                    once: true,
-                });
-                transaction.addEventListener('abort', () => reject(transaction.error), {
-                    once: true,
-                });
-            });
-        }
-        canvasToBlob(canvas) {
-            return new Promise((resolve, reject) => {
-                canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Unable to encode screenshot'))), 'image/png');
-            });
-        }
-        dataUrlToBlob(dataURL) {
-            if (typeof dataURL !== 'string') return null;
-            const match = dataURL.match(/^data:([^;,]+);base64,(.+)$/);
-            if (!match) return null;
-            try {
-                const binary = atob(match[2]);
-                const bytes = new Uint8Array(binary.length);
-                for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-                return new Blob([bytes], { type: match[1] || 'image/png' });
-            } catch {
-                return null;
-            }
-        }
-        async createThumbnail(blob, maxWidth = 320) {
-            if (!(blob instanceof Blob)) return { blob: null, width: 0, height: 0 };
-            let bitmap = null;
-            let image = null;
-            let sourceWidth = 0;
-            let sourceHeight = 0;
-            let objectUrl = '';
-            try {
-                if (typeof createImageBitmap === 'function') {
-                    bitmap = await createImageBitmap(blob);
-                    sourceWidth = bitmap.width;
-                    sourceHeight = bitmap.height;
-                    image = bitmap;
-                } else {
-                    objectUrl = URL.createObjectURL(blob);
-                    image = await new Promise((resolve, reject) => {
-                        const img = new Image();
-                        img.onload = () => resolve(img);
-                        img.onerror = reject;
-                        img.src = objectUrl;
-                    });
-                    sourceWidth = image.naturalWidth;
-                    sourceHeight = image.naturalHeight;
-                }
-                const scale = Math.min(1, maxWidth / Math.max(1, sourceWidth));
-                const width = Math.max(1, Math.round(sourceWidth * scale));
-                const height = Math.max(1, Math.round(sourceHeight * scale));
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const context = canvas.getContext('2d', { alpha: false });
-                if (!context) throw new Error('Unable to create thumbnail canvas');
-                context.drawImage(image, 0, 0, width, height);
-                const thumbnail = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.78));
-                return {
-                    blob: thumbnail || blob,
-                    width: sourceWidth,
-                    height: sourceHeight,
-                };
-            } finally {
-                bitmap?.close?.();
-                if (objectUrl) URL.revokeObjectURL(objectUrl);
-            }
-        }
-        async migrateLegacyEntries() {
-            const marker = await this.requestStore(STORAGE.galleryMetaStore, 'readonly', (store) => store.get('__v2_migrated__'));
-            if (marker?.migrated) return;
-            const entries = await this.requestStore(STORAGE.galleryStore, 'readonly', (store) => store.getAll());
-            let migrationComplete = true;
-            for (const entry of Array.isArray(entries) ? entries : []) {
-                if (!Number.isFinite(Number(entry?.timestamp))) continue;
-                const timestamp = Number(entry.timestamp);
-                const blob = entry.blob instanceof Blob ? entry.blob : this.dataUrlToBlob(entry.dataURL);
-                if (!(blob instanceof Blob)) {
-                    migrationComplete = false;
-                    continue;
-                }
-                const thumb = await this.createThumbnail(blob).catch(() => ({
-                    blob,
-                    width: 0,
-                    height: 0,
-                }));
-                await this.saveRecord(
-                    { timestamp, blob },
-                    {
-                        timestamp,
-                        thumbnail: thumb.blob,
-                        width: thumb.width,
-                        height: thumb.height,
-                        size: blob.size,
-                    }
-                );
-            }
-            if (migrationComplete) {
-                await this.requestStore(STORAGE.galleryMetaStore, 'readwrite', (store) =>
-                    store.put({
-                        timestamp: '__v2_migrated__',
-                        migrated: true,
-                    })
-                );
-            }
-        }
-        async saveImage() {
-            const canvas =
-                this.app.host.adapter?.kind === 'sigfix'
-                    ? document.querySelector('#sf-canvas')
-                    : (this.app.dom?.canvas ?? document.querySelector(SELECTORS.canvas));
-            if (!(canvas instanceof HTMLCanvasElement)) return false;
-            if (!(await this.ensureDatabase())) return false;
-            await new Promise((resolve) => requestAnimationFrame(resolve));
-            const blob = await this.canvasToBlob(canvas);
-            const thumbnail = await this.createThumbnail(blob).catch(() => ({
-                blob,
-                width: canvas.width,
-                height: canvas.height,
-            }));
-            const timestamp = Date.now();
-            await this.saveRecord(
-                { timestamp, blob },
-                {
-                    timestamp,
-                    thumbnail: thumbnail.blob,
-                    width: thumbnail.width || canvas.width,
-                    height: thumbnail.height || canvas.height,
-                    size: blob.size,
-                }
-            );
-            const gallery = document.querySelector('#image-gallery, #gallery, #gallery-container, .gallery');
-            if (gallery instanceof HTMLElement) await this.renderGallery(gallery, true);
-            fetch(`${ENDPOINTS.app}/screenshot`).catch((error) => {
-                this.app.logger.warnOnce('screenshot-counter', 'Unable to register the screenshot', error);
-            });
-            return true;
-        }
-        getImage(timestamp) {
-            return this.requestStore(STORAGE.galleryStore, 'readonly', (store) => store.get(timestamp));
-        }
-        async getMeta(limit) {
-            const safeLimit = Math.max(1, Math.min(200, Math.round(Number(limit) || 20)));
-            return new Promise((resolve, reject) => {
-                if (!this.database) {
-                    reject(new Error('Gallery database is not ready'));
-                    return;
-                }
-                const transaction = this.database.transaction(STORAGE.galleryMetaStore, 'readonly');
-                const request = transaction.objectStore(STORAGE.galleryMetaStore).openCursor(null, 'prev');
-                const entries = [];
-                let more = false;
-                request.addEventListener('success', () => {
-                    const cursor = request.result;
-                    if (!cursor) {
-                        resolve({ entries, more });
-                        return;
-                    }
-                    const value = cursor.value;
-                    if (!Number.isFinite(Number(value?.timestamp))) {
-                        cursor.continue();
-                        return;
-                    }
-                    if (entries.length >= safeLimit) {
-                        more = true;
-                        resolve({ entries, more });
-                        return;
-                    }
-                    entries.push(value);
-                    cursor.continue();
-                });
-                request.addEventListener('error', () => reject(request.error), {
-                    once: true,
-                });
-            });
-        }
-        revokeObjectUrls() {
-            for (const url of this.objectUrls) URL.revokeObjectURL(url);
-            this.objectUrls.clear();
-        }
-        objectUrl(blob) {
-            if (!(blob instanceof Blob)) return '';
-            const url = URL.createObjectURL(blob);
-            this.objectUrls.add(url);
-            return url;
-        }
-        async renderGallery(container, reset = false) {
-            if (!(container instanceof HTMLElement)) return;
-            if (reset) this.renderLimit = 20;
-            const { entries, more } = await this.getMeta(this.renderLimit);
-            this.revokeObjectUrls();
-            container.replaceChildren();
-            const downloadAll = document.querySelector('#gallery-download');
-            const deleteAll = document.querySelector('#gallery-delete');
-            const hasEntries = entries.length > 0;
-            if (downloadAll instanceof HTMLElement) downloadAll.style.display = hasEntries ? 'block' : 'none';
-            if (deleteAll instanceof HTMLElement) deleteAll.style.display = hasEntries ? 'block' : 'none';
-            if (!hasEntries) {
-                container.append(
-                    createElement('span', {
-                        className: 'gallery-empty',
-                        text: 'No images saved yet.',
-                    })
-                );
-                return;
-            }
-            for (const entry of entries) {
-                const timestamp = Number(entry.timestamp);
-                const card = createElement('div', {
-                    className: 'image-container',
-                    attributes: { 'data-timestamp': timestamp },
-                });
-                const source = this.objectUrl(entry.thumbnail);
-                const image = createElement('img', {
-                    className: 'gallery-image',
-                    attributes: {
-                        src: source,
-                        loading: 'lazy',
-                        alt: `Screenshot ${new Date(timestamp).toLocaleString()}`,
-                        'data-image-id': timestamp,
-                    },
-                });
-                const meta = createElement('div', {
-                    className: 'gallery-card-meta',
-                });
-                const date = createElement('span', {
-                    className: 'modDescText',
-                    text: new Date(timestamp).toLocaleString(),
-                });
-                const actions = createElement('div', {
-                    className: 'centerXY g-5',
-                });
-                actions.append(
-                    createElement('button', {
-                        className: 'download_btn operation_btn',
-                        icon: 'download',
-                        attributes: {
-                            type: 'button',
-                            'data-action': 'download',
-                            'data-image-id': timestamp,
-                            'aria-label': 'Download screenshot',
-                        },
-                    }),
-                    createElement('button', {
-                        className: 'delete_btn operation_btn',
-                        icon: 'trash',
-                        attributes: {
-                            type: 'button',
-                            'data-action': 'delete',
-                            'data-image-id': timestamp,
-                            'aria-label': 'Delete screenshot',
-                        },
-                    })
-                );
-                meta.append(date, actions);
-                card.append(image, meta);
-                container.append(card);
-            }
-            if (more) {
-                container.append(
-                    createElement('button', {
-                        className: 'modButton-secondary gallery-load-more',
-                        attributes: {
-                            type: 'button',
-                            'data-action': 'load-more',
-                        },
-                        text: 'Load more',
-                    })
-                );
-            }
-        }
-        async downloadAll() {
-            try {
-                if (!(await this.ensureDatabase())) return;
-                const entries = await this.requestStore(STORAGE.galleryStore, 'readonly', (store) => store.getAll());
-                if (!entries.length) return;
-                const JSZip = await this.app.dependencies.load('jszip');
-                if (this.resources.disposed) return;
-                const archive = new JSZip();
-                for (const entry of entries) {
-                    const blob2 = entry.blob instanceof Blob ? entry.blob : this.dataUrlToBlob(entry.dataURL);
-                    if (!(blob2 instanceof Blob) || !Number.isFinite(Number(entry.timestamp))) continue;
-                    archive.file(`sigmod-${entry.timestamp}.png`, await blob2.arrayBuffer());
-                }
-                const blob = await archive.generateAsync({ type: 'blob' });
-                const href = URL.createObjectURL(blob);
-                const anchor = createElement('a', {
-                    attributes: {
-                        href,
-                        download: `sigmod-gallery-${Date.now()}.zip`,
-                    },
-                });
-                anchor.click();
-                this.resources.timeout(() => URL.revokeObjectURL(href), 1e3);
-            } catch (error) {
-                this.app.features.get('modal')?.alert(error.message || 'Unable to download the gallery.', 'danger');
-            }
-        }
-        async deleteAll() {
-            const confirmMsg = this.app.i18n?.message('Delete all saved screenshots?') ?? 'Delete all saved screenshots?';
-            if (!confirm(confirmMsg)) return;
-            try {
-                if (!(await this.ensureDatabase())) return;
-                await this.clear();
-                const gallery = document.querySelector('#image-gallery, #gallery, #gallery-container, .gallery');
-                if (gallery instanceof HTMLElement) await this.renderGallery(gallery, true);
-            } catch (error) {
-                this.app.features.get('modal')?.alert(error.message || 'Unable to clear the gallery.', 'danger');
-            }
-        }
-        async downloadImage(timestamp) {
-            if (!(await this.ensureDatabase())) return;
-            const entry = await this.getImage(timestamp);
-            const blob = entry?.blob instanceof Blob ? entry.blob : this.dataUrlToBlob(entry?.dataURL);
-            if (!(blob instanceof Blob)) return;
-            const href = URL.createObjectURL(blob);
-            const anchor = createElement('a', {
-                attributes: {
-                    href,
-                    download: `Sigmally ${new Date(timestamp).toISOString().replace(/[:]/g, '_')}.png`,
-                },
-            });
-            anchor.click();
-            this.resources.timeout(() => URL.revokeObjectURL(href), 1e3);
-        }
-        async showImage(timestamp) {
-            if (!(await this.ensureDatabase())) return;
-            const entry = await this.getImage(timestamp);
-            const blob = entry?.blob instanceof Blob ? entry.blob : this.dataUrlToBlob(entry?.dataURL);
-            if (!(blob instanceof Blob)) return;
-            if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
-            const href = URL.createObjectURL(blob);
-            this.previewUrl = href;
-            const body = createElement('div', {
-                className: 'gallery-preview-modal',
-            });
-            const image = createElement('img', {
-                className: 'sigmod-avatar',
-                attributes: {
-                    src: href,
-                    alt: `Screenshot ${new Date(timestamp).toLocaleString()}`,
-                },
-            });
-            const actions = createElement('div', {
-                className: 'gallery-preview-actions',
-            });
-            const download = createElement('button', {
-                className: 'modButton-primary',
-                attributes: { type: 'button' },
-                text: 'Download',
-            });
-            const close = createElement('button', {
-                className: 'modButton-secondary',
-                attributes: { type: 'button' },
-                text: 'Close',
-            });
-            actions.append(close, download);
-            body.append(image, actions);
-            const modal = this.app.features.get('modal');
-            modal?.open('gallery-preview', body, {
-                className: 'modAlert gallery-preview-shell',
-                zIndex: 2147483645,
-            });
-            const release = () => {
-                URL.revokeObjectURL(href);
-                if (this.previewUrl === href) this.previewUrl = null;
-            };
-            const scope = modal?.modals.get('gallery-preview')?.scope;
-            if (scope) {
-                scope.add(release);
-                scope.listen(close, 'click', () => modal?.close('gallery-preview'));
-                scope.listen(download, 'click', () => this.downloadImage(timestamp));
-            } else {
-                release();
-                close.addEventListener('click', () => modal?.close('gallery-preview'), { once: true });
-                download.addEventListener('click', () => this.downloadImage(timestamp));
-            }
-        }
-        async handleGalleryClick(event) {
-            const target = event.target instanceof Element ? event.target : null;
-            if (!target) return;
-            const loadMore = target.closest('[data-action="load-more"]');
-            if (loadMore instanceof HTMLElement) {
-                this.renderLimit = Math.min(200, this.renderLimit + 20);
-                const gallery = loadMore.parentElement;
-                if (gallery instanceof HTMLElement) await this.renderGallery(gallery, false);
-                return;
-            }
-            const card = target.closest('[data-timestamp]');
-            if (!(card instanceof HTMLElement)) return;
-            const timestamp = Number(card.dataset.timestamp);
-            if (!Number.isFinite(timestamp)) return;
-            const button = target.closest('[data-action]');
-            if (button instanceof HTMLElement) {
-                event.stopPropagation();
-                if (button.dataset.action === 'delete') {
-                    await this.remove(timestamp);
-                    if (card.parentElement instanceof HTMLElement) await this.renderGallery(card.parentElement, true);
-                } else if (button.dataset.action === 'download') {
-                    await this.downloadImage(timestamp);
-                }
-                return;
-            }
-            if (target.closest('img.gallery-image')) await this.showImage(timestamp);
         }
     }
     class SavedNamesController extends FeatureController {
@@ -20024,7 +19400,6 @@
         ],
         [
             ['challenges', ChallengeController],
-            ['screenshots', ScreenshotController],
             ['announcements', AnnouncementsController],
             ['statistics', StatisticsController],
             ['quickAccess', QuickAccessController],

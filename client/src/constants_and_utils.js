@@ -29,9 +29,6 @@ const STORAGE = {
     statsDatabase: 'SigModStatisticsDB',
     statsMatchStore: 'matches',
     statsMetaStore: 'meta',
-    galleryDatabase: 'imageGalleryDB',
-    galleryStore: 'images',
-    galleryMetaStore: 'imageMeta',
     recentTabs: 'SigModClient-recent-tabs',
     friendsLocal: 'SigModClient-friends-local',
     localization: 'SigModClient-localization',
@@ -150,7 +147,6 @@ const DEFAULT_SETTINGS = {
             respawn: 'b',
             ping: 'r',
             location: 'y',
-            saveImage: null,
             splits: {
                 double: 'd',
                 triple: 'f',
@@ -284,10 +280,6 @@ const LIBRARIES = {
         script: 'https://unpkg.com/alwan@2.2.0/dist/js/alwan.min.js',
         style: 'https://unpkg.com/alwan@2.2.0/dist/css/alwan.min.css',
         global: 'Alwan',
-    },
-    jszip: {
-        script: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-        global: 'JSZip',
     },
 };
 
@@ -665,7 +657,6 @@ const ALL_KEYBIND_DEFINITIONS = [
     { path: 'macros.keys.respawn', label: 'Respawn' },
     { path: 'macros.keys.ping', label: 'Ping' },
     { path: 'macros.keys.location', label: 'Send location' },
-    { path: 'macros.keys.saveImage', label: 'Make screenshot' },
     { path: 'macros.keys.splits.double', label: 'Double split' },
     { path: 'macros.keys.splits.triple', label: 'Triple split' },
     { path: 'macros.keys.splits.quad', label: 'Quad split' },

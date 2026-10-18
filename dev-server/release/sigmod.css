@@ -1463,53 +1463,6 @@ button:focus {
     font-size: 9px;
     text-align: right;
 }
-.gallery-card-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5px;
-    padding-top: 3px;
-}
-.gallery-load-more {
-    grid-column: 1 / -1;
-    width: 100%;
-    min-height: 31px;
-    margin-top: 4px;
-}
-.gallery-empty {
-    grid-column: 1 / -1;
-    width: 100%;
-    padding: 18px 8px;
-    color: #777;
-    text-align: center;
-}
-.gallery-preview-shell {
-    top: 50%;
-    width: min(760px, calc(100vw - 30px));
-    max-width: 760px;
-    transform: translate(-50%, -50%);
-    padding: 8px;
-    border: 1px solid #282828;
-    background: #0d0d0d;
-}
-.gallery-preview-modal {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.gallery-preview-modal img {
-    display: block;
-    width: 100%;
-    max-height: 70vh;
-    object-fit: contain;
-    border-radius: 6px;
-    background: #050505;
-}
-.gallery-preview-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 6px;
-}
 .sigmod-title {
     display: flex;
     flex-direction: column;
@@ -2609,7 +2562,10 @@ button:focus {
     box-shadow: none;
     user-select: none;
     box-sizing: border-box;
-    transition: background-color 0.15s ease, border-color 0.15s ease, border-radius 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        border-radius 0.15s ease;
     cursor: grab;
 }
 
@@ -2772,7 +2728,9 @@ button:focus {
     width: 100%;
     cursor: pointer;
     text-align: center;
-    transition: background 0.15s ease, opacity 0.15s ease;
+    transition:
+        background 0.15s ease,
+        opacity 0.15s ease;
     opacity: 0.85;
 }
 
@@ -3571,8 +3529,7 @@ button:focus {
     justify-content: space-between;
     gap: 8px;
     padding: 11px 12px;
-    border: 1px solid #202020;
-    border-left: 0;
+    border: none;
     border-radius: 7px;
     background: #0d0d0d;
     color: #fafafa;
@@ -3584,7 +3541,7 @@ button:focus {
 }
 
 .mod-category-card:hover {
-    background: #101010;
+    background: #1c1c1c;
     transform: translateY(-1px);
 }
 
@@ -4443,7 +4400,9 @@ button[disabled] {
     width: 100%;
     cursor: pointer;
     padding: 6px 10px;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
     box-sizing: border-box;
 }
 
@@ -4617,7 +4576,9 @@ button[disabled] {
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .sigmod-announcement-gallery-thumb:hover,
@@ -4632,63 +4593,6 @@ button[disabled] {
     gap: 10px;
     max-height: 330px;
     overflow-y: auto;
-}
-
-#image-gallery {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-}
-
-.image-container {
-    display: flex;
-    flex-direction: column;
-}
-
-.image-container img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.download_btn,
-.delete_btn {
-    color: #d8d8d8;
-    background: transparent;
-    border-radius: 4px;
-    cursor: pointer;
-    transition:
-        background-color 150ms ease,
-        color 150ms ease;
-}
-
-.download_btn:hover,
-.delete_btn:hover,
-.operation_btn:hover {
-    background: #252525;
-    color: #fff;
-}
-
-.operation_btn {
-    border: none;
-    width: 22px;
-    min-width: 22px;
-    height: 22px;
-    min-height: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    color: currentColor;
-    cursor: pointer;
-}
-
-.operation_btn .sigmod-icon {
-    width: 18px;
-    height: 18px;
 }
 
 .sigmod-community {
@@ -4998,11 +4902,6 @@ html.sigmod-hide-ads #modalfolks {
 
 .data-actions > .flex,
 .data-actions > div {
-    gap: 6px;
-}
-
-.data-screenshots-actions {
-    display: flex;
     gap: 6px;
 }
 
@@ -6415,7 +6314,10 @@ html.sigmod-hide-ads #modalfolks {
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
 }
 .sigmod-announcement-back-btn:hover {
     background: rgba(255, 255, 255, 0.12);
@@ -7358,7 +7260,6 @@ html.sigmod-hide-ads #modalfolks {
     }
 }
 
-
 /* SigMod Keybindings Styling */
 .keybinding-wrapper {
     position: relative;
@@ -7382,7 +7283,10 @@ html.sigmod-hide-ads #modalfolks {
     text-align: center;
     letter-spacing: 0.5px;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
     user-select: none;
     box-sizing: border-box;
 }
@@ -7438,7 +7342,10 @@ html.sigmod-hide-ads #modalfolks {
     padding: 0;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease;
 }
 
 .keybinding-wrapper:hover .keybinding-clear,
@@ -7452,7 +7359,7 @@ html.sigmod-hide-ads #modalfolks {
     color: #fff;
 }
 
-.keybinding-wrapper[data-has-value="false"] .keybinding-clear,
+.keybinding-wrapper[data-has-value='false'] .keybinding-clear,
 .keybinding.is-recording ~ .keybinding-clear {
     display: none !important;
 }
@@ -7483,8 +7390,14 @@ html.sigmod-hide-ads #modalfolks {
 }
 
 @keyframes tipFadeIn {
-    from { opacity: 0; transform: translate(-50%, -4px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
+    from {
+        opacity: 0;
+        transform: translate(-50%, -4px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
 }
 
 .keybind-info {
@@ -7733,6 +7646,3 @@ body.sigmod-hud-hidden #chat_block {
     visibility: hidden !important;
     pointer-events: none !important;
 }
-
-
-

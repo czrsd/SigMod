@@ -1463,53 +1463,6 @@ button:focus {
     font-size: 9px;
     text-align: right;
 }
-.gallery-card-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5px;
-    padding-top: 3px;
-}
-.gallery-load-more {
-    grid-column: 1 / -1;
-    width: 100%;
-    min-height: 31px;
-    margin-top: 4px;
-}
-.gallery-empty {
-    grid-column: 1 / -1;
-    width: 100%;
-    padding: 18px 8px;
-    color: #777;
-    text-align: center;
-}
-.gallery-preview-shell {
-    top: 50%;
-    width: min(760px, calc(100vw - 30px));
-    max-width: 760px;
-    transform: translate(-50%, -50%);
-    padding: 8px;
-    border: 1px solid #282828;
-    background: #0d0d0d;
-}
-.gallery-preview-modal {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.gallery-preview-modal img {
-    display: block;
-    width: 100%;
-    max-height: 70vh;
-    object-fit: contain;
-    border-radius: 6px;
-    background: #050505;
-}
-.gallery-preview-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 6px;
-}
 .sigmod-title {
     display: flex;
     flex-direction: column;
@@ -4642,63 +4595,6 @@ button[disabled] {
     overflow-y: auto;
 }
 
-#image-gallery {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-}
-
-.image-container {
-    display: flex;
-    flex-direction: column;
-}
-
-.image-container img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.download_btn,
-.delete_btn {
-    color: #d8d8d8;
-    background: transparent;
-    border-radius: 4px;
-    cursor: pointer;
-    transition:
-        background-color 150ms ease,
-        color 150ms ease;
-}
-
-.download_btn:hover,
-.delete_btn:hover,
-.operation_btn:hover {
-    background: #252525;
-    color: #fff;
-}
-
-.operation_btn {
-    border: none;
-    width: 22px;
-    min-width: 22px;
-    height: 22px;
-    min-height: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    color: currentColor;
-    cursor: pointer;
-}
-
-.operation_btn .sigmod-icon {
-    width: 18px;
-    height: 18px;
-}
-
 .sigmod-community {
     display: flex;
     flex-direction: column;
@@ -5006,11 +4902,6 @@ html.sigmod-hide-ads #modalfolks {
 
 .data-actions > .flex,
 .data-actions > div {
-    gap: 6px;
-}
-
-.data-screenshots-actions {
-    display: flex;
     gap: 6px;
 }
 

@@ -1122,17 +1122,6 @@ class MenuController extends FeatureController {
                                 </div>
                             </section>
 
-                            <section class="mod_tab scroll" id="mod_gallery" data-mod-panel>
-                                <div class="modColItems_2">
-                                    <label class="macroRow w-100"><span class="text">Make screenshot</span><input type="text" name="saveImage" data-label="Save image" id="modinput17" class="keybinding" data-setting="macros.keys.saveImage" maxlength="1" placeholder="..."></label>
-                                </div>
-                                <div class="modColItems_2">
-                                    <span>Image gallery</span>
-                                    <div class="flex g-5"><button type="button" class="modButton" id="gallery-download">Download all</button><button type="button" class="modButton" id="gallery-delete">Delete all</button></div>
-                                    <div id="image-gallery"></div>
-                                </div>
-                            </section>
-
                             <section class="mod_tab scroll" id="mod_friends" data-mod-panel>
                                 <div id="friends-guest-intro" class="friends-guest-intro">
                                     <div class="friends-guest-icon">${icon('users', 24)}</div>
@@ -1385,7 +1374,7 @@ class MenuController extends FeatureController {
                     {
                         id: 'mod_macros',
                         title: 'Keyboard',
-                        description: 'Game actions, split keys, toggles and screenshot keybinds.',
+                        description: 'Game actions, split keys and toggle keybinds.',
                     },
                     {
                         id: 'mod_controls_mouse',
@@ -1442,7 +1431,7 @@ class MenuController extends FeatureController {
                     {
                         id: 'mod_settings_data',
                         title: 'Data',
-                        description: 'Statistics, reset options and captured screenshots.',
+                        description: 'Settings backup, import, export and reset options.',
                     },
                     {
                         id: 'mod_statistics',
@@ -1518,7 +1507,6 @@ class MenuController extends FeatureController {
         const gamePanel = content.querySelector('#mod_game');
         const namePanel = content.querySelector('#mod_name');
         const themesPanel = content.querySelector('#mod_themes');
-        const galleryPanel = content.querySelector('#mod_gallery');
         const mousePanel = this.ensureNavigationPanel(content, 'mod_controls_mouse');
         const advancedPanel = this.ensureNavigationPanel(content, 'mod_controls_advanced');
         const interfacePanel = this.ensureNavigationPanel(content, 'mod_settings_interface');
@@ -1583,8 +1571,6 @@ class MenuController extends FeatureController {
             gamePanel instanceof HTMLElement
                 ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle'].map((selector) => row(gamePanel, selector)).filter(Boolean)
                 : [];
-        let screenshotRow = null;
-        if (galleryPanel instanceof HTMLElement) screenshotRow = row(galleryPanel, '#modinput17');
         if (keyboardPanel instanceof HTMLElement) {
             const keyboard = page();
             const headerBar = keyboardPanel.querySelector('.macros-header-bar');
@@ -1592,7 +1578,6 @@ class MenuController extends FeatureController {
             if (headerBar) keyboard.append(headerBar);
             if (conflictBanner) keyboard.append(conflictBanner);
             const actions = ['#modinput1', '#modinput15', '#modinput18'].map((selector) => row(keyboardPanel, selector)).filter(Boolean);
-            if (screenshotRow instanceof HTMLElement) actions.push(screenshotRow);
             const splits = ['#modinput2', '#modinput3', '#modinput4'].map((selector) => row(keyboardPanel, selector)).filter(Boolean);
             splits.push(...trickRows);
             const movement = ['#modinput5', '#modinput7', '#modinput16'].map((selector) => row(keyboardPanel, selector)).filter(Boolean);
@@ -1714,25 +1699,6 @@ class MenuController extends FeatureController {
             );
             if (settingsRow instanceof HTMLElement) {
                 dataPage.append(section('Settings', [settingsRow]));
-            }
-            if (galleryPanel instanceof HTMLElement) {
-                const gallery = galleryPanel.querySelector('#image-gallery');
-                const galleryBlock = gallery?.closest('.modColItems_2');
-                if (galleryBlock instanceof HTMLElement) {
-                    const galleryTitle = galleryBlock.querySelector(':scope > span');
-                    galleryTitle?.remove();
-                    const galleryActions = galleryBlock.querySelector(':scope > .flex');
-                    if (galleryActions instanceof HTMLElement) galleryActions.classList.add('data-screenshots-actions');
-                    galleryBlock.className = 'settings-section';
-                    galleryBlock.prepend(
-                        createElement('div', {
-                            className: 'settings-section-title',
-                            text: 'Screenshots',
-                        })
-                    );
-                    dataPage.append(galleryBlock);
-                }
-                galleryPanel.remove();
             }
             interfacePanel.replaceChildren(interfacePage);
             dataPanel.replaceChildren(dataPage);
@@ -3690,7 +3656,6 @@ class HomeSearch {
             ['spectator', 'spectate', 'spectating'],
             ['name', 'nickname', 'nick'],
             ['macro', 'macros', 'control', 'controls', 'keyboard', 'keybind'],
-            ['gallery', 'screenshot', 'screenshots', 'capture', 'image gallery'],
             ['interface', 'ui', 'hud', 'menu'],
             ['settings', 'general', 'preferences', 'options'],
             ['social', 'friends', 'discover', 'users', 'requests', 'profile', 'account'],

@@ -16208,6 +16208,12 @@
                 { capture: true }
             );
             this.resources.add(this.app.backend.on('tag-ping', (data) => this.receivePing(data)));
+            const loop = () => {
+                this.drawPings();
+                this.frameId = requestAnimationFrame(loop);
+            };
+            this.frameId = requestAnimationFrame(loop);
+            this.resources.add(() => cancelAnimationFrame(this.frameId));
             this.resources.add(() => this.closeWheel());
             this.resources.add(() => {
                 this.activePings.forEach((p) => p.element.remove());

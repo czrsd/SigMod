@@ -3,50 +3,49 @@ import { generateAccessToken, verifyAccessToken, verifyRefreshToken } from '../u
 import AccountModel from '../models/AccountModel';
 
 export const requireUser = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
-    let accessToken = req.cookies.mod_accessToken;
+    let accessToken: string | undefined = req.cookies?.mod_accessToken;
     const authHeader = req.headers.authorization;
 
-    if (!accessToken && authHeader && authHeader.startsWith('Bearer ')) {
-        accessToken = authHeader.split(' ')[1];
+    if (authHeader?.startsWith('Bearer ')) {
+        accessToken = authHeader.slice('Bearer '.length).trim() || undefined;
     }
 
-    if (!accessToken) {
-        const refreshToken = req.cookies.mod_refreshToken || req.headers['x-refresh-token'];
-
-        if (!refreshToken || typeof refreshToken !== 'string') {
-            return res.status(401).json({ success: false, message: 'Unauthorized' });
-        }
-
+    if (accessToken) {
         try {
-            const decodedRefreshToken = verifyRefreshToken(refreshToken);
-            const { userId } = decodedRefreshToken;
-
-            const user = await AccountModel.findById(userId);
-            if (!user) {
-                return res.status(404).json({ success: false, message: 'User not found' });
-            }
-
-            const newAccessToken = generateAccessToken(userId);
-            res.cookie('mod_accessToken', newAccessToken, {
-                maxAge: 300000, // 5 minutes
-                httpOnly: true,
-                secure: true,
-                sameSite: 'none',
-            });
-            res.setHeader('x-new-access-token', newAccessToken);
-
-            req.user = { userId };
+            const decoded = verifyAccessToken(accessToken);
+            req.user = { userId: decoded.userId };
             return next();
-        } catch (err) {
-            return res.status(401).json({ success: false, message: 'Invalid refresh token' });
+        } catch {
+            // An expired access token is expected; try the longer-lived refresh token below.
         }
+    }
+
+    const refreshToken = req.cookies?.mod_refreshToken || req.headers['x-refresh-token'];
+    if (!refreshToken || typeof refreshToken !== 'string') {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     try {
-        const decoded = verifyAccessToken(accessToken);
-        req.user = { userId: decoded.userId };
+        const decodedRefreshToken = verifyRefreshToken(refreshToken);
+        const { userId } = decodedRefreshToken;
+
+        const user = await AccountModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const newAccessToken = generateAccessToken(userId);
+        res.cookie('mod_accessToken', newAccessToken, {
+            maxAge: 300000, // 5 minutes
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+        });
+        res.setHeader('x-new-access-token', newAccessToken);
+
+        req.user = { userId };
         return next();
-    } catch (err) {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
+    } catch {
+        return res.status(401).json({ success: false, message: 'Invalid refresh token' });
     }
 };

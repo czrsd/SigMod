@@ -1305,7 +1305,7 @@ class PartyController extends FeatureController {
         super(app, name);
         this.members = new Map();
         this.panel = null;
-        this.panelDisposer = null;
+        this.panelScope = null;
         this.drag = null;
         this.lastScore = null;
         this.sentPositionNull = false;
@@ -1803,10 +1803,8 @@ class PartyController extends FeatureController {
             this.panel.remove();
             this.panel = null;
         }
-        if (this.panelDisposer) {
-            this.resources.remove(this.panelDisposer);
-            this.panelDisposer = null;
-        }
+        this.panelScope?.dispose();
+        this.panelScope = null;
     }
     publishIdentity() {
         const inputNick = document.querySelector(SELECTORS.nickname)?.value?.trim();
@@ -1875,6 +1873,8 @@ class PartyController extends FeatureController {
             return null;
         }
         if (this.panel?.isConnected) return this.panel;
+        this.panelScope?.dispose();
+        const scope = (this.panelScope = this.resources.child('party-panel'));
         const panel = createElement('section', { className: 'party_panel' });
         const header = createElement('header', {
             className: 'flex centerY justify-sb drag-handle',
@@ -1923,7 +1923,12 @@ class PartyController extends FeatureController {
         document.body.append(panel);
         this.panel = panel;
         this.updateStyles();
-        this.resources.listen(panel, 'pointerdown', (event) => {
+        scope.listen(members, 'click', (event) => {
+            if (!(event.target instanceof Element) || !event.target.closest('.party-expand-btn')) return;
+            this.expanded = !this.expanded;
+            this.requestRender();
+        });
+        scope.listen(panel, 'pointerdown', (event) => {
             if (this.drag) return;
             if (event.target instanceof Element && event.target.closest('button, input, a, select')) return;
             this.drag = {
@@ -1934,7 +1939,7 @@ class PartyController extends FeatureController {
             panel.setPointerCapture?.(event.pointerId);
             document.body.style.userSelect = 'none';
         });
-        this.resources.listen(window, 'pointermove', (event) => {
+        scope.listen(window, 'pointermove', (event) => {
             if (!this.drag || event.pointerId !== this.drag.pointerId) return;
             const x = clamp(event.clientX - this.drag.offsetX, 0, Math.max(0, innerWidth - panel.offsetWidth));
             const y = clamp(event.clientY - this.drag.offsetY, 0, Math.max(0, innerHeight - panel.offsetHeight));
@@ -1943,7 +1948,7 @@ class PartyController extends FeatureController {
             this.drag.x = x;
             this.drag.y = y;
         });
-        this.resources.listen(window, 'pointerup', (event) => {
+        scope.listen(window, 'pointerup', (event) => {
             if (!this.drag || event.pointerId !== this.drag.pointerId) return;
             const { x, y } = this.drag;
             this.drag = null;
@@ -1953,8 +1958,7 @@ class PartyController extends FeatureController {
                 this.app.settingsStore.set('settings.partyPanel.y', y);
             }
         });
-        if (this.panelDisposer) this.resources.remove(this.panelDisposer);
-        this.panelDisposer = this.resources.add(() => panel.remove());
+        scope.add(() => panel.remove());
         return panel;
     }
     renderMembers(input) {
@@ -2362,10 +2366,6 @@ class PartyController extends FeatureController {
                     type: 'button',
                     className: 'party-expand-btn',
                     text: btnText,
-                });
-                this.resources.listen(expandBtn, 'click', () => {
-                    this.expanded = !this.expanded;
-                    this.requestRender();
                 });
                 container.append(expandBtn);
             } else {

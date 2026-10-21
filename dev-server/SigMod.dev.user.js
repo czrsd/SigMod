@@ -4954,6 +4954,8 @@
                                 </div>
                             </section>
 
+                            <section class="mod_tab mod-category-panel" id="mod_category" data-mod-panel></section>
+
                             <section class="mod_tab scroll" id="mod_statistics" data-mod-panel>
                                 <div class="statistics-page">
                                     <div class="statistics-header">
@@ -5039,201 +5041,313 @@
                             </section>
 
                             <section class="mod_tab scroll" id="mod_macros" data-mod-panel>
-                                <div class="modColItems">
-                                    <div class="macros_wrapper">
-                                        <div class="macros-header-bar flex justify-sb align-center">
-                                            <span class="text-center f-big">Keybindings</span>
-                                            <button type="button" class="modButton keybinds-reset-btn" id="sigmod-reset-keybinds" title="Restore all default keybindings">Reset Defaults</button>
-                                        </div>
-                                        <div id="sigmod-keybind-conflict-banner" class="keybind-conflict-banner" style="display: none;"></div>
-                                        <hr style="border-color: #3F3F3F">
-                                        <div style="justify-content: center;">
-                                            <div class="f-column g-10" style="align-items: center; justify-content: center;">
-                                                <div class="macrosContainer">
-                                                    <div class="f-column g-10">
-                                                        <label class="macroRow"><span class="text">Rapid Feed</span><input id="modinput1" class="keybinding" name="rapidFeed" data-label="Rapid Feed" data-setting="macros.keys.rapidFeed" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="text">Double Split</span><input id="modinput2" class="keybinding" name="splits.double" data-label="Double split" data-setting="macros.keys.splits.double" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="text">Triple Split</span><input id="modinput3" class="keybinding" name="splits.triple" data-label="Triple split" data-setting="macros.keys.splits.triple" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="flex align-center g-5"><span class="text">Respawn</span>${this.infoBtn('Quickly respawns your cell after dying without having to manually click through the death screen.', 'down')}</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
-                                                    </div>
-                                                    <div class="f-column g-10">
-                                                        <label class="macroRow"><span class="text">Quad Split</span><input id="modinput4" class="keybinding" name="splits.quad" data-label="Quad split" data-setting="macros.keys.splits.quad" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="text">Horizontal Line</span><input id="modinput5" class="keybinding" name="line.horizontal" data-label="Horizontal line" data-setting="macros.keys.line.horizontal" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="text">Vertical Line</span><input id="modinput7" class="keybinding" name="line.vertical" data-label="Vertical line" data-setting="macros.keys.line.vertical" maxlength="1" placeholder="..."></label>
-                                                        <label class="macroRow"><span class="flex align-center g-5"><span class="text">Fixed Line</span>${this.infoBtn('Freezes your aim position in place so your cell maintains a straight trajectory without following the mouse.')}</span><input id="modinput16" class="keybinding" name="line.fixed" data-label="Fixed line" data-setting="macros.keys.line.fixed" maxlength="1" placeholder="..."></label>
-                                                    </div>
-                                                </div>
-                                                <label class="macroRow"><span class="flex align-center g-5"><span class="text">Ping</span>${this.infoBtn('Sends a quick ping or opens the ping wheel to alert tag teammates of your location. You must be in a tag to use this keybind.')}</span><input id="modinput18" class="keybinding" name="ping" data-label="Ping" data-setting="macros.keys.ping" maxlength="1" placeholder="..."></label>
-                                            </div>
-                                        </div>
+                                <div class="settings-page">
+                                    <div class="macros-header-bar flex justify-sb align-center">
+                                        <span class="text-center f-big">Keybindings</span>
+                                        <button type="button" class="modButton keybinds-reset-btn" id="sigmod-reset-keybinds" title="Restore all default keybindings">Reset Defaults</button>
                                     </div>
-                                    <div class="macros_wrapper">
-                                        <span class="text-center f-big">Advanced Keybinding options</span>
-                                        <div class="setting-card-wrapper">
-                                            <div class="setting-card"><div class="setting-card-action"><span class="setting-card-name">Rapid feed</span></div></div>
-                                            <div class="setting-parameters" style="display: none;">
-                                                <div class="my-5"><span class="stats-info-text">Customize feeding</span></div>
-                                                <div class="stats-line justify-sb"><span>Feed speed</span><div class="justify-sb g-5" style="width: 200px;"><span class="mod_badge" id="macroSpeedText"></span><input type="range" class="modSlider" id="macroSpeed" min="5" max="100" step="5" data-setting="macros.feedSpeed" data-number style="width: 134px;"></div></div>
-                                            </div>
+                                    <div id="sigmod-keybind-conflict-banner" class="keybind-conflict-banner" style="display: none;"></div>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Actions</div>
+                                        <div class="settings-grid settings-grid-two">
+                                            <label class="macroRow settings-item"><span class="text">Rapid Feed</span><input id="modinput1" class="keybinding" name="rapidFeed" data-label="Rapid Feed" data-setting="macros.keys.rapidFeed" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Respawn</span>${this.infoBtn('Quickly respawns your cell after dying without having to manually click through the death screen.', 'down')}</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Ping</span>${this.infoBtn('Sends a quick ping or opens the ping wheel to alert tag teammates of your location. You must be in a tag to use this keybind.')}</span><input id="modinput18" class="keybinding" name="ping" data-label="Ping" data-setting="macros.keys.ping" maxlength="1" placeholder="..."></label>
                                         </div>
-                                        <div class="setting-card-wrapper">
-                                            <div class="setting-card"><div class="setting-card-action"><span class="setting-card-name">Linesplits</span></div></div>
-                                            <div class="setting-parameters" style="display: none;">
-                                                <div class="my-5"><span class="stats-info-text">Customize linesplits</span></div>
-                                                <div class="stats-line justify-sb"><span>Instant split</span><div class="centerXY g-5"><span class="modDescText">Splits - </span><input type="number" class="modInput modNumberInput text-center" min="0" max="4" placeholder="0" title="Splits" style="width: 44px;" id="instant-split-amount"><div class="modCheckbox"><input id="toggle-instant-split" type="checkbox"><label class="cbx" for="toggle-instant-split"></label></div></div></div>
-                                            </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Splits</div>
+                                        <div class="settings-grid settings-grid-two">
+                                            <label class="macroRow settings-item"><span class="text">Double Split</span><input id="modinput2" class="keybinding" name="splits.double" data-label="Double split" data-setting="macros.keys.splits.double" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="text">Triple Split</span><input id="modinput3" class="keybinding" name="splits.triple" data-label="Triple split" data-setting="macros.keys.splits.triple" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="text">Quad Split</span><input id="modinput4" class="keybinding" name="splits.quad" data-label="Quad split" data-setting="macros.keys.splits.quad" maxlength="1" placeholder="..."></label>
+                                            <div class="stats-line justify-sb settings-item"><span class="flex align-center g-5"><span>Double Trick</span>${this.infoBtn('Performs two quick splits with a timed delay, perfect for double splitting into a teammate or target.')}</span><input id="modinput13" class="keybinding" name="splits.doubleTrick" data-label="Double Trick" data-setting="macros.keys.splits.doubleTrick" maxlength="1" placeholder="..."></div>
+                                            <div class="stats-line justify-sb settings-item"><span class="flex align-center g-5"><span>Self Trick</span>${this.infoBtn('Performs four rapid splits with a timed delay, quickly splitting all pieces for a self trick split.')}</span><input id="modinput14" class="keybinding" name="splits.selfTrick" data-label="Self Trick" data-setting="macros.keys.splits.selfTrick" maxlength="1" placeholder="..."></div>
                                         </div>
-                                        <div class="setting-card-wrapper">
-                                            <div class="setting-card"><div class="setting-card-action"><span class="setting-card-name">Toggle Settings</span></div></div>
-                                            <div class="setting-parameters" style="display: none;">
-                                                <div class="my-5"><span class="stats-info-text">Toggle settings with a keybind.</span></div>
-                                                ${this.keyRow('Toggle Menu', 'modinput6', 'toggle.menu', 'macros.keys.toggle.menu')}
-                                                ${this.keyRow('Toggle Names', 'modinput10', 'toggle.names', 'macros.keys.toggle.names')}
-                                                ${this.keyRow('Toggle Skins', 'modinput11', 'toggle.skins', 'macros.keys.toggle.skins')}
-                                                ${this.keyRow('Toggle Autorespawn', 'modinput12', 'toggle.autoRespawn', 'macros.keys.toggle.autoRespawn')}
-                                                ${this.keyRow('Toggle Party Panel', 'modinput19', 'toggle.party', 'macros.keys.toggle.party')}
-                                                ${this.keyRow('Toggle HUD', 'modinput20', 'toggle.hud', 'macros.keys.toggle.hud')}
-                                            </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Movement</div>
+                                        <div class="settings-grid settings-grid-two">
+                                            <label class="macroRow settings-item"><span class="text">Horizontal Line</span><input id="modinput5" class="keybinding" name="line.horizontal" data-label="Horizontal line" data-setting="macros.keys.line.horizontal" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="text">Vertical Line</span><input id="modinput7" class="keybinding" name="line.vertical" data-label="Vertical line" data-setting="macros.keys.line.vertical" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Fixed Line</span>${this.infoBtn('Freezes your aim position in place so your cell maintains a straight trajectory without following the mouse.')}</span><input id="modinput16" class="keybinding" name="line.fixed" data-label="Fixed line" data-setting="macros.keys.line.fixed" maxlength="1" placeholder="..."></label>
                                         </div>
-                                        <div class="setting-card-wrapper">
-                                            <div class="setting-card"><div class="setting-card-action"><span class="setting-card-name">Tricksplits</span></div></div>
-                                            <div class="setting-parameters" style="display: none;">
-                                                <div class="my-5"><span class="stats-info-text">Other split options - splits with delay</span></div>
-                                                ${this.keyRow('Double Trick', 'modinput13', 'splits.doubleTrick', 'macros.keys.splits.doubleTrick', 'Performs two quick splits with a timed delay, perfect for double splitting into a teammate or target.')}
-                                                ${this.keyRow('Self Trick', 'modinput14', 'splits.selfTrick', 'macros.keys.splits.selfTrick', 'Performs four rapid splits with a timed delay, quickly splitting all pieces for a self trick split.')}
-                                            </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Toggle keybinds</div>
+                                        <div class="settings-grid settings-grid-two">
+                                            <div class="stats-line justify-sb settings-item"><span>Toggle Menu</span><input id="modinput6" class="keybinding" name="toggle.menu" data-label="Toggle Menu" data-setting="macros.keys.toggle.menu" maxlength="1" placeholder="..."></div>
+                                            <div class="stats-line justify-sb settings-item"><span>Toggle Names</span><input id="modinput10" class="keybinding" name="toggle.names" data-label="Toggle Names" data-setting="macros.keys.toggle.names" maxlength="1" placeholder="..."></div>
+                                            <div class="stats-line justify-sb settings-item"><span>Toggle Skins</span><input id="modinput11" class="keybinding" name="toggle.skins" data-label="Toggle Skins" data-setting="macros.keys.toggle.skins" maxlength="1" placeholder="..."></div>
+                                            <div class="stats-line justify-sb settings-item"><span>Toggle Autorespawn</span><input id="modinput12" class="keybinding" name="toggle.autoRespawn" data-label="Toggle Autorespawn" data-setting="macros.keys.toggle.autoRespawn" maxlength="1" placeholder="..."></div>
+                                            <div class="stats-line justify-sb settings-item"><span>Toggle Party Panel</span><input id="modinput19" class="keybinding" name="toggle.party" data-label="Toggle Party Panel" data-setting="macros.keys.toggle.party" maxlength="1" placeholder="..."></div>
+                                            <div class="stats-line justify-sb settings-item"><span>Toggle HUD</span><input id="modinput20" class="keybinding" name="toggle.hud" data-label="Toggle HUD" data-setting="macros.keys.toggle.hud" maxlength="1" placeholder="..."></div>
                                         </div>
-                                    </div>
+                                    </section>
+                                </div>
+                            </section>
+
+                            <section class="mod_tab scroll" id="mod_controls_mouse" data-mod-panel>
+                                <div class="settings-page mouse-binding-page">
+                                    <section class="settings-section mouse-binding-section">
+                                        <div class="settings-section-title">Mouse actions</div>
+                                        <p class="mouse-binding-hint">Click a button on the mouse, then choose its action.</p>
+                                        <div class="mouse-binding-workspace">
+                                            <div class="mouse-visual-wrap">
+                                                <svg class="mouse-visual" viewBox="0 0 360 440" role="group" aria-label="Interactive mouse button map">
+                                                    <defs><linearGradient id="sigmod-mouse-shell" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#30343e"></stop><stop offset="1" stop-color="#181b22"></stop></linearGradient></defs>
+                                                    <path class="mouse-shell" d="M180 34C119 34 88 79 88 153v128c0 80 39 129 92 129s92-49 92-129V153c0-74-31-119-92-119Z"></path>
+                                                    <path class="mouse-divider" d="M180 35v137M89 172h182"></path>
+                                                    <g class="mouse-button-region" data-mouse-button="0" tabindex="0" role="button" aria-label="Left mouse button"><path d="M177 43c-50 2-79 38-81 104v18h81Z"></path></g>
+                                                    <g class="mouse-button-region" data-mouse-button="2" tabindex="0" role="button" aria-label="Right mouse button"><path d="M183 43c50 2 79 38 81 104v18h-81Z"></path></g>
+                                                    <g class="mouse-button-region mouse-wheel-region" data-mouse-button="1" tabindex="0" role="button" aria-label="Middle mouse button"><rect x="166" y="65" width="28" height="72" rx="14"></rect><path d="M180 76v17M180 107v17"></path></g>
+                                                    <g class="mouse-button-region mouse-side-region" data-mouse-button="4" tabindex="0" role="button" aria-label="Forward mouse button"><rect x="76" y="206" width="23" height="52" rx="9"></rect></g>
+                                                    <g class="mouse-button-region mouse-side-region" data-mouse-button="3" tabindex="0" role="button" aria-label="Back mouse button"><rect x="77" y="271" width="22" height="45" rx="9"></rect></g>
+                                                    <g class="mouse-callout" data-mouse-button="0"><path d="M120 104H35V78"></path><text x="8" y="55">Left</text><text class="mouse-callout-action" data-mouse-assignment="0" x="8" y="72">None</text></g>
+                                                    <g class="mouse-callout" data-mouse-button="1"><path d="M180 65V22"></path><text text-anchor="middle" x="180" y="12">Middle</text><text class="mouse-callout-action" data-mouse-assignment="1" text-anchor="middle" x="180" y="29">None</text></g>
+                                                    <g class="mouse-callout" data-mouse-button="2"><path d="M240 104h85V78"></path><text text-anchor="end" x="352" y="55">Right</text><text class="mouse-callout-action" data-mouse-assignment="2" text-anchor="end" x="352" y="72">None</text></g>
+                                                    <g class="mouse-callout" data-mouse-button="4"><path d="M77 230H20v-35"></path><text x="8" y="187">Forward</text><text class="mouse-callout-action" data-mouse-assignment="4" x="8" y="204">None</text></g>
+                                                    <g class="mouse-callout" data-mouse-button="3"><path d="M78 293H20v35"></path><text x="8" y="347">Back</text><text class="mouse-callout-action" data-mouse-assignment="3" x="8" y="364">None</text></g>
+                                                </svg>
+                                            </div>
+                                            <aside class="mouse-binding-editor" aria-live="polite" data-quick-access-exclude>
+                                                <strong id="mouse-binding-title">Left mouse button</strong>
+                                                <label for="mouse-action-select">Action</label>
+                                                <select id="mouse-action-select" class="form-control macro-extended-input">${this.mouseActionOptions()}</select>
+                                                <p class="mouse-editor-help">You can also press a side button here to select it.</p>
+                                            </aside>
+                                        </div>
+                                        <div class="mouse-extra-panel" hidden>
+                                            <div><strong>Extra buttons</strong></div>
+                                            <div id="mouse-extra-buttons" class="mouse-extra-buttons"></div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </section>
+
+                            <section class="mod_tab scroll" id="mod_controls_advanced" data-mod-panel>
+                                <div class="settings-page">
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Rapid feed</div>
+                                        <div class="settings-grid">
+                                            <div class="stats-line justify-sb settings-item"><span>Feed speed</span><div class="justify-sb g-5" style="width: 200px;"><span class="mod_badge" id="macroSpeedText"></span><input type="range" class="modSlider" id="macroSpeed" min="5" max="100" step="5" data-setting="macros.feedSpeed" data-number style="width: 134px;"></div></div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Linesplits</div>
+                                        <div class="settings-grid">
+                                            <div class="stats-line justify-sb settings-item"><span>Instant split</span><div class="centerXY g-5"><span class="modDescText">Splits - </span><input type="number" class="modInput modNumberInput text-center" min="0" max="4" placeholder="0" title="Splits" style="width: 44px;" id="instant-split-amount"><div class="modCheckbox"><input id="toggle-instant-split" type="checkbox"><label class="cbx" for="toggle-instant-split"></label></div></div></div>
+                                        </div>
+                                    </section>
                                 </div>
                             </section>
 
                             <section class="mod_tab scroll" id="mod_game" data-mod-panel>
-                                <div class="modColItems">
-                                    <div class="modRowItems" style="align-items: start;">
-                                        <div class="modColItems_2">
-                                            <span style="font-style: italic;">~ Game Colors</span>
-                                            <div class="justify-sb w-100 p-5 rounded"><span class="text">Map</span><div id="mapColor"></div></div>
-                                            <div class="justify-sb w-100 accent_row p-5 rounded"><span class="text">Border</span><div id="borderColor"></div></div>
-                                            <div class="justify-sb w-100 p-5 rounded"><span class="text" title="Does not work with jelly physics">Food</span><div id="foodColor"></div></div>
-                                            <div class="justify-sb w-100 accent_row p-5 rounded"><span class="text" title="Does not work with jelly physics">Cells</span><div id="cellColor"></div></div>
+                                <div class="settings-page">
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Colors</div>
+                                        <div class="settings-grid settings-grid-two">
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Map</span><div id="mapColor"></div></div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Border</span><div id="borderColor"></div></div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text" title="Does not work with jelly physics">Food</span><div id="foodColor"></div></div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text" title="Does not work with jelly physics">Cells</span><div id="cellColor"></div></div>
                                         </div>
-                                        <div class="modColItems_2">
-                                            <span style="font-style: italic;">~ Game Images</span>
-                                            <div class="justify-sb w-100 p-5 rounded"><span class="text">Map Image</span><button type="button" class="btn select-btn" id="mapImageSelect" aria-label="Select map image"></button></div>
-                                            <div class="justify-sb w-100 accent_row p-5 rounded"><span class="text">Virus Image</span><button type="button" class="btn select-btn" id="virusImageSelect" aria-label="Select virus image"></button></div>
-                                            <div class="justify-sb w-100 p-5 rounded"><span class="text">Replace Skins</span><button type="button" class="btn select-btn" id="skinReplaceSelect" aria-label="Select skin replacement"></button></div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Images</div>
+                                        <div class="settings-grid settings-grid-two">
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Map Image</span><button type="button" class="btn select-btn" id="mapImageSelect" aria-label="Select map image"></button></div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Virus Image</span><button type="button" class="btn select-btn" id="virusImageSelect" aria-label="Select virus image"></button></div>
                                         </div>
-                                    </div>
-                                    <div class="modColItems_2">
-                                        <span style="font-style: italic;">~ Game Settings</span>
-                                        <div class="justify-sb w-100 accent_row p-10 rounded"><span class="text">Font</span><div id="font-select-container"></div></div>
-                                        <div class="justify-sb w-100 p-10"><span class="text">Names</span>${this.checkboxHtml('mod-showNames')}</div>
-                                        <div class="justify-sb w-100 p-10 accent_row rounded"><span class="text" title="Your real name is still visible to other players.">Hide my name for me</span>${this.checkboxHtml('hideOwnName', 'game.hideOwnName')}</div>
-                                        <div class="justify-sb w-100 accent_row p-10 rounded"><span class="text">Skins</span>${this.checkboxHtml('mod-showSkins')}</div>
-                                        <div class="justify-sb w-100 p-10 rounded"><span class="text" title="Matches the listed bot names exactly.">Only show bot skins (SigFixes)</span>${this.checkboxHtml('botSkinsOnly', 'game.botSkinsOnly')}</div>
-                                        <div class="justify-sb w-100 p-10 accent_row rounded"><span class="text" title="Keeps your own cell skins visible when bot-only skins are enabled.">Also show my own skin</span>${this.checkboxHtml('showOwnSkinWithBots', 'game.showOwnSkinWithBots')}</div>
-                                        <div class="justify-sb w-100 p-10 rounded"><span title="Long nicknames will be shorten on the leaderboard & ingame">Shorten names</span>${this.checkboxHtml('shortenNames', 'game.shortenNames')}</div>
-                                        <div class="justify-sb w-100 accent_row p-10"><span>Text outlines & shadows</span>${this.checkboxHtml('removeOutlines', 'game.removeOutlines')}</div>
-                                        <div class="justify-sb w-100 rounded" style="padding: 5px 10px;"><span class="text">Death screen Position</span><select id="deathScreenPos" class="form-control" data-setting="settings.deathScreenPos" style="width: 30%"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option><option value="top">Top</option><option value="bottom">Bottom</option></select></div>
-                                        <div class="justify-sb w-100 accent_row p-10 rounded">${this.checkRowInline('Play timer', 'playTimerToggle', 'settings.playTimer')}</div>
-                                        <div class="justify-sb w-100 p-10 rounded">${this.checkRowInline('Mouse tracker', 'mouseTrackerToggle', 'settings.mouseTracker')}</div>
-                                    </div>
-                                    <div class="settings-actions" id="settingsActions">
-                                        <div class="settings-actions-heading"><span class="settings-actions-title">Settings</span></div>
-                                        <div class="settings-scope-row" data-scope-row="reset">
-                                            <span class="settings-scope-title">Reset</span>
-                                            <div class="settings-scope-options">
-                                                <button class="settings-scope-option active" data-scope="game" type="button">Game</button>
-                                                <button class="settings-scope-option active" data-scope="sigmod" type="button">SigMod</button>
-                                                <button class="settings-scope-option" data-scope="sigfix" type="button" hidden>SigFixes</button>
-                                            </div>
-                                            <button class="settings-icon-action" id="resetSettings" type="button" title="Reset selected settings" aria-label="Reset selected settings">
-                                                ${icon('reset', 18)}
-                                            </button>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Skins</div>
+                                        <div class="settings-grid settings-grid-two">
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Replace Skins</span><button type="button" class="btn select-btn" id="skinReplaceSelect" aria-label="Select skin replacement"></button></div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Skins</span>${this.checkboxHtml('mod-showSkins')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text" title="Matches the listed bot names exactly.">Only show bot skins (SigFixes)</span>${this.checkboxHtml('botSkinsOnly', 'game.botSkinsOnly')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text" title="Keeps your own cell skins visible when bot-only skins are enabled.">Also show my own skin</span>${this.checkboxHtml('showOwnSkinWithBots', 'game.showOwnSkinWithBots')}</div>
                                         </div>
-                                        <div class="settings-scope-row" data-scope-row="backup">
-                                            <span class="settings-scope-title">Backup</span>
-                                            <div class="settings-scope-options">
-                                                <button class="settings-scope-option active" data-scope="game" type="button">Game</button>
-                                                <button class="settings-scope-option active" data-scope="sigmod" type="button">SigMod</button>
-                                                <button class="settings-scope-option" data-scope="sigfix" type="button" hidden>SigFixes</button>
-                                            </div>
-                                            <div class="settings-icon-actions">
-                                                <button class="settings-icon-action" id="exportSettings" type="button" title="Export selected settings" aria-label="Export selected settings">
-                                                    ${icon('export', 18)}
-                                                </button>
-                                                <button class="settings-icon-action" id="importSettings" type="button" title="Import all settings found in backup" aria-label="Import all settings found in backup">
-                                                    ${icon('upload', 18)}
-                                                </button>
-                                            </div>
-                                            <input id="settingsImportFile" type="file" accept="application/json,.json" hidden>
-                                        </div>
-                                    </div>
+                                    </section>
                                 </div>
                             </section>
 
                             <section class="mod_tab scroll" id="mod_name" data-mod-panel>
-                                <div class="modColItems">
-                                    <div class="modRowItems justify-sb" style="align-items: start;">
-                                        <div class="f-column g-5" style="align-items: start; justify-content: start;">
-                                            <span class="modTitleText">Name fonts & special characters</span>
-                                            <span class="modDescText">Customize your name with special characters or fonts</span>
+                                <div class="settings-page">
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Display</div>
+                                        <div class="settings-grid">
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Font</span><div id="font-select-container"></div></div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Names</span>${this.checkboxHtml('mod-showNames')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span class="text" title="Your real name is still visible to other players.">Hide my name for me</span>${this.checkboxHtml('hideOwnName', 'game.hideOwnName')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span title="Long nicknames will be shorten on the leaderboard & ingame">Shorten names</span>${this.checkboxHtml('shortenNames', 'game.shortenNames')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Text outlines & shadows</span>${this.checkboxHtml('removeOutlines', 'game.removeOutlines')}</div>
                                         </div>
-                                        <div class="f-column g-5">
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Saved names</div>
+                                        <div class="name-save-row">
+                                            <input class="modInput" placeholder="Enter a name..." id="saveNameValue" />
+                                            <button type="button" id="saveName" class="modButton-secondary centerXY">Save</button>
+                                        </div>
+                                        <div id="savedNames" class="f-column scroll"></div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Name colors</div>
+                                        <div class="name-color-tabs" role="tablist" aria-label="Name color mode">
+                                            <button class="name-color-tab" text="Single color" type="button" role="tab" data-name-color-mode="solid" aria-controls="name-color-panel-solid">Single color</button>
+                                            <button class="name-color-tab" text="Gradient" type="button" role="tab" data-name-color-mode="gradient" aria-controls="name-color-panel-gradient">Gradient</button>
+                                        </div>
+                                        <div class="name-color-preview" id="nameColorPreview" aria-label="Name color preview">
+                                            <span class="name-color-preview-text">Your name</span>
+                                        </div>
+                                        <div class="name-color-mode-panel" id="name-color-panel-solid" role="tabpanel" data-name-color-panel="solid">
+                                            <div class="name-color-item">
+                                                <span>Name color</span>
+                                                <input type="color" value="#ffffff" id="nameColor" class="colorInput" data-setting="game.name.color">
+                                                <code class="name-color-value" data-name-color-value="game.name.color">#FFFFFF</code>
+                                            </div>
+                                        </div>
+                                        <div class="name-color-mode-panel" id="name-color-panel-gradient" role="tabpanel" data-name-color-panel="gradient">
+                                            <div class="settings-grid settings-grid-two">
+                                                <div class="name-color-item">
+                                                    <span>Gradient start</span>
+                                                    <input type="color" value="#ffffff" id="gradientNameColor1" class="colorInput" data-setting="game.name.gradient.left">
+                                                    <code class="name-color-value" data-name-color-value="game.name.gradient.left">#FFFFFF</code>
+                                                </div>
+                                                <div class="name-color-item">
+                                                    <span>Gradient end</span>
+                                                    <input type="color" value="#ffffff" id="gradientNameColor2" class="colorInput" data-setting="game.name.gradient.right">
+                                                    <code class="name-color-value" data-name-color-value="game.name.gradient.right">#FFFFFF</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Name tools</div>
+                                        <div class="name-tools-row">
                                             <button class="modButton-secondary" onclick="window.open('https://nickfinder.com', '_blank')">Nickfinder</button>
                                             <button class="modButton-secondary" onclick="window.open('https://www.stylishnamemaker.com', '_blank')">Stylish Name</button>
                                             <button class="modButton-secondary" onclick="window.open('https://www.tell.wtf', '_blank')">Tell.wtf</button>
                                         </div>
-                                    </div>
-                                    <div class="modRowItems justify-sb">
-                                        <div class="f-column g-5">
-                                            <span class="modTitleText">Save names</span>
-                                            <span class="modDescText">Save your names locally</span>
-                                            <div class="flex g-5">
-                                                <input class="modInput" placeholder="Enter a name..." id="saveNameValue" />
-                                                <button type="button" id="saveName" class="modButton-secondary centerXY">Save</button>
-                                            </div>
-                                            <div id="savedNames" class="f-column scroll"></div>
-                                        </div>
-                                        <div class="vr"></div>
-                                        <div class="f-column g-5">
-                                            <span class="modTitleText">Name Color</span>
-                                            <span class="modDescText">Customize your name color</span>
-                                            <div class="justify-sb">
-                                                <input type="color" value="#ffffff" id="nameColor" class="colorInput" data-setting="game.name.color">
-                                            </div>
-                                            <span class="modTitleText">Gradient Name</span>
-                                            <span class="modDescText">Customize your name with a gradient color</span>
-                                            <div class="justify-sb">
-                                                <div class="flex g-2" style="align-items: center">
-                                                    <input type="color" value="#ffffff" id="gradientNameColor1" class="colorInput" data-setting="game.name.gradient.left">
-                                                    <span>\u279C First color</span>
-                                                </div>
-                                            </div>
-                                            <div class="justify-sb">
-                                                <div class="flex g-2" style="align-items: center">
-                                                    <input type="color" value="#ffffff" id="gradientNameColor2" class="colorInput" data-setting="game.name.gradient.right">
-                                                    <span>\u279C Second color</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </section>
                                 </div>
                             </section>
 
                             <section class="mod_tab scroll" id="mod_themes" data-mod-panel>
-                                <span>Background presets</span>
+                                <div class="settings-section-title">Themes</div>
                                 <div class="themes scroll" id="themes"></div>
-                                <div class="modColItems_2" style="margin-top: 5px;">
-                                    <div class="justify-sb w-100 p-10"><span>Input border radius</span><div class="centerXY g-10" style="width: 40%"><button type="button" id="reset_input_radius" class="resetButton">${icon('reset', 18)}</button><input type="range" class="modSlider" id="theme-inputBorderRadius" min="0" max="20" step="2" data-setting="themes.inputBorderRadius" data-pixels></div></div>
-                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span>Menu border radius</span><div class="centerXY g-10" style="width: 40%"><button type="button" id="reset_menu_radius" class="resetButton">${icon('reset', 18)}</button><input type="range" class="modSlider" id="theme-menuBorderRadius" min="0" max="50" step="2" data-setting="themes.menuBorderRadius" data-pixels></div></div>
-                                    <div class="justify-sb w-100 p-10"><span>Input border</span>${this.checkboxHtml('theme-inputBorder', 'themes.inputBorder', '1px', '0px')}</div>
-                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span>Challenges on deathscreen</span>${this.checkboxHtml('showChallenges', 'settings.showChallenges')}</div>
-                                    <div class="justify-sb w-100 p-10"><span>Remove shop popup</span>${this.checkboxHtml('removeShopPopup', 'settings.removeShopPopup')}</div>
-                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span>Hide Discord Button</span>${this.checkboxHtml('hideDiscordBtns', 'themes.hideDiscordBtns')}</div>
-                                    <div class="justify-sb w-100 p-10"><span>Hide Language Buttons</span>${this.checkboxHtml('hideLangs', 'themes.hideLangs')}</div>
-                                    <div class="justify-sb w-100 p-10 accent_row rounded"><span title="Blocks Google Ads, DoubleClick, Tag Manager & Analytics">Hide Ads & Trackers</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
-                                    <div class="justify-sb w-100 p-10"><span>Show Zig popup</span>${this.checkboxHtml('showZigPopup', 'themes.showZigPopup')}</div>
+                            </section>
+
+                            <section class="mod_tab scroll" id="mod_settings_interface" data-mod-panel>
+                                <div class="settings-page">
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Language</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item justify-sb" data-sigmod-localize="">
+                                                <span class="text">Language</span>
+                                                <div class="f-column g-5">
+                                                    <select class="form-control" id="sigmod-language" data-localization-language="" aria-label="SigMod language">${this.languageOptionsHtml()}</select>
+                                                    <span class="modDescText" id="sigmod-language-status" aria-live="polite"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Menu</div>
+                                        <div class="settings-grid">
+                                            <div class="justify-sb w-100 settings-item"><span>Input border radius</span><div class="centerXY g-10" style="width: 40%"><button type="button" id="reset_input_radius" class="resetButton">${icon('reset', 18)}</button><input type="range" class="modSlider" id="theme-inputBorderRadius" min="0" max="20" step="2" data-setting="themes.inputBorderRadius" data-pixels></div></div>
+                                            <div class="justify-sb w-100 settings-item"><span>Menu border radius</span><div class="centerXY g-10" style="width: 40%"><button type="button" id="reset_menu_radius" class="resetButton">${icon('reset', 18)}</button><input type="range" class="modSlider" id="theme-menuBorderRadius" min="0" max="50" step="2" data-setting="themes.menuBorderRadius" data-pixels></div></div>
+                                            <div class="justify-sb w-100 settings-item"><span>Input border</span>${this.checkboxHtml('theme-inputBorder', 'themes.inputBorder', '1px', '0px')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Hide Discord Button</span>${this.checkboxHtml('hideDiscordBtns', 'themes.hideDiscordBtns')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Hide Language Buttons</span>${this.checkboxHtml('hideLangs', 'themes.hideLangs')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span title="Blocks Google Ads, DoubleClick, Tag Manager & Analytics">Hide Ads & Trackers</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Show Zig popup</span>${this.checkboxHtml('showZigPopup', 'themes.showZigPopup')}</div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">HUD & game UI</div>
+                                        <div class="settings-grid">
+                                            <div class="justify-sb w-100 settings-item"><span class="text">Death screen Position</span><select id="deathScreenPos" class="form-control" data-setting="settings.deathScreenPos" style="width: 30%"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option><option value="top">Top</option><option value="bottom">Bottom</option></select></div>
+                                            <div class="justify-sb w-100 settings-item">${this.checkRowInline('Play timer', 'playTimerToggle', 'settings.playTimer')}</div>
+                                            <div class="justify-sb w-100 settings-item">${this.checkRowInline('Mouse tracker', 'mouseTrackerToggle', 'settings.mouseTracker')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Challenges on deathscreen</span>${this.checkboxHtml('showChallenges', 'settings.showChallenges')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Remove shop popup</span>${this.checkboxHtml('removeShopPopup', 'settings.removeShopPopup')}</div>
+                                            <div class="settings-item justify-sb" data-sigmod-localize=""><span class="text">Chat</span><div class="modCheckbox"><input id="sigmod-chat-enabled" type="checkbox" data-setting="chat.enabled"><label class="cbx" for="sigmod-chat-enabled"></label></div></div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </section>
+
+                            <section class="mod_tab scroll" id="mod_chat_settings" data-mod-panel>
+                                <div class="settings-page">
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Keybindings</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2">
+                                                    <span>Send location</span>
+                                                    <span class="modDescText">Send your current position to chat.</span>
+                                                </div>
+                                                <input class="keybinding" id="chat-location-key" data-setting="macros.keys.location" data-label="Send location" type="text" placeholder="..." aria-label="Send location keybind" readonly="true" autocomplete="off">
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2">
+                                                    <span>Show / Hide chat</span>
+                                                </div>
+                                                <input class="keybinding" id="chat-toggle-key" data-setting="macros.keys.toggle.chat" data-label="Toggle chat" type="text" placeholder="..." aria-label="Show or hide chat keybind" readonly="true" autocomplete="off">
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Messages & behavior</div>
+                                        <div class="settings-grid">
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2"><span>Show timestamps</span></div>
+                                                ${this.checkboxHtml('showChatTime')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2"><span>Use name colors</span></div>
+                                                ${this.checkboxHtml('showNameColors')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2"><span>Show Main / Party tabs</span></div>
+                                                ${this.checkboxHtml('showPartyMain')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2"><span>Blur party tag</span></div>
+                                                ${this.checkboxHtml('blurTag')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2"><span>Compact chat</span></div>
+                                                ${this.checkboxHtml('compactChat')}
+                                            </div>
+                                            <div class="settings-item chat-menu-row">
+                                                <div class="f-column g-2">
+                                                    <span>Location message</span>
+                                                    <span class="modDescText">Use {pos} where the position should appear.</span>
+                                                </div>
+                                                <input class="form-control" id="locationText" type="text" placeholder="{pos}" autocomplete="off">
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section">
+                                        <div class="settings-section-title">Colors</div>
+                                        <div class="chat-menu-colors">
+                                            <div class="chat-menu-color">
+                                                <span>Text</span>
+                                                <div id="chatTextColor"><input class="colorInput" id="chatTextColorInput" type="color"></div>
+                                            </div>
+                                            <div class="chat-menu-color">
+                                                <span>Background</span>
+                                                <div id="chatBackground"><input class="colorInput" id="chatBackgroundInput" type="color"></div>
+                                            </div>
+                                            <div class="chat-menu-color">
+                                                <span>Accent</span>
+                                                <div id="chatThemeChanger"><input class="colorInput" id="chatThemeColorInput" type="color"></div>
+                                            </div>
+                                        </div>
+                                    </section>
                                 </div>
                             </section>
 
@@ -5373,6 +5487,44 @@
                                 </div>
                             </section>
 
+                            <section class="mod_tab scroll" id="mod_settings_data" data-mod-panel>
+                                <div class="settings-page">
+                                    <section class="settings-section">
+                                        <div class="settings-actions" id="settingsActions">
+                                            <div class="settings-actions-heading"><span class="settings-actions-title">Settings</span></div>
+                                            <div class="settings-scope-row" data-scope-row="reset">
+                                                <span class="settings-scope-title">Reset</span>
+                                                <div class="settings-scope-options">
+                                                    <button class="settings-scope-option active" data-scope="game" type="button">Game</button>
+                                                    <button class="settings-scope-option active" data-scope="sigmod" type="button">SigMod</button>
+                                                    <button class="settings-scope-option" data-scope="sigfix" type="button" hidden>SigFixes</button>
+                                                </div>
+                                                <button class="settings-icon-action" id="resetSettings" type="button" title="Reset selected settings" aria-label="Reset selected settings">
+                                                    ${icon('reset', 18)}
+                                                </button>
+                                            </div>
+                                            <div class="settings-scope-row" data-scope-row="backup">
+                                                <span class="settings-scope-title">Backup</span>
+                                                <div class="settings-scope-options">
+                                                    <button class="settings-scope-option active" data-scope="game" type="button">Game</button>
+                                                    <button class="settings-scope-option active" data-scope="sigmod" type="button">SigMod</button>
+                                                    <button class="settings-scope-option" data-scope="sigfix" type="button" hidden>SigFixes</button>
+                                                </div>
+                                                <div class="settings-icon-actions">
+                                                    <button class="settings-icon-action" id="exportSettings" type="button" title="Export selected settings" aria-label="Export selected settings">
+                                                        ${icon('export', 18)}
+                                                    </button>
+                                                    <button class="settings-icon-action" id="importSettings" type="button" title="Import all settings found in backup" aria-label="Import all settings found in backup">
+                                                        ${icon('upload', 18)}
+                                                    </button>
+                                                </div>
+                                                <input id="settingsImportFile" type="file" accept="application/json,.json" hidden>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </section>
+
                             <section class="mod_tab scroll f-column g-5 text-center" id="mod_info" data-mod-panel>
                                 <div class="brand_wrapper">
                                     <img src="https://czrsd.com/static/sigmod/info_bg_2.jpeg" alt="Info background" class="brand_img" />
@@ -5433,9 +5585,6 @@
         get detectedMouseButtons() {
             return this.mouseBinder.detectedMouseButtons;
         }
-        createMouseBindingPanel() {
-            return this.mouseBinder.createMouseBindingPanel();
-        }
         mouseActionOptions() {
             return this.mouseBinder.mouseActionOptions();
         }
@@ -5459,6 +5608,9 @@
         }
         updateKeybindingConflicts() {
             return this.keybinds.updateKeybindingConflicts();
+        }
+        languageOptionsHtml() {
+            return [...Localization.languages()].map(([code, name]) => `<option value="${code}" data-i18n-skip>${name}</option>`).join('');
         }
         infoBtn(text, position = 'up') {
             const posClass = position === 'down' ? ' is-down' : '';
@@ -5578,394 +5730,12 @@
         }
         setupNavigationArchitecture() {
             if (!this.root) return;
-            const content = this.root.querySelector('.mod_menu_content');
-            if (!(content instanceof HTMLElement)) return;
-            this.ensureCategoryPanel(content);
-            this.restructureFeaturePanels(content);
             this.adoptOtherExtensionsNavButtons();
             this.flushPendingOtherExtensions();
             const nav = this.root.querySelector('.mod_menu_navbar');
             if (nav instanceof HTMLElement) {
                 const observer = new MutationObserver(() => this.adoptOtherExtensionsNavButtons());
                 this.resources.observe(observer, nav, { childList: true });
-            }
-        }
-        ensureCategoryPanel(content) {
-            let panel = content.querySelector('#mod_category');
-            if (panel instanceof HTMLElement) return panel;
-            panel = createElement('section', {
-                className: 'mod_tab mod-category-panel',
-                attributes: { id: 'mod_category', 'data-mod-panel': '' },
-            });
-            const home = content.querySelector('#mod_home');
-            if (home?.nextSibling) content.insertBefore(panel, home.nextSibling);
-            else content.append(panel);
-            return panel;
-        }
-        ensureNavigationPanel(content, id) {
-            let panel = content.querySelector(`#${id}`);
-            if (panel instanceof HTMLElement) return panel;
-            panel = createElement('section', {
-                className: 'mod_tab scroll',
-                attributes: { id, 'data-mod-panel': '' },
-            });
-            content.append(panel);
-            return panel;
-        }
-        findRowByControl(panel, selector) {
-            const control = panel?.querySelector(selector);
-            if (!(control instanceof HTMLElement)) return null;
-            return control.closest('.justify-sb, .modRowItems, .macroRow, .stats-line');
-        }
-        restructureFeaturePanels(content) {
-            const keyboardPanel = content.querySelector('#mod_macros');
-            const gamePanel = content.querySelector('#mod_game');
-            const namePanel = content.querySelector('#mod_name');
-            const themesPanel = content.querySelector('#mod_themes');
-            const mousePanel = this.ensureNavigationPanel(content, 'mod_controls_mouse');
-            const advancedPanel = this.ensureNavigationPanel(content, 'mod_controls_advanced');
-            const interfacePanel = this.ensureNavigationPanel(content, 'mod_settings_interface');
-            this.ensureNavigationPanel(content, 'mod_chat_settings');
-            const dataPanel = this.ensureNavigationPanel(content, 'mod_settings_data');
-            const page = () => createElement('div', { className: 'settings-page' });
-            const normalizeRow = (row2) => {
-                if (!(row2 instanceof HTMLElement)) return null;
-                row2.classList.remove('accent_row', 'p-5', 'p-10', 'rounded');
-                row2.classList.add('settings-item');
-                row2.style.removeProperty('padding');
-                row2.style.removeProperty('background');
-                return row2;
-            };
-            const section = (title, rows, columns = 1) => {
-                const root = createElement('section', {
-                    className: 'settings-section',
-                });
-                if (title)
-                    root.append(
-                        createElement('div', {
-                            className: 'settings-section-title',
-                            text: title,
-                        })
-                    );
-                const body = createElement('div', {
-                    className: `settings-grid${columns === 2 ? ' settings-grid-two' : columns === 3 ? ' settings-grid-three' : ''}`,
-                });
-                for (const row2 of rows) {
-                    const normalized = normalizeRow(row2);
-                    if (normalized) body.append(normalized);
-                }
-                root.append(body);
-                return root;
-            };
-            const row = (panel, selector) => this.findRowByControl(panel, selector);
-            const card = (title) =>
-                [...(keyboardPanel?.querySelectorAll('.setting-card-wrapper') ?? [])].find(
-                    (item) => item.querySelector('.setting-card-name')?.textContent?.trim().toLowerCase() === title
-                );
-            const cardRows = (title) => {
-                const parameters = card(title)?.querySelector('.setting-parameters');
-                if (!(parameters instanceof HTMLElement)) return [];
-                return [...parameters.children].filter(
-                    (item) =>
-                        item instanceof HTMLElement &&
-                        (item.matches('.stats-line') || item.querySelector('input, select, button')) &&
-                        !item.matches('.my-5')
-                );
-            };
-            const rapidRows = cardRows('rapid feed');
-            const lineRows = cardRows('linesplits');
-            const toggleRows = cardRows('toggle settings');
-            const trickRows = cardRows('tricksplits');
-            const displayRows =
-                gamePanel instanceof HTMLElement
-                    ? ['#font-select-container', '#mod-showNames', '#hideOwnName', '#shortenNames', '#removeOutlines']
-                          .map((selector) => row(gamePanel, selector))
-                          .filter(Boolean)
-                    : [];
-            const interfaceHudRows =
-                gamePanel instanceof HTMLElement
-                    ? ['#deathScreenPos', '#playTimerToggle', '#mouseTrackerToggle']
-                          .map((selector) => row(gamePanel, selector))
-                          .filter(Boolean)
-                    : [];
-            if (keyboardPanel instanceof HTMLElement) {
-                const keyboard = page();
-                const headerBar = keyboardPanel.querySelector('.macros-header-bar');
-                const conflictBanner = keyboardPanel.querySelector('#sigmod-keybind-conflict-banner');
-                if (headerBar) keyboard.append(headerBar);
-                if (conflictBanner) keyboard.append(conflictBanner);
-                const actions = ['#modinput1', '#modinput15', '#modinput18']
-                    .map((selector) => row(keyboardPanel, selector))
-                    .filter(Boolean);
-                const splits = ['#modinput2', '#modinput3', '#modinput4'].map((selector) => row(keyboardPanel, selector)).filter(Boolean);
-                splits.push(...trickRows);
-                const movement = ['#modinput5', '#modinput7', '#modinput16']
-                    .map((selector) => row(keyboardPanel, selector))
-                    .filter(Boolean);
-                keyboard.append(
-                    section('Actions', actions, 2),
-                    section('Splits', splits, 2),
-                    section('Movement', movement, 2),
-                    section('Toggle keybinds', toggleRows, 2)
-                );
-                keyboardPanel.replaceChildren(keyboard);
-            }
-            mousePanel.replaceChildren(this.createMouseBindingPanel());
-            const advanced = page();
-            advanced.append(section('Rapid feed', rapidRows), section('Linesplits', lineRows));
-            advancedPanel.replaceChildren(advanced);
-            if (gamePanel instanceof HTMLElement) {
-                const colors = ['#mapColor', '#borderColor', '#foodColor', '#cellColor']
-                    .map((selector) => row(gamePanel, selector))
-                    .filter(Boolean);
-                const images = ['#mapImageSelect', '#virusImageSelect'].map((selector) => row(gamePanel, selector)).filter(Boolean);
-                const skins = ['#skinReplaceSelect', '#mod-showSkins', '#botSkinsOnly', '#showOwnSkinWithBots']
-                    .map((selector) => row(gamePanel, selector))
-                    .filter(Boolean);
-                const settingsRow = gamePanel.querySelector('#settingsActions');
-                const game = page();
-                game.append(section('Colors', colors, 2), section('Images', images, 2), section('Skins', skins, 2));
-                gamePanel.replaceChildren(game);
-                const interfacePage = page();
-                const dataPage = page();
-                const menuRows = [];
-                const generalRows = [];
-                if (themesPanel instanceof HTMLElement) {
-                    for (const selector of [
-                        '#reset_input_radius',
-                        '#reset_menu_radius',
-                        '#theme-inputBorder',
-                        '#hideDiscordBtns',
-                        '#hideLangs',
-                        '#hideAds',
-                        '#showZigPopup',
-                    ]) {
-                        const item = row(themesPanel, selector);
-                        if (item instanceof HTMLElement) menuRows.push(item);
-                    }
-                    for (const selector of ['#showChallenges', '#removeShopPopup']) {
-                        const item = row(themesPanel, selector);
-                        if (item instanceof HTMLElement) generalRows.push(item);
-                    }
-                }
-                const languageRow = createElement('div', {
-                    className: 'settings-item justify-sb',
-                    attributes: { 'data-sigmod-localize': '' },
-                });
-                languageRow.append(
-                    createElement('span', {
-                        className: 'text',
-                        text: 'Language',
-                    })
-                );
-                const languageControl = createElement('div', {
-                    className: 'f-column g-5',
-                });
-                const languageSelect = createElement('select', {
-                    className: 'form-control',
-                    attributes: {
-                        id: 'sigmod-language',
-                        'data-localization-language': '',
-                        'aria-label': 'SigMod language',
-                    },
-                });
-                for (const [code, name] of Localization.languages()) {
-                    languageSelect.append(
-                        createElement('option', {
-                            text: name,
-                            attributes: { value: code, 'data-i18n-skip': '' },
-                        })
-                    );
-                }
-                languageControl.append(
-                    languageSelect,
-                    createElement('span', {
-                        className: 'modDescText',
-                        attributes: {
-                            id: 'sigmod-language-status',
-                            'aria-live': 'polite',
-                        },
-                    })
-                );
-                languageRow.append(languageControl);
-                const chatRow = createElement('div', {
-                    className: 'settings-item justify-sb',
-                    attributes: { 'data-sigmod-localize': '' },
-                });
-                const chatInput = createElement('input', {
-                    attributes: {
-                        id: 'sigmod-chat-enabled',
-                        type: 'checkbox',
-                        'data-setting': 'chat.enabled',
-                    },
-                });
-                const chatControl = createElement('div', {
-                    className: 'modCheckbox',
-                });
-                chatControl.append(
-                    chatInput,
-                    createElement('label', {
-                        attributes: {
-                            class: 'cbx',
-                            for: 'sigmod-chat-enabled',
-                        },
-                    })
-                );
-                chatRow.append(createElement('span', { className: 'text', text: 'Chat' }), chatControl);
-                interfacePage.append(
-                    section('Language', [languageRow]),
-                    section('Menu', menuRows),
-                    section('HUD & game UI', [...interfaceHudRows, ...generalRows, chatRow])
-                );
-                if (settingsRow instanceof HTMLElement) {
-                    dataPage.append(section('Settings', [settingsRow]));
-                }
-                interfacePanel.replaceChildren(interfacePage);
-                dataPanel.replaceChildren(dataPage);
-            }
-            if (namePanel instanceof HTMLElement) {
-                const name = page();
-                const saveInput = namePanel.querySelector('#saveNameValue');
-                const saveButton = namePanel.querySelector('#saveName');
-                const savedNames = namePanel.querySelector('#savedNames');
-                const saveSection = createElement('section', {
-                    className: 'settings-section',
-                });
-                saveSection.append(
-                    createElement('div', {
-                        className: 'settings-section-title',
-                        text: 'Saved names',
-                    })
-                );
-                const saveRow = createElement('div', {
-                    className: 'name-save-row',
-                });
-                if (saveInput) saveRow.append(saveInput);
-                if (saveButton) saveRow.append(saveButton);
-                saveSection.append(saveRow);
-                if (savedNames) saveSection.append(savedNames);
-                const colorSection = createElement('section', {
-                    className: 'settings-section',
-                });
-                const preview = createElement('div', {
-                    className: 'name-color-preview',
-                    attributes: {
-                        id: 'nameColorPreview',
-                        'aria-label': 'Name color preview',
-                    },
-                });
-                preview.append(
-                    createElement('span', {
-                        className: 'name-color-preview-text',
-                        text: 'Your name',
-                    })
-                );
-                const colorItem = (label, selector, path) => {
-                    const input = namePanel.querySelector(selector);
-                    if (!(input instanceof HTMLElement)) return null;
-                    const item = createElement('div', {
-                        className: 'name-color-item',
-                    });
-                    item.append(
-                        createElement('span', { text: label }),
-                        input,
-                        createElement('code', {
-                            className: 'name-color-value',
-                            text: '#ffffff',
-                            attributes: { 'data-name-color-value': path },
-                        })
-                    );
-                    return item;
-                };
-                const modeTabs = createElement('div', {
-                    className: 'name-color-tabs',
-                    attributes: {
-                        role: 'tablist',
-                        'aria-label': 'Name color mode',
-                    },
-                });
-                for (const [label, mode] of [
-                    ['Single color', 'solid'],
-                    ['Gradient', 'gradient'],
-                ]) {
-                    modeTabs.append(
-                        createElement('button', {
-                            className: 'name-color-tab',
-                            text: label,
-                            attributes: {
-                                type: 'button',
-                                role: 'tab',
-                                'data-name-color-mode': mode,
-                                'aria-controls': `name-color-panel-${mode}`,
-                            },
-                        })
-                    );
-                }
-                const solidPanel = createElement('div', {
-                    className: 'name-color-mode-panel',
-                    attributes: {
-                        id: 'name-color-panel-solid',
-                        role: 'tabpanel',
-                        'data-name-color-panel': 'solid',
-                    },
-                });
-                const solidItem = colorItem('Name color', '#nameColor', 'game.name.color');
-                if (solidItem) solidPanel.append(solidItem);
-                const gradientPanel = createElement('div', {
-                    className: 'name-color-mode-panel',
-                    attributes: {
-                        id: 'name-color-panel-gradient',
-                        role: 'tabpanel',
-                        'data-name-color-panel': 'gradient',
-                    },
-                });
-                const gradientGrid = createElement('div', {
-                    className: 'settings-grid settings-grid-two',
-                });
-                const gradientStartItem = colorItem('Gradient start', '#gradientNameColor1', 'game.name.gradient.left');
-                const gradientEndItem = colorItem('Gradient end', '#gradientNameColor2', 'game.name.gradient.right');
-                if (gradientStartItem) gradientGrid.append(gradientStartItem);
-                if (gradientEndItem) gradientGrid.append(gradientEndItem);
-                gradientPanel.append(gradientGrid);
-                colorSection.append(
-                    createElement('div', {
-                        className: 'settings-section-title',
-                        text: 'Name colors',
-                    }),
-                    modeTabs,
-                    preview,
-                    solidPanel,
-                    gradientPanel
-                );
-                const tools = [...namePanel.querySelectorAll('button[onclick]')].filter((button) => button instanceof HTMLButtonElement);
-                const toolsSection = createElement('section', {
-                    className: 'settings-section',
-                });
-                toolsSection.append(
-                    createElement('div', {
-                        className: 'settings-section-title',
-                        text: 'Name tools',
-                    })
-                );
-                const toolsRow = createElement('div', {
-                    className: 'name-tools-row',
-                });
-                for (const button of tools) toolsRow.append(button);
-                toolsSection.append(toolsRow);
-                name.append(section('Display', displayRows), saveSection, colorSection, toolsSection);
-                namePanel.replaceChildren(name);
-            }
-            if (themesPanel instanceof HTMLElement) {
-                const themes = themesPanel.querySelector('#themes');
-                if (themes instanceof HTMLElement) {
-                    themesPanel.replaceChildren(
-                        createElement('div', {
-                            className: 'settings-section-title',
-                            text: 'Themes',
-                        }),
-                        themes
-                    );
-                }
             }
         }
         getOtherExtensionsSlot() {
@@ -6898,45 +6668,6 @@
         }
         message(source, parameters = null) {
             return this.app.i18n?.message(source, parameters) ?? source;
-        }
-        createMouseBindingPanel() {
-            const page = createElement('div', {
-                className: 'settings-page mouse-binding-page',
-            });
-            page.innerHTML = `<section class="settings-section mouse-binding-section">
-                <div class="settings-section-title">Mouse actions</div>
-                <p class="mouse-binding-hint">Click a button on the mouse, then choose its action.</p>
-                <div class="mouse-binding-workspace">
-                    <div class="mouse-visual-wrap">
-                        <svg class="mouse-visual" viewBox="0 0 360 440" role="group" aria-label="Interactive mouse button map">
-                            <defs><linearGradient id="sigmod-mouse-shell" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#30343e"></stop><stop offset="1" stop-color="#181b22"></stop></linearGradient></defs>
-                            <path class="mouse-shell" d="M180 34C119 34 88 79 88 153v128c0 80 39 129 92 129s92-49 92-129V153c0-74-31-119-92-119Z"></path>
-                            <path class="mouse-divider" d="M180 35v137M89 172h182"></path>
-                            <g class="mouse-button-region" data-mouse-button="0" tabindex="0" role="button" aria-label="Left mouse button"><path d="M177 43c-50 2-79 38-81 104v18h81Z"></path></g>
-                            <g class="mouse-button-region" data-mouse-button="2" tabindex="0" role="button" aria-label="Right mouse button"><path d="M183 43c50 2 79 38 81 104v18h-81Z"></path></g>
-                            <g class="mouse-button-region mouse-wheel-region" data-mouse-button="1" tabindex="0" role="button" aria-label="Middle mouse button"><rect x="166" y="65" width="28" height="72" rx="14"></rect><path d="M180 76v17M180 107v17"></path></g>
-                            <g class="mouse-button-region mouse-side-region" data-mouse-button="4" tabindex="0" role="button" aria-label="Forward mouse button"><rect x="76" y="206" width="23" height="52" rx="9"></rect></g>
-                            <g class="mouse-button-region mouse-side-region" data-mouse-button="3" tabindex="0" role="button" aria-label="Back mouse button"><rect x="77" y="271" width="22" height="45" rx="9"></rect></g>
-                            <g class="mouse-callout" data-mouse-button="0"><path d="M120 104H35V78"></path><text x="8" y="55">Left</text><text class="mouse-callout-action" data-mouse-assignment="0" x="8" y="72">None</text></g>
-                            <g class="mouse-callout" data-mouse-button="1"><path d="M180 65V22"></path><text text-anchor="middle" x="180" y="12">Middle</text><text class="mouse-callout-action" data-mouse-assignment="1" text-anchor="middle" x="180" y="29">None</text></g>
-                            <g class="mouse-callout" data-mouse-button="2"><path d="M240 104h85V78"></path><text text-anchor="end" x="352" y="55">Right</text><text class="mouse-callout-action" data-mouse-assignment="2" text-anchor="end" x="352" y="72">None</text></g>
-                            <g class="mouse-callout" data-mouse-button="4"><path d="M77 230H20v-35"></path><text x="8" y="187">Forward</text><text class="mouse-callout-action" data-mouse-assignment="4" x="8" y="204">None</text></g>
-                            <g class="mouse-callout" data-mouse-button="3"><path d="M78 293H20v35"></path><text x="8" y="347">Back</text><text class="mouse-callout-action" data-mouse-assignment="3" x="8" y="364">None</text></g>
-                        </svg>
-                    </div>
-                    <aside class="mouse-binding-editor" aria-live="polite" data-quick-access-exclude>
-                        <strong id="mouse-binding-title">Left mouse button</strong>
-                        <label for="mouse-action-select">Action</label>
-                        <select id="mouse-action-select" class="form-control macro-extended-input">${this.mouseActionOptions()}</select>
-                        <p class="mouse-editor-help">You can also press a side button here to select it.</p>
-                    </aside>
-                </div>
-                <div class="mouse-extra-panel" hidden>
-                    <div><strong>Extra buttons</strong></div>
-                    <div id="mouse-extra-buttons" class="mouse-extra-buttons"></div>
-                </div>
-            </section>`;
-            return page;
         }
         mouseActionOptions() {
             return MOUSE_ACTIONS.map(({ value, label }) => `<option value="${value ?? ''}">${this.message(label)}</option>`).join('');
@@ -12028,171 +11759,40 @@
             const menu = this.app.features.get('menu');
             const panel = menu?.root?.querySelector('#mod_chat_settings');
             if (!(panel instanceof HTMLElement)) return;
-            panel.classList.add('scroll');
-            panel.replaceChildren();
-            const page = createElement('div', { className: 'settings-page' });
-            const makeSection = (title) => {
-                const section = createElement('section', {
-                    className: 'settings-section',
-                });
-                section.append(
-                    createElement('div', {
-                        className: 'settings-section-title',
-                        text: title,
-                    })
-                );
-                const body = createElement('div', {
-                    className: 'settings-grid',
-                });
-                section.append(body);
-                return { section, body };
-            };
-            const makeRow = (label, control, description = '') => {
-                const row = createElement('div', {
-                    className: 'settings-item chat-menu-row',
-                });
-                const copy = createElement('div', {
-                    className: 'f-column g-2',
-                });
-                copy.append(createElement('span', { text: label }));
-                if (description) {
-                    copy.append(
-                        createElement('span', {
-                            className: 'modDescText',
-                            text: description,
-                        })
-                    );
-                }
-                row.append(copy, control);
-                return row;
-            };
-            const checkbox = (id) => {
-                const wrapper = createElement('div', {
-                    className: 'modCheckbox',
-                });
-                const input = createElement('input', {
-                    attributes: { id, type: 'checkbox' },
-                });
-                wrapper.append(
-                    input,
-                    createElement('label', {
-                        attributes: { class: 'cbx', for: id },
-                    })
-                );
-                return { wrapper, input };
-            };
-            const keys = makeSection('Keybindings');
+            this.settingsPanel = panel;
             const locValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.location'));
             const toggleValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.toggle.chat'));
-            const locationKey = createElement('input', {
-                className: 'keybinding',
-                attributes: {
-                    id: 'chat-location-key',
-                    'data-setting': 'macros.keys.location',
-                    'data-label': 'Send location',
-                    type: 'text',
-                    placeholder: '...',
-                    'aria-label': 'Send location keybind',
-                    readonly: 'true',
-                    autocomplete: 'off',
-                },
-            });
-            locationKey.value = menu?.bindingDisplay(locValue) ?? '';
-            locationKey.dataset.bindingValue = typeof locValue === 'string' ? locValue : '';
-            const toggleKey = createElement('input', {
-                className: 'keybinding',
-                attributes: {
-                    id: 'chat-toggle-key',
-                    'data-setting': 'macros.keys.toggle.chat',
-                    'data-label': 'Toggle chat',
-                    type: 'text',
-                    placeholder: '...',
-                    'aria-label': 'Show or hide chat keybind',
-                    readonly: 'true',
-                    autocomplete: 'off',
-                },
-            });
-            toggleKey.value = menu?.bindingDisplay(toggleValue) ?? '';
-            toggleKey.dataset.bindingValue = typeof toggleValue === 'string' ? toggleValue : '';
-            keys.body.append(
-                makeRow('Send location', locationKey, 'Send your current position to chat.'),
-                makeRow('Show / Hide chat', toggleKey)
-            );
-            const behavior = makeSection('Messages & behavior');
-            const time = checkbox('showChatTime');
-            const names = checkbox('showNameColors');
-            const chatButtons = checkbox('showPartyMain');
-            const blurTag = checkbox('blurTag');
-            const compact = checkbox('compactChat');
-            const locationText = createElement('input', {
-                className: 'form-control',
-                attributes: {
-                    id: 'locationText',
-                    type: 'text',
-                    placeholder: '{pos}',
-                    autocomplete: 'off',
-                },
-            });
-            behavior.body.append(
-                makeRow('Show timestamps', time.wrapper),
-                makeRow('Use name colors', names.wrapper),
-                makeRow('Show Main / Party tabs', chatButtons.wrapper),
-                makeRow('Blur party tag', blurTag.wrapper),
-                makeRow('Compact chat', compact.wrapper),
-                makeRow('Location message', locationText, 'Use {pos} where the position should appear.')
-            );
-            const style = createElement('section', {
-                className: 'settings-section',
-            });
-            style.append(
-                createElement('div', {
-                    className: 'settings-section-title',
-                    text: 'Colors',
-                })
-            );
-            const colors = createElement('div', {
-                className: 'chat-menu-colors',
-            });
-            for (const [label, containerId, inputId] of [
-                ['Text', 'chatTextColor', 'chatTextColorInput'],
-                ['Background', 'chatBackground', 'chatBackgroundInput'],
-                ['Accent', 'chatThemeChanger', 'chatThemeColorInput'],
-            ]) {
-                const item = createElement('div', {
-                    className: 'chat-menu-color',
-                });
-                const container = createElement('div', {
-                    attributes: { id: containerId },
-                });
-                container.append(
-                    createElement('input', {
-                        className: 'colorInput',
-                        attributes: { id: inputId, type: 'color' },
-                    })
-                );
-                item.append(createElement('span', { text: label }), container);
-                colors.append(item);
+            const locationKey = panel.querySelector('#chat-location-key');
+            if (locationKey instanceof HTMLInputElement) {
+                locationKey.value = menu?.bindingDisplay(locValue) ?? '';
+                locationKey.dataset.bindingValue = typeof locValue === 'string' ? locValue : '';
             }
-            style.append(colors);
-            page.append(keys.section, behavior.section, style);
-            panel.append(page);
-            this.settingsPanel = panel;
-            const bindBoolean = (input, path) => {
+            const toggleKey = panel.querySelector('#chat-toggle-key');
+            if (toggleKey instanceof HTMLInputElement) {
+                toggleKey.value = menu?.bindingDisplay(toggleValue) ?? '';
+                toggleKey.dataset.bindingValue = typeof toggleValue === 'string' ? toggleValue : '';
+            }
+            const bindBoolean = (id, path) => {
+                const input = panel.querySelector(`#${id}`);
+                if (!(input instanceof HTMLInputElement)) return;
                 input.checked = Boolean(unwrapSettingScalar(this.app.settingsStore.get(path)));
                 this.resources.listen(input, 'change', () => {
                     this.app.settingsStore.set(path, input.checked);
                     this.applyChatPreferences();
                 });
             };
-            bindBoolean(time.input, 'chat.showTime');
-            bindBoolean(names.input, 'chat.showNameColors');
-            bindBoolean(chatButtons.input, 'chat.showChatButtons');
-            bindBoolean(blurTag.input, 'chat.blurTag');
-            bindBoolean(compact.input, 'chat.compact');
-            locationText.value = this.app.settings.chat.locationText || '{pos}';
-            this.resources.listen(locationText, 'input', () => {
-                this.app.settingsStore.set('chat.locationText', locationText.value || '{pos}');
-            });
+            bindBoolean('showChatTime', 'chat.showTime');
+            bindBoolean('showNameColors', 'chat.showNameColors');
+            bindBoolean('showPartyMain', 'chat.showChatButtons');
+            bindBoolean('blurTag', 'chat.blurTag');
+            bindBoolean('compactChat', 'chat.compact');
+            const locationText = panel.querySelector('#locationText');
+            if (locationText instanceof HTMLInputElement) {
+                locationText.value = this.app.settings.chat.locationText || '{pos}';
+                this.resources.listen(locationText, 'input', () => {
+                    this.app.settingsStore.set('chat.locationText', locationText.value || '{pos}');
+                });
+            }
             const normalizePickerColor = (value, fallback) =>
                 /^#[0-9a-f]{6}/i.test(String(value ?? '')) ? String(value).slice(0, 7) : fallback;
             for (const [id, path, fallback] of [

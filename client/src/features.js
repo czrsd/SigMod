@@ -718,171 +718,44 @@ class ChatController extends FeatureController {
         const menu = this.app.features.get('menu');
         const panel = menu?.root?.querySelector('#mod_chat_settings');
         if (!(panel instanceof HTMLElement)) return;
-        panel.classList.add('scroll');
-        panel.replaceChildren();
-        const page = createElement('div', { className: 'settings-page' });
-        const makeSection = (title) => {
-            const section = createElement('section', {
-                className: 'settings-section',
-            });
-            section.append(
-                createElement('div', {
-                    className: 'settings-section-title',
-                    text: title,
-                })
-            );
-            const body = createElement('div', {
-                className: 'settings-grid',
-            });
-            section.append(body);
-            return { section, body };
-        };
-        const makeRow = (label, control, description = '') => {
-            const row = createElement('div', {
-                className: 'settings-item chat-menu-row',
-            });
-            const copy = createElement('div', {
-                className: 'f-column g-2',
-            });
-            copy.append(createElement('span', { text: label }));
-            if (description) {
-                copy.append(
-                    createElement('span', {
-                        className: 'modDescText',
-                        text: description,
-                    })
-                );
-            }
-            row.append(copy, control);
-            return row;
-        };
-        const checkbox = (id) => {
-            const wrapper = createElement('div', {
-                className: 'modCheckbox',
-            });
-            const input = createElement('input', {
-                attributes: { id, type: 'checkbox' },
-            });
-            wrapper.append(
-                input,
-                createElement('label', {
-                    attributes: { class: 'cbx', for: id },
-                })
-            );
-            return { wrapper, input };
-        };
-        const keys = makeSection('Keybindings');
+        this.settingsPanel = panel;
+
         const locValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.location'));
         const toggleValue = unwrapSettingScalar(this.app.settingsStore.get('macros.keys.toggle.chat'));
-        const locationKey = createElement('input', {
-            className: 'keybinding',
-            attributes: {
-                id: 'chat-location-key',
-                'data-setting': 'macros.keys.location',
-                'data-label': 'Send location',
-                type: 'text',
-                placeholder: '...',
-                'aria-label': 'Send location keybind',
-                readonly: 'true',
-                autocomplete: 'off',
-            },
-        });
-        locationKey.value = menu?.bindingDisplay(locValue) ?? '';
-        locationKey.dataset.bindingValue = typeof locValue === 'string' ? locValue : '';
-        const toggleKey = createElement('input', {
-            className: 'keybinding',
-            attributes: {
-                id: 'chat-toggle-key',
-                'data-setting': 'macros.keys.toggle.chat',
-                'data-label': 'Toggle chat',
-                type: 'text',
-                placeholder: '...',
-                'aria-label': 'Show or hide chat keybind',
-                readonly: 'true',
-                autocomplete: 'off',
-            },
-        });
-        toggleKey.value = menu?.bindingDisplay(toggleValue) ?? '';
-        toggleKey.dataset.bindingValue = typeof toggleValue === 'string' ? toggleValue : '';
-        keys.body.append(
-            makeRow('Send location', locationKey, 'Send your current position to chat.'),
-            makeRow('Show / Hide chat', toggleKey)
-        );
-        const behavior = makeSection('Messages & behavior');
-        const time = checkbox('showChatTime');
-        const names = checkbox('showNameColors');
-        const chatButtons = checkbox('showPartyMain');
-        const blurTag = checkbox('blurTag');
-        const compact = checkbox('compactChat');
-        const locationText = createElement('input', {
-            className: 'form-control',
-            attributes: {
-                id: 'locationText',
-                type: 'text',
-                placeholder: '{pos}',
-                autocomplete: 'off',
-            },
-        });
-        behavior.body.append(
-            makeRow('Show timestamps', time.wrapper),
-            makeRow('Use name colors', names.wrapper),
-            makeRow('Show Main / Party tabs', chatButtons.wrapper),
-            makeRow('Blur party tag', blurTag.wrapper),
-            makeRow('Compact chat', compact.wrapper),
-            makeRow('Location message', locationText, 'Use {pos} where the position should appear.')
-        );
-        const style = createElement('section', {
-            className: 'settings-section',
-        });
-        style.append(
-            createElement('div', {
-                className: 'settings-section-title',
-                text: 'Colors',
-            })
-        );
-        const colors = createElement('div', {
-            className: 'chat-menu-colors',
-        });
-        for (const [label, containerId, inputId] of [
-            ['Text', 'chatTextColor', 'chatTextColorInput'],
-            ['Background', 'chatBackground', 'chatBackgroundInput'],
-            ['Accent', 'chatThemeChanger', 'chatThemeColorInput'],
-        ]) {
-            const item = createElement('div', {
-                className: 'chat-menu-color',
-            });
-            const container = createElement('div', {
-                attributes: { id: containerId },
-            });
-            container.append(
-                createElement('input', {
-                    className: 'colorInput',
-                    attributes: { id: inputId, type: 'color' },
-                })
-            );
-            item.append(createElement('span', { text: label }), container);
-            colors.append(item);
+        const locationKey = panel.querySelector('#chat-location-key');
+        if (locationKey instanceof HTMLInputElement) {
+            locationKey.value = menu?.bindingDisplay(locValue) ?? '';
+            locationKey.dataset.bindingValue = typeof locValue === 'string' ? locValue : '';
         }
-        style.append(colors);
-        page.append(keys.section, behavior.section, style);
-        panel.append(page);
-        this.settingsPanel = panel;
-        const bindBoolean = (input, path) => {
+        const toggleKey = panel.querySelector('#chat-toggle-key');
+        if (toggleKey instanceof HTMLInputElement) {
+            toggleKey.value = menu?.bindingDisplay(toggleValue) ?? '';
+            toggleKey.dataset.bindingValue = typeof toggleValue === 'string' ? toggleValue : '';
+        }
+
+        const bindBoolean = (id, path) => {
+            const input = panel.querySelector(`#${id}`);
+            if (!(input instanceof HTMLInputElement)) return;
             input.checked = Boolean(unwrapSettingScalar(this.app.settingsStore.get(path)));
             this.resources.listen(input, 'change', () => {
                 this.app.settingsStore.set(path, input.checked);
                 this.applyChatPreferences();
             });
         };
-        bindBoolean(time.input, 'chat.showTime');
-        bindBoolean(names.input, 'chat.showNameColors');
-        bindBoolean(chatButtons.input, 'chat.showChatButtons');
-        bindBoolean(blurTag.input, 'chat.blurTag');
-        bindBoolean(compact.input, 'chat.compact');
-        locationText.value = this.app.settings.chat.locationText || '{pos}';
-        this.resources.listen(locationText, 'input', () => {
-            this.app.settingsStore.set('chat.locationText', locationText.value || '{pos}');
-        });
+        bindBoolean('showChatTime', 'chat.showTime');
+        bindBoolean('showNameColors', 'chat.showNameColors');
+        bindBoolean('showPartyMain', 'chat.showChatButtons');
+        bindBoolean('blurTag', 'chat.blurTag');
+        bindBoolean('compactChat', 'chat.compact');
+
+        const locationText = panel.querySelector('#locationText');
+        if (locationText instanceof HTMLInputElement) {
+            locationText.value = this.app.settings.chat.locationText || '{pos}';
+            this.resources.listen(locationText, 'input', () => {
+                this.app.settingsStore.set('chat.locationText', locationText.value || '{pos}');
+            });
+        }
+
         const normalizePickerColor = (value, fallback) =>
             /^#[0-9a-f]{6}/i.test(String(value ?? '')) ? String(value).slice(0, 7) : fallback;
         for (const [id, path, fallback] of [

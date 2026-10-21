@@ -15382,6 +15382,7 @@
     }
     class MainMenuController extends FeatureController {
         async mount() {
+            this.mountShopPopupPreference();
             const grid = await this.app.readiness.waitFor(SELECTORS.settingsGrid, 5e3).catch(() => null);
             if (grid instanceof HTMLElement) this.mountHostSettings(grid);
             this.smallMods();
@@ -15414,14 +15415,22 @@
                     if (isObject(window.gameSettings)) window.gameSettings.user = null;
                 });
             }
-            const shopPopup = document.querySelector('#shop-popup');
-            if (this.app.settings.settings.removeShopPopup && shopPopup instanceof HTMLElement) {
-                const display = shopPopup.style.display;
-                shopPopup.style.display = 'none';
-                this.resources.add(() => {
-                    shopPopup.style.display = display;
-                });
-            }
+        }
+        mountShopPopupPreference() {
+            const style = createElement('style', {
+                attributes: { 'data-sigmod-shop-popup': '' },
+            });
+            const sync = () => {
+                style.textContent = this.app.settings.settings.removeShopPopup ? '#shop-popup { display: none !important; }' : '';
+            };
+            sync();
+            (document.head || document.documentElement).append(style);
+            this.resources.add(() => style.remove());
+            this.resources.add(
+                this.app.settingsStore.onChange((path) => {
+                    if (!path || path === 'settings.removeShopPopup') sync();
+                })
+            );
         }
         replaceDiscordLink() {
             const menu = document.querySelector(SELECTORS.menuContent);

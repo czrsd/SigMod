@@ -8156,6 +8156,10 @@
         }
         setupNameColorActions() {
             if (!(this.root instanceof HTMLElement)) return;
+            this.resources.listen(document, 'input', (event) => {
+                const target = event.target;
+                if (target instanceof HTMLInputElement && target.matches(SELECTORS.nickname)) this.syncNameColorControls();
+            });
             this.resources.listen(this.root, 'click', (event) => {
                 const target = event.target instanceof Element ? event.target.closest('[data-name-color-mode]') : null;
                 if (!(target instanceof HTMLButtonElement)) return;
@@ -8209,7 +8213,9 @@
                 previewText.style.webkitTextFillColor = solid;
                 previewText.style.color = solid;
             }
-            previewText.textContent = 'Your name';
+            const nickname = document.querySelector(SELECTORS.nickname);
+            previewText.textContent =
+                nickname instanceof HTMLInputElement && nickname.value.trim() ? nickname.value.trim() : this.message('Your name');
         }
         setupColors() {
             const definitions = [

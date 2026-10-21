@@ -647,6 +647,14 @@ class MenuController extends FeatureController {
         this.bindLauncher();
         this.resources.listen(root, 'click', (event) => this.handleOtherExtensionsTabClick(event), true);
         this.resources.listen(root, 'click', (event) => this.handleClick(event));
+        this.resources.listen(document, 'sigmod:languagechange', () => {
+            const welcome = this.root?.querySelector('#welcomeUser');
+            if (welcome instanceof HTMLElement) {
+                welcome.textContent = this.message('Welcome, {name}!', {
+                    name: this.app.state.nickname || this.message('Guest'),
+                });
+            }
+        });
         this.resources.listen(root, 'input', (event) => this.settingsIO.handleSettingInput(event));
         this.resources.listen(root, 'change', (event) => this.settingsIO.handleSettingInput(event));
         this.resources.listen(root, 'change', (event) => {
@@ -874,7 +882,7 @@ class MenuController extends FeatureController {
                                                 <strong>Play time</strong>
                                                 <span>Recent matches</span>
                                             </div>
-                                            <span id="statistics-average-time">0m avg.</span>
+                                            <span id="statistics-average-time">${this.message('{time} avg.', { time: '0m' })}</span>
                                         </div>
                                         <div class="statistics-chart-wrap">
                                             <canvas id="statistics-time-chart" height="126"></canvas>
@@ -3964,7 +3972,9 @@ class SettingsPorter {
             amount.value = String(splits);
             amount.disabled = splits === 0;
         }
-        this.root.querySelector('#welcomeUser').textContent = `Welcome ${this.app.state.nickname || 'Guest'}, to the SigMod Client!`;
+        this.root.querySelector('#welcomeUser').textContent = this.message('Welcome, {name}!', {
+            name: this.app.state.nickname || this.message('Guest'),
+        });
         this.updateMacroSpeedLabel();
         this.updatePartySliderLabels();
         this.updateKeybindingConflicts();
@@ -5348,6 +5358,12 @@ class ThemeController extends FeatureController {
         this.createEditor();
         this.gradientEditor.setupGradientDrag();
         this.renderThemes();
+        this.resources.listen(document, 'sigmod:languagechange', () => {
+            const hint = this.editor?.querySelector('#theme-editor-hint');
+            if (hint instanceof HTMLElement && hint.dataset.sigmodMessage) {
+                this.setEditorHint(hint.dataset.sigmodMessage, hint.classList.contains('is-error'));
+            }
+        });
         this.app.dependencies
             .load('colorPicker')
             .then((Alwan) => {
@@ -5647,16 +5663,19 @@ class ThemeController extends FeatureController {
         // Alwan must be connected before its picker mounts.
         this.gradientEditor.upgradeEditorColorPickers();
         this.updateEditorPreview();
-        const hint = this.editor.querySelector('#theme-editor-hint');
-        if (hint) {
-            hint.textContent = 'Right-click a custom preset later to delete it.';
-            hint.classList.remove('is-error');
-        }
+        this.setEditorHint('Right-click a custom preset later to delete it.');
         this.editor.querySelector('#themeEditorName')?.focus();
     }
     hideEditor() {
         this.app.features.get('modal')?.close('theme-editor');
         this.gradientEditor.gradientDrag = null;
+    }
+    setEditorHint(source, isError = false) {
+        const hint = this.editor?.querySelector('#theme-editor-hint');
+        if (!(hint instanceof HTMLElement)) return;
+        hint.dataset.sigmodMessage = source;
+        hint.textContent = this.message(source);
+        hint.classList.toggle('is-error', isError);
     }
     updateEditorPreview() {
         if (!this.editor) return;
@@ -5715,19 +5734,12 @@ class ThemeController extends FeatureController {
     }
     saveEditorTheme(type) {
         const name = this.value('themeEditorName').trim().slice(0, 20);
-        const hint = this.editor?.querySelector('#theme-editor-hint');
         if (!name) {
-            if (hint) {
-                hint.textContent = 'Give the theme a name first.';
-                hint.classList.add('is-error');
-            }
+            this.setEditorHint('Give the theme a name first.', true);
             return;
         }
         if (this.findTheme(name)) {
-            if (hint) {
-                hint.textContent = 'That theme name is already used.';
-                hint.classList.add('is-error');
-            }
+            this.setEditorHint('That theme name is already used.', true);
             return;
         }
         let background;
@@ -5743,10 +5755,7 @@ class ThemeController extends FeatureController {
             background = this.safeImageUrl(this.value('theme-editor-imagelink'));
             text = this.value('theme-editor-textcolorImage') || '#ffffff';
             if (!background) {
-                if (hint) {
-                    hint.textContent = 'Enter a valid http(s) image URL.';
-                    hint.classList.add('is-error');
-                }
+                this.setEditorHint('Enter a valid http(s) image URL.', true);
                 return;
             }
         }
@@ -5758,10 +5767,7 @@ class ThemeController extends FeatureController {
         this.container.scrollTop = this.container.scrollHeight;
         const nameInput = this.editor?.querySelector('#themeEditorName');
         if (nameInput instanceof HTMLInputElement) nameInput.value = '';
-        if (hint) {
-            hint.textContent = 'Right-click a custom preset later to delete it.';
-            hint.classList.remove('is-error');
-        }
+        this.setEditorHint('Right-click a custom preset later to delete it.');
     }
     removeCustomTheme(name) {
         const selected = this.current?.name === name;

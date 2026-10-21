@@ -1239,6 +1239,9 @@ class FeatureController {
         this.mounted = false;
     }
     async mount() {}
+    message(source, parameters = null) {
+        return this.app.i18n?.message(source, parameters) ?? source;
+    }
     destroy() {
         this.resources.dispose();
         this.mounted = false;

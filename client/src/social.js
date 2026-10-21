@@ -115,7 +115,7 @@ class ProfileController extends FeatureController {
             });
             header.append(
                 createElement('span', {
-                    text: `Profile of ${String(user.username ?? 'user')}`,
+                    text: this.message('Profile of {name}', { name: String(user.username ?? 'user') }),
                 })
             );
             const closeWrap = createElement('div', {
@@ -401,7 +401,7 @@ class ProfileController extends FeatureController {
         try {
             await action();
         } catch (error) {
-            status.textContent = error.message || 'The profile update failed.';
+            status.textContent = this.message(error.message || 'The profile update failed.');
         } finally {
             done?.();
         }
@@ -502,7 +502,7 @@ class ProfileController extends FeatureController {
             const top = Math.max(0, (window.innerHeight - height) / 2);
             const popup = window.open(ENDPOINTS.discordAuth, '_blank', `width=${width},height=${height},left=${left},top=${top}`);
             if (!popup) {
-                status.textContent = 'The Discord login popup was blocked by your browser.';
+                status.textContent = this.message('The Discord login popup was blocked by your browser.');
                 return;
             }
 
@@ -577,7 +577,7 @@ class ProfileController extends FeatureController {
                                 text: item?.message ?? item,
                             })
                         );
-                } else status.textContent = error.message || 'Sign-in failed.';
+                } else status.textContent = this.message(error.message || 'Sign-in failed.');
             } finally {
                 submit.disabled = false;
             }
@@ -664,21 +664,24 @@ class FriendPresenceTracker {
         if (changed) this.saveLocalFriendState();
     }
     friendPresenceText(user) {
-        if (user?.online) return user?.server ? `Online · ${user.server}` : 'Online';
+        if (user?.online) return user?.server ? this.controller.message('Online · {server}', { server: user.server }) : this.controller.message('Online');
         const id = String(user?._id ?? user?.id ?? '');
         const last = Number(this.localFriendState.lastOnlineAt[id] || 0);
-        if (!last) return 'Offline';
-        return `Seen ${this.formatRelativeTime(last)}`;
+        if (!last) return this.controller.message('Offline');
+        return this.controller.message('Seen {time}', { time: this.formatRelativeTime(last) });
     }
     formatRelativeTime(value) {
         const seconds = Math.max(0, Math.floor((Date.now() - Number(value || 0)) / 1000));
-        if (seconds < 45) return 'just now';
+        if (seconds < 45) return this.controller.message('just now');
         const minutes = Math.floor(seconds / 60);
-        if (minutes < 60) return `${minutes}m ago`;
         const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours}h ago`;
         const days = Math.floor(hours / 24);
-        return days < 30 ? `${days}d ago` : 'a while ago';
+        const locale = this.controller.app.i18n?.locale || 'en';
+        const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+        if (minutes < 60) return relative.format(-minutes, 'minute');
+        if (hours < 24) return relative.format(-hours, 'hour');
+        if (days < 30) return relative.format(-days, 'day');
+        return this.controller.message('a while ago');
     }
 }
 
@@ -1075,6 +1078,9 @@ class FriendsController extends FeatureController {
         this.resources.listen(this.root, 'submit', (event) => this.handleSubmit(event));
         this.resources.listen(this.root, 'change', (event) => this.handleChange(event));
         this.resources.listen(this.root, 'input', (event) => this.handleInput(event));
+        this.resources.listen(document, 'sigmod:languagechange', () => {
+            if (this.activeView === 'friends') this.renderFriendsList();
+        });
         this.resources.add(this.app.backend.on('private-message', (message) => this.updatePrivateChat(message)));
         this.resources.add(this.profileController?.onChange((profile) => this.handleAccountChange(profile)) ?? (() => {}));
         this.handleAccountChange(this.profileController?.profile ?? null);
@@ -1557,7 +1563,11 @@ class FriendsController extends FeatureController {
         const onlineCount = all.filter((friend) => Boolean(friend?.online)).length;
         const unreadTotal = this.totalUnread();
         if (summary instanceof HTMLElement) {
-            summary.textContent = `${onlineCount} online · ${all.length} friend${all.length === 1 ? '' : 's'}${unreadTotal ? ` · ${unreadTotal} unread` : ''}`;
+            summary.textContent = this.message('Online: {online} · Friends: {friends} · Unread: {unread}', {
+                online: onlineCount,
+                friends: all.length,
+                unread: unreadTotal,
+            });
         }
         const filtered = normalized
             ? all.filter((friend) => {
@@ -2423,6 +2433,7 @@ class StatisticsController extends FeatureController {
             });
             this.resources.listen(root, 'sigmod:menuopen', (event) => this.activateCharts(event.detail?.tabId));
         }
+        this.resources.listen(document, 'sigmod:languagechange', () => this.refresh());
         this.refresh();
         if (menu?.isOpen()) this.activateCharts(menu.activeTab);
     }
@@ -2508,7 +2519,10 @@ class StatisticsController extends FeatureController {
         this.setText('statistics-total-deaths', formatNumber(stats['total-deaths']));
         this.setText('statistics-total-mass', formatNumber(stats['total-mass']));
 
-        this.setText('statistics-average-time', `${count ? formatDuration(summary.totalDuration / count) : '0m'} avg.`);
+        this.setText(
+            'statistics-average-time',
+            this.message('{time} avg.', { time: count ? formatDuration(summary.totalDuration / count) : '0m' })
+        );
         this.setText('statistics-kills', formatNumber(summary.totalKills));
         this.setText('statistics-avg-kills', count ? (summary.totalKills / count).toFixed(summary.totalKills / count >= 10 ? 0 : 1) : '0');
         this.setText('statistics-pellets', formatNumber(summary.totalPellets));
@@ -2661,7 +2675,7 @@ class StatisticsController extends FeatureController {
                     tooltip: {
                         displayColors: false,
                         callbacks: {
-                            label: (context) => `Played ${formatDuration((context.raw || 0) * 60)}`,
+                            label: (context) => this.message('Played {duration}', { duration: formatDuration((context.raw || 0) * 60) }),
                         },
                     },
                 },

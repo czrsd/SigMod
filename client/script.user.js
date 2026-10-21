@@ -2109,6 +2109,9 @@
             this.mounted = false;
         }
         async mount() {}
+        message(source, parameters = null) {
+            return this.app.i18n?.message(source, parameters) ?? source;
+        }
         destroy() {
             this.resources.dispose();
             this.mounted = false;
@@ -4764,6 +4767,14 @@
             this.bindLauncher();
             this.resources.listen(root, 'click', (event) => this.handleOtherExtensionsTabClick(event), true);
             this.resources.listen(root, 'click', (event) => this.handleClick(event));
+            this.resources.listen(document, 'sigmod:languagechange', () => {
+                const welcome = this.root?.querySelector('#welcomeUser');
+                if (welcome instanceof HTMLElement) {
+                    welcome.textContent = this.message('Welcome, {name}!', {
+                        name: this.app.state.nickname || this.message('Guest'),
+                    });
+                }
+            });
             this.resources.listen(root, 'input', (event) => this.settingsIO.handleSettingInput(event));
             this.resources.listen(root, 'change', (event) => this.settingsIO.handleSettingInput(event));
             this.resources.listen(root, 'change', (event) => {
@@ -4989,7 +5000,7 @@
                                                 <strong>Play time</strong>
                                                 <span>Recent matches</span>
                                             </div>
-                                            <span id="statistics-average-time">0m avg.</span>
+                                            <span id="statistics-average-time">${this.message('{time} avg.', { time: '0m' })}</span>
                                         </div>
                                         <div class="statistics-chart-wrap">
                                             <canvas id="statistics-time-chart" height="126"></canvas>
@@ -8069,7 +8080,9 @@
                 amount.value = String(splits);
                 amount.disabled = splits === 0;
             }
-            this.root.querySelector('#welcomeUser').textContent = `Welcome ${this.app.state.nickname || 'Guest'}, to the SigMod Client!`;
+            this.root.querySelector('#welcomeUser').textContent = this.message('Welcome, {name}!', {
+                name: this.app.state.nickname || this.message('Guest'),
+            });
             this.updateMacroSpeedLabel();
             this.updatePartySliderLabels();
             this.updateKeybindingConflicts();
@@ -9460,6 +9473,12 @@
             this.createEditor();
             this.gradientEditor.setupGradientDrag();
             this.renderThemes();
+            this.resources.listen(document, 'sigmod:languagechange', () => {
+                const hint = this.editor?.querySelector('#theme-editor-hint');
+                if (hint instanceof HTMLElement && hint.dataset.sigmodMessage) {
+                    this.setEditorHint(hint.dataset.sigmodMessage, hint.classList.contains('is-error'));
+                }
+            });
             this.app.dependencies
                 .load('colorPicker')
                 .then((Alwan) => {
@@ -9763,16 +9782,19 @@
             });
             this.gradientEditor.upgradeEditorColorPickers();
             this.updateEditorPreview();
-            const hint = this.editor.querySelector('#theme-editor-hint');
-            if (hint) {
-                hint.textContent = 'Right-click a custom preset later to delete it.';
-                hint.classList.remove('is-error');
-            }
+            this.setEditorHint('Right-click a custom preset later to delete it.');
             this.editor.querySelector('#themeEditorName')?.focus();
         }
         hideEditor() {
             this.app.features.get('modal')?.close('theme-editor');
             this.gradientEditor.gradientDrag = null;
+        }
+        setEditorHint(source, isError = false) {
+            const hint = this.editor?.querySelector('#theme-editor-hint');
+            if (!(hint instanceof HTMLElement)) return;
+            hint.dataset.sigmodMessage = source;
+            hint.textContent = this.message(source);
+            hint.classList.toggle('is-error', isError);
         }
         updateEditorPreview() {
             if (!this.editor) return;
@@ -9831,19 +9853,12 @@
         }
         saveEditorTheme(type) {
             const name = this.value('themeEditorName').trim().slice(0, 20);
-            const hint = this.editor?.querySelector('#theme-editor-hint');
             if (!name) {
-                if (hint) {
-                    hint.textContent = 'Give the theme a name first.';
-                    hint.classList.add('is-error');
-                }
+                this.setEditorHint('Give the theme a name first.', true);
                 return;
             }
             if (this.findTheme(name)) {
-                if (hint) {
-                    hint.textContent = 'That theme name is already used.';
-                    hint.classList.add('is-error');
-                }
+                this.setEditorHint('That theme name is already used.', true);
                 return;
             }
             let background;
@@ -9859,10 +9874,7 @@
                 background = this.safeImageUrl(this.value('theme-editor-imagelink'));
                 text = this.value('theme-editor-textcolorImage') || '#ffffff';
                 if (!background) {
-                    if (hint) {
-                        hint.textContent = 'Enter a valid http(s) image URL.';
-                        hint.classList.add('is-error');
-                    }
+                    this.setEditorHint('Enter a valid http(s) image URL.', true);
                     return;
                 }
             }
@@ -9874,10 +9886,7 @@
             this.container.scrollTop = this.container.scrollHeight;
             const nameInput = this.editor?.querySelector('#themeEditorName');
             if (nameInput instanceof HTMLInputElement) nameInput.value = '';
-            if (hint) {
-                hint.textContent = 'Right-click a custom preset later to delete it.';
-                hint.classList.remove('is-error');
-            }
+            this.setEditorHint('Right-click a custom preset later to delete it.');
         }
         removeCustomTheme(name) {
             const selected = this.current?.name === name;
@@ -11155,11 +11164,26 @@
             this.emojiBatchSize = 49;
             this.recentEmojis = this.loadRecentEmojis();
         }
+        message(source, parameters = null) {
+            return this.app.i18n?.message(source, parameters) ?? source;
+        }
         get input() {
             return this.getInput();
         }
         get panel() {
             return this.emojiPanel;
+        }
+        syncLocalizedView() {
+            const panel = this.emojiPanel;
+            if (!panel) return;
+            const title = panel.querySelector('.emoji-picker-header span');
+            const close = panel.querySelector('.emoji-picker-close');
+            const search = panel.querySelector('#searchEmoji');
+            if (title) title.textContent = this.message('Emojis');
+            if (close instanceof HTMLButtonElement) close.setAttribute('aria-label', this.message('Close emoji picker'));
+            if (search instanceof HTMLInputElement) search.placeholder = this.message('Search emojis...');
+            this.renderEmojiCategoryTabs();
+            this.renderEmojis(search instanceof HTMLInputElement ? search.value : '', this.emojiCategory);
         }
         set panel(value) {
             this.emojiPanel = value;
@@ -11183,6 +11207,7 @@
         createEmojiMenu(emojiButton) {
             const panel = createElement('div', {
                 className: 'chatAddedContainer emojisContainer hidden_full',
+                attributes: { 'data-sigmod-localize': '' },
             });
             const header = createElement('div', {
                 className: 'emoji-picker-header',
@@ -11222,6 +11247,7 @@
             });
             panel.append(header, searchWrap, categoryTabs, categories);
             document.body.append(panel);
+            this.app.i18n?.translateTree(panel);
             this.emojiPanel = panel;
             this.panel = panel;
             this.resources.add(() => {
@@ -11317,7 +11343,7 @@
                 categories.replaceChildren(
                     createElement('div', {
                         className: 'emoji-picker-state',
-                        text: 'Loading emojis...',
+                        text: this.message('Loading emojis...'),
                     })
                 );
                 if (!this.emojis) await this.loadEmojis();
@@ -11346,7 +11372,7 @@
                 root.append(
                     createElement('button', {
                         className: `emoji-category-tab${category === this.emojiCategory ? ' active' : ''}`,
-                        text: category,
+                        text: this.message(category),
                         attributes: {
                             type: 'button',
                             'data-emoji-category': category,
@@ -11423,7 +11449,9 @@
                 root.append(
                     createElement('div', {
                         className: 'emoji-picker-state',
-                        text: query ? `No emojis found for "${searchTerm.trim()}".` : 'No emojis in this category.',
+                        text: query
+                            ? this.message('No emojis found for "{query}".', { query: searchTerm.trim() })
+                            : this.message('No emojis in this category.'),
                     })
                 );
                 return;
@@ -11455,7 +11483,7 @@
                         section.append(
                             createElement('div', {
                                 className: 'emoji-picker-section-title',
-                                text: group,
+                                text: this.message(group),
                             })
                         );
                     }
@@ -11528,7 +11556,10 @@
             this.setMode(this.mode, false);
         }
         createView() {
-            const root = createElement('aside', { className: 'modChat' });
+            const root = createElement('aside', {
+                className: 'modChat',
+                attributes: { 'data-sigmod-localize': '' },
+            });
             const inner = createElement('div', { className: 'modChat__inner' });
             const scrollButton = createElement('button', {
                 attributes: {
@@ -11604,6 +11635,7 @@
             inner.append(scrollButton, tabs, messages, inputContainer);
             root.append(inner);
             document.body.append(root);
+            this.app.i18n?.translateTree(root);
             this.root = root;
             this.messages = messages;
             this.input = input;
@@ -11612,6 +11644,25 @@
             this.applyChatPreferences();
             this.applyColors();
             this.updateInputAvailability();
+            this.resources.listen(document, 'sigmod:languagechange', () => {
+                const setLabel = (selector, key, replaceText = false) => {
+                    const element = this.root?.querySelector(selector);
+                    if (!(element instanceof HTMLElement)) return;
+                    if (replaceText) element.textContent = this.message(key);
+                    element.setAttribute('aria-label', this.message(key));
+                    if (element.hasAttribute('title')) element.title = this.message(key);
+                };
+                setLabel('#mainchat', 'Main', true);
+                setLabel('#partychat', 'Party', true);
+                setLabel('#sendButton', 'Send message');
+                setLabel('#openChatSettings', 'Chat settings');
+                setLabel('#openEmojiMenu', 'Emojis');
+                const scrollButton2 = this.root?.querySelector('#scroll-down-btn');
+                if (scrollButton2 instanceof HTMLElement) scrollButton2.title = this.message('Jump to latest messages');
+                this.updateInputAvailability();
+                this.updateScrollState();
+                this.emojiPicker.syncLocalizedView();
+            });
             this.resources.add(
                 this.app.settingsStore.onChange((path) => {
                     if (!path || path.startsWith('chat.')) {
@@ -11947,14 +11998,17 @@
             partyButton?.classList.toggle('active', this.mode === 'party');
             const tag = this.root?.querySelector('.tagText');
             if (tag)
-                tag.textContent = this.mode === 'party' && this.app.settings.settings.tag ? `Tag: ${this.app.settings.settings.tag}` : '';
+                tag.textContent =
+                    this.mode === 'party' && this.app.settings.settings.tag
+                        ? this.message('Tag: {tag}', { tag: this.app.settings.settings.tag })
+                        : '';
             if (this.mode === 'party') {
                 this.addMessage({
                     name: '[SERVER]',
                     color: '#5a44eb',
                     message: this.app.settings.settings.tag
-                        ? 'Welcome to the SigMod party chat!'
-                        : 'You need to be in a tag to use the SigMod party chat.',
+                        ? this.message('Welcome to the SigMod party chat!')
+                        : this.message('You need to be in a tag to use the SigMod party chat.'),
                 });
             }
             this.updateInputAvailability();
@@ -11970,10 +12024,10 @@
             const partyUnavailable = this.mode === 'party' && !this.app.settings.settings.tag;
             this.input.disabled = partyUnavailable;
             this.input.placeholder = requiresLogin
-                ? 'Login to use the chat'
+                ? this.message('Login to use the chat')
                 : partyUnavailable
-                  ? 'Join a tag to use party chat'
-                  : 'Message...';
+                  ? this.message('Join a tag to use party chat')
+                  : this.message('Message...');
             const send = this.root?.querySelector('#sendButton');
             if (send instanceof HTMLButtonElement) send.disabled = this.input.disabled;
         }
@@ -12235,11 +12289,17 @@
             const count = button.querySelector('.chat-new-count');
             if (count instanceof HTMLElement) {
                 count.textContent =
-                    this.unreadCount > 0 ? `${Math.min(this.unreadCount, 99)}${this.unreadCount > 99 ? '+' : ''} new` : 'Latest';
+                    this.unreadCount > 0
+                        ? this.message('{count} new', {
+                              count: `${Math.min(this.unreadCount, 99)}${this.unreadCount > 99 ? '+' : ''}`,
+                          })
+                        : this.message('Latest');
             }
             button.setAttribute(
                 'aria-label',
-                this.unreadCount > 0 ? `${this.unreadCount} new messages. Jump to latest.` : 'Jump to latest messages'
+                this.unreadCount > 0
+                    ? this.message('{count} new messages. Jump to latest.', { count: this.unreadCount })
+                    : this.message('Jump to latest messages')
             );
         }
         scrollToBottom(smooth = true) {
@@ -12331,6 +12391,13 @@
             this.resources.add(backend.on('leave-tag', ({ id } = {}) => this.leave(id)));
             this.resources.add(backend.on('score-tag', (update) => this.updateScore(update)));
             this.resources.add(backend.on('party-member-update', (data) => this.updateMemberStatus(data)));
+            this.resources.listen(document, 'sigmod:languagechange', () => {
+                const tagInput = document.querySelector('#tag');
+                if (tagInput instanceof HTMLInputElement) tagInput.placeholder = this.message('Tag');
+                this.lastStatusKey = null;
+                this.requestRender();
+                if (this.lock) this.showLockOverlay(this.lock);
+            });
             this.resources.add(
                 backend.on('open', () => {
                     this.publishIdentity();
@@ -12391,7 +12458,7 @@
             }
             tagInput = createElement('input', {
                 className: 'form-control',
-                attributes: { id: 'tag', placeholder: 'Tag', maxlength: '3' },
+                attributes: { id: 'tag', placeholder: this.message('Tag'), maxlength: '3' },
             });
             nick.insertAdjacentElement('beforebegin', tagInput);
             return tagInput;
@@ -12477,7 +12544,7 @@
                 className: 'party-avatar party-avatar-color',
                 attributes: {
                     style: `background-color: ${hex} !important; display: inline-block !important; width: 14px; height: 14px; min-width: 14px; min-height: 14px; border-radius: 50%; box-sizing: border-box;`,
-                    title: 'Cell color',
+                    title: this.message('Cell color'),
                 },
             });
         }
@@ -12831,16 +12898,14 @@
                 return null;
             }
             if (this.panel?.isConnected) return this.panel;
-            const panel = createElement('section', {
-                className: 'party_panel',
-            });
+            const panel = createElement('section', { className: 'party_panel' });
             const header = createElement('header', {
                 className: 'flex centerY justify-sb drag-handle',
             });
             const currentTag = this.getTag();
             const title = createElement('strong', {
                 attributes: { id: 'party_title' },
-                text: currentTag ? `Party ${currentTag}` : 'Party',
+                text: currentTag ? this.message('Party {tag}', { tag: currentTag }) : this.message('Party'),
             });
             const memberCount = createElement('span', {
                 attributes: { id: 'tag_member_len' },
@@ -13097,7 +13162,7 @@
             if (!isPlaying) {
                 const deadIcon = createElement('span', {
                     className: 'party-avatar party-avatar-dead centerXY',
-                    attributes: { title: 'Dead / Menu' },
+                    attributes: { title: this.message('Dead / Menu') },
                 });
                 deadIcon.innerHTML = icon('skull', 12);
                 wrap.append(deadIcon);
@@ -13112,8 +13177,8 @@
                     className: 'party-avatar party-avatar-skin',
                     attributes: {
                         src: skinUrl,
-                        alt: member.nick || 'Avatar',
-                        title: member.nick || 'Avatar',
+                        alt: member.nick || this.message('Avatar'),
+                        title: member.nick || this.message('Avatar'),
                         crossorigin: 'anonymous',
                     },
                 });
@@ -13152,7 +13217,7 @@
             if (!container || !count || !total) return;
             const currentTag = this.getTag();
             if (title) {
-                title.textContent = currentTag ? `Party ${currentTag}` : 'Party';
+                title.textContent = currentTag ? this.message('Party {tag}', { tag: currentTag }) : this.message('Party');
             }
             const settings = this.app.settings.settings;
             const showHeader =
@@ -13270,7 +13335,9 @@
             }
             let expandBtn = container.querySelector('.party-expand-btn');
             if (shouldLimit) {
-                const btnText = this.expanded ? 'Show less' : `+${sorted.length - maxMembers} more`;
+                const btnText = this.expanded
+                    ? this.message('Show less')
+                    : this.message('+{count} more', { count: sorted.length - maxMembers });
                 if (!expandBtn) {
                     expandBtn = createElement('button', {
                         type: 'button',
@@ -14299,14 +14366,14 @@
                     attributes: { class: 'playTimer' },
                 });
                 timerEl.style.display = 'block';
-                timerEl.textContent = '0m0s played';
+                timerEl.textContent = this.message('{minutes}m {seconds}s played', { minutes: 0, seconds: 0 });
                 overlay.append(timerEl);
                 let sec = 0;
                 this.playTimerInterval = this.resources.interval(() => {
                     sec += 1;
                     const m = Math.floor(sec / 60);
                     const s = sec % 60;
-                    timerEl.textContent = `${m}m${s}s played`;
+                    timerEl.textContent = this.message('{minutes}m {seconds}s played', { minutes: m, seconds: s });
                 }, 1e3);
             }
             if (settings.mouseTracker) {
@@ -14483,6 +14550,10 @@
             super(app2, name);
             this.view = null;
             this.loading = false;
+            this.challenges = [];
+            this.resources.listen(document, 'sigmod:languagechange', () => {
+                if (this.view?.isConnected) this.render(this.challenges);
+            });
         }
         async show() {
             if (!this.app.settings.settings.showChallenges || this.loading || this.view?.isConnected) return;
@@ -14502,6 +14573,7 @@
             }
         }
         render(challenges) {
+            this.challenges = Array.isArray(challenges) ? challenges : [];
             const parent = document.querySelector('.menu-wrapper--stats-mode');
             if (!(parent instanceof HTMLElement)) return;
             this.resources.children.get('challenge-timer')?.dispose();
@@ -14511,15 +14583,15 @@
             });
             const title = createElement('span', {
                 className: 'challenges-title',
-                text: 'Daily challenges',
+                text: this.message('Daily challenges'),
             });
             const list = createElement('div', { className: 'challenges-col' });
-            const pending = challenges.filter((challenge) => !challenge.status);
+            const pending = this.challenges.filter((challenge) => !challenge.status);
             if (!pending.length) {
                 list.append(
                     createElement('div', {
                         className: 'challenge-row',
-                        text: 'All challenges completed.',
+                        text: this.message('All challenges completed.'),
                     })
                 );
             } else {
@@ -14554,19 +14626,26 @@
         createRow(challenge) {
             const row = createElement('div', { className: 'challenge-row' });
             const goal = challenge.task === 'alive' ? Number(challenge.goal) / 60 : challenge.goal;
+            const taskKeys = {
+                eaten: 'Eat {goal} food in a game.',
+                xp: 'Get {goal} XP in a game.',
+                alive: 'Stay alive for {goal} minutes in a game.',
+                pos: 'Reach top {goal} on leaderboard.',
+            };
+            const taskKey = taskKeys[challenge.task];
             const templates = window.shopLocales?.challenge_tab?.tasks ?? {};
             const template = typeof templates[challenge.task] === 'string' ? templates[challenge.task] : `${challenge.task}: %n`;
             row.append(
                 createElement('div', {
                     className: 'challenge-desc',
-                    text: template.replace('%n', String(goal)),
+                    text: taskKey ? this.message(taskKey, { goal }) : template.replace('%n', String(goal)),
                 })
             );
             if (challenge.ready) {
                 const button = createElement('button', {
                     className: 'challenge-collect-secondary',
                     attributes: { type: 'button' },
-                    text: window.shopLocales?.challenge_tab?.collect ?? 'Collect',
+                    text: this.message('Collect'),
                 });
                 this.resources.listen(button, 'click', () => {
                     if (typeof button.challenge === 'function') {
@@ -14579,7 +14658,9 @@
                 row.append(
                     createElement('div', {
                         className: 'challenge-best-secondary',
-                        text: `${window.shopLocales?.challenge_tab?.result ?? 'Best: '}${Math.round(Number(challenge.best) || 0)}${challenge.task === 'alive' ? 's' : ''}`,
+                        text: this.message('Best: {score}', {
+                            score: `${Math.round(Number(challenge.best) || 0)}${challenge.task === 'alive' ? 's' : ''}`,
+                        }),
                     })
                 );
             }
@@ -15344,7 +15425,6 @@
             this.styleTopUsers();
             this.trackMouse();
             this.redirectOwnedSkins();
-            this.applyChallengeGrammar();
             this.handlePasswordUrl();
         }
         mountClientPing() {
@@ -15477,18 +15557,6 @@
             this.resources.add(() => {
                 Element.prototype.openTab = original;
             });
-        }
-        applyChallengeGrammar() {
-            this.resources.timeout(() => {
-                if (isObject(window.shopLocales?.challenge_tab?.tasks)) {
-                    Object.assign(window.shopLocales.challenge_tab.tasks, {
-                        eaten: 'Eat %n food in a game.',
-                        xp: 'Get %n XP in a game.',
-                        alive: 'Stay alive for %n minutes in a game.',
-                        pos: 'Reach top %n on leaderboard.',
-                    });
-                }
-            }, 1e3);
         }
         handlePasswordUrl() {
             if (!location.search.includes('password')) return;
@@ -16273,7 +16341,7 @@
                 });
                 header.append(
                     createElement('span', {
-                        text: `Profile of ${String(user.username ?? 'user')}`,
+                        text: this.message('Profile of {name}', { name: String(user.username ?? 'user') }),
                     })
                 );
                 const closeWrap = createElement('div', {
@@ -16560,7 +16628,7 @@
             try {
                 await action();
             } catch (error) {
-                status.textContent = error.message || 'The profile update failed.';
+                status.textContent = this.message(error.message || 'The profile update failed.');
             } finally {
                 done?.();
             }
@@ -16661,7 +16729,7 @@
                 const top = Math.max(0, (window.innerHeight - height) / 2);
                 const popup = window.open(ENDPOINTS.discordAuth, '_blank', `width=${width},height=${height},left=${left},top=${top}`);
                 if (!popup) {
-                    status.textContent = 'The Discord login popup was blocked by your browser.';
+                    status.textContent = this.message('The Discord login popup was blocked by your browser.');
                     return;
                 }
                 const messageHandler = (event) => {
@@ -16734,7 +16802,7 @@
                                     text: item?.message ?? item,
                                 })
                             );
-                    } else status.textContent = error.message || 'Sign-in failed.';
+                    } else status.textContent = this.message(error.message || 'Sign-in failed.');
                 } finally {
                     submit.disabled = false;
                 }
@@ -16820,21 +16888,27 @@
             if (changed) this.saveLocalFriendState();
         }
         friendPresenceText(user) {
-            if (user?.online) return user?.server ? `Online \xB7 ${user.server}` : 'Online';
+            if (user?.online)
+                return user?.server
+                    ? this.controller.message('Online \xB7 {server}', { server: user.server })
+                    : this.controller.message('Online');
             const id = String(user?._id ?? user?.id ?? '');
             const last = Number(this.localFriendState.lastOnlineAt[id] || 0);
-            if (!last) return 'Offline';
-            return `Seen ${this.formatRelativeTime(last)}`;
+            if (!last) return this.controller.message('Offline');
+            return this.controller.message('Seen {time}', { time: this.formatRelativeTime(last) });
         }
         formatRelativeTime(value) {
             const seconds = Math.max(0, Math.floor((Date.now() - Number(value || 0)) / 1e3));
-            if (seconds < 45) return 'just now';
+            if (seconds < 45) return this.controller.message('just now');
             const minutes = Math.floor(seconds / 60);
-            if (minutes < 60) return `${minutes}m ago`;
             const hours = Math.floor(minutes / 60);
-            if (hours < 24) return `${hours}h ago`;
             const days = Math.floor(hours / 24);
-            return days < 30 ? `${days}d ago` : 'a while ago';
+            const locale = this.controller.app.i18n?.locale || 'en';
+            const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+            if (minutes < 60) return relative.format(-minutes, 'minute');
+            if (hours < 24) return relative.format(-hours, 'hour');
+            if (days < 30) return relative.format(-days, 'day');
+            return this.controller.message('a while ago');
         }
     }
     class PrivateChatView {
@@ -17220,6 +17294,9 @@
             this.resources.listen(this.root, 'submit', (event) => this.handleSubmit(event));
             this.resources.listen(this.root, 'change', (event) => this.handleChange(event));
             this.resources.listen(this.root, 'input', (event) => this.handleInput(event));
+            this.resources.listen(document, 'sigmod:languagechange', () => {
+                if (this.activeView === 'friends') this.renderFriendsList();
+            });
             this.resources.add(this.app.backend.on('private-message', (message) => this.updatePrivateChat(message)));
             this.resources.add(this.profileController?.onChange((profile) => this.handleAccountChange(profile)) ?? (() => {}));
             this.handleAccountChange(this.profileController?.profile ?? null);
@@ -17700,7 +17777,11 @@
             const onlineCount = all.filter((friend) => Boolean(friend?.online)).length;
             const unreadTotal = this.totalUnread();
             if (summary instanceof HTMLElement) {
-                summary.textContent = `${onlineCount} online \xB7 ${all.length} friend${all.length === 1 ? '' : 's'}${unreadTotal ? ` \xB7 ${unreadTotal} unread` : ''}`;
+                summary.textContent = this.message('Online: {online} \xB7 Friends: {friends} \xB7 Unread: {unread}', {
+                    online: onlineCount,
+                    friends: all.length,
+                    unread: unreadTotal,
+                });
             }
             const filtered = normalized
                 ? all.filter((friend) => {
@@ -18559,6 +18640,7 @@
                 });
                 this.resources.listen(root, 'sigmod:menuopen', (event) => this.activateCharts(event.detail?.tabId));
             }
+            this.resources.listen(document, 'sigmod:languagechange', () => this.refresh());
             this.refresh();
             if (menu?.isOpen()) this.activateCharts(menu.activeTab);
         }
@@ -18642,7 +18724,10 @@
             this.setText('statistics-highest-mass', formatNumber(stats['highest-mass']));
             this.setText('statistics-total-deaths', formatNumber(stats['total-deaths']));
             this.setText('statistics-total-mass', formatNumber(stats['total-mass']));
-            this.setText('statistics-average-time', `${count ? formatDuration(summary.totalDuration / count) : '0m'} avg.`);
+            this.setText(
+                'statistics-average-time',
+                this.message('{time} avg.', { time: count ? formatDuration(summary.totalDuration / count) : '0m' })
+            );
             this.setText('statistics-kills', formatNumber(summary.totalKills));
             this.setText(
                 'statistics-avg-kills',
@@ -18797,7 +18882,8 @@
                         tooltip: {
                             displayColors: false,
                             callbacks: {
-                                label: (context) => `Played ${formatDuration((context.raw || 0) * 60)}`,
+                                label: (context) =>
+                                    this.message('Played {duration}', { duration: formatDuration((context.raw || 0) * 60) }),
                             },
                         },
                     },

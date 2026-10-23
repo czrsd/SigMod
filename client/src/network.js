@@ -1300,6 +1300,7 @@ class BackendClient extends Emitter {
             this.connectedCount += 1;
             this.reconnectAttempts = 0;
             this.app.state.backend.connected = true;
+            this.app.state.backend.authNonce = null;
             this.send('version', BUILD.serverVersion);
             this.send('server-changed', getGameMode());
             const currentNick = document.querySelector(SELECTORS.nickname)?.value?.trim() || this.app.state.nickname;
@@ -1318,6 +1319,7 @@ class BackendClient extends Emitter {
         socketScope.listen(socket, 'close', (event) => {
             if (generation === this.generation) {
                 this.app.state.backend.connected = false;
+                this.app.state.backend.authNonce = null;
                 this.emit('close', event);
                 if (!this.closedByClient && !this.updateRequired) this.scheduleReconnect();
             }
@@ -1369,6 +1371,9 @@ class BackendClient extends Emitter {
         if (!isObject(envelope) || typeof envelope.type !== 'string') return;
         if (envelope.type === 'sid') {
             this.app.state.backend.sid = envelope.content;
+        } else if (envelope.type === 'auth-challenge') {
+            this.app.state.backend.authNonce = envelope.content;
+            this.emit('auth-required', this.app.state.backend.sid);
         } else if (envelope.type === 'ping' && this.pingStarted !== null) {
             this.app.state.backend.latency = performance.now() - this.pingStarted;
             this.pingStarted = null;

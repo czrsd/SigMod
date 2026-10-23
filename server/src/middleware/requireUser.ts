@@ -11,11 +11,21 @@ export const requireUser = async (req: Request, res: Response, next: NextFunctio
     }
 
     if (accessToken) {
+        let decoded;
         try {
-            const decoded = verifyAccessToken(accessToken);
-            req.user = { userId: decoded.userId };
-            return next();
-        } catch {
+            decoded = verifyAccessToken(accessToken);
+        } catch {}
+        if (decoded) {
+            try {
+                const account = await AccountModel.findById(decoded.userId).select('_id merged_into session_version');
+                if (!account || account.merged_into || (account.session_version ?? 0) !== (decoded.sessionVersion ?? 0)) {
+                    return res.status(401).json({ success: false, message: 'Session expired. Please sign in again.' });
+                }
+                req.user = { userId: decoded.userId, sessionVersion: decoded.sessionVersion ?? 0 };
+                return next();
+            } catch {
+                return res.status(503).json({ success: false, message: 'Authentication unavailable.' });
+            }
         }
     }
 
@@ -24,16 +34,21 @@ export const requireUser = async (req: Request, res: Response, next: NextFunctio
         return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
+    let decodedRefreshToken;
     try {
-        const decodedRefreshToken = verifyRefreshToken(refreshToken);
+        decodedRefreshToken = verifyRefreshToken(refreshToken);
+    } catch {
+        return res.status(401).json({ success: false, message: 'Invalid refresh token' });
+    }
+    try {
         const { userId } = decodedRefreshToken;
 
         const user = await AccountModel.findById(userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user || user.merged_into || (user.session_version ?? 0) !== (decodedRefreshToken.sessionVersion ?? 0)) {
+            return res.status(401).json({ success: false, message: 'Session expired. Please sign in again.' });
         }
 
-        const newAccessToken = generateAccessToken(userId);
+        const newAccessToken = generateAccessToken(userId, user.session_version);
         res.cookie('mod_accessToken', newAccessToken, {
             maxAge: 300000,
             httpOnly: true,
@@ -42,9 +57,9 @@ export const requireUser = async (req: Request, res: Response, next: NextFunctio
         });
         res.setHeader('x-new-access-token', newAccessToken);
 
-        req.user = { userId };
+        req.user = { userId, sessionVersion: decodedRefreshToken.sessionVersion ?? 0 };
         return next();
     } catch {
-        return res.status(401).json({ success: false, message: 'Invalid refresh token' });
+        return res.status(503).json({ success: false, message: 'Authentication unavailable.' });
     }
 };

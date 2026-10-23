@@ -10,6 +10,7 @@ export function validateUsername(username: string | string[] | undefined) {
 export function validatePassword(password: string | string[] | undefined) {
     if (!password) return 'Password is required.';
     if (typeof password !== 'string') return 'Password must be a string.';
+    if (typeof password !== 'string') return 'Password must be a string.';
     if (password.trim().length === 0) return 'Password cannot be empty or contain only blank spaces.';
     if (password.includes('  ')) return 'Password cannot contain consecutive blank spaces.';
     if (password.length < 8) return 'Password is too short (minimum 8 characters).';

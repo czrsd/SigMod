@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as DiscordStrategy } from 'passport-discord';
 import { generateAccessToken, generateRefreshToken } from '../utils/jwtUtils';
-import AccountModel from '../models/AccountModel';
+import { resolveDiscordAccount } from '../services/discordAccount';
 
 passport.use(
     new DiscordStrategy(
@@ -13,26 +13,14 @@ passport.use(
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
-                let user = await AccountModel.findOne({
-                    _id: profile.id,
+                const { account: user } = await resolveDiscordAccount({
+                    id: profile.id,
+                    username: profile.username,
+                    avatar: profile.avatar,
                 });
 
-                if (!user) {
-                    user = new AccountModel({
-                        _id: profile.id,
-                        username: profile.username,
-                        imageURL: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : '',
-                        role: 'Member',
-                        badges: [],
-                        online: false,
-                        visible: true,
-                        create_time: new Date(),
-                    });
-                    await user.save();
-                }
-
-                const accessTokenJWT = generateAccessToken(user._id);
-                const refreshTokenJWT = generateRefreshToken(user._id);
+                const accessTokenJWT = generateAccessToken(user._id, user.session_version);
+                const refreshTokenJWT = generateRefreshToken(user._id, user.session_version);
 
                 return done(null, {
                     user,

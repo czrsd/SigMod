@@ -1,26 +1,25 @@
 import { Request, Response } from 'express';
 import AccountModel from '../../../models/AccountModel';
 import logger from '../../../utils/logger';
-import UserSettingsModel from '../../../models/UserSettingsModel';
-import RequestModel from '../../../models/RequestModel';
-import FriendModel from '../../../models/FriendModel';
+import { sendFriendRequest } from '../../../services/friendships';
+import { HttpError } from '../../../admin/common';
 
 class PublicUserController {
     async getAllUsers(req: Request, res: Response): Promise<Response | void> {
         let { amount, offset } = req.body;
 
-        if (!amount || typeof amount !== 'number' || amount < 1 || amount > 100) {
+        if (!Number.isSafeInteger(amount) || amount < 1 || amount > 100) {
             return res.status(401).json({
                 success: false,
                 message: 'No amount provided or not a valid amount.',
             });
         }
 
-        offset = typeof offset === 'number' && offset >= 0 ? Math.floor(offset) : 0;
+        offset = Number.isSafeInteger(offset) && offset >= 0 && offset <= 100000 ? Math.floor(offset) : 0;
 
         try {
             const users = await AccountModel.aggregate([
-                { $match: { visible: true } },
+                { $match: { visible: true, merged_into: { $exists: false } } },
                 {
                     $addFields: {
                         rolePriority: {
@@ -90,6 +89,7 @@ class PublicUserController {
         try {
             const reqUser = await AccountModel.findOne({
                 _id: userId,
+                merged_into: { $exists: false },
                 $or: [{ visible: { $ne: false } }, { _id: req.user?.userId }],
             }).select('_id username imageURL role bio badges online lastOnline visible create_time');
 
@@ -114,77 +114,17 @@ class PublicUserController {
     }
 
     async friendRequest(req: Request, res: Response): Promise<Response | void> {
-        const { req_id } = req.body;
+        const target = req.body?.req_id;
         const userId = req.user?.userId;
-
-        if (!req_id || typeof req_id !== 'string') {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid User ID for request.',
-            });
-        }
-
-        if (userId === req_id) {
-            return res.status(400).json({
-                success: false,
-                message: 'You cannot send a friend request to yourself.',
-            });
-        }
-
+        if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+        if (typeof target !== 'string') return res.status(400).json({ success: false, message: 'Invalid friend target.' });
         try {
-            const userExists = await AccountModel.findById(req_id);
-            if (!userExists) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'User does not exist.',
-                });
-            }
-
-            const targetUserSettings = await UserSettingsModel.findOne({
-                target: req_id,
-            });
-            if (!targetUserSettings || targetUserSettings.accept_requests == false) {
-                return res.status(400).json({
-                    success: false,
-                    message: "User doesn't accept friend requests.",
-                });
-            }
-
-            const existingRequest = await RequestModel.findOne({
-                req_id,
-                target_id: userId,
-            });
-
-            if (existingRequest) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'This request has already been opened.',
-                });
-            }
-
-            const isFriend = await FriendModel.exists({
-                user_id: userId,
-                friend_id: req_id,
-            });
-            if (isFriend) {
-                return res.json({
-                    success: false,
-                    message: 'You are already friends!',
-                });
-            }
-
-            await RequestModel.create({ req_id, target_id: userId });
-
-            res.json({
-                success: true,
-                message: 'Friend request sent!',
-            });
-        } catch (e) {
-            logger.error('Error sending friend request: ', e);
-            return res.status(400).json({
-                success: false,
-                message: 'An error occurred while sending friend request.',
-            });
+            await sendFriendRequest(userId, target);
+            return res.json({ success: true, message: 'Friend request sent!' });
+        } catch (error) {
+            return res
+                .status(error instanceof HttpError ? error.status : 503)
+                .json({ success: false, message: error instanceof HttpError ? error.message : 'Unable to send friend request.' });
         }
     }
 
@@ -207,9 +147,10 @@ class PublicUserController {
         const regex = new RegExp(`^${escapedQuery}`, 'i');
 
         try {
-            const users = await AccountModel.find({ username: regex })
+            const users = await AccountModel.find({ username: regex, visible: true, merged_into: { $exists: false } })
                 .select('id username role imageURL bio badges online')
-                .sort({ role: 1, username: 1 });
+                .sort({ role: 1, username: 1 })
+                .limit(50);
 
             if (!users.length) {
                 return res.status(404).json({

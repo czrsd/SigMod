@@ -4,6 +4,7 @@ import { wsHandler } from '../setup';
 import { google_user, minimapData, PingData } from '../../types';
 import logger from '../../utils/logger';
 import ChatModel from '../../models/ChatModel';
+import FriendModel from '../../models/FriendModel';
 import { db } from '../../db/connection';
 import { ObjectId } from 'mongodb';
 import useragent from 'express-useragent';
@@ -203,6 +204,8 @@ const handlePrivateMessage = async (data: { text: string; target: string }, sock
         throw new Error('Not authorized.');
     }
 
+    if (!data || typeof data.text !== 'string' || typeof data.target !== 'string' || !/^[a-f0-9]{24}$/i.test(data.target))
+        throw new Error('Invalid private message.');
     const { target } = data;
     const text = noXSS(data.text);
 
@@ -210,7 +213,13 @@ const handlePrivateMessage = async (data: { text: string; target: string }, sock
 
     const timestamp = Date.now();
 
-    sendToUser(user._id.toString(), target, text, timestamp);
+    if (!socket.privateMessageWindowStarted || timestamp - socket.privateMessageWindowStarted >= 10_000) {
+        socket.privateMessageWindowStarted = timestamp;
+        socket.privateMessageCount = 0;
+    }
+    if (socket.privateMessageCount >= 10) throw new Error('Please wait before sending more private messages.');
+    socket.privateMessageCount += 1;
+    if (!(await FriendModel.exists({ user_id: user._id, friend_id: target }))) throw new Error('Only friends can send private messages.');
 
     try {
         await ChatModel.create({
@@ -219,6 +228,7 @@ const handlePrivateMessage = async (data: { text: string; target: string }, sock
             timestamp: new Date(timestamp),
             content: text,
         });
+        sendToUser(user._id.toString(), target, text, timestamp);
     } catch (e) {
         logger.error('Error saving message: ', e);
         throw new Error('Failed to save message.');
@@ -302,8 +312,6 @@ const onGoogleAuth = async (user: extended_user, socket: socket) => {
             const updates: Record<string, any> = { ...user, ip };
             await usersCollection.updateOne({ _id: user._id }, { $set: updates });
         }
-
-        wsHandler.setSocketUser(socket, user._id.toString());
     } catch (e) {
         logger.error(e);
     }

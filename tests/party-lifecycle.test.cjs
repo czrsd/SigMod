@@ -26,7 +26,7 @@ function serverHarness() {
     const handler = loadServer('socket/SocketController.ts', { '../services/partyUsage': metrics }).default;
     const utils = loadServer('socket/core/socketUtils.ts', {
         '../../utils/helpers': { noXSS: (s) => s }, '../setup': { wsHandler: handler },
-        '../../utils/logger': {}, '../../models/ChatModel': {}, '../../db/connection': {},
+        '../../utils/logger': {}, '../../models/ChatModel': {}, '../../models/FriendModel': {}, '../../db/connection': {},
         mongodb: {}, 'express-useragent': {}, '../../services/partyUsage': metrics,
     });
     const member = (id, server = 'eu', tag = 'ABC') => {
@@ -107,7 +107,7 @@ test('disconnect cleanup completes while the account database write is still pen
     const b = member('b');
     let finishWrite;
     const Socket = loadServer('socket/core/socket.ts', {
-        ws: { OPEN: 1 }, fs: { readFileSync: () => '0', watch() {} }, path,
+        ws: { OPEN: 1 }, fs: { readFileSync: () => '0', watch() {} }, path, crypto: require('node:crypto'),
         '../setup': { wsHandler: handler }, uuid: {},
         '../../models/AccountModel': { updateOne: () => new Promise((resolve) => { finishWrite = resolve; }) },
         '../../utils/logger': { info() {}, error() {} }, './messageHandler': {},

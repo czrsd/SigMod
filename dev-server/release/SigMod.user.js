@@ -237,7 +237,7 @@
         app: SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl,
         socket: SIGMOD_DEV.enabled ? SIGMOD_DEV.socketUrl : SIGMOD_DEV.productionSocketUrl,
         headerAnimation: 'https://czrsd.com/static/sigmod/sigmodclient.gif',
-        discordAuth: `https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=${encodeURIComponent((SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl) + '/discord/callback')}&scope=identify`,
+        discordAuth: `${SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl}/discord/login`,
     };
     const LIBRARIES = {
         chart: {
@@ -4091,6 +4091,7 @@
                 this.connectedCount += 1;
                 this.reconnectAttempts = 0;
                 this.app.state.backend.connected = true;
+                this.app.state.backend.authNonce = null;
                 this.send('version', BUILD.serverVersion);
                 this.send('server-changed', getGameMode());
                 const currentNick = document.querySelector(SELECTORS.nickname)?.value?.trim() || this.app.state.nickname;
@@ -4109,6 +4110,7 @@
             socketScope.listen(socket, 'close', (event) => {
                 if (generation === this.generation) {
                     this.app.state.backend.connected = false;
+                    this.app.state.backend.authNonce = null;
                     this.emit('close', event);
                     if (!this.closedByClient && !this.updateRequired) this.scheduleReconnect();
                 }
@@ -4160,6 +4162,9 @@
             if (!isObject(envelope) || typeof envelope.type !== 'string') return;
             if (envelope.type === 'sid') {
                 this.app.state.backend.sid = envelope.content;
+            } else if (envelope.type === 'auth-challenge') {
+                this.app.state.backend.authNonce = envelope.content;
+                this.emit('auth-required', this.app.state.backend.sid);
             } else if (envelope.type === 'ping' && this.pingStarted !== null) {
                 this.app.state.backend.latency = performance.now() - this.pingStarted;
                 this.pingStarted = null;
@@ -17539,11 +17544,23 @@
             this.profile = null;
             this.events = new Emitter();
             this.authenticating = null;
+            this.accountEpoch = 0;
         }
         async mount() {
             this.menu = this.app.features.get('menu');
             this.modal = this.app.features.get('modal');
             this.resources.add(this.app.backend.on('auth-required', (sid) => this.authenticate(sid)));
+            this.resources.add(
+                this.app.backend.on('account-logged-out', () => {
+                    this.clearTokens();
+                    this.clearAccount();
+                })
+            );
+            this.resources.listen(window, 'storage', (event) => {
+                if (event.key !== 'mod_refreshToken') return;
+                this.clearAccount();
+                if (event.newValue) void this.authenticate(this.app.state.backend.sid);
+            });
         }
         /** Subscribe to profile changes. @param {(profile: object|null) => void} listener */
         onChange(listener) {
@@ -17562,7 +17579,7 @@
                 headers,
             });
             const newAccessToken = response.headers.get('x-new-access-token');
-            if (newAccessToken) {
+            if (newAccessToken && localStorage.getItem('mod_refreshToken') === refreshToken) {
                 localStorage.setItem('mod_accessToken', newAccessToken);
             }
             let payload = null;
@@ -17572,6 +17589,10 @@
                 throw new Error(`The SigMod server returned an invalid response (HTTP ${response.status}).`);
             }
             if (!response.ok) {
+                if (response.status === 401 && localStorage.getItem('mod_refreshToken') === refreshToken) {
+                    this.clearTokens();
+                    this.clearAccount();
+                }
                 const error = new Error(String(payload?.message ?? `HTTP ${response.status}`));
                 error.payload = payload;
                 throw error;
@@ -17580,9 +17601,19 @@
         }
         /** Exchange a Sigmally session id for the existing SigMod account cookie. */
         authenticate(sid) {
-            if (!sid || this.authenticating) return this.authenticating;
-            this.authenticating = this.request(`/auth/?sid=${encodeURIComponent(String(sid))}`)
+            if (!sid || !this.app.state.backend.authNonce || !localStorage.getItem('mod_refreshToken')) return Promise.resolve(false);
+            if (this.authenticating) {
+                if (this.authSid !== sid || this.authEpoch !== this.accountEpoch) this.pendingAuthSid = sid;
+                return this.authenticating;
+            }
+            const epoch = this.accountEpoch;
+            this.authSid = sid;
+            this.authEpoch = epoch;
+            this.authenticating = this.request(`/auth/?sid=${encodeURIComponent(String(sid))}`, {
+                headers: { 'x-socket-auth': this.app.state.backend.authNonce },
+            })
                 .then((payload) => {
+                    if (epoch !== this.accountEpoch || sid !== this.app.state.backend.sid) return false;
                     if (!payload?.success || !isObject(payload.user)) return false;
                     this.applyAccount(payload.user, payload.settings);
                     return true;
@@ -17593,6 +17624,9 @@
                 })
                 .finally(() => {
                     this.authenticating = null;
+                    const nextSid = this.pendingAuthSid || (sid !== this.app.state.backend.sid ? this.app.state.backend.sid : null);
+                    this.pendingAuthSid = null;
+                    if (nextSid) return this.authenticate(nextSid);
                 });
             return this.authenticating;
         }
@@ -17605,11 +17639,23 @@
             this.events.emit('change', profile);
         }
         clearAccount() {
+            this.accountEpoch += 1;
             this.profile = null;
             this.app.state.friends.settings = {};
             this.app.state.friends.names = /* @__PURE__ */ new Set();
             this.app.settingsStore.set('modAccount.authorized', false, true);
             this.events.emit('change', null);
+        }
+        clearTokens() {
+            localStorage.removeItem('mod_accessToken');
+            localStorage.removeItem('mod_refreshToken');
+        }
+        storeTokens(payload) {
+            if (typeof payload?.accessToken !== 'string' || typeof payload?.refreshToken !== 'string')
+                throw new Error('The server did not return account credentials.');
+            this.accountEpoch += 1;
+            localStorage.setItem('mod_accessToken', payload.accessToken);
+            localStorage.setItem('mod_refreshToken', payload.refreshToken);
         }
         createAvatar(user, size = 44) {
             const image = createElement('img', {
@@ -17890,7 +17936,7 @@
                 const confirmMsg = this.app.i18n?.message('Remove your profile picture?') ?? 'Remove your profile picture?';
                 if (!confirm(confirmMsg)) return;
                 await this.runEditorAction(errorText, async () => {
-                    const payload = await this.request('/me/remove');
+                    const payload = await this.request('/me/remove', { method: 'DELETE' });
                     if (!payload?.success || !isObject(payload.user)) throw new Error(String(payload?.message ?? 'Avatar removal failed.'));
                     this.applyAccount(payload.user);
                     avatar.src = this.safeImageUrl(payload.user.imageURL);
@@ -18038,13 +18084,17 @@
                     status.textContent = this.message('The Discord login popup was blocked by your browser.');
                     return;
                 }
+                let completed = false;
                 const messageHandler = (event) => {
-                    if (event.source !== popup) return;
+                    if (event.source !== popup || event.origin !== new URL(ENDPOINTS.app).origin) return;
                     if (event.data && event.data.type === 'SIGMOD_AUTH_SUCCESS') {
-                        const { accessToken, refreshToken } = event.data.payload || {};
-                        if (accessToken) localStorage.setItem('mod_accessToken', accessToken);
-                        if (refreshToken) localStorage.setItem('mod_refreshToken', refreshToken);
-                        this.app.settingsStore.set('modAccount.authorized', true, true);
+                        try {
+                            this.storeTokens(event.data.payload);
+                            this.app.settingsStore.set('modAccount.authorized', true, true);
+                            completed = true;
+                        } catch (error) {
+                            status.textContent = this.message(error.message);
+                        }
                     }
                 };
                 const removeListener =
@@ -18061,7 +18111,8 @@
                 interval = window.setInterval(() => {
                     if (!popup.closed) return;
                     cleanup();
-                    this.resources.timeout(() => location.reload(), 1500);
+                    if (completed) this.resources.timeout(() => location.reload(), 250);
+                    else status.textContent = this.message('Discord sign-in was not completed. Please try again.');
                 }, 1e3);
                 scope?.add(cleanup);
             });
@@ -18097,7 +18148,9 @@
                             );
                         return;
                     }
+                    this.storeTokens(payload);
                     this.applyAccount(payload.user, payload.settings);
+                    await this.authenticate(this.app.state.backend.sid);
                     this.modal.close('mod-account');
                 } catch (error) {
                     const errors = Array.isArray(error?.payload?.errors) ? error.payload.errors : null;
@@ -18116,8 +18169,9 @@
         }
         async logout() {
             try {
-                const payload = await this.request('/logout');
+                const payload = await this.request('/logout', { method: 'POST' });
                 if (!payload?.success) throw new Error(String(payload?.message ?? 'Logout failed.'));
+                this.clearTokens();
                 this.clearAccount();
                 location.reload();
             } catch (error) {
@@ -18605,6 +18659,11 @@
             });
             this.resources.add(this.app.backend.on('private-message', (message) => this.updatePrivateChat(message)));
             this.resources.add(this.profileController?.onChange((profile) => this.handleAccountChange(profile)) ?? (() => {}));
+            this.resources.interval(() => {
+                if (!this.profileController?.profile || document.hidden || !this.root?.getClientRects().length) return;
+                void this.refreshRequestBadge();
+                if (this.activeView === 'friends') void this.refreshPresence();
+            }, 3e4);
             this.handleAccountChange(this.profileController?.profile ?? null);
         }
         handleAccountChange(profile) {
@@ -19498,13 +19557,35 @@
         }
         async refreshRequestBadge() {
             if (!this.profileController?.profile) return;
+            const accountId = this.profileController.profile._id;
             try {
                 const payload = await this.request('/me/requests');
+                if (this.profileController?.profile?._id !== accountId) return;
                 const requests = Array.isArray(payload?.body) ? payload.body : [];
                 this.requestCount = requests.length;
                 this.updateRequestBadge();
             } catch (error) {
                 this.app.logger.warnOnce('friends-request-count', 'Unable to refresh friend request count', error);
+            }
+        }
+        async refreshPresence() {
+            if (this.refreshingPresence || !this.profileController?.profile) return;
+            this.refreshingPresence = true;
+            const accountId = this.profileController.profile._id;
+            try {
+                const payload = await this.request('/me/friends');
+                if (!payload?.success || this.profileController?.profile?._id !== accountId) return;
+                this.friendsCache = Array.isArray(payload.friends) ? payload.friends : [];
+                this.app.state.friends.names = new Set(
+                    this.friendsCache.filter((friend) => friend.online && friend.nick).map((friend) => String(friend.nick))
+                );
+                this.trackFriendPresence(this.friendsCache);
+                if (this.body?.querySelector('[data-friends-list]')) this.renderFriendsList();
+                else if (this.activeView === 'friends' && this.friendsCache.length) void this.openFriends();
+            } catch (error) {
+                this.app.logger.warnOnce('friends-presence', 'Unable to refresh friend presence', error);
+            } finally {
+                this.refreshingPresence = false;
             }
         }
         rememberMessage(id, message, unread = false) {

@@ -5,6 +5,8 @@ export type IAccount = Document & {
     username: string;
     password?: string;
     discord_id?: string;
+    merged_into?: string;
+    session_version?: number;
     imageURL: string;
     role: string;
     bio?: string;
@@ -19,6 +21,8 @@ const modAccountSchema: Schema<IAccount> = new mongoose.Schema({
     username: { type: String, required: true, unique: true, index: true },
     password: { type: String, required: false },
     discord_id: { type: String, required: false, unique: true, sparse: true, index: true },
+    merged_into: { type: String, required: false },
+    session_version: { type: Number, default: 0 },
     imageURL: { type: String, required: true },
     role: { type: String, required: true, default: 'Member' },
     bio: { type: String, required: false },

@@ -9,6 +9,7 @@ import logger from '../../utils/logger';
 import { google_user, modAccount, socketMessageData } from '../../types';
 import messageHandler from './messageHandler';
 import { getCachedClientContent } from '../../services/clientContent';
+import { randomBytes } from 'crypto';
 
 const zigFilePath: string = path.join(process.cwd(), 'zig');
 let isZigActive: boolean = false;
@@ -34,6 +35,9 @@ class Socket {
     ws: WebSocket;
     req: Request;
     sid: string;
+    authNonce: string = randomBytes(32).toString('hex');
+    privateMessageWindowStarted: number = 0;
+    privateMessageCount: number = 0;
     connectedAt: Date = new Date();
     lastMessageAt: Date | null = null;
     lastPongAt: Date | null = null;
@@ -84,7 +88,7 @@ class Socket {
     }
 
     private async updateUserStatus() {
-        if (this.modUser?._id) {
+        if (this.modUser?._id && !wsHandler.onlineFriends([this.modUser._id.toString()]).length) {
             try {
                 await AccountModel.updateOne({ _id: this.modUser._id }, { $set: { online: false, lastOnline: new Date() } });
             } catch (err) {
@@ -119,6 +123,7 @@ class Socket {
         });
 
         this.send({ type: 'usage-capabilities', content: { keybindUsage: 1 } });
+        this.send({ type: 'auth-challenge', content: this.authNonce });
 
         this.send({ type: 'client-content', content: getCachedClientContent() });
 

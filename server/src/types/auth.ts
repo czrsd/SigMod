@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 
 export type JWTPayload_accessToken = {
+    sessionVersion?: number;
     userId: string;
     valid: boolean;
     iat: number;
@@ -8,6 +9,7 @@ export type JWTPayload_accessToken = {
 };
 
 export type JWTPayload_refreshToken = {
+    sessionVersion?: number;
     userId: string;
     jti: string;
     iat: number;

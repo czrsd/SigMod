@@ -22,6 +22,7 @@ const SetupMiddleware = (app: Application) => {
         ],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
+        exposedHeaders: ['x-new-access-token'],
     });
     const isAdminPath = (pathname: string) => pathname === '/api/v5/admin' || pathname.startsWith('/api/v5/admin/');
     const isDashboardPath = (pathname: string) => pathname === '/admin' || pathname.startsWith('/admin/');

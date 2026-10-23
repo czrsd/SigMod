@@ -28,28 +28,32 @@ const getAlgorithm = (): jwt.Algorithm => {
     return key.includes('BEGIN RSA PRIVATE KEY') || key.includes('BEGIN PRIVATE KEY') ? 'RS256' : 'HS256';
 };
 
-export const generateAccessToken = (userId: string): string => {
-    return jwt.sign({ userId, valid: true }, getSigningKey(), {
+export const generateAccessToken = (userId: string, sessionVersion = 0): string => {
+    return jwt.sign({ userId, valid: true, sessionVersion }, getSigningKey(), {
         algorithm: getAlgorithm(),
         expiresIn: '5m',
     });
 };
 
-export const generateRefreshToken = (userId: string): string => {
-    return jwt.sign({ userId }, getSigningKey(), {
+export const generateRefreshToken = (userId: string, sessionVersion = 0): string => {
+    return jwt.sign({ userId, sessionVersion }, getSigningKey(), {
         algorithm: getAlgorithm(),
         expiresIn: '1y',
     });
 };
 
 export const verifyAccessToken = (token: string): JWTPayload_accessToken => {
-    return jwt.verify(token, getVerificationKey(), {
+    const payload = jwt.verify(token, getVerificationKey(), {
         algorithms: [getAlgorithm()],
     }) as JWTPayload_accessToken;
+    if (typeof payload.userId !== 'string' || payload.valid !== true) throw new Error('Invalid access token.');
+    return payload;
 };
 
 export const verifyRefreshToken = (token: string): JWTPayload_refreshToken => {
-    return jwt.verify(token, getVerificationKey(), {
+    const payload = jwt.verify(token, getVerificationKey(), {
         algorithms: [getAlgorithm()],
     }) as JWTPayload_refreshToken;
+    if (typeof payload.userId !== 'string' || 'valid' in payload) throw new Error('Invalid refresh token.');
+    return payload;
 };

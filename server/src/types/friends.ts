@@ -12,6 +12,7 @@ export type modAccount = {
     username: string;
     password?: string;
     discord_id?: string;
+    session_version?: number;
     imageURL: string;
     role: string | Role;
     bio?: string;

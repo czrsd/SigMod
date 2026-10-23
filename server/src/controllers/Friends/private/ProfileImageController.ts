@@ -48,7 +48,12 @@ class ProfileImageController {
             const fileName = `${userId}-${Date.now()}.webp`;
             const filePath = path.join(this.profilesDir, fileName);
 
-            await sharp(req.file.buffer).resize(256, 256, { fit: 'cover', position: 'center' }).webp({ quality: 85 }).toFile(filePath);
+            const image = sharp(req.file.buffer, { limitInputPixels: 16_777_216 });
+            const metadata = await image.metadata();
+            if (!metadata.format || !['png', 'jpeg', 'webp'].includes(metadata.format)) {
+                return res.status(400).json({ success: false, message: 'Upload an actual PNG, JPEG or WebP image.' });
+            }
+            await image.rotate().resize(256, 256, { fit: 'cover', position: 'center' }).webp({ quality: 85 }).toFile(filePath);
 
             const oldUser = await AccountModel.findById(userId, { imageURL: 1 });
             if (oldUser?.imageURL && oldUser.imageURL.includes('/profiles/')) {
@@ -59,8 +64,6 @@ class ProfileImageController {
                 }
             }
 
-            const host = req.get('host') || `localhost:${process.env.PORT || 3001}`;
-            const protocol = req.protocol === 'https' || req.secure ? 'https' : 'http';
             const imageURL =
                 process.env.NODE_ENV === 'development'
                     ? `http://localhost:${process.env.PORT || 3001}/profiles/${fileName}`

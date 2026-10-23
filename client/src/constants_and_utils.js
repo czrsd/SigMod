@@ -270,7 +270,7 @@ const ENDPOINTS = {
     app: SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl,
     socket: SIGMOD_DEV.enabled ? SIGMOD_DEV.socketUrl : SIGMOD_DEV.productionSocketUrl,
     headerAnimation: 'https://czrsd.com/static/sigmod/sigmodclient.gif',
-    discordAuth: `https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=${encodeURIComponent((SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl) + '/discord/callback')}&scope=identify`,
+    discordAuth: `${SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl}/discord/login`,
 };
 const LIBRARIES = {
     chart: {

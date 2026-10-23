@@ -5,6 +5,7 @@ import { recordPartyJoin, recordPartyLeave } from '../services/partyUsage';
 class SocketController {
     public sockets: Map<string, socket>;
     private userSockets: Map<string, Set<string>>;
+    private socketUsers: Map<string, string>;
     private serverRooms: Map<string, Set<string>>;
     private tagRooms: Map<string, Set<string>>;
 
@@ -16,6 +17,7 @@ class SocketController {
     constructor() {
         this.sockets = new Map();
         this.userSockets = new Map();
+        this.socketUsers = new Map();
         this.serverRooms = new Map();
         this.tagRooms = new Map();
 
@@ -54,12 +56,7 @@ class SocketController {
 
     private notifyTagDeparture(s: socket, tag: string, server: string): void {
         this.sendToTag({ type: 'leave-tag', content: { id: s.sid } }, tag, s.sid, server);
-        this.sendToTag(
-            { type: 'minimap-data', content: { sid: s.sid, nick: s.nick, x: null, y: null } },
-            tag,
-            s.sid,
-            server
-        );
+        this.sendToTag({ type: 'minimap-data', content: { sid: s.sid, nick: s.nick, x: null, y: null } }, tag, s.sid, server);
         this.syncTagRoom(tag, server);
     }
 
@@ -87,7 +84,7 @@ class SocketController {
             }
         }
 
-        const userId = s.modUser?._id?.toString() || (s.user as any)?._id?.toString();
+        const userId = this.socketUsers.get(s.sid);
         if (userId) {
             const userSet = this.userSockets.get(userId);
             if (userSet) {
@@ -97,6 +94,7 @@ class SocketController {
         }
 
         this.sockets.delete(s.sid);
+        this.socketUsers.delete(s.sid);
     }
 
     public setSocketServer(s: socket, newServer: string): void {
@@ -183,12 +181,30 @@ class SocketController {
     }
 
     public setSocketUser(s: socket, userId: string): void {
+        const previous = this.socketUsers.get(s.sid);
+        if (previous && previous !== userId) {
+            const oldSet = this.userSockets.get(previous);
+            oldSet?.delete(s.sid);
+            if (!oldSet?.size) this.userSockets.delete(previous);
+        }
+        this.socketUsers.set(s.sid, userId);
         let userSet = this.userSockets.get(userId);
         if (!userSet) {
             userSet = new Set();
             this.userSockets.set(userId, userSet);
         }
         userSet.add(s.sid);
+    }
+
+    public clearSocketUser(s: socket): void {
+        const previous = this.socketUsers.get(s.sid);
+        if (previous) {
+            const oldSet = this.userSockets.get(previous);
+            oldSet?.delete(s.sid);
+            if (!oldSet?.size) this.userSockets.delete(previous);
+        }
+        this.socketUsers.delete(s.sid);
+        s.modUser = null;
     }
 
     public sendToAll(data: socketMessageData): void {
@@ -258,7 +274,7 @@ class SocketController {
         if (!sids) return;
         for (const sid of sids) {
             const s = this.sockets.get(sid);
-            if (s) s.send(data);
+            if (s?.modUser?._id?.toString() === userId) s.send(data);
         }
     }
 
@@ -269,7 +285,7 @@ class SocketController {
             if (sids && sids.size > 0) {
                 for (const sid of sids) {
                     const s = this.sockets.get(sid);
-                    if (s && s.modUser) {
+                    if (s?.modUser?._id?.toString() === userId && s.modUser.online !== false) {
                         onlineFriendSockets.push(s);
                         break;
                     }

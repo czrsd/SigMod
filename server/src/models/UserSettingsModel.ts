@@ -9,7 +9,7 @@ type UserSettings = Document & {
 };
 
 const userSettingsSchema = new Schema<UserSettings>({
-    target: { type: String, required: true },
+    target: { type: String, required: true, unique: true, index: true },
     static_status: { type: String, required: true },
     accept_requests: { type: Boolean, required: true },
     highlight_friends: { type: Boolean, required: true },

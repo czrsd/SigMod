@@ -10,7 +10,7 @@
         "start": "node ./dist/server.js",
         "lint": "npx eslint .",
         "prettier": "npx prettier . --write",
-        "deploy": "ssh sigmod-deploy \"bash /var/www/sigmod_v5/deploy.sh\""
+        "deploy": "ssh sigmod-deploy \"bash /var/www/sigmod_v5/ops/deploy.sh\""
     },
     "keywords": [],
     "author": "",

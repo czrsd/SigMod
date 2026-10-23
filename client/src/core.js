@@ -634,6 +634,9 @@ class Localization {
         return 'en';
     }
     initialize() {
+        void this.load('en', { refresh: true }).then(() => {
+            if (this.locale === 'en') this.apply();
+        }).catch(() => {});
         const stored = this.readPreference();
         if (stored) {
             if (stored !== 'en') void this.setLanguage(stored, { persist: false });
@@ -651,29 +654,29 @@ class Localization {
         const suffix = SIGMOD_DEV.enabled ? `?t=${Date.now()}` : '';
         return `${base}/${encodeURIComponent(locale)}.json${suffix}`;
     }
-    async load(locale) {
-        if (this.messages.has(locale)) return this.messages.get(locale);
+    async load(locale, { refresh = false } = {}) {
+        if (!refresh && this.messages.has(locale)) return this.messages.get(locale);
         if (this.loading.has(locale)) return this.loading.get(locale);
         const request = (async () => {
-            const controller = new AbortController();
-            const timeout = window.setTimeout(() => controller.abort(), 4_000);
             try {
-                const response = await fetch(this.catalogueUrl(locale), {
-                    cache: SIGMOD_DEV.enabled ? 'no-store' : 'force-cache',
-                    credentials: 'omit',
-                    referrerPolicy: 'no-referrer',
-                    signal: controller.signal,
-                });
-                if (!response.ok) throw new Error(`Language pack request failed (${response.status})`);
-                const payload = await response.json();
-                if (!isObject(payload) || payload.locale !== locale || !isObject(payload.messages)) {
-                    throw new Error('Language pack has an invalid format');
+                for (const url of [`${ENDPOINTS.app}/locales/${encodeURIComponent(locale)}.json`, this.catalogueUrl(locale)]) {
+                    const controller = new AbortController();
+                    const timeout = window.setTimeout(() => controller.abort(), 4_000);
+                    try {
+                        const response = await fetch(url, {
+                            cache: 'no-cache', credentials: 'omit', referrerPolicy: 'no-referrer', signal: controller.signal,
+                        });
+                        if (!response.ok) continue;
+                        const payload = await response.json();
+                        if (!isObject(payload) || payload.locale !== locale || !isObject(payload.messages)) continue;
+                        const messages = Object.fromEntries(Object.entries(payload.messages).filter(([, value]) => typeof value === 'string'));
+                        this.messages.set(locale, messages);
+                        return messages;
+                    } catch { /* Try the shipped catalogue when an older backend is unavailable. */ }
+                    finally { window.clearTimeout(timeout); }
                 }
-                const messages = Object.fromEntries(Object.entries(payload.messages).filter(([, value]) => typeof value === 'string'));
-                this.messages.set(locale, messages);
-                return messages;
+                throw new Error('Language pack unavailable');
             } finally {
-                window.clearTimeout(timeout);
                 this.loading.delete(locale);
             }
         })();
@@ -813,12 +816,18 @@ class SettingsStore {
         this.value = clone(defaults);
         this.savedKeys = clone(defaults.macros.keys);
         this.changeListeners = new Set();
+        this.readOnly = false;
         this.flushLater = debounce(() => this.flush(), 100);
     }
     load() {
         let source;
+        let imported = false;
         try {
             source = this.storage.getItem(this.key);
+            if (!source) {
+                source = this.storage.getItem(STORAGE.legacySettings);
+                imported = Boolean(source);
+            }
         } catch (error) {
             this.logger.warn('Unable to read settings; defaults were loaded', error);
             return this.value;
@@ -830,6 +839,7 @@ class SettingsStore {
         let parsed;
         try {
             parsed = JSON.parse(source);
+            if (!isObject(parsed)) throw new TypeError('Settings must be an object');
         } catch (error) {
             this.backup(source, 'invalid-json');
             this.logger.warn('Stored settings are invalid; defaults were loaded', error);
@@ -838,6 +848,7 @@ class SettingsStore {
         }
         const sourceVersion = Number(parsed?.storageVersion) || 1;
         if (sourceVersion > BUILD.settingsVersion) {
+            this.readOnly = true;
             this.backup(source, `future-v${sourceVersion}`);
             this.logger.warn(`Settings version ${sourceVersion} is newer than this client`);
             return this.value;
@@ -847,13 +858,58 @@ class SettingsStore {
         const merged = mergeKnown(this.defaults, migrated);
         this.value = this.normalize(merged);
         this.savedKeys = extractKeybindsFromSettings(this.value);
-        if (JSON.stringify(this.value) !== source) this.flush();
+        if ((imported || JSON.stringify(this.value) !== source) && !this.flush()) return this.value;
+        this.restoreLegacy();
         return this.value;
+    }
+    restoreLegacy() {
+        try {
+            const source = this.storage.getItem(STORAGE.legacySettings);
+            if (!source) return;
+            const parsed = JSON.parse(source);
+            const version = Number(parsed?.storageVersion);
+            if (!isObject(parsed) || version <= 1 || version > BUILD.settingsVersion || !Number.isFinite(version)) return;
+            let restored;
+            const backups = Array.from({ length: this.storage.length }, (_, index) => this.storage.key(index))
+                .filter((key) => key?.startsWith(`${STORAGE.settingsBackupPrefix}-v1-`))
+                .sort()
+                .reverse();
+            for (const key of backups) {
+                try {
+                    const raw = this.storage.getItem(key);
+                    const value = JSON.parse(raw);
+                    if (
+                        value?.storageVersion === 1 &&
+                        ['macros', 'game', 'themes', 'settings', 'chat', 'modAccount'].every((path) => isObject(value[path]))
+                    ) {
+                        restored = raw;
+                        break;
+                    }
+                } catch {}
+            }
+            if (!restored) {
+                const value = this.normalize(mergeKnown(this.defaults, this.migrate(parsed, version)));
+                const bindings = value.macros.mouse.bindings;
+                value.macros.mouse = {
+                    left: bindings.find((binding) => binding.button === 0)?.action ?? null,
+                    right: bindings.find((binding) => binding.button === 2)?.action ?? null,
+                };
+                value.macros.keys.saveImage = null;
+                value.settings.analytics = value.analytics;
+                value.storageVersion = 1;
+                restored = JSON.stringify(value);
+            }
+            if (this.backup(source, 'before-storage-migration')) this.storage.setItem(STORAGE.legacySettings, restored);
+        } catch (error) {
+            this.logger.warn('Unable to restore legacy settings', error);
+        }
     }
     migrate(input, sourceVersion) {
         if (!isObject(input)) return clone(this.defaults);
         const value = clone(input);
+        if (value.themes) delete value.themes.showZigPopup;
         if (sourceVersion <= 1) {
+            value.analytics ??= value.settings?.analytics;
             if (value.macros?.feedSpeed !== undefined) {
                 value.macros.feedSpeed = Number(value.macros.feedSpeed);
             }
@@ -889,6 +945,7 @@ class SettingsStore {
         return value;
     }
     normalize(value) {
+        value.analytics = value.analytics === 'off' ? 'off' : 'on';
         const normalizeBinding = (rawBinding) => {
             const binding = unwrapSettingScalar(rawBinding);
             if (binding === null || binding === '' || binding === undefined) return null;
@@ -1156,6 +1213,7 @@ class SettingsStore {
         return this.value;
     }
     flush() {
+        if (this.readOnly) return false;
         try {
             // SigFixes replaces some key fields with non-enumerable accessors.
             // Read the known settings schema so those keys remain in the saved JSON.
@@ -1163,16 +1221,20 @@ class SettingsStore {
             snapshot.macros.keys = extractKeybindsFromSettings(this.value);
             this.savedKeys = clone(snapshot.macros.keys);
             this.storage.setItem(this.key, JSON.stringify(snapshot));
+            return true;
         } catch (error) {
             this.logger.error('Unable to save settings', error);
+            return false;
         }
     }
     backup(source, reason) {
         const key = `${STORAGE.settingsBackupPrefix}-${reason}-${Date.now()}`;
         try {
             this.storage.setItem(key, source);
+            return true;
         } catch (error) {
             this.logger.warn('Unable to back up settings', error);
+            return false;
         }
     }
     destroy() {
@@ -1403,7 +1465,7 @@ class AdTrackerProtector {
 
     resolveInitialSetting() {
         try {
-            const raw = localStorage.getItem(STORAGE.settings);
+            const raw = localStorage.getItem(STORAGE.settings) ?? localStorage.getItem(STORAGE.legacySettings);
             if (raw) {
                 const parsed = JSON.parse(raw);
                 if (parsed?.themes?.hideAds === false) return false;
@@ -1416,11 +1478,15 @@ class AdTrackerProtector {
         if (this.initialized) return;
         this.initialized = true;
 
-        this.installGlobalFlags();
-        this.installApiStubs();
+        // Preserve the game's real ad APIs when ads are allowed. These shims run
+        // before the game initializes and cannot be undone cleanly mid-session.
+        if (this.enabled) {
+            this.installGlobalFlags();
+            this.installApiStubs();
+            this.installAntiAdblockShield();
+        }
         this.installDomGuard();
         this.installNetworkGuard();
-        this.installAntiAdblockShield();
         this.installDomSanitizer();
     }
 
@@ -1837,8 +1903,6 @@ class AdTrackerProtector {
     installDomSanitizer() {
         const protector = this;
 
-        this.cleanupAdDom();
-
         const observer = new MutationObserver((mutations) => {
             if (!protector.enabled) return;
             for (let m = 0; m < mutations.length; m += 1) {
@@ -1872,24 +1936,6 @@ class AdTrackerProtector {
         }
     }
 
-    cleanupAdDom() {
-        if (!this.enabled || typeof document === 'undefined') return;
-        const selector =
-            '#left_ad_block, #ad_bottom, .ad-block, .ad-block-left, .ad-block-right, [id^="div-gpt-ad"], iframe[id^="google_ads"], iframe[src*="doubleclick.net"], iframe[src*="googletagmanager.com"], ins.adsbygoogle';
-        const elements = document.querySelectorAll(selector);
-        for (let i = 0; i < elements.length; i += 1) {
-            const el = elements[i];
-            el.replaceChildren();
-            el.style.setProperty('display', 'none', 'important');
-        }
-        const noscripts = document.querySelectorAll('noscript');
-        for (let i = 0; i < noscripts.length; i += 1) {
-            if (noscripts[i].innerHTML?.includes('googletagmanager')) {
-                noscripts[i].remove();
-            }
-        }
-    }
-
     bindApp(app) {
         this.app = app;
         const enabled = app.settings?.themes?.hideAds !== false;
@@ -1908,9 +1954,6 @@ class AdTrackerProtector {
 
     setEnabled(enabled) {
         this.enabled = Boolean(enabled);
-        if (this.enabled) {
-            this.cleanupAdDom();
-        }
     }
 
     getStatus() {

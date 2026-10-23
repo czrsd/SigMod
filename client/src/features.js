@@ -79,8 +79,10 @@ class AuthController extends FeatureController {
     }
     publishUser() {
         if (!this.app.state.user) return;
+        const user = { ...this.app.state.user };
+        delete user.token;
         this.app.backend.send('user', {
-            ...this.app.state.user,
+            ...user,
             nick: this.app.state.nickname,
         });
     }
@@ -1191,22 +1193,38 @@ class ChatController extends FeatureController {
         );
     }
     async loadBlockedData() {
+        this.blockedRequest?.abort();
         const controller = new AbortController();
         this.blockedRequest = controller;
-        this.resources.add(() => controller.abort());
+        const dispose = () => controller.abort();
+        this.resources.add(dispose);
+        const timeout = setTimeout(dispose, 5000);
         try {
-            const response = await fetch(ENDPOINTS.blockedChat, {
+            if (controller.signal.aborted || this.resources.disposed) return;
+            const response = await fetch(`${ENDPOINTS.app}/chat-filter`, {
                 signal: controller.signal,
+                credentials: 'omit',
+                referrerPolicy: 'no-referrer',
+                cache: 'no-cache',
             });
-            if (!response.ok) return;
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            if (this.resources.disposed) return;
-            this.blocked.names = Array.isArray(data.names) ? data.names.map((value) => String(value).toLowerCase()) : [];
-            this.blocked.messages = Array.isArray(data.messages) ? data.messages.map((value) => String(value).toLowerCase()) : [];
+            if (!isObject(data) || typeof data.enabled !== 'boolean' || !Array.isArray(data.names) || !Array.isArray(data.messages)) {
+                throw new Error('Invalid chat filter response');
+            }
+            if (controller.signal.aborted || this.resources.disposed) return;
+            this.blocked.names = data.enabled
+                ? data.names.filter((value) => typeof value === 'string' && value.length > 0).map((value) => value.toLowerCase())
+                : [];
+            this.blocked.messages = data.enabled
+                ? data.messages.filter((value) => typeof value === 'string' && value.length > 0).map((value) => value.toLowerCase())
+                : [];
         } catch (error) {
             if (error?.name === 'AbortError') return;
             this.app.logger.warnOnce('blocked-chat', 'Unable to load the chat filter', error);
         } finally {
+            clearTimeout(timeout);
+            this.resources.remove(dispose);
             if (this.blockedRequest === controller) this.blockedRequest = null;
         }
     }
@@ -1347,6 +1365,7 @@ class PartyController extends FeatureController {
         this.resources.add(backend.on('leave-tag', ({ id } = {}) => this.leave(id)));
         this.resources.add(backend.on('score-tag', (update) => this.updateScore(update)));
         this.resources.add(backend.on('party-member-update', (data) => this.updateMemberStatus(data)));
+        this.resources.add(backend.on('close', () => this.resetPartyState()));
         this.resources.listen(document, 'sigmod:languagechange', () => {
             const tagInput = document.querySelector('#tag');
             if (tagInput instanceof HTMLInputElement) tagInput.placeholder = this.message('Tag');
@@ -1356,8 +1375,12 @@ class PartyController extends FeatureController {
         });
         this.resources.add(
             backend.on('open', () => {
+                this.resetPartyState();
                 this.publishIdentity();
                 this.syncPublishTimers();
+                this.publishScore();
+                this.publishPosition();
+                this.publishMemberStatus();
             })
         );
         this.bindIdentityInputs();
@@ -1374,6 +1397,8 @@ class PartyController extends FeatureController {
                         this.localColor = this.resolveLocalColor() || this.localColor;
                         this.localSkin = this.resolveLocalSkin() || this.localSkin;
                     }
+                    this.publishScore();
+                    this.publishPosition();
                     this.publishMemberStatus();
                     this.requestRender();
                 })
@@ -1683,6 +1708,7 @@ class PartyController extends FeatureController {
                     this.lastScore = null;
                     this.sentPositionNull = false;
                     this.lastPositionKey = null;
+                    this.lastStatusKey = null;
                     this.syncPublishTimers();
                     this.members.clear();
                     this.rowCache.forEach((row) => row.remove());
@@ -1791,7 +1817,6 @@ class PartyController extends FeatureController {
         }
     }
     closePanel() {
-        this.members.clear();
         this.rowCache.clear();
         this.drag = null;
         if (this.renderRaf) {
@@ -1805,6 +1830,15 @@ class PartyController extends FeatureController {
         }
         this.panelScope?.dispose();
         this.panelScope = null;
+    }
+    resetPartyState() {
+        this.members.clear();
+        this.app.features.get('minimap')?.clear();
+        this.lastScore = null;
+        this.lastPositionKey = null;
+        this.sentPositionNull = false;
+        this.lastStatusKey = null;
+        this.requestRender();
     }
     publishIdentity() {
         const inputNick = document.querySelector(SELECTORS.nickname)?.value?.trim();
@@ -1820,25 +1854,27 @@ class PartyController extends FeatureController {
     }
     publishPosition() {
         if (!this.hasTag()) return;
-        const position = this.app.host.adapter?.snapshot().position;
+        const position = this.isLocalPlaying() ? this.app.host.adapter?.snapshot().position : null;
         if (position) {
             const key = `${position.x}:${position.y}`;
             if (key === this.lastPositionKey) return;
-            this.lastPositionKey = key;
-            this.sentPositionNull = false;
-            this.app.backend.send('position', position);
+            if (this.app.backend.send('position', position)) {
+                this.lastPositionKey = key;
+                this.sentPositionNull = false;
+            }
         } else if (!this.sentPositionNull) {
-            this.sentPositionNull = true;
-            this.lastPositionKey = null;
-            this.app.backend.send('position', { x: null, y: null });
+            if (this.app.backend.send('position', { x: null, y: null })) {
+                this.sentPositionNull = true;
+                this.lastPositionKey = null;
+            }
         }
     }
     publishScore() {
         if (!this.hasTag()) return;
-        const score = Math.round(this.app.host.adapter?.snapshot().score ?? 0);
+        const rawScore = this.isLocalPlaying() ? this.app.host.adapter?.snapshot().score : 0;
+        const score = Number.isFinite(rawScore) ? Math.max(0, Math.round(rawScore)) : 0;
         if (score === this.lastScore) return;
-        this.lastScore = score;
-        this.app.backend.send('score', score);
+        if (this.app.backend.send('score', score)) this.lastScore = score;
     }
     publishMemberStatus() {
         if (!this.hasTag()) return;
@@ -1856,15 +1892,14 @@ class PartyController extends FeatureController {
 
         const key = `${skin || ''}|${color || ''}|${isPlaying}|${ping ?? ''}`;
         if (key === this.lastStatusKey) return;
-        this.lastStatusKey = key;
-
-        this.app.backend.send('party-member-update', {
+        const sent = this.app.backend.send('party-member-update', {
             skin,
             color,
             isAlive: isPlaying,
             isPlaying,
             ping,
         });
+        if (sent) this.lastStatusKey = key;
         this.requestRender();
     }
     ensurePanel() {
@@ -1963,6 +1998,10 @@ class PartyController extends FeatureController {
     }
     renderMembers(input) {
         if (!Array.isArray(input)) return;
+        const incomingIds = new Set(input.filter((m) => isObject(m) && m.id !== undefined).map((m) => String(m.id)));
+        for (const id of this.members.keys()) {
+            if (!incomingIds.has(id)) this.app.features.get('minimap')?.updatePlayer({ sid: id, x: null, y: null });
+        }
         this.members.clear();
         const selfSid = String(this.app.state.backend.sid);
         const currentSelfNick =
@@ -2020,7 +2059,9 @@ class PartyController extends FeatureController {
         }
     }
     leave(id) {
-        if (id === undefined || !this.members.delete(String(id))) return;
+        if (id === undefined) return;
+        this.app.features.get('minimap')?.updatePlayer({ sid: id, x: null, y: null });
+        if (!this.members.delete(String(id))) return;
         if (this.shouldShowPanel()) {
             this.requestRender();
         }
@@ -2441,16 +2482,8 @@ class MinimapController extends FeatureController {
     updatePlayer(data) {
         if (!isObject(data) || data.sid === undefined) return;
         const id = String(data.sid);
-        const party = this.app.features.get('party');
         if (data.x === null || data.y === null) {
             this.players.delete(id);
-            if (party && party.members.has(id)) {
-                const member = party.members.get(id);
-                if (member && member.isAlive !== false) {
-                    member.isAlive = false;
-                    party.render();
-                }
-            }
         } else {
             const x = Number(data.x);
             const y = Number(data.y);
@@ -2462,13 +2495,6 @@ class MinimapController extends FeatureController {
                     y,
                     nick: typeof data.nick === 'string' ? data.nick : 'Unnamed',
                 });
-                if (party && party.members.has(id)) {
-                    const member = party.members.get(id);
-                    if (member && member.isAlive === false) {
-                        member.isAlive = true;
-                        party.render();
-                    }
-                }
             }
         }
         this.scheduleDraw();
@@ -2670,6 +2696,17 @@ class MacroController extends FeatureController {
             event.stopPropagation();
             return;
         }
+        if (!event.repeat && event.isTrusted) {
+            const record = (values, prefix = 'macros.keys') => {
+                for (const [name, value] of Object.entries(values || {})) {
+                    const path = `${prefix}.${name}`;
+                    const binding = unwrapSettingScalar(value);
+                    if (path !== 'macros.keys.ping' && typeof binding === 'string' && this.matches(event, binding)) this.app.keybindUsage.record(path, binding);
+                    else if (value && typeof value === 'object' && !Array.isArray(value)) record(value, path);
+                }
+            };
+            record(this.app.settingsStore.get('macros.keys'));
+        }
         if (this.app.inputOwnership?.ownsKeyEvent(event)) return;
         const key = String(event.key).toLowerCase();
         const keys = this.app.settings?.macros?.keys;
@@ -2789,6 +2826,7 @@ class MacroController extends FeatureController {
         if (this.app.inputOwnership?.owns('mouseButtons', event.button)) return;
         const action = this.mouseBinding(event.button);
         if (!action) return;
+        if (event.isTrusted && action !== 'ping') this.app.keybindUsage.record(action, `mouse:${event.button}`, 'mouse');
         if (event.button !== 0) event.preventDefault();
         if (action === 'fastfeed') {
             this.startPointerFeed(event.button);
@@ -4458,7 +4496,12 @@ class MainMenuController extends FeatureController {
         const gameMode = document.querySelector(SELECTORS.gameMode);
         if (gameMode instanceof HTMLSelectElement) {
             this.resources.listen(gameMode, 'change', () => {
+                const party = this.app.features.get('party');
+                party?.resetPartyState();
                 this.app.backend.send('server-changed', getGameMode());
+                party?.publishScore();
+                party?.publishPosition();
+                party?.publishMemberStatus();
                 document.querySelector('#mod-messages')?.replaceChildren();
             });
         }
@@ -5003,6 +5046,8 @@ class SmartPingController extends FeatureController {
         }
 
         if (this.isPingInput(event) && !this.wheelOpen) {
+            const binding = unwrapSettingScalar(this.app.settings?.macros?.keys?.ping);
+            this.app.keybindUsage.record('macros.keys.ping', binding);
             event.preventDefault();
             this.openWheel({ type: 'key', code: event.code });
             this.wheelCancelled = false;
@@ -5041,6 +5086,7 @@ class SmartPingController extends FeatureController {
         }
 
         if (this.isPingInput(event) && !this.wheelOpen) {
+            this.app.keybindUsage.record('ping', `mouse:${event.button}`, 'mouse');
             event.preventDefault();
             this.openWheel({ type: 'mouse', button: event.button });
             this.wheelCancelled = false;

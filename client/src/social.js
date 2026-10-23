@@ -2186,6 +2186,30 @@ class FriendsController extends FeatureController {
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~ Announcements, statistics, and shop                                               ~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+const sanitizedAnnouncementFragment = (html) => {
+    const template = document.createElement('template');
+    template.innerHTML = String(html ?? '');
+    const allowed = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'BLOCKQUOTE', 'H2', 'H3', 'A']);
+    const discard = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'SVG', 'MATH', 'TEMPLATE', 'LINK', 'META', 'BASE']);
+    const visit = (parent) => {
+        for (const node of [...parent.childNodes]) {
+            if (node.nodeType === Node.TEXT_NODE) continue;
+            if (!(node instanceof HTMLElement) || discard.has(node.tagName)) { node.remove(); continue; }
+            visit(node);
+            if (!allowed.has(node.tagName)) { node.replaceWith(...node.childNodes); continue; }
+            const href = node.tagName === 'A' ? safeHttpUrl(node.getAttribute('href')) : null;
+            for (const attribute of [...node.attributes]) node.removeAttribute(attribute.name);
+            if (href) {
+                node.setAttribute('href', href);
+                node.setAttribute('target', '_blank');
+                node.setAttribute('rel', 'noopener noreferrer');
+            }
+        }
+    };
+    visit(template.content);
+    return template.content;
+};
+
 class AnnouncementsController extends FeatureController {
     mount() {
         this.container = document.querySelector('#mod-announcements');
@@ -2362,7 +2386,7 @@ class AnnouncementsController extends FeatureController {
         const body = createElement('div', {
             className: 'sigmod-announcement-body',
         });
-        body.innerHTML = descriptionHtml;
+        body.append(sanitizedAnnouncementFragment(descriptionHtml));
         for (const link of body.querySelectorAll('a')) {
             link.setAttribute('target', '_blank');
             link.setAttribute('rel', 'noopener noreferrer');

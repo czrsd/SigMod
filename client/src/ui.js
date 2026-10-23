@@ -304,6 +304,7 @@ class ModalController extends FeatureController {
             })
         );
         this.resources.add(this.app.backend.on('update-available', (url) => this.showUpdate(url)));
+        this.resources.add(this.app.backend.on('release-notice', (notice) => this.handleUpdateNotice(notice)));
     }
     message(source, parameters = null) {
         return this.app.i18n?.message(source, parameters) ?? source;
@@ -392,6 +393,7 @@ class ModalController extends FeatureController {
         return toast;
     }
     showUpdate(value) {
+        this.close('update-notice', true);
         const url = this.safeUpdateUrl(value);
         const body = createElement('div');
         body.append(
@@ -424,23 +426,66 @@ class ModalController extends FeatureController {
     safeUpdateUrl(value) {
         try {
             const url = new URL(String(value));
-            return url.protocol === 'https:' ? url.href : null;
+            const local = SIGMOD_DEV.enabled && ['localhost', '127.0.0.1'].includes(url.hostname);
+            return !url.username && !url.password && (url.protocol === 'https:' || (local && url.protocol === 'http:')) ? url.href : null;
         } catch {
             return null;
         }
+    }
+    handleUpdateNotice(notice) {
+        if (!isObject(notice) || !notice.enabled || this.app.backend.updateRequired) {
+            this.close('update-notice', true);
+            this.updateNoticeKey = null;
+            return;
+        }
+        const url = this.safeUpdateUrl(notice.downloadUrl);
+        if (!url) return;
+        const key = `${String(notice.id)}:${Number(notice.revision) || 0}`;
+        if (key === this.updateNoticeKey && this.modals.has('update-notice')) return;
+        this.updateNoticeKey = key;
+        const body = createElement('div');
+        body.append(createElement('p', { text: String(notice.message || `SigMod ${notice.latestClientVersion} is available.`) }));
+        const update = createElement('a', {
+            className: 'modButton',
+            text: 'Update',
+            attributes: { href: url, target: '_blank', rel: 'noopener noreferrer' },
+        });
+        const later = createElement('button', { className: 'modButton', text: 'Later', attributes: { type: 'button' } });
+        body.append(update, later);
+        const dialog = this.open('update-notice', body, { overlay: false });
+        dialog.setAttribute('aria-modal', 'false');
+        dialog.setAttribute('role', 'status');
+        const scope = this.modals.get('update-notice').scope;
+        const dismiss = () => {
+            this.app.remoteContent?.dismissUpdateNotice(notice);
+            this.close('update-notice');
+        };
+        scope.listen(later, 'click', dismiss);
+        scope.listen(update, 'click', dismiss);
     }
     handleAlert(data) {
         if (!isObject(data)) return;
         const { title = '', description = '', enabled = false, link = '', buttonText = 'Open' } = data;
         if (this.app.backend.updateRequired) return;
-        const hideAlert = Number(localStorage.getItem('hide-alert'));
-        if (!enabled || (hideAlert && Date.now() - hideAlert < 3 * 60 * 60 * 1000)) {
+        const alertKey = data.id ? `${String(data.id)}:${Number(data.revision) || 0}` : JSON.stringify([title, description]);
+        let dismissals = {};
+        try {
+            dismissals = JSON.parse(localStorage.getItem('SigModClient-alert-dismissals') || '{}');
+        } catch {
+        }
+        if (!isObject(dismissals)) dismissals = {};
+        dismissals = { ...dismissals, ...this.alertDismissals };
+        const expiresAt = data.expiresAt ? Date.parse(data.expiresAt) : null;
+        const expired = expiresAt !== null && (!Number.isFinite(expiresAt) || expiresAt <= Date.now());
+        if (!enabled || expired || Number(dismissals[alertKey]) > Date.now()) {
             this.scrimScope?.dispose();
+            this.currentAlertKey = null;
             document.getElementById('scrim_alert')?.remove();
             return;
         }
-        localStorage.removeItem('hide-alert');
+        if (this.currentAlertKey === alertKey && document.getElementById('scrim_alert')) return;
         this.scrimScope?.dispose();
+        this.currentAlertKey = alertKey;
         const modal = createElement('div', {
             className: 'modAlert',
             attributes: { id: 'scrim_alert' },
@@ -463,7 +508,8 @@ class ModalController extends FeatureController {
             attributes: { style: 'align-items: center; gap: 5px;' },
         });
         let actionBtn = null;
-        if (link) {
+        const safeLink = this.safeUpdateUrl(link);
+        if (safeLink) {
             actionBtn = createElement('button', {
                 className: 'modButton',
                 text: buttonText,
@@ -478,6 +524,35 @@ class ModalController extends FeatureController {
         modal.append(header, createElement('span', { text: description }), actions);
         document.body.append(modal);
         const scope = (this.scrimScope = this.resources.child('scrim-alert'));
+        const dismiss = () => {
+            this.alertDismissals ??= {};
+            this.alertDismissals[alertKey] = Date.now() + 3 * 60 * 60 * 1000;
+            try {
+                const next = Object.entries(dismissals)
+                    .filter(([, until]) => Number(until) > Date.now())
+                    .slice(-19);
+                next.push([alertKey, Date.now() + 3 * 60 * 60 * 1000]);
+                localStorage.setItem('SigModClient-alert-dismissals', JSON.stringify(Object.fromEntries(next)));
+            } catch {
+                /* Dismiss locally even if browser storage is unavailable. */
+            }
+            this.currentAlertKey = null;
+            scope.dispose();
+            this.app.remoteContent?.dismissAlert(data);
+        };
+        if (expiresAt !== null) {
+            const armExpiry = () =>
+                scope.timeout(
+                    () => {
+                        if (Date.now() >= expiresAt) {
+                            this.currentAlertKey = null;
+                            scope.dispose();
+                        } else armExpiry();
+                    },
+                    Math.max(1, Math.min(expiresAt - Date.now(), 2_147_483_647))
+                );
+            armExpiry();
+        }
         const menuWrapper = document.getElementById('menu-wrapper');
         if (menuWrapper instanceof HTMLElement) {
             const sync = () => {
@@ -493,16 +568,13 @@ class ModalController extends FeatureController {
                 observer.disconnect();
             });
         }
-        if (actionBtn && link) {
+        if (actionBtn && safeLink) {
             scope.listen(actionBtn, 'click', () => {
-                window.open(link, '_blank');
-                scope.dispose();
+                window.open(safeLink, '_blank', 'noopener,noreferrer');
+                dismiss();
             });
         }
-        scope.listen(closeButton, 'click', () => {
-            scope.dispose();
-            localStorage.setItem('hide-alert', Date.now());
-        });
+        scope.listen(closeButton, 'click', dismiss);
         scope.add(() => {
             modal.remove();
         });
@@ -944,7 +1016,7 @@ class MenuController extends FeatureController {
                                         <div class="settings-section-title">Actions</div>
                                         <div class="settings-grid settings-grid-two">
                                             <label class="macroRow settings-item"><span class="text">Rapid Feed</span><input id="modinput1" class="keybinding" name="rapidFeed" data-label="Rapid Feed" data-setting="macros.keys.rapidFeed" maxlength="1" placeholder="..."></label>
-                                            <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Respawn</span>${this.infoBtn('Quickly respawns your cell after dying without having to manually click through the death screen.', 'down')}</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Respawn</span>${this.infoBtn('Press the assigned key to respawn your cell when your score is below 5.5k. Requires a Google login.', 'down')}</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
                                             <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Ping</span>${this.infoBtn('Sends a quick ping or opens the ping wheel to alert tag teammates of your location. You must be in a tag to use this keybind.')}</span><input id="modinput18" class="keybinding" name="ping" data-label="Ping" data-setting="macros.keys.ping" maxlength="1" placeholder="..."></label>
                                         </div>
                                     </section>
@@ -1155,7 +1227,7 @@ class MenuController extends FeatureController {
                                             <div class="justify-sb w-100 settings-item"><span>Hide Discord Button</span>${this.checkboxHtml('hideDiscordBtns', 'themes.hideDiscordBtns')}</div>
                                             <div class="justify-sb w-100 settings-item"><span>Hide Language Buttons</span>${this.checkboxHtml('hideLangs', 'themes.hideLangs')}</div>
                                             <div class="justify-sb w-100 settings-item"><span title="Blocks Google Ads, DoubleClick, Tag Manager & Analytics">Hide Ads & Trackers</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
-                                            <div class="justify-sb w-100 settings-item"><span>Show Zig popup</span>${this.checkboxHtml('showZigPopup', 'themes.showZigPopup')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Show promotions</span>${this.checkboxHtml('showPromotions', 'themes.showPromotions')}</div>
                                         </div>
                                     </section>
                                     <section class="settings-section">
@@ -1404,15 +1476,24 @@ class MenuController extends FeatureController {
                                                     <button class="settings-scope-option" data-scope="sigfix" type="button" hidden>SigFixes</button>
                                                 </div>
                                                 <div class="settings-icon-actions">
-                                                    <button class="settings-icon-action" id="exportSettings" type="button" title="Export selected settings" aria-label="Export selected settings">
-                                                        ${icon('export', 18)}
+                                                    <button class="modButton" id="exportSettings" type="button" title="Export selected settings" aria-label="Export selected settings">
+                                                        Export
                                                     </button>
-                                                    <button class="settings-icon-action" id="importSettings" type="button" title="Import all settings found in backup" aria-label="Import all settings found in backup">
-                                                        ${icon('upload', 18)}
+                                                    <button class="modButton" id="importSettings" type="button" title="Import settings from a backup file" aria-label="Import settings from a backup file">
+                                                        Import
                                                     </button>
                                                 </div>
                                                 <input id="settingsImportFile" type="file" accept="application/json,.json" hidden>
                                             </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section analytics-section">
+                                        <div class="analytics-row">
+                                            <div class="analytics-copy">
+                                                <span class="analytics-title">Analytics</span>
+                                                <span class="analytics-description">Helps improve SigMod</span>
+                                            </div>
+                                            ${this.checkboxHtml('analyticsEnabled', 'analytics', 'on', 'off')}
                                         </div>
                                     </section>
                                 </div>
@@ -4671,6 +4752,7 @@ class GradientEditor {
             { color: '#7b2cbf', position: 100 },
         ];
         this.editorPickers = new Map();
+        this.editorColorInputs = new Map();
         this.editorAlwan = null;
         this.gradientDrag = null;
     }
@@ -4678,7 +4760,9 @@ class GradientEditor {
         return this.getEditor();
     }
     value(id) {
-        const input = this.editor?.querySelector(`#${id}`);
+        const element = this.editor?.querySelector(`#${id}`);
+        const input =
+            element instanceof HTMLInputElement || element instanceof HTMLSelectElement ? element : this.editorColorInputs.get(id);
         return input instanceof HTMLInputElement || input instanceof HTMLSelectElement ? input.value : '';
     }
     syncGradientStopInputs() {
@@ -4862,6 +4946,7 @@ class GradientEditor {
             if (typeof picker?.destroy === 'function') picker.destroy();
         }
         this.editorPickers.clear();
+        this.editorColorInputs.clear();
     }
     createEditorPicker(key, input, color, onChange) {
         if (!this.editorAlwan || !(input instanceof HTMLInputElement)) return;
@@ -4882,6 +4967,9 @@ class GradientEditor {
             return;
         }
         this.editorPickers.set(key, picker);
+        // Alwan's preset button replaces the input in the DOM. Keep the input
+        // available so preview/save can still read the value updated below.
+        if (!String(key).startsWith('stop:')) this.editorColorInputs.set(input.id, input);
         if (typeof picker.on === 'function') {
             const handleColorChange = (event) => {
                 const value = typeof event?.hex === 'string' ? event.hex.slice(0, 7) : null;
@@ -5626,7 +5714,12 @@ class ThemeController extends FeatureController {
     handleSettingChange(event) {
         const { path } = event.detail ?? {};
         if (path?.startsWith('themes.input') || path === 'themes.menuBorderRadius') this.applyLayout();
-        if (path === 'themes.hideDiscordBtns' || path === 'themes.hideLangs' || path === 'themes.hideAds' || path === 'themes.showZigPopup')
+        if (
+            path === 'themes.hideDiscordBtns' ||
+            path === 'themes.hideLangs' ||
+            path === 'themes.hideAds' ||
+            path === 'themes.showPromotions'
+        )
             this.applyVisibility();
     }
     handleEditorClick(event) {
@@ -5985,15 +6078,13 @@ class ThemeController extends FeatureController {
         const hideDiscord = Boolean(this.app.settings.themes.hideDiscordBtns);
         const hideLanguages = Boolean(this.app.settings.themes.hideLangs);
         const hideAds = this.app.settings.themes.hideAds !== false;
-        zigAdEnabled = this.app.settings.themes.showZigPopup === true;
         const discord = document.querySelector('#discord_link');
         const languages = document.querySelector('.ch-lang');
         if (discord) this.setHidden(discord, hideDiscord);
         if (languages) this.setHidden(languages, hideLanguages);
         document.documentElement.classList.toggle('sigmod-hide-ads', hideAds);
         this.app.adProtection?.setEnabled(hideAds);
-        if (!zigActive || !zigAdEnabled || hasZigGlobal()) removeZigAd();
-        else insertZigAd(this.resources);
+        this.app.remoteContent?.renderPromotions();
     }
     applyLauncherColor() {
         const path = document.querySelector('#clans_and_settings > button:nth-of-type(2) svg path');
@@ -6062,8 +6153,7 @@ class ThemeController extends FeatureController {
         }
     }
     value(id) {
-        const input = this.editor?.querySelector(`#${id}`);
-        return input instanceof HTMLInputElement || input instanceof HTMLSelectElement ? input.value : '';
+        return this.gradientEditor.value(id);
     }
     findTheme(name) {
         return [...this.defaults, ...this.orderly, ...this.customThemes()].find((theme) => theme.name === name);

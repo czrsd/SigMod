@@ -9,10 +9,26 @@ async function build() {
 
     const devMeta = releaseMeta.replace(/(@name(?::\S+)?\s+SigMod)(\s+-)/g, '$1 DEV$2').replace(/(@version\s+\S+)/g, '$1-dev');
 
-    const files = ['constants_and_utils.js', 'core.js', 'network.js', 'ui.js', 'render.js', 'features.js', 'social.js', 'app.js'];
+    const files = [
+        'constants_and_utils.js',
+        'core.js',
+        'network.js',
+        'keybind_usage.js',
+        'settings_usage.js',
+        'remote_content.js',
+        'ui.js',
+        'render.js',
+        'features.js',
+        'social.js',
+        'app.js',
+    ];
 
     let sourceCode = '';
     for (const file of files) {
+        if (file === 'settings_usage.js') {
+            const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../server/src/config/settingsUsageSchema.json'), 'utf8'));
+            sourceCode += `const SETTINGS_USAGE_SCHEMA = ${JSON.stringify(schema)};\n`;
+        }
         sourceCode += fs.readFileSync(path.join(__dirname, 'src', file), 'utf8') + '\n';
     }
 

@@ -1073,7 +1073,9 @@ button:focus {
     cursor: pointer;
     flex-shrink: 0;
     box-sizing: border-box;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
 }
 .theme-editor-row input[type='color']:hover,
 .theme-gradient-color-input:hover {
@@ -1164,12 +1166,16 @@ button:focus {
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.7);
     transform: translate(-50%, -50%);
     cursor: ew-resize;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    transition:
+        transform 0.1s ease,
+        box-shadow 0.1s ease;
 }
 .theme-gradient-marker:hover,
 .theme-gradient-marker:active {
     transform: translate(-50%, -50%) scale(1.2);
-    box-shadow: 0 0 0 2px #8a25e5, 0 2px 8px rgba(0, 0, 0, 0.9);
+    box-shadow:
+        0 0 0 2px #8a25e5,
+        0 2px 8px rgba(0, 0, 0, 0.9);
 }
 .theme-gradient-stop-list {
     display: flex;
@@ -4729,6 +4735,33 @@ html.sigmod-hide-ads #modalfolks {
     line-height: 20px;
 }
 
+.analytics-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    gap: 12px;
+}
+
+.analytics-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.analytics-title {
+    color: #e7e7e7;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.analytics-description {
+    color: #8d8d96;
+    font-size: 11px;
+    line-height: 1.25;
+}
+
 .settings-list,
 .settings-grid {
     display: grid;
@@ -6051,61 +6084,103 @@ html.sigmod-hide-ads #modalfolks {
     display: none;
 }
 
-.zig-ad {
+.sigmod-promotion-wrap {
+    position: relative;
     width: 100%;
-    min-height: 68px;
-    padding: 8px 10px;
+    margin-top: 10px;
+}
+.sigmod-promotion {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 76px;
+    padding: 10px 40px 10px 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: #202020;
-    border: 1px solid #2d2d2d;
+    gap: 10px;
+    background: #151515;
+    border: 0;
     border-radius: 12px;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
 }
-
-.zig-ad-content {
+.sigmod-promotion:hover {
+    background: #1b1b1b;
+}
+.sigmod-promotion:focus-visible {
+    outline: 2px solid #c5a46d;
+    outline-offset: 2px;
+}
+.sigmod-promotion article {
     display: flex;
     align-items: center;
     gap: 10px;
     flex: 1;
     min-width: 0;
-    color: inherit;
-    text-decoration: none;
+    width: 100%;
 }
-
-.zig-ad-logo {
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
+.sigmod-promotion img {
+    width: 42px;
+    height: 42px;
     flex-shrink: 0;
+    object-fit: contain;
+    border-radius: 9px;
 }
-
-.zig-ad-text strong {
-    color: #fff;
-}
-
-.zig-ad-close {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 0;
+.sigmod-promotion article > div {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    background: transparent;
+    flex-direction: column;
+    min-width: 0;
+}
+.sigmod-promotion h1,
+.sigmod-promotion h2,
+.sigmod-promotion h3,
+.sigmod-promotion h4,
+.sigmod-promotion p {
+    margin: 0;
+}
+.sigmod-promotion h1,
+.sigmod-promotion h2,
+.sigmod-promotion h3,
+.sigmod-promotion h4 {
+    color: var(--promotion-title-color, #fff);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.sigmod-promotion p {
+    margin-top: 3px;
+    color: var(--promotion-description-color, #a0a0a0);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.3;
+}
+.sigmod-promotion-close {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    display: grid;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    place-items: center;
+    transform: translateY(-50%);
     border: 0;
+    border-radius: 50%;
+    color: #a0a0a0;
+    background: transparent;
     cursor: pointer;
-    opacity: 0.55;
 }
-
-.zig-ad-close:hover {
-    opacity: 1;
+.sigmod-promotion-close svg {
+    display: block;
+    width: 14px;
+    height: 14px;
 }
-
-.zig-ad-close .sigmod-icon {
-    width: 18px;
-    height: 18px;
+.sigmod-promotion-close:hover,
+.sigmod-promotion-close:focus-visible {
+    color: #fff;
+    background: #303030;
+    outline: none;
 }
 
 /* Runtime component styles: static rules belong here, behavior stays in sigmod-v11.js. */
@@ -6413,10 +6488,6 @@ html.sigmod-hide-ads #modalfolks {
     color: #c084fc;
     margin-left: auto;
 }
-.sigmod-zig-ad-logo {
-    border-radius: 8px;
-}
-
 .sigmod-icon {
     display: block;
     flex: 0 0 auto;
@@ -7425,7 +7496,10 @@ html.sigmod-hide-ads #modalfolks {
     justify-content: center;
     font-style: normal;
     font-family: 'Titillium Web', sans-serif;
-    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        color 0.15s ease,
+        background 0.15s ease;
 }
 
 .keybind-info:hover .keybind-info-icon,
@@ -7456,7 +7530,9 @@ html.sigmod-hide-ads #modalfolks {
     opacity: 0;
     visibility: hidden;
     transform: translateY(3px);
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
     z-index: 1000;
     text-align: left;

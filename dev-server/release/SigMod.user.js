@@ -91,7 +91,8 @@
         settingsVersion: 3,
     };
     const STORAGE = {
-        settings: 'SigModClient-settings',
+        settings: 'sigmod',
+        legacySettings: 'SigModClient-settings',
         settingsBackupPrefix: 'SigModClient-settings-backup',
         gameSettings: 'settings',
         gameLogin: 'save',
@@ -106,6 +107,7 @@
         localization: 'SigModClient-localization',
     };
     const DEFAULT_SETTINGS = {
+        analytics: 'on',
         storageVersion: BUILD.settingsVersion,
         macros: {
             feedSpeed: 40,
@@ -167,7 +169,7 @@
             hideDiscordBtns: false,
             hideLangs: false,
             hideAds: true,
-            showZigPopup: false,
+            showPromotions: true,
         },
         settings: {
             tag: null,
@@ -234,7 +236,6 @@
     const ENDPOINTS = {
         app: SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl,
         socket: SIGMOD_DEV.enabled ? SIGMOD_DEV.socketUrl : SIGMOD_DEV.productionSocketUrl,
-        blockedChat: 'https://mod.czrsd.com/spam.json',
         headerAnimation: 'https://czrsd.com/static/sigmod/sigmodclient.gif',
         discordAuth: `https://discord.com/oauth2/authorize?client_id=1067097357780516874&response_type=code&redirect_uri=${encodeURIComponent((SIGMOD_DEV.enabled ? SIGMOD_DEV.apiUrl : SIGMOD_DEV.productionApiUrl) + '/discord/callback')}&scope=identify`,
     };
@@ -294,16 +295,6 @@
             viewBox: '0 0 1920 1920',
             content:
                 '<path fill="currentColor" fill-rule="evenodd" d="M960 0v213.333c411.627 0 746.667 334.934 746.667 746.667S1371.627 1706.667 960 1706.667 213.333 1371.733 213.333 960c0-197.013 78.4-382.507 213.334-520.747v254.08H640V106.667H53.333V320h191.04C88.64 494.08 0 720.96 0 960c0 529.28 430.613 960 960 960s960-430.72 960-960S1489.387 0 960 0"></path>',
-        },
-        export: {
-            viewBox: '0 0 24 24',
-            content:
-                '<path fill="none" d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
-        },
-        upload: {
-            viewBox: '0 0 24 24',
-            content:
-                '<path fill="none" d="M17 17H17.01M15.6 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H8.4M12 15V4M12 4L15 7M12 4L9 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>',
         },
         download: {
             viewBox: '0 0 24 24',
@@ -403,7 +394,7 @@
         warning: {
             viewBox: '0 0 24 24',
             content:
-                '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>',
+                '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/>',
         },
         shield: {
             viewBox: '0 0 24 24',
@@ -1498,6 +1489,11 @@
             return 'en';
         }
         initialize() {
+            void this.load('en', { refresh: true })
+                .then(() => {
+                    if (this.locale === 'en') this.apply();
+                })
+                .catch(() => {});
             const stored = this.readPreference();
             if (stored) {
                 if (stored !== 'en') void this.setLanguage(stored, { persist: false });
@@ -1515,29 +1511,36 @@
             const suffix = SIGMOD_DEV.enabled ? `?t=${Date.now()}` : '';
             return `${base}/${encodeURIComponent(locale)}.json${suffix}`;
         }
-        async load(locale) {
-            if (this.messages.has(locale)) return this.messages.get(locale);
+        async load(locale, { refresh = false } = {}) {
+            if (!refresh && this.messages.has(locale)) return this.messages.get(locale);
             if (this.loading.has(locale)) return this.loading.get(locale);
             const request = (async () => {
-                const controller = new AbortController();
-                const timeout = window.setTimeout(() => controller.abort(), 4e3);
                 try {
-                    const response = await fetch(this.catalogueUrl(locale), {
-                        cache: SIGMOD_DEV.enabled ? 'no-store' : 'force-cache',
-                        credentials: 'omit',
-                        referrerPolicy: 'no-referrer',
-                        signal: controller.signal,
-                    });
-                    if (!response.ok) throw new Error(`Language pack request failed (${response.status})`);
-                    const payload = await response.json();
-                    if (!isObject(payload) || payload.locale !== locale || !isObject(payload.messages)) {
-                        throw new Error('Language pack has an invalid format');
+                    for (const url of [`${ENDPOINTS.app}/locales/${encodeURIComponent(locale)}.json`, this.catalogueUrl(locale)]) {
+                        const controller = new AbortController();
+                        const timeout = window.setTimeout(() => controller.abort(), 4e3);
+                        try {
+                            const response = await fetch(url, {
+                                cache: 'no-cache',
+                                credentials: 'omit',
+                                referrerPolicy: 'no-referrer',
+                                signal: controller.signal,
+                            });
+                            if (!response.ok) continue;
+                            const payload = await response.json();
+                            if (!isObject(payload) || payload.locale !== locale || !isObject(payload.messages)) continue;
+                            const messages = Object.fromEntries(
+                                Object.entries(payload.messages).filter(([, value]) => typeof value === 'string')
+                            );
+                            this.messages.set(locale, messages);
+                            return messages;
+                        } catch {
+                        } finally {
+                            window.clearTimeout(timeout);
+                        }
                     }
-                    const messages = Object.fromEntries(Object.entries(payload.messages).filter(([, value]) => typeof value === 'string'));
-                    this.messages.set(locale, messages);
-                    return messages;
+                    throw new Error('Language pack unavailable');
                 } finally {
-                    window.clearTimeout(timeout);
                     this.loading.delete(locale);
                 }
             })();
@@ -1676,12 +1679,18 @@
             this.value = clone(defaults);
             this.savedKeys = clone(defaults.macros.keys);
             this.changeListeners = /* @__PURE__ */ new Set();
+            this.readOnly = false;
             this.flushLater = debounce(() => this.flush(), 100);
         }
         load() {
             let source;
+            let imported = false;
             try {
                 source = this.storage.getItem(this.key);
+                if (!source) {
+                    source = this.storage.getItem(STORAGE.legacySettings);
+                    imported = Boolean(source);
+                }
             } catch (error) {
                 this.logger.warn('Unable to read settings; defaults were loaded', error);
                 return this.value;
@@ -1693,6 +1702,7 @@
             let parsed;
             try {
                 parsed = JSON.parse(source);
+                if (!isObject(parsed)) throw new TypeError('Settings must be an object');
             } catch (error) {
                 this.backup(source, 'invalid-json');
                 this.logger.warn('Stored settings are invalid; defaults were loaded', error);
@@ -1701,6 +1711,7 @@
             }
             const sourceVersion = Number(parsed?.storageVersion) || 1;
             if (sourceVersion > BUILD.settingsVersion) {
+                this.readOnly = true;
                 this.backup(source, `future-v${sourceVersion}`);
                 this.logger.warn(`Settings version ${sourceVersion} is newer than this client`);
                 return this.value;
@@ -1710,13 +1721,58 @@
             const merged = mergeKnown(this.defaults, migrated);
             this.value = this.normalize(merged);
             this.savedKeys = extractKeybindsFromSettings(this.value);
-            if (JSON.stringify(this.value) !== source) this.flush();
+            if ((imported || JSON.stringify(this.value) !== source) && !this.flush()) return this.value;
+            this.restoreLegacy();
             return this.value;
+        }
+        restoreLegacy() {
+            try {
+                const source = this.storage.getItem(STORAGE.legacySettings);
+                if (!source) return;
+                const parsed = JSON.parse(source);
+                const version = Number(parsed?.storageVersion);
+                if (!isObject(parsed) || version <= 1 || version > BUILD.settingsVersion || !Number.isFinite(version)) return;
+                let restored;
+                const backups = Array.from({ length: this.storage.length }, (_, index) => this.storage.key(index))
+                    .filter((key) => key?.startsWith(`${STORAGE.settingsBackupPrefix}-v1-`))
+                    .sort()
+                    .reverse();
+                for (const key of backups) {
+                    try {
+                        const raw = this.storage.getItem(key);
+                        const value = JSON.parse(raw);
+                        if (
+                            value?.storageVersion === 1 &&
+                            ['macros', 'game', 'themes', 'settings', 'chat', 'modAccount'].every((path) => isObject(value[path]))
+                        ) {
+                            restored = raw;
+                            break;
+                        }
+                    } catch {}
+                }
+                if (!restored) {
+                    const value = this.normalize(mergeKnown(this.defaults, this.migrate(parsed, version)));
+                    const bindings = value.macros.mouse.bindings;
+                    value.macros.mouse = {
+                        left: bindings.find((binding) => binding.button === 0)?.action ?? null,
+                        right: bindings.find((binding) => binding.button === 2)?.action ?? null,
+                    };
+                    value.macros.keys.saveImage = null;
+                    value.settings.analytics = value.analytics;
+                    value.storageVersion = 1;
+                    restored = JSON.stringify(value);
+                }
+                if (this.backup(source, 'before-storage-migration')) this.storage.setItem(STORAGE.legacySettings, restored);
+            } catch (error) {
+                this.logger.warn('Unable to restore legacy settings', error);
+            }
         }
         migrate(input, sourceVersion) {
             if (!isObject(input)) return clone(this.defaults);
             const value = clone(input);
+            if (value.themes) delete value.themes.showZigPopup;
             if (sourceVersion <= 1) {
+                value.analytics ?? (value.analytics = value.settings?.analytics);
                 if (value.macros?.feedSpeed !== void 0) {
                     value.macros.feedSpeed = Number(value.macros.feedSpeed);
                 }
@@ -1752,6 +1808,7 @@
             return value;
         }
         normalize(value) {
+            value.analytics = value.analytics === 'off' ? 'off' : 'on';
             const normalizeBinding = (rawBinding) => {
                 const binding = unwrapSettingScalar(rawBinding);
                 if (binding === null || binding === '' || binding === void 0) return null;
@@ -2033,21 +2090,26 @@
             return this.value;
         }
         flush() {
+            if (this.readOnly) return false;
             try {
                 const snapshot = mergeKnown(this.defaults, this.value);
                 snapshot.macros.keys = extractKeybindsFromSettings(this.value);
                 this.savedKeys = clone(snapshot.macros.keys);
                 this.storage.setItem(this.key, JSON.stringify(snapshot));
+                return true;
             } catch (error) {
                 this.logger.error('Unable to save settings', error);
+                return false;
             }
         }
         backup(source, reason) {
             const key = `${STORAGE.settingsBackupPrefix}-${reason}-${Date.now()}`;
             try {
                 this.storage.setItem(key, source);
+                return true;
             } catch (error) {
                 this.logger.warn('Unable to back up settings', error);
+                return false;
             }
         }
         destroy() {
@@ -2270,7 +2332,7 @@
         }
         resolveInitialSetting() {
             try {
-                const raw = localStorage.getItem(STORAGE.settings);
+                const raw = localStorage.getItem(STORAGE.settings) ?? localStorage.getItem(STORAGE.legacySettings);
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     if (parsed?.themes?.hideAds === false) return false;
@@ -2281,11 +2343,13 @@
         initializeEarly() {
             if (this.initialized) return;
             this.initialized = true;
-            this.installGlobalFlags();
-            this.installApiStubs();
+            if (this.enabled) {
+                this.installGlobalFlags();
+                this.installApiStubs();
+                this.installAntiAdblockShield();
+            }
             this.installDomGuard();
             this.installNetworkGuard();
-            this.installAntiAdblockShield();
             this.installDomSanitizer();
         }
         installGlobalFlags() {
@@ -2671,7 +2735,6 @@
         }
         installDomSanitizer() {
             const protector = this;
-            this.cleanupAdDom();
             const observer = new MutationObserver((mutations) => {
                 if (!protector.enabled) return;
                 for (let m = 0; m < mutations.length; m += 1) {
@@ -2703,23 +2766,6 @@
                 this.resources.add(() => observer.disconnect());
             }
         }
-        cleanupAdDom() {
-            if (!this.enabled || typeof document === 'undefined') return;
-            const selector =
-                '#left_ad_block, #ad_bottom, .ad-block, .ad-block-left, .ad-block-right, [id^="div-gpt-ad"], iframe[id^="google_ads"], iframe[src*="doubleclick.net"], iframe[src*="googletagmanager.com"], ins.adsbygoogle';
-            const elements = document.querySelectorAll(selector);
-            for (let i = 0; i < elements.length; i += 1) {
-                const el = elements[i];
-                el.replaceChildren();
-                el.style.setProperty('display', 'none', 'important');
-            }
-            const noscripts = document.querySelectorAll('noscript');
-            for (let i = 0; i < noscripts.length; i += 1) {
-                if (noscripts[i].innerHTML?.includes('googletagmanager')) {
-                    noscripts[i].remove();
-                }
-            }
-        }
         bindApp(app2) {
             this.app = app2;
             const enabled = app2.settings?.themes?.hideAds !== false;
@@ -2735,9 +2781,6 @@
         }
         setEnabled(enabled) {
             this.enabled = Boolean(enabled);
-            if (this.enabled) {
-                this.cleanupAdDom();
-            }
         }
         getStatus() {
             return {
@@ -4131,6 +4174,1119 @@
             this.clear();
         }
     }
+    class KeybindUsage {
+        constructor(app2) {
+            this.app = app2;
+            this.storage = app2.settingsStore.storage;
+            this.key = 'SigModClient-keybind-usage-v1';
+            this.pending = { uses: [], changes: [] };
+            this.lastBindings = this.bindings();
+            this.supported = false;
+            this.destroyed = false;
+            this.resources = app2.resources.child('keybind-usage');
+            this.saveTimer = null;
+            this.enabled = () => this.app.settings.analytics !== 'off';
+            this.resources.add(() => clearTimeout(this.saveTimer));
+            this.resources.add(app2.settingsStore.onChange((path) => this.settingsChanged(path)));
+            this.resources.add(
+                app2.backend.on('open', () => {
+                    this.supported = false;
+                })
+            );
+            this.resources.add(
+                app2.backend.on('close', () => {
+                    this.supported = false;
+                })
+            );
+            this.resources.add(
+                app2.backend.on('usage-capabilities', (value) => {
+                    this.supported = value?.keybindUsage === 1;
+                    if (this.supported) void this.flush();
+                })
+            );
+            this.resources.add(app2.backend.on('keybind-usage-ack', (batchId) => void this.acknowledge(batchId)));
+            this.resources.add(
+                app2.backend.on('keybind-usage-status', (value) => {
+                    this.app.logger.warnOnce(
+                        'keybind-usage-' + value?.status,
+                        'Keybind analytics report is pending: ' + (value?.status || 'unavailable')
+                    );
+                })
+            );
+            this.resources.interval(() => void this.flush(), 6e4);
+            this.resources.listen(window, 'pagehide', () => void this.persist());
+            this.resources.listen(document, 'visibilitychange', () => {
+                if (document.hidden) void this.persist();
+            });
+        }
+        read() {
+            const raw = this.storage.getItem(this.key);
+            if (!raw) return { version: 1, uses: [], changes: [] };
+            const value = JSON.parse(raw);
+            if (value?.version !== 1 || !Array.isArray(value.uses) || !Array.isArray(value.changes))
+                throw new Error('Invalid analytics outbox');
+            return value;
+        }
+        async locked(callback) {
+            try {
+                if (!navigator.locks?.request) return;
+                await navigator.locks.request(this.key, callback);
+            } catch {
+                this.app.logger.warnOnce('keybind-usage-storage', 'Keybind analytics could not be persisted; pending reports will retry.');
+            }
+        }
+        save() {
+            if (this.saveTimer) return;
+            this.saveTimer = setTimeout(() => {
+                this.saveTimer = null;
+                void this.persist();
+            }, 2e3);
+        }
+        merge(outbox) {
+            for (const item of this.pending.uses) {
+                const previous = outbox.uses.find(
+                    (entry) => entry.action === item.action && entry.input === item.input && entry.binding === item.binding
+                );
+                if (previous) previous.count += item.count;
+                else outbox.uses.push({ ...item });
+            }
+            for (const item of this.pending.changes) {
+                const previous = outbox.changes.find(
+                    (entry) =>
+                        entry.action === item.action &&
+                        JSON.stringify(entry.from) === JSON.stringify(item.from) &&
+                        JSON.stringify(entry.to) === JSON.stringify(item.to)
+                );
+                if (previous) previous.count += item.count;
+                else outbox.changes.push({ ...item });
+            }
+        }
+        write(outbox) {
+            this.storage.setItem(this.key, JSON.stringify(outbox));
+            this.pending.uses = [];
+            this.pending.changes = [];
+        }
+        persist() {
+            return this.locked(() => {
+                if (!this.enabled()) {
+                    this.pending = { uses: [], changes: [] };
+                    this.storage.removeItem(this.key);
+                    return;
+                }
+                const outbox = this.read();
+                this.merge(outbox);
+                this.write(outbox);
+            });
+        }
+        bindings() {
+            const values = {};
+            for (const path of Object.keys(SETTINGS_USAGE_SCHEMA.fields)) {
+                if (path.startsWith('macros.keys.')) values[path] = unwrapSettingScalar(this.app.settingsStore.get(path)) ?? null;
+            }
+            values['macros.mouse.bindings'] = (this.app.settingsStore.get('macros.mouse.bindings') || []).map(({ button, action }) => ({
+                button,
+                action: unwrapSettingScalar(action),
+            }));
+            return JSON.parse(JSON.stringify(values));
+        }
+        settingsChanged(path) {
+            if (path === 'analytics') {
+                if (!this.enabled()) {
+                    clearTimeout(this.saveTimer);
+                    this.saveTimer = null;
+                    this.pending = { uses: [], changes: [] };
+                    this.storage.removeItem(this.key);
+                    void this.locked(() => this.storage.removeItem(this.key));
+                } else this.lastBindings = this.bindings();
+                return;
+            }
+            if (!this.enabled()) return;
+            if (path !== null && path !== 'macros' && !path?.startsWith('macros.keys') && !path?.startsWith('macros.mouse')) return;
+            const next = this.bindings();
+            for (const [action, to] of Object.entries(next)) {
+                const from = this.lastBindings[action] ?? null;
+                if (JSON.stringify(from) !== JSON.stringify(to)) this.pending.changes.push({ action, from, to, count: 1 });
+            }
+            this.lastBindings = next;
+            this.save();
+        }
+        record(action, binding, input = 'keyboard') {
+            if (this.destroyed || !this.enabled()) return;
+            const value = String(binding ?? '');
+            const entry = this.pending.uses.find((item) => item.action === action && item.input === input && item.binding === value);
+            if (entry) entry.count += 1;
+            else this.pending.uses.push({ action, input, binding: value, count: 1 });
+            this.save();
+        }
+        flush() {
+            return this.locked(() => {
+                if (!this.enabled()) {
+                    this.pending = { uses: [], changes: [] };
+                    this.storage.removeItem(this.key);
+                    return;
+                }
+                const outbox = this.read();
+                this.merge(outbox);
+                if (this.supported && !this.destroyed && !outbox.inFlight && (outbox.uses.length || outbox.changes.length)) {
+                    const identity = JSON.parse(this.storage.getItem('SigModClient-settings-usage-v1') || 'null');
+                    if (typeof identity?.installationId === 'string') {
+                        const batch = {
+                            batchId: crypto.randomUUID(),
+                            installationId: identity.installationId,
+                            day: /* @__PURE__ */ new Date().toISOString().slice(0, 10),
+                            uses: [],
+                            changes: [],
+                        };
+                        for (const type of ['uses', 'changes']) {
+                            while (outbox[type].length && batch[type].length < 100) {
+                                const item = outbox[type][0];
+                                batch[type].push(item);
+                                if (new TextEncoder().encode(JSON.stringify(batch)).length > 90 * 1024) {
+                                    batch[type].pop();
+                                    break;
+                                }
+                                outbox[type].shift();
+                            }
+                        }
+                        if (batch.uses.length || batch.changes.length) outbox.inFlight = batch;
+                    }
+                }
+                if (outbox.inFlight && !outbox.inFlight.day) outbox.inFlight.day = /* @__PURE__ */ new Date().toISOString().slice(0, 10);
+                this.write(outbox);
+                if (this.supported && !this.destroyed && outbox.inFlight) this.app.backend.send('keybind-usage', outbox.inFlight);
+            });
+        }
+        async acknowledge(batchId) {
+            await this.locked(() => {
+                const outbox = this.read();
+                this.merge(outbox);
+                if (outbox.inFlight?.batchId === batchId) outbox.inFlight = null;
+                this.write(outbox);
+            });
+            if (!this.destroyed && this.supported) void this.flush();
+        }
+        destroy() {
+            void this.persist();
+            this.destroyed = true;
+            this.resources.dispose();
+        }
+    }
+    const SETTINGS_USAGE_SCHEMA = {
+        version: 1,
+        settingsSchemaVersion: 3,
+        fields: {
+            'localization.language': { type: 'language', default: 'en' },
+            'macros.feedSpeed': { type: 'number', default: 40 },
+            'macros.keys.rapidFeed': { type: 'nullableString', default: 'w' },
+            'macros.keys.respawn': { type: 'nullableString', default: 'b' },
+            'macros.keys.ping': { type: 'nullableString', default: 'r' },
+            'macros.keys.location': { type: 'nullableString', default: 'y' },
+            'macros.keys.splits.double': { type: 'nullableString', default: 'd' },
+            'macros.keys.splits.triple': { type: 'nullableString', default: 'f' },
+            'macros.keys.splits.quad': { type: 'nullableString', default: 'g' },
+            'macros.keys.splits.doubleTrick': { type: 'nullableString', default: null },
+            'macros.keys.splits.selfTrick': { type: 'nullableString', default: null },
+            'macros.keys.line.horizontal': { type: 'nullableString', default: 's' },
+            'macros.keys.line.vertical': { type: 'nullableString', default: 't' },
+            'macros.keys.line.fixed': { type: 'nullableString', default: null },
+            'macros.keys.line.instantSplit': { type: 'number', default: 0 },
+            'macros.keys.toggle.menu': { type: 'nullableString', default: 'v' },
+            'macros.keys.toggle.chat': { type: 'nullableString', default: 'z' },
+            'macros.keys.toggle.names': { type: 'nullableString', default: null },
+            'macros.keys.toggle.skins': { type: 'nullableString', default: null },
+            'macros.keys.toggle.autoRespawn': { type: 'nullableString', default: null },
+            'macros.keys.toggle.party': { type: 'nullableString', default: null },
+            'macros.keys.toggle.hud': { type: 'nullableString', default: null },
+            'macros.mouse.bindings': { type: 'bindings', default: [] },
+            'game.font': { type: 'string', default: 'Ubuntu' },
+            'game.borderColor': { type: 'nullableString', default: null },
+            'game.foodColor': { type: 'nullableString', default: null },
+            'game.cellColor': { type: 'nullableString', default: null },
+            'game.virusImage': { type: 'string', default: '/assets/images/viruses/2.png' },
+            'game.shortenNames': { type: 'boolean', default: false },
+            'game.showLeaderboard': { type: 'boolean', default: true },
+            'game.hideOwnName': { type: 'boolean', default: false },
+            'game.botSkinsOnly': { type: 'boolean', default: false },
+            'game.showOwnSkinWithBots': { type: 'boolean', default: true },
+            'game.removeOutlines': { type: 'boolean', default: false },
+            'game.skins.original': { type: 'nullableString', default: null },
+            'game.skins.replacement': { type: 'nullableString', default: null },
+            'game.map.color': { type: 'nullableString', default: null },
+            'game.map.image': { type: 'string', default: '' },
+            'game.name.color': { type: 'nullableString', default: null },
+            'game.name.gradient.enabled': { type: 'boolean', default: false },
+            'game.name.gradient.left': { type: 'nullableString', default: null },
+            'game.name.gradient.right': { type: 'nullableString', default: null },
+            'themes.current': { type: 'string', default: 'Dark' },
+            'themes.inputBorderRadius': { type: 'nullableString', default: null },
+            'themes.menuBorderRadius': { type: 'nullableString', default: null },
+            'themes.inputBorder': { type: 'string', default: '1px' },
+            'themes.hideDiscordBtns': { type: 'boolean', default: false },
+            'themes.hideLangs': { type: 'boolean', default: false },
+            'themes.hideAds': { type: 'boolean', default: true },
+            'themes.showPromotions': { type: 'boolean', default: true },
+            'settings.tag': { type: 'nullableString', default: null },
+            'settings.partyPanel.x': { type: 'number', default: 4 },
+            'settings.partyPanel.y': { type: 'number', default: 300 },
+            'settings.showPartyPanel': { type: 'boolean', default: true },
+            'settings.partyScale': { type: 'number', default: 1 },
+            'settings.partyMaxWidth': { type: 'number', default: 240 },
+            'settings.partyBgColor': { type: 'string', default: 'rgba(0, 0, 0, 0.4)' },
+            'settings.partyTextColor': { type: 'string', default: '#fafafa' },
+            'settings.partyBorderColor': { type: 'string', default: 'transparent' },
+            'settings.partyBorderRadius': { type: 'number', default: 6 },
+            'settings.partyBlur': { type: 'number', default: 0 },
+            'settings.partyCompact': { type: 'boolean', default: false },
+            'settings.partySort': { type: 'string', default: 'index' },
+            'settings.partyHighlightSelf': { type: 'boolean', default: true },
+            'settings.partyShowSkins': { type: 'boolean', default: true },
+            'settings.partyShowScores': { type: 'boolean', default: true },
+            'settings.partyShowIndexes': { type: 'boolean', default: true },
+            'settings.partyShowHeader': { type: 'boolean', default: true },
+            'settings.partyShowHeaderTotals': { type: 'boolean', default: true },
+            'settings.partyShowPing': { type: 'boolean', default: false },
+            'settings.partyMaxMembers': { type: 'number', default: 10 },
+            'settings.pingDuration': { type: 'number', default: 2e3 },
+            'settings.autoRespawn': { type: 'boolean', default: false },
+            'settings.playTimer': { type: 'boolean', default: false },
+            'settings.mouseTracker': { type: 'boolean', default: false },
+            'settings.autoClaimCoins': { type: 'boolean', default: false },
+            'settings.showChallenges': { type: 'boolean', default: false },
+            'settings.deathScreenPos': { type: 'string', default: 'center' },
+            'settings.removeShopPopup': { type: 'boolean', default: true },
+            'settings.quickAccess': {
+                type: 'strings',
+                default: [
+                    'host:showNames',
+                    'host:showSkins',
+                    'host:showMass',
+                    'setting:chat.enabled',
+                    'host:showMinimap',
+                    'host:showLeaderboard',
+                    'host:showBorder',
+                    'host:showGrid',
+                    'host:moreZoom',
+                    'host:jellyPhysics',
+                    'host:showClanmates',
+                    'setting:settings.playTimer',
+                    'host:autoRespawn',
+                    'host:autoClaimCoins',
+                ],
+            },
+            'chat.enabled': { type: 'boolean', default: true },
+            'chat.bgColor': { type: 'string', default: '#00000040' },
+            'chat.textColor': { type: 'string', default: '#ffffff' },
+            'chat.compact': { type: 'boolean', default: false },
+            'chat.themeColor': { type: 'string', default: '#8a25e5' },
+            'chat.showTime': { type: 'boolean', default: true },
+            'chat.showNameColors': { type: 'boolean', default: true },
+            'chat.showClientChat': { type: 'boolean', default: false },
+            'chat.showChatButtons': { type: 'boolean', default: true },
+            'chat.blurTag': { type: 'boolean', default: false },
+            'chat.locationText': { type: 'string', default: '{pos}' },
+            'modAccount.authorized': { type: 'boolean', default: false },
+        },
+    };
+    class SettingsUsageSync {
+        constructor(app2) {
+            this.app = app2;
+            this.storage = app2.settingsStore.storage;
+            this.key = 'SigModClient-settings-usage-v1';
+            this.lockName = 'SigModClient-settings-usage-v1';
+            this.resources = app2.resources.child('settings-usage');
+            this.started = false;
+            this.enabled = false;
+            this.destroyed = false;
+            this.running = false;
+            this.again = false;
+            this.needsCheck = true;
+            this.retryDelay = 2e3;
+            this.timer = null;
+            this.controller = null;
+        }
+        start() {
+            if (this.destroyed) return;
+            if (!navigator.locks?.request || !crypto.subtle) {
+                this.app.logger.warnOnce('settings-usage-unavailable', 'Settings usage sync requires Web Locks and Web Crypto.');
+                return;
+            }
+            if (!this.started) {
+                this.started = true;
+                this.resources.add(
+                    this.app.settingsStore.onChange((path) => {
+                        if (path === 'analytics') {
+                            this.setEnabled(this.app.settings.analytics !== 'off');
+                            return;
+                        }
+                        if (!this.enabled) return;
+                        this.app.settingsStore.flush();
+                        this.schedule();
+                    })
+                );
+                this.resources.listen(window, 'storage', (event) => {
+                    if (event.key === STORAGE.settings) {
+                        let allowed = true;
+                        try {
+                            allowed = JSON.parse(event.newValue || 'null')?.analytics !== 'off';
+                        } catch {}
+                        this.setEnabled(allowed);
+                    }
+                    if (this.enabled && (event.key === STORAGE.settings || event.key === STORAGE.localization || event.key === null))
+                        this.schedule();
+                });
+                this.resources.listen(document, 'sigmod:languagechange', () => {
+                    if (this.enabled) this.schedule();
+                });
+                const reconcile = () => {
+                    if (!this.enabled) return;
+                    this.needsCheck = true;
+                    this.schedule();
+                };
+                this.resources.listen(window, 'online', reconcile);
+                this.resources.add(this.app.backend.on('open', reconcile));
+                this.resources.interval(reconcile, 5 * 60 * 1e3);
+                this.resources.listen(window, 'pagehide', () => {
+                    if (this.enabled) this.app.settingsStore.flush();
+                });
+            }
+            this.setEnabled(this.app.settings.analytics !== 'off');
+        }
+        setEnabled(enabled) {
+            if (this.destroyed || this.enabled === enabled) return;
+            this.enabled = enabled;
+            clearTimeout(this.timer);
+            this.timer = null;
+            if (!enabled) {
+                this.controller?.abort();
+                this.storage.removeItem(this.key);
+                this.again = false;
+                return;
+            }
+            this.needsCheck = true;
+            this.schedule();
+        }
+        schedule(delay = 2e3) {
+            if (!this.started || !this.enabled || this.destroyed) return;
+            clearTimeout(this.timer);
+            this.timer = setTimeout(() => {
+                this.timer = null;
+                void this.run();
+            }, delay);
+        }
+        project() {
+            const raw = this.storage.getItem(STORAGE.settings);
+            const source = raw ? JSON.parse(raw) : this.app.settingsStore.value;
+            const result = {};
+            for (const path of Object.keys(SETTINGS_USAGE_SCHEMA.fields).sort()) {
+                const rule = SETTINGS_USAGE_SCHEMA.fields[path];
+                let value = getPath(source, path);
+                if (path === 'localization.language') {
+                    let preference;
+                    try {
+                        preference = JSON.parse(this.storage.getItem(STORAGE.localization) || 'null');
+                    } catch {}
+                    const locale = preference?.language ?? preference;
+                    value = ['en', 'es', 'tr', 'fr', 'pt', 'ru', 'de'].includes(locale) ? locale : 'en';
+                }
+                if (value === void 0) value = getPath(DEFAULT_SETTINGS, path);
+                if (path === 'themes.current' && source.themes?.custom?.some((theme) => theme?.name === value)) {
+                    value = '__custom__';
+                }
+                if (rule.type === 'bindings') {
+                    value = value.slice(0, 64).map(({ button, action }) => ({ button, action }));
+                } else if (rule.type === 'strings') {
+                    value = value.slice(0, 128).map((item) => item.slice(0, 8192));
+                } else if (typeof value === 'string') {
+                    value = value.slice(0, 8192);
+                }
+                result[path] = value;
+            }
+            return this.canonical(result);
+        }
+        canonical(values) {
+            return Object.fromEntries(
+                Object.keys(values)
+                    .sort()
+                    .map((key) => [key, values[key]])
+            );
+        }
+        async checksum(values) {
+            const bytes = new TextEncoder().encode(JSON.stringify(this.canonical(values)));
+            const digest = await crypto.subtle.digest('SHA-256', bytes);
+            return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+        }
+        readState() {
+            const raw = this.storage.getItem(this.key);
+            if (raw) {
+                let state2;
+                try {
+                    state2 = JSON.parse(raw);
+                } catch {}
+                if (
+                    state2?.contractVersion === SETTINGS_USAGE_SCHEMA.version &&
+                    typeof state2.installationId === 'string' &&
+                    /^[0-9a-f-]{36}$/i.test(state2.installationId) &&
+                    typeof state2.writeKey === 'string' &&
+                    /^[0-9a-f]{64}$/.test(state2.writeKey) &&
+                    Number.isSafeInteger(state2.revision) &&
+                    state2.revision >= 0
+                ) {
+                    const allowed = (values, full = false) =>
+                        values &&
+                        !Array.isArray(values) &&
+                        typeof values === 'object' &&
+                        (!full || Object.keys(values).length === Object.keys(SETTINGS_USAGE_SCHEMA.fields).length) &&
+                        Object.keys(values).every((path) => own(SETTINGS_USAGE_SCHEMA.fields, path));
+                    if (state2.acknowledged && !allowed(state2.acknowledged, true)) state2.acknowledged = null;
+                    if (
+                        state2.pending &&
+                        (!allowed(state2.pending.values) ||
+                            !allowed(state2.pending.target, true) ||
+                            state2.pending.contractVersion !== SETTINGS_USAGE_SCHEMA.version ||
+                            state2.pending.settingsSchemaVersion !== BUILD.settingsVersion)
+                    ) {
+                        state2.pending = null;
+                        state2.acknowledged = null;
+                        this.needsCheck = true;
+                    }
+                    return state2;
+                }
+            }
+            const bytes = crypto.getRandomValues(new Uint8Array(32));
+            const state = {
+                contractVersion: SETTINGS_USAGE_SCHEMA.version,
+                installationId: crypto.randomUUID(),
+                writeKey: [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join(''),
+                revision: 0,
+                acknowledged: null,
+                clientVersion: null,
+                pending: null,
+            };
+            this.saveState(state);
+            return state;
+        }
+        saveState(state) {
+            this.storage.setItem(this.key, JSON.stringify(state));
+        }
+        async request(state, operation) {
+            this.controller = new AbortController();
+            const timeout = setTimeout(() => this.controller?.abort(), 15e3);
+            try {
+                const body = { installationId: state.installationId, kind: operation.kind };
+                if (operation.kind !== 'check') {
+                    for (const key of [
+                        'baseRevision',
+                        'operationId',
+                        'clientVersion',
+                        'settingsSchemaVersion',
+                        'contractVersion',
+                        'checksum',
+                        'values',
+                    ]) {
+                        body[key] = operation[key];
+                    }
+                }
+                const response = await fetch(`${ENDPOINTS.app}/settings-usage/sync`, {
+                    method: 'POST',
+                    credentials: 'omit',
+                    referrerPolicy: 'no-referrer',
+                    headers: { 'Content-Type': 'application/json', 'X-Settings-Write-Key': state.writeKey },
+                    body: JSON.stringify(body),
+                    signal: this.controller.signal,
+                });
+                const payload = await response.json();
+                if (response.status === 409) {
+                    state.pending = null;
+                    state.acknowledged = null;
+                    this.needsCheck = true;
+                    this.saveState(state);
+                    throw new Error('Settings revision conflict');
+                }
+                if (!response.ok || payload.success !== true || !Number.isSafeInteger(payload.revision) || payload.revision < 0) {
+                    throw new Error('Settings sync unavailable');
+                }
+                return payload;
+            } finally {
+                clearTimeout(timeout);
+                this.controller = null;
+            }
+        }
+        async acknowledge(state) {
+            const pending = state.pending;
+            const response = await this.request(state, pending);
+            if (response.revision !== pending.baseRevision + 1 || response.checksum !== pending.checksum) {
+                throw new Error('Settings acknowledgement mismatch');
+            }
+            state.revision = response.revision;
+            state.acknowledged = pending.target;
+            state.clientVersion = pending.clientVersion;
+            state.pending = null;
+            this.saveState(state);
+        }
+        async synchronize() {
+            if (this.destroyed || !this.enabled) return;
+            let storedSettings;
+            try {
+                storedSettings = JSON.parse(this.storage.getItem(STORAGE.settings) || 'null');
+            } catch {
+                storedSettings = null;
+            }
+            if (storedSettings?.analytics === 'off') {
+                this.setEnabled(false);
+                return;
+            }
+            const state = this.readState();
+            if (state.pending) await this.acknowledge(state);
+            if (this.needsCheck) {
+                const response = await this.request(state, { kind: 'check' });
+                const knownChecksum = state.acknowledged ? await this.checksum(state.acknowledged) : null;
+                if (response.checksum !== knownChecksum || response.revision !== state.revision) state.acknowledged = null;
+                state.revision = response.revision;
+                this.needsCheck = false;
+                this.saveState(state);
+            }
+            const target = this.project();
+            const snapshot = !state.acknowledged || state.clientVersion !== BUILD.release;
+            const values = snapshot
+                ? target
+                : Object.fromEntries(
+                      Object.entries(target).filter(([path, value]) => JSON.stringify(value) !== JSON.stringify(state.acknowledged[path]))
+                  );
+            if (!snapshot && Object.keys(values).length === 0) return;
+            state.pending = {
+                kind: snapshot ? 'snapshot' : 'patch',
+                baseRevision: state.revision,
+                operationId: crypto.randomUUID(),
+                clientVersion: BUILD.release,
+                settingsSchemaVersion: BUILD.settingsVersion,
+                contractVersion: SETTINGS_USAGE_SCHEMA.version,
+                checksum: await this.checksum(target),
+                values,
+                target,
+            };
+            this.saveState(state);
+            await this.acknowledge(state);
+            if (JSON.stringify(this.project()) !== JSON.stringify(target)) this.again = true;
+        }
+        async run() {
+            if (this.destroyed || !this.enabled || navigator.onLine === false) return;
+            if (this.running) {
+                this.again = true;
+                return;
+            }
+            this.running = true;
+            try {
+                await navigator.locks.request(this.lockName, () => this.synchronize());
+                this.retryDelay = 2e3;
+            } catch {
+                if (!this.destroyed && this.enabled) {
+                    this.app.logger.warnOnce('settings-usage-retry', 'Settings usage sync is pending; it will retry automatically.');
+                    this.schedule(this.retryDelay);
+                    this.retryDelay = Math.min(this.retryDelay * 2, 5 * 60 * 1e3);
+                }
+            } finally {
+                this.running = false;
+                if (this.again) {
+                    this.again = false;
+                    this.schedule();
+                }
+            }
+        }
+        destroy() {
+            this.destroyed = true;
+            clearTimeout(this.timer);
+            this.controller?.abort();
+            this.resources.dispose();
+        }
+    }
+    function safePromotionColor(value, fallback) {
+        return typeof value === 'string' && /^#[\da-f]{6}$/i.test(value) ? value : fallback;
+    }
+    class RemoteContentController {
+        constructor(app2) {
+            this.app = app2;
+            this.resources = app2.resources.child('remote-content');
+            this.snapshot = null;
+            this.requestController = null;
+            this.localeControllers = /* @__PURE__ */ new Set();
+            this.requestGeneration = 0;
+            this.snapshotGeneration = 0;
+            this.started = false;
+            this.destroyed = false;
+            this.lastAlertKey = null;
+            this.lastNoticeKey = null;
+            this.lastAlertState = null;
+            this.lastNoticeState = null;
+            this.menuWrapper = null;
+            this.menuWrapperObserver = null;
+            this.bodyObserver = null;
+            this.menuVisible = false;
+            this.hideForGameplay = false;
+            this.dismissedPromotions = /* @__PURE__ */ new Set();
+            this.transitionTimer = 0;
+        }
+        start() {
+            if (this.started || this.destroyed) return;
+            this.started = true;
+            this.resources.add(this.app.backend.on('client-content', (snapshot) => this.apply(snapshot, 'socket')));
+            this.resources.add(this.app.backend.on('chat-filter-updated', (value) => this.applyChatFilter(value)));
+            this.resources.add(this.app.backend.on('announcements-updated', () => this.app.features.get('announcements')?.load?.()));
+            this.resources.add(this.app.backend.on('locale-updated', (value) => this.applyLocaleUpdate(value)));
+            this.resources.listen(document, 'sigmod:settingchange', (event) => {
+                if (event.detail?.path === 'themes.showPromotions') this.renderPromotions();
+            });
+            this.resources.listen(
+                document,
+                'click',
+                (event) => {
+                    const target = event.target;
+                    if (target instanceof Element && target.closest(SELECTORS.play)) {
+                        this.hideForGameplay = true;
+                        this.renderPromotions();
+                    }
+                },
+                true
+            );
+            this.resources.listen(
+                document,
+                'keydown',
+                (event) => {
+                    if (event.key === 'Escape') {
+                        this.hideForGameplay = true;
+                        this.renderPromotions();
+                    }
+                },
+                true
+            );
+            this.observeMenu();
+            this.resources.interval(() => void this.refresh(), 6e4);
+            void this.refresh();
+        }
+        async refresh() {
+            if (this.destroyed) return null;
+            const generation = ++this.requestGeneration;
+            this.requestController?.abort();
+            const controller = new AbortController();
+            this.requestController = controller;
+            const timeout = window.setTimeout(() => controller.abort(), 5e3);
+            const snapshotAtRequest = this.snapshotGeneration;
+            try {
+                const response = await fetch(`${ENDPOINTS.app}/client-content`, {
+                    credentials: 'omit',
+                    referrerPolicy: 'no-referrer',
+                    cache: 'no-store',
+                    signal: controller.signal,
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const payload = await response.json();
+                if (generation !== this.requestGeneration || snapshotAtRequest !== this.snapshotGeneration || this.destroyed) return null;
+                if (!isObject(payload) || payload.success !== true || !isObject(payload.data)) throw new Error('Invalid content response');
+                return this.apply(payload.data, 'http');
+            } catch (error) {
+                if (error?.name !== 'AbortError') this.app.logger.warnOnce('client-content', 'Unable to refresh remote content', error);
+                return null;
+            } finally {
+                window.clearTimeout(timeout);
+                if (this.requestController === controller) this.requestController = null;
+            }
+        }
+        apply(snapshot, source = 'socket') {
+            if (!isObject(snapshot) || this.destroyed) return false;
+            if (source === 'socket') {
+                this.snapshotGeneration += 1;
+                this.requestController?.abort();
+            }
+            this.snapshot = {
+                alert: isObject(snapshot.alert) ? snapshot.alert : { enabled: false },
+                updateNotice: isObject(snapshot.updateNotice) ? snapshot.updateNotice : { enabled: false },
+                promotions: Array.isArray(snapshot.promotions) ? snapshot.promotions.filter(isObject) : [],
+            };
+            this.applyAlert(this.snapshot.alert);
+            this.applyUpdateNotice(this.snapshot.updateNotice);
+            this.renderPromotions();
+            this.scheduleNextTransition();
+            return true;
+        }
+        isCurrentlyEnabled(item, now = Date.now()) {
+            if (!isObject(item) || item.enabled !== true) return false;
+            const startsAt = item.startsAt ? Date.parse(item.startsAt) : null;
+            const expiresAt = item.expiresAt ? Date.parse(item.expiresAt) : null;
+            if ((startsAt !== null && !Number.isFinite(startsAt)) || (expiresAt !== null && !Number.isFinite(expiresAt))) return false;
+            return (startsAt === null || startsAt <= now) && (expiresAt === null || expiresAt > now);
+        }
+        dismissalKey(type, item) {
+            if (!isObject(item) || item.id === void 0 || item.revision === void 0) return null;
+            return `sigmod:${type}:${encodeURIComponent(String(item.id))}:${encodeURIComponent(String(item.revision))}`;
+        }
+        hasDismissal(type, item) {
+            const key = this.dismissalKey(type, item);
+            if (!key) return false;
+            try {
+                return sessionStorage.getItem(key) === '1';
+            } catch {
+                return false;
+            }
+        }
+        setDismissal(type, item) {
+            const key = this.dismissalKey(type, item);
+            if (!key) return false;
+            try {
+                sessionStorage.setItem(key, '1');
+                return true;
+            } catch {
+                return false;
+            }
+        }
+        dismissAlert(alert2) {
+            if (!this.setDismissal('alert', alert2)) return false;
+            this.lastAlertKey = this.contentKey(alert2);
+            this.app.features.get('modal')?.handleAlert?.({ ...alert2, enabled: false });
+            return true;
+        }
+        hasAlertDismissal(alert2) {
+            return this.hasDismissal('alert', alert2);
+        }
+        contentKey(item) {
+            return isObject(item) ? `${String(item.id ?? '')}:${String(item.revision ?? '')}` : '';
+        }
+        applyAlert(alert2) {
+            const current = this.isCurrentlyEnabled(alert2) && !this.hasAlertDismissal(alert2);
+            const key = this.contentKey(alert2);
+            const state = `${key}:${current}`;
+            if (this.lastAlertState === state) return;
+            this.lastAlertKey = key;
+            this.lastAlertState = state;
+            this.app.features.get('modal')?.handleAlert?.(current ? alert2 : { ...alert2, enabled: false });
+        }
+        compareVersions(left, right) {
+            const parse = (value) => {
+                const match = String(value ?? '')
+                    .trim()
+                    .match(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/);
+                return match ? { numbers: match.slice(1, 4).map(Number), prerelease: match[4] ? match[4].split('.') : [] } : null;
+            };
+            const a = parse(left);
+            const b = parse(right);
+            if (!a || !b) return null;
+            for (let i = 0; i < 3; i += 1) if (a.numbers[i] !== b.numbers[i]) return a.numbers[i] < b.numbers[i] ? -1 : 1;
+            if (!a.prerelease.length || !b.prerelease.length)
+                return a.prerelease.length === b.prerelease.length ? 0 : a.prerelease.length ? -1 : 1;
+            const len = Math.max(a.prerelease.length, b.prerelease.length);
+            for (let i = 0; i < len; i += 1) {
+                if (a.prerelease[i] === void 0) return -1;
+                if (b.prerelease[i] === void 0) return 1;
+                if (a.prerelease[i] === b.prerelease[i]) continue;
+                const aNumber = /^\d+$/.test(a.prerelease[i]);
+                const bNumber = /^\d+$/.test(b.prerelease[i]);
+                if (aNumber && bNumber) return Number(a.prerelease[i]) < Number(b.prerelease[i]) ? -1 : 1;
+                if (aNumber !== bNumber) return aNumber ? -1 : 1;
+                return a.prerelease[i] < b.prerelease[i] ? -1 : 1;
+            }
+            return 0;
+        }
+        isSafePublicUrl(value) {
+            if (typeof value !== 'string' || !value.trim()) return null;
+            try {
+                const url = new URL(value);
+                const devLocal =
+                    typeof SIGMOD_DEV !== 'undefined' && SIGMOD_DEV.enabled && ['localhost', '127.0.0.1'].includes(url.hostname);
+                if (!['https:', ...(devLocal ? ['http:'] : [])].includes(url.protocol) || url.username || url.password) return null;
+                return url.href;
+            } catch {
+                return null;
+            }
+        }
+        dismissUpdateNotice(notice) {
+            if (!this.setDismissal('update-notice', notice)) return false;
+            this.lastNoticeKey = this.contentKey(notice);
+            this.app.backend.emit('release-notice', { ...notice, enabled: false });
+            return true;
+        }
+        hasUpdateNoticeDismissal(notice) {
+            return this.hasDismissal('update-notice', notice);
+        }
+        applyUpdateNotice(notice) {
+            const safeUrl = this.isSafePublicUrl(notice.downloadUrl);
+            const newer = this.compareVersions(BUILD.release, notice.latestClientVersion) === -1;
+            const current = this.isCurrentlyEnabled(notice) && newer && Boolean(safeUrl) && !this.hasUpdateNoticeDismissal(notice);
+            const key = this.contentKey(notice);
+            const state = `${key}:${current}`;
+            if (this.lastNoticeState === state) return;
+            this.lastNoticeKey = key;
+            this.lastNoticeState = state;
+            this.app.backend.emit('release-notice', current ? { ...notice, downloadUrl: safeUrl } : { ...notice, enabled: false });
+        }
+        applyChatFilter(value) {
+            const feature = this.app.features.get('chat');
+            if (!feature) return;
+            if (isObject(value) && Array.isArray(value.names) && Array.isArray(value.messages)) {
+                feature.blocked =
+                    value.enabled === false
+                        ? { names: [], messages: [] }
+                        : {
+                              names: value.names.filter((item) => typeof item === 'string').map((item) => item.toLowerCase()),
+                              messages: value.messages.filter((item) => typeof item === 'string').map((item) => item.toLowerCase()),
+                          };
+                return;
+            }
+            void feature.loadBlockedData?.();
+        }
+        async applyLocaleUpdate(value) {
+            if (this.destroyed) return;
+            const locale = typeof value === 'string' ? value : value?.locale;
+            if (typeof locale !== 'string' || !/^[a-z]{2}$/.test(locale)) return;
+            let pack = value?.messages && isObject(value.messages) ? value : null;
+            if (!pack) {
+                const controller = new AbortController();
+                const timeout = window.setTimeout(() => controller.abort(), 5e3);
+                this.localeControllers.add(controller);
+                try {
+                    const response = await fetch(`${ENDPOINTS.app}/locales/${encodeURIComponent(locale)}`, {
+                        credentials: 'omit',
+                        referrerPolicy: 'no-referrer',
+                        cache: 'no-store',
+                        signal: controller.signal,
+                    });
+                    if (!response.ok) return;
+                    const payload = await response.json();
+                    pack = payload?.data ?? payload;
+                } catch {
+                    return;
+                } finally {
+                    window.clearTimeout(timeout);
+                    this.localeControllers.delete(controller);
+                }
+            }
+            if (this.destroyed || pack?.locale !== locale || !isObject(pack.messages)) return;
+            this.app.i18n.messages.set(
+                locale,
+                Object.fromEntries(Object.entries(pack.messages).filter(([, text]) => typeof text === 'string'))
+            );
+            if (this.app.i18n.locale === locale) this.app.i18n.apply();
+        }
+        observeMenu() {
+            const sync = () => {
+                const wrapper = document.querySelector(SELECTORS.menuWrapper);
+                if (wrapper !== this.menuWrapper) {
+                    this.menuWrapperObserver?.disconnect();
+                    this.menuWrapper = wrapper;
+                    if (wrapper instanceof HTMLElement) {
+                        this.menuWrapperObserver = new MutationObserver(() => this.syncMenuVisibility());
+                        this.menuWrapperObserver.observe(wrapper, { attributes: true, attributeFilter: ['class', 'hidden', 'style'] });
+                    }
+                }
+                this.syncMenuVisibility();
+            };
+            this.bodyObserver = new MutationObserver(sync);
+            if (document.body) this.bodyObserver.observe(document.body, { childList: true });
+            this.resources.add(() => {
+                this.bodyObserver?.disconnect();
+                this.menuWrapperObserver?.disconnect();
+                this.bodyObserver = null;
+                this.menuWrapperObserver = null;
+                this.menuWrapper = null;
+            });
+            sync();
+        }
+        isMenuVisible() {
+            const wrapper = document.querySelector(SELECTORS.menuWrapper);
+            if (!(wrapper instanceof HTMLElement) || wrapper.hidden || wrapper.style.display === 'none') return false;
+            return getComputedStyle(wrapper).display !== 'none' && getComputedStyle(wrapper).visibility !== 'hidden';
+        }
+        syncMenuVisibility() {
+            const visible = this.isMenuVisible();
+            if (visible && !this.menuVisible) this.hideForGameplay = false;
+            this.menuVisible = visible;
+            this.renderPromotions();
+        }
+        scheduleNextTransition() {
+            if (this.transitionTimer) window.clearTimeout(this.transitionTimer);
+            this.transitionTimer = 0;
+            const candidates = [this.snapshot?.alert, this.snapshot?.updateNotice, ...(this.snapshot?.promotions ?? [])];
+            const now = Date.now();
+            const transitions = candidates
+                .flatMap((item) => [item?.startsAt, item?.expiresAt])
+                .map((value) => (value ? Date.parse(value) : NaN))
+                .filter((time) => Number.isFinite(time) && time > now);
+            if (!transitions.length) return;
+            const delay = Math.min(Math.min(...transitions) - now + 10, 2147e6);
+            this.transitionTimer = window.setTimeout(
+                () => {
+                    this.transitionTimer = 0;
+                    if (this.destroyed) return;
+                    this.applyAlert(this.snapshot?.alert ?? { enabled: false });
+                    this.applyUpdateNotice(this.snapshot?.updateNotice ?? { enabled: false });
+                    this.renderPromotions();
+                    this.scheduleNextTransition();
+                },
+                Math.max(0, delay)
+            );
+        }
+        renderPromotions() {
+            const visible = this.isMenuVisible();
+            if (visible && !this.menuVisible) this.hideForGameplay = false;
+            this.menuVisible = visible;
+            const host = document.querySelector('#left-menu')?.closest('.menu-wrapper.top');
+            const shouldShow =
+                this.app.settings?.themes?.showPromotions === true && visible && !this.hideForGameplay && host instanceof HTMLElement;
+            const active = shouldShow
+                ? (this.snapshot?.promotions
+                      .filter(
+                          (item) =>
+                              !this.dismissedPromotions.has(String(item.id ?? '')) &&
+                              this.isCurrentlyEnabled(item) &&
+                              this.isSafePublicUrl(item.link) &&
+                              item.placement === 'menu-card'
+                      )
+                      .sort((a, b) => (Date.parse(b.startsAt ?? '') || 0) - (Date.parse(a.startsAt ?? '') || 0)) ?? [])
+                : [];
+            const wanted = new Set(active.map((item) => this.contentKey(item)));
+            for (const existing of document.querySelectorAll('[data-sigmod-promotion-controller]')) {
+                if (!wanted.has(existing.dataset.promotionKey) || existing.parentElement !== host) existing.remove();
+            }
+            if (!shouldShow) return;
+            for (const item of active) {
+                const key = this.contentKey(item);
+                let card = [...host.querySelectorAll('[data-sigmod-promotion-controller]')].find(
+                    (existing) => existing.dataset.promotionKey === key
+                );
+                if (card) {
+                    host.append(card);
+                    continue;
+                }
+                const link = this.isSafePublicUrl(item.link);
+                if (!link) continue;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'sigmod-promotion-wrap';
+                wrapper.dataset.sigmodPromotionController = 'true';
+                wrapper.dataset.promotionKey = key;
+                card = document.createElement('a');
+                card.className = 'sigmod-promotion';
+                card.href = link;
+                card.target = '_blank';
+                card.rel = 'noopener noreferrer';
+                card.style.setProperty('--promotion-title-color', safePromotionColor(item.titleColor, '#ffffff'));
+                card.style.setProperty('--promotion-description-color', safePromotionColor(item.descriptionColor, '#a0a0a0'));
+                const values = {
+                    title: String(item.title ?? ''),
+                    description: String(item.description ?? ''),
+                    imageUrl: this.isSafePublicUrl(item.imageUrl) ?? '',
+                    link,
+                    buttonText: String(item.buttonText ?? ''),
+                };
+                const escapeHtml = (value) =>
+                    value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+                const template =
+                    typeof item.html === 'string' && item.html
+                        ? item.html
+                        : '<article><img src="{{imageUrl}}" alt=""><div><h2>{{title}}</h2><p>{{description}}</p></div></article>';
+                const html = template.replace(/\{\{(title|description|imageUrl|link|buttonText)\}\}/g, (_match, key2) =>
+                    escapeHtml(values[key2])
+                );
+                const content = document.createElement('template');
+                content.innerHTML = html;
+                this.sanitizePromotionContent(content.content);
+                card.append(content.content);
+                const close = document.createElement('button');
+                close.type = 'button';
+                close.className = 'sigmod-promotion-close';
+                close.setAttribute('aria-label', `Close ${String(item.title ?? 'promotion')}`);
+                close.title = 'Close promotion until this page is reloaded';
+                const closeIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                closeIcon.setAttribute('viewBox', '0 0 24 24');
+                closeIcon.setAttribute('width', '14');
+                closeIcon.setAttribute('height', '14');
+                closeIcon.setAttribute('aria-hidden', 'true');
+                const closePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                closePath.setAttribute('d', 'M18 6 6 18M6 6l12 12');
+                closePath.setAttribute('fill', 'none');
+                closePath.setAttribute('stroke', 'currentColor');
+                closePath.setAttribute('stroke-width', '1.8');
+                closePath.setAttribute('stroke-linecap', 'round');
+                closeIcon.append(closePath);
+                close.append(closeIcon);
+                close.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.dismissedPromotions.add(String(item.id ?? key));
+                    wrapper.remove();
+                });
+                wrapper.append(card, close);
+                host.append(wrapper);
+            }
+        }
+        sanitizePromotionContent(root) {
+            const allowed = /* @__PURE__ */ new Set([
+                'ARTICLE',
+                'DIV',
+                'SPAN',
+                'P',
+                'BR',
+                'STRONG',
+                'B',
+                'EM',
+                'I',
+                'U',
+                'UL',
+                'OL',
+                'LI',
+                'BLOCKQUOTE',
+                'H1',
+                'H2',
+                'H3',
+                'H4',
+                'IMG',
+            ]);
+            const discard = /* @__PURE__ */ new Set([
+                'SCRIPT',
+                'STYLE',
+                'IFRAME',
+                'OBJECT',
+                'EMBED',
+                'SVG',
+                'MATH',
+                'TEMPLATE',
+                'LINK',
+                'META',
+                'BASE',
+            ]);
+            const visit = (parent) => {
+                for (const node of [...parent.childNodes]) {
+                    if (node.nodeType === Node.TEXT_NODE) continue;
+                    if (!(node instanceof HTMLElement) || discard.has(node.tagName)) {
+                        node.remove();
+                        continue;
+                    }
+                    visit(node);
+                    if (!allowed.has(node.tagName)) {
+                        node.replaceWith(...node.childNodes);
+                        continue;
+                    }
+                    const urlAttr = node.tagName === 'IMG' ? 'src' : null;
+                    const url = urlAttr ? this.isSafePublicUrl(node.getAttribute(urlAttr)) : null;
+                    const alt = node.tagName === 'IMG' ? node.getAttribute('alt') : null;
+                    for (const attribute of [...node.attributes]) node.removeAttribute(attribute.name);
+                    if (url && urlAttr) node.setAttribute(urlAttr, url);
+                    if (alt !== null && node.tagName === 'IMG') node.setAttribute('alt', alt.slice(0, 300));
+                }
+            };
+            visit(root);
+        }
+        destroy() {
+            if (this.destroyed) return;
+            this.destroyed = true;
+            this.requestGeneration += 1;
+            this.requestController?.abort();
+            for (const controller of this.localeControllers) controller.abort();
+            this.localeControllers.clear();
+            this.requestController = null;
+            this.resources.dispose();
+            if (this.transitionTimer) window.clearTimeout(this.transitionTimer);
+            this.transitionTimer = 0;
+            for (const card of document.querySelectorAll('[data-sigmod-promotion-controller]')) card.remove();
+            this.snapshot = null;
+        }
+    }
     class OptionalDependencyLoader {
         constructor(resources, logger) {
             this.resources = resources;
@@ -4432,6 +5588,7 @@
                 })
             );
             this.resources.add(this.app.backend.on('update-available', (url) => this.showUpdate(url)));
+            this.resources.add(this.app.backend.on('release-notice', (notice) => this.handleUpdateNotice(notice)));
         }
         message(source, parameters = null) {
             return this.app.i18n?.message(source, parameters) ?? source;
@@ -4520,6 +5677,7 @@
             return toast;
         }
         showUpdate(value) {
+            this.close('update-notice', true);
             const url = this.safeUpdateUrl(value);
             const body = createElement('div');
             body.append(
@@ -4552,23 +5710,67 @@
         safeUpdateUrl(value) {
             try {
                 const url = new URL(String(value));
-                return url.protocol === 'https:' ? url.href : null;
+                const local = SIGMOD_DEV.enabled && ['localhost', '127.0.0.1'].includes(url.hostname);
+                return !url.username && !url.password && (url.protocol === 'https:' || (local && url.protocol === 'http:'))
+                    ? url.href
+                    : null;
             } catch {
                 return null;
             }
+        }
+        handleUpdateNotice(notice) {
+            if (!isObject(notice) || !notice.enabled || this.app.backend.updateRequired) {
+                this.close('update-notice', true);
+                this.updateNoticeKey = null;
+                return;
+            }
+            const url = this.safeUpdateUrl(notice.downloadUrl);
+            if (!url) return;
+            const key = `${String(notice.id)}:${Number(notice.revision) || 0}`;
+            if (key === this.updateNoticeKey && this.modals.has('update-notice')) return;
+            this.updateNoticeKey = key;
+            const body = createElement('div');
+            body.append(createElement('p', { text: String(notice.message || `SigMod ${notice.latestClientVersion} is available.`) }));
+            const update = createElement('a', {
+                className: 'modButton',
+                text: 'Update',
+                attributes: { href: url, target: '_blank', rel: 'noopener noreferrer' },
+            });
+            const later = createElement('button', { className: 'modButton', text: 'Later', attributes: { type: 'button' } });
+            body.append(update, later);
+            const dialog = this.open('update-notice', body, { overlay: false });
+            dialog.setAttribute('aria-modal', 'false');
+            dialog.setAttribute('role', 'status');
+            const scope = this.modals.get('update-notice').scope;
+            const dismiss = () => {
+                this.app.remoteContent?.dismissUpdateNotice(notice);
+                this.close('update-notice');
+            };
+            scope.listen(later, 'click', dismiss);
+            scope.listen(update, 'click', dismiss);
         }
         handleAlert(data) {
             if (!isObject(data)) return;
             const { title = '', description = '', enabled = false, link = '', buttonText = 'Open' } = data;
             if (this.app.backend.updateRequired) return;
-            const hideAlert = Number(localStorage.getItem('hide-alert'));
-            if (!enabled || (hideAlert && Date.now() - hideAlert < 3 * 60 * 60 * 1e3)) {
+            const alertKey = data.id ? `${String(data.id)}:${Number(data.revision) || 0}` : JSON.stringify([title, description]);
+            let dismissals = {};
+            try {
+                dismissals = JSON.parse(localStorage.getItem('SigModClient-alert-dismissals') || '{}');
+            } catch {}
+            if (!isObject(dismissals)) dismissals = {};
+            dismissals = { ...dismissals, ...this.alertDismissals };
+            const expiresAt = data.expiresAt ? Date.parse(data.expiresAt) : null;
+            const expired = expiresAt !== null && (!Number.isFinite(expiresAt) || expiresAt <= Date.now());
+            if (!enabled || expired || Number(dismissals[alertKey]) > Date.now()) {
                 this.scrimScope?.dispose();
+                this.currentAlertKey = null;
                 document.getElementById('scrim_alert')?.remove();
                 return;
             }
-            localStorage.removeItem('hide-alert');
+            if (this.currentAlertKey === alertKey && document.getElementById('scrim_alert')) return;
             this.scrimScope?.dispose();
+            this.currentAlertKey = alertKey;
             const modal = createElement('div', {
                 className: 'modAlert',
                 attributes: { id: 'scrim_alert' },
@@ -4591,7 +5793,8 @@
                 attributes: { style: 'align-items: center; gap: 5px;' },
             });
             let actionBtn = null;
-            if (link) {
+            const safeLink = this.safeUpdateUrl(link);
+            if (safeLink) {
                 actionBtn = createElement('button', {
                     className: 'modButton',
                     text: buttonText,
@@ -4606,6 +5809,33 @@
             modal.append(header, createElement('span', { text: description }), actions);
             document.body.append(modal);
             const scope = (this.scrimScope = this.resources.child('scrim-alert'));
+            const dismiss = () => {
+                this.alertDismissals ?? (this.alertDismissals = {});
+                this.alertDismissals[alertKey] = Date.now() + 3 * 60 * 60 * 1e3;
+                try {
+                    const next = Object.entries(dismissals)
+                        .filter(([, until]) => Number(until) > Date.now())
+                        .slice(-19);
+                    next.push([alertKey, Date.now() + 3 * 60 * 60 * 1e3]);
+                    localStorage.setItem('SigModClient-alert-dismissals', JSON.stringify(Object.fromEntries(next)));
+                } catch {}
+                this.currentAlertKey = null;
+                scope.dispose();
+                this.app.remoteContent?.dismissAlert(data);
+            };
+            if (expiresAt !== null) {
+                const armExpiry = () =>
+                    scope.timeout(
+                        () => {
+                            if (Date.now() >= expiresAt) {
+                                this.currentAlertKey = null;
+                                scope.dispose();
+                            } else armExpiry();
+                        },
+                        Math.max(1, Math.min(expiresAt - Date.now(), 2147483647))
+                    );
+                armExpiry();
+            }
             const menuWrapper = document.getElementById('menu-wrapper');
             if (menuWrapper instanceof HTMLElement) {
                 const sync = () => {
@@ -4621,16 +5851,13 @@
                     observer.disconnect();
                 });
             }
-            if (actionBtn && link) {
+            if (actionBtn && safeLink) {
                 scope.listen(actionBtn, 'click', () => {
-                    window.open(link, '_blank');
-                    scope.dispose();
+                    window.open(safeLink, '_blank', 'noopener,noreferrer');
+                    dismiss();
                 });
             }
-            scope.listen(closeButton, 'click', () => {
-                scope.dispose();
-                localStorage.setItem('hide-alert', Date.now());
-            });
+            scope.listen(closeButton, 'click', dismiss);
             scope.add(() => {
                 modal.remove();
             });
@@ -5067,7 +6294,7 @@
                                         <div class="settings-section-title">Actions</div>
                                         <div class="settings-grid settings-grid-two">
                                             <label class="macroRow settings-item"><span class="text">Rapid Feed</span><input id="modinput1" class="keybinding" name="rapidFeed" data-label="Rapid Feed" data-setting="macros.keys.rapidFeed" maxlength="1" placeholder="..."></label>
-                                            <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Respawn</span>${this.infoBtn('Quickly respawns your cell after dying without having to manually click through the death screen.', 'down')}</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
+                                            <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Respawn</span>${this.infoBtn('Press the assigned key to respawn your cell when your score is below 5.5k. Requires a Google login.', 'down')}</span><input id="modinput15" class="keybinding" name="respawn" data-label="Respawn" data-setting="macros.keys.respawn" maxlength="1" placeholder="..."></label>
                                             <label class="macroRow settings-item"><span class="flex align-center g-5"><span class="text">Ping</span>${this.infoBtn('Sends a quick ping or opens the ping wheel to alert tag teammates of your location. You must be in a tag to use this keybind.')}</span><input id="modinput18" class="keybinding" name="ping" data-label="Ping" data-setting="macros.keys.ping" maxlength="1" placeholder="..."></label>
                                         </div>
                                     </section>
@@ -5278,7 +6505,7 @@
                                             <div class="justify-sb w-100 settings-item"><span>Hide Discord Button</span>${this.checkboxHtml('hideDiscordBtns', 'themes.hideDiscordBtns')}</div>
                                             <div class="justify-sb w-100 settings-item"><span>Hide Language Buttons</span>${this.checkboxHtml('hideLangs', 'themes.hideLangs')}</div>
                                             <div class="justify-sb w-100 settings-item"><span title="Blocks Google Ads, DoubleClick, Tag Manager & Analytics">Hide Ads & Trackers</span>${this.checkboxHtml('hideAds', 'themes.hideAds')}</div>
-                                            <div class="justify-sb w-100 settings-item"><span>Show Zig popup</span>${this.checkboxHtml('showZigPopup', 'themes.showZigPopup')}</div>
+                                            <div class="justify-sb w-100 settings-item"><span>Show promotions</span>${this.checkboxHtml('showPromotions', 'themes.showPromotions')}</div>
                                         </div>
                                     </section>
                                     <section class="settings-section">
@@ -5527,15 +6754,24 @@
                                                     <button class="settings-scope-option" data-scope="sigfix" type="button" hidden>SigFixes</button>
                                                 </div>
                                                 <div class="settings-icon-actions">
-                                                    <button class="settings-icon-action" id="exportSettings" type="button" title="Export selected settings" aria-label="Export selected settings">
-                                                        ${icon('export', 18)}
+                                                    <button class="modButton" id="exportSettings" type="button" title="Export selected settings" aria-label="Export selected settings">
+                                                        Export
                                                     </button>
-                                                    <button class="settings-icon-action" id="importSettings" type="button" title="Import all settings found in backup" aria-label="Import all settings found in backup">
-                                                        ${icon('upload', 18)}
+                                                    <button class="modButton" id="importSettings" type="button" title="Import settings from a backup file" aria-label="Import settings from a backup file">
+                                                        Import
                                                     </button>
                                                 </div>
                                                 <input id="settingsImportFile" type="file" accept="application/json,.json" hidden>
                                             </div>
+                                        </div>
+                                    </section>
+                                    <section class="settings-section analytics-section">
+                                        <div class="analytics-row">
+                                            <div class="analytics-copy">
+                                                <span class="analytics-title">Analytics</span>
+                                                <span class="analytics-description">Helps improve SigMod</span>
+                                            </div>
+                                            ${this.checkboxHtml('analyticsEnabled', 'analytics', 'on', 'off')}
                                         </div>
                                     </section>
                                 </div>
@@ -8783,6 +10019,7 @@
                 { color: '#7b2cbf', position: 100 },
             ];
             this.editorPickers = /* @__PURE__ */ new Map();
+            this.editorColorInputs = /* @__PURE__ */ new Map();
             this.editorAlwan = null;
             this.gradientDrag = null;
         }
@@ -8790,7 +10027,9 @@
             return this.getEditor();
         }
         value(id) {
-            const input = this.editor?.querySelector(`#${id}`);
+            const element = this.editor?.querySelector(`#${id}`);
+            const input =
+                element instanceof HTMLInputElement || element instanceof HTMLSelectElement ? element : this.editorColorInputs.get(id);
             return input instanceof HTMLInputElement || input instanceof HTMLSelectElement ? input.value : '';
         }
         syncGradientStopInputs() {
@@ -8975,6 +10214,7 @@
                 if (typeof picker?.destroy === 'function') picker.destroy();
             }
             this.editorPickers.clear();
+            this.editorColorInputs.clear();
         }
         createEditorPicker(key, input, color, onChange) {
             if (!this.editorAlwan || !(input instanceof HTMLInputElement)) return;
@@ -8995,6 +10235,7 @@
                 return;
             }
             this.editorPickers.set(key, picker);
+            if (!String(key).startsWith('stop:')) this.editorColorInputs.set(input.id, input);
             if (typeof picker.on === 'function') {
                 const handleColorChange = (event) => {
                     const value = typeof event?.hex === 'string' ? event.hex.slice(0, 7) : null;
@@ -9752,7 +10993,7 @@
                 path === 'themes.hideDiscordBtns' ||
                 path === 'themes.hideLangs' ||
                 path === 'themes.hideAds' ||
-                path === 'themes.showZigPopup'
+                path === 'themes.showPromotions'
             )
                 this.applyVisibility();
         }
@@ -10106,15 +11347,13 @@
             const hideDiscord = Boolean(this.app.settings.themes.hideDiscordBtns);
             const hideLanguages = Boolean(this.app.settings.themes.hideLangs);
             const hideAds = this.app.settings.themes.hideAds !== false;
-            zigAdEnabled = this.app.settings.themes.showZigPopup === true;
             const discord = document.querySelector('#discord_link');
             const languages = document.querySelector('.ch-lang');
             if (discord) this.setHidden(discord, hideDiscord);
             if (languages) this.setHidden(languages, hideLanguages);
             document.documentElement.classList.toggle('sigmod-hide-ads', hideAds);
             this.app.adProtection?.setEnabled(hideAds);
-            if (!zigActive || !zigAdEnabled || hasZigGlobal()) removeZigAd();
-            else insertZigAd(this.resources);
+            this.app.remoteContent?.renderPromotions();
         }
         applyLauncherColor() {
             const path = document.querySelector('#clans_and_settings > button:nth-of-type(2) svg path');
@@ -10183,8 +11422,7 @@
             }
         }
         value(id) {
-            const input = this.editor?.querySelector(`#${id}`);
-            return input instanceof HTMLInputElement || input instanceof HTMLSelectElement ? input.value : '';
+            return this.gradientEditor.value(id);
         }
         findTheme(name) {
             return [...this.defaults, ...this.orderly, ...this.customThemes()].find((theme) => theme.name === name);
@@ -11154,8 +12392,10 @@
         }
         publishUser() {
             if (!this.app.state.user) return;
+            const user = { ...this.app.state.user };
+            delete user.token;
             this.app.backend.send('user', {
-                ...this.app.state.user,
+                ...user,
                 nick: this.app.state.nickname,
             });
         }
@@ -12249,22 +13489,38 @@
             );
         }
         async loadBlockedData() {
+            this.blockedRequest?.abort();
             const controller = new AbortController();
             this.blockedRequest = controller;
-            this.resources.add(() => controller.abort());
+            const dispose = () => controller.abort();
+            this.resources.add(dispose);
+            const timeout = setTimeout(dispose, 5e3);
             try {
-                const response = await fetch(ENDPOINTS.blockedChat, {
+                if (controller.signal.aborted || this.resources.disposed) return;
+                const response = await fetch(`${ENDPOINTS.app}/chat-filter`, {
                     signal: controller.signal,
+                    credentials: 'omit',
+                    referrerPolicy: 'no-referrer',
+                    cache: 'no-cache',
                 });
-                if (!response.ok) return;
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
-                if (this.resources.disposed) return;
-                this.blocked.names = Array.isArray(data.names) ? data.names.map((value) => String(value).toLowerCase()) : [];
-                this.blocked.messages = Array.isArray(data.messages) ? data.messages.map((value) => String(value).toLowerCase()) : [];
+                if (!isObject(data) || typeof data.enabled !== 'boolean' || !Array.isArray(data.names) || !Array.isArray(data.messages)) {
+                    throw new Error('Invalid chat filter response');
+                }
+                if (controller.signal.aborted || this.resources.disposed) return;
+                this.blocked.names = data.enabled
+                    ? data.names.filter((value) => typeof value === 'string' && value.length > 0).map((value) => value.toLowerCase())
+                    : [];
+                this.blocked.messages = data.enabled
+                    ? data.messages.filter((value) => typeof value === 'string' && value.length > 0).map((value) => value.toLowerCase())
+                    : [];
             } catch (error) {
                 if (error?.name === 'AbortError') return;
                 this.app.logger.warnOnce('blocked-chat', 'Unable to load the chat filter', error);
             } finally {
+                clearTimeout(timeout);
+                this.resources.remove(dispose);
                 if (this.blockedRequest === controller) this.blockedRequest = null;
             }
         }
@@ -12402,6 +13658,7 @@
             this.resources.add(backend.on('leave-tag', ({ id } = {}) => this.leave(id)));
             this.resources.add(backend.on('score-tag', (update) => this.updateScore(update)));
             this.resources.add(backend.on('party-member-update', (data) => this.updateMemberStatus(data)));
+            this.resources.add(backend.on('close', () => this.resetPartyState()));
             this.resources.listen(document, 'sigmod:languagechange', () => {
                 const tagInput = document.querySelector('#tag');
                 if (tagInput instanceof HTMLInputElement) tagInput.placeholder = this.message('Tag');
@@ -12411,8 +13668,12 @@
             });
             this.resources.add(
                 backend.on('open', () => {
+                    this.resetPartyState();
                     this.publishIdentity();
                     this.syncPublishTimers();
+                    this.publishScore();
+                    this.publishPosition();
+                    this.publishMemberStatus();
                 })
             );
             this.bindIdentityInputs();
@@ -12428,6 +13689,8 @@
                             this.localColor = this.resolveLocalColor() || this.localColor;
                             this.localSkin = this.resolveLocalSkin() || this.localSkin;
                         }
+                        this.publishScore();
+                        this.publishPosition();
                         this.publishMemberStatus();
                         this.requestRender();
                     })
@@ -12722,6 +13985,7 @@
                         this.lastScore = null;
                         this.sentPositionNull = false;
                         this.lastPositionKey = null;
+                        this.lastStatusKey = null;
                         this.syncPublishTimers();
                         this.members.clear();
                         this.rowCache.forEach((row) => row.remove());
@@ -12827,7 +14091,6 @@
             }
         }
         closePanel() {
-            this.members.clear();
             this.rowCache.clear();
             this.drag = null;
             if (this.renderRaf) {
@@ -12841,6 +14104,15 @@
             }
             this.panelScope?.dispose();
             this.panelScope = null;
+        }
+        resetPartyState() {
+            this.members.clear();
+            this.app.features.get('minimap')?.clear();
+            this.lastScore = null;
+            this.lastPositionKey = null;
+            this.sentPositionNull = false;
+            this.lastStatusKey = null;
+            this.requestRender();
         }
         publishIdentity() {
             const inputNick = document.querySelector(SELECTORS.nickname)?.value?.trim();
@@ -12856,25 +14128,27 @@
         }
         publishPosition() {
             if (!this.hasTag()) return;
-            const position = this.app.host.adapter?.snapshot().position;
+            const position = this.isLocalPlaying() ? this.app.host.adapter?.snapshot().position : null;
             if (position) {
                 const key = `${position.x}:${position.y}`;
                 if (key === this.lastPositionKey) return;
-                this.lastPositionKey = key;
-                this.sentPositionNull = false;
-                this.app.backend.send('position', position);
+                if (this.app.backend.send('position', position)) {
+                    this.lastPositionKey = key;
+                    this.sentPositionNull = false;
+                }
             } else if (!this.sentPositionNull) {
-                this.sentPositionNull = true;
-                this.lastPositionKey = null;
-                this.app.backend.send('position', { x: null, y: null });
+                if (this.app.backend.send('position', { x: null, y: null })) {
+                    this.sentPositionNull = true;
+                    this.lastPositionKey = null;
+                }
             }
         }
         publishScore() {
             if (!this.hasTag()) return;
-            const score = Math.round(this.app.host.adapter?.snapshot().score ?? 0);
+            const rawScore = this.isLocalPlaying() ? this.app.host.adapter?.snapshot().score : 0;
+            const score = Number.isFinite(rawScore) ? Math.max(0, Math.round(rawScore)) : 0;
             if (score === this.lastScore) return;
-            this.lastScore = score;
-            this.app.backend.send('score', score);
+            if (this.app.backend.send('score', score)) this.lastScore = score;
         }
         publishMemberStatus() {
             if (!this.hasTag()) return;
@@ -12891,14 +14165,14 @@
             const ping = latency !== null ? Math.round(latency) : null;
             const key = `${skin || ''}|${color || ''}|${isPlaying}|${ping ?? ''}`;
             if (key === this.lastStatusKey) return;
-            this.lastStatusKey = key;
-            this.app.backend.send('party-member-update', {
+            const sent = this.app.backend.send('party-member-update', {
                 skin,
                 color,
                 isAlive: isPlaying,
                 isPlaying,
                 ping,
             });
+            if (sent) this.lastStatusKey = key;
             this.requestRender();
         }
         ensurePanel() {
@@ -12997,6 +14271,10 @@
         }
         renderMembers(input) {
             if (!Array.isArray(input)) return;
+            const incomingIds = new Set(input.filter((m) => isObject(m) && m.id !== void 0).map((m) => String(m.id)));
+            for (const id of this.members.keys()) {
+                if (!incomingIds.has(id)) this.app.features.get('minimap')?.updatePlayer({ sid: id, x: null, y: null });
+            }
             this.members.clear();
             const selfSid = String(this.app.state.backend.sid);
             const currentSelfNick =
@@ -13054,7 +14332,9 @@
             }
         }
         leave(id) {
-            if (id === void 0 || !this.members.delete(String(id))) return;
+            if (id === void 0) return;
+            this.app.features.get('minimap')?.updatePlayer({ sid: id, x: null, y: null });
+            if (!this.members.delete(String(id))) return;
             if (this.shouldShowPanel()) {
                 this.requestRender();
             }
@@ -13432,16 +14712,8 @@
         updatePlayer(data) {
             if (!isObject(data) || data.sid === void 0) return;
             const id = String(data.sid);
-            const party = this.app.features.get('party');
             if (data.x === null || data.y === null) {
                 this.players.delete(id);
-                if (party && party.members.has(id)) {
-                    const member = party.members.get(id);
-                    if (member && member.isAlive !== false) {
-                        member.isAlive = false;
-                        party.render();
-                    }
-                }
             } else {
                 const x = Number(data.x);
                 const y = Number(data.y);
@@ -13453,13 +14725,6 @@
                         y,
                         nick: typeof data.nick === 'string' ? data.nick : 'Unnamed',
                     });
-                    if (party && party.members.has(id)) {
-                        const member = party.members.get(id);
-                        if (member && member.isAlive === false) {
-                            member.isAlive = true;
-                            party.render();
-                        }
-                    }
                 }
             }
             this.scheduleDraw();
@@ -13660,6 +14925,18 @@
                 event.stopPropagation();
                 return;
             }
+            if (!event.repeat && event.isTrusted) {
+                const record = (values, prefix = 'macros.keys') => {
+                    for (const [name, value] of Object.entries(values || {})) {
+                        const path = `${prefix}.${name}`;
+                        const binding = unwrapSettingScalar(value);
+                        if (path !== 'macros.keys.ping' && typeof binding === 'string' && this.matches(event, binding))
+                            this.app.keybindUsage.record(path, binding);
+                        else if (value && typeof value === 'object' && !Array.isArray(value)) record(value, path);
+                    }
+                };
+                record(this.app.settingsStore.get('macros.keys'));
+            }
             if (this.app.inputOwnership?.ownsKeyEvent(event)) return;
             const key = String(event.key).toLowerCase();
             const keys = this.app.settings?.macros?.keys;
@@ -13776,6 +15053,7 @@
             if (this.app.inputOwnership?.owns('mouseButtons', event.button)) return;
             const action = this.mouseBinding(event.button);
             if (!action) return;
+            if (event.isTrusted && action !== 'ping') this.app.keybindUsage.record(action, `mouse:${event.button}`, 'mouse');
             if (event.button !== 0) event.preventDefault();
             if (action === 'fastfeed') {
                 this.startPointerFeed(event.button);
@@ -15404,7 +16682,12 @@
             const gameMode = document.querySelector(SELECTORS.gameMode);
             if (gameMode instanceof HTMLSelectElement) {
                 this.resources.listen(gameMode, 'change', () => {
+                    const party = this.app.features.get('party');
+                    party?.resetPartyState();
                     this.app.backend.send('server-changed', getGameMode());
+                    party?.publishScore();
+                    party?.publishPosition();
+                    party?.publishMemberStatus();
                     document.querySelector('#mod-messages')?.replaceChildren();
                 });
             }
@@ -15935,6 +17218,8 @@
                 return;
             }
             if (this.isPingInput(event) && !this.wheelOpen) {
+                const binding = unwrapSettingScalar(this.app.settings?.macros?.keys?.ping);
+                this.app.keybindUsage.record('macros.keys.ping', binding);
                 event.preventDefault();
                 this.openWheel({ type: 'key', code: event.code });
                 this.wheelCancelled = false;
@@ -15968,6 +17253,7 @@
                 }
             }
             if (this.isPingInput(event) && !this.wheelOpen) {
+                this.app.keybindUsage.record('ping', `mouse:${event.button}`, 'mouse');
                 event.preventDefault();
                 this.openWheel({ type: 'mouse', button: event.button });
                 this.wheelCancelled = false;
@@ -18419,6 +19705,62 @@
             super.destroy();
         }
     }
+    const sanitizedAnnouncementFragment = (html) => {
+        const template = document.createElement('template');
+        template.innerHTML = String(html ?? '');
+        const allowed = /* @__PURE__ */ new Set([
+            'P',
+            'BR',
+            'STRONG',
+            'B',
+            'EM',
+            'I',
+            'U',
+            'UL',
+            'OL',
+            'LI',
+            'BLOCKQUOTE',
+            'H2',
+            'H3',
+            'A',
+        ]);
+        const discard = /* @__PURE__ */ new Set([
+            'SCRIPT',
+            'STYLE',
+            'IFRAME',
+            'OBJECT',
+            'EMBED',
+            'SVG',
+            'MATH',
+            'TEMPLATE',
+            'LINK',
+            'META',
+            'BASE',
+        ]);
+        const visit = (parent) => {
+            for (const node of [...parent.childNodes]) {
+                if (node.nodeType === Node.TEXT_NODE) continue;
+                if (!(node instanceof HTMLElement) || discard.has(node.tagName)) {
+                    node.remove();
+                    continue;
+                }
+                visit(node);
+                if (!allowed.has(node.tagName)) {
+                    node.replaceWith(...node.childNodes);
+                    continue;
+                }
+                const href = node.tagName === 'A' ? safeHttpUrl(node.getAttribute('href')) : null;
+                for (const attribute of [...node.attributes]) node.removeAttribute(attribute.name);
+                if (href) {
+                    node.setAttribute('href', href);
+                    node.setAttribute('target', '_blank');
+                    node.setAttribute('rel', 'noopener noreferrer');
+                }
+            }
+        };
+        visit(template.content);
+        return template.content;
+    };
     class AnnouncementsController extends FeatureController {
         mount() {
             this.container = document.querySelector('#mod-announcements');
@@ -18591,7 +19933,7 @@
             const body = createElement('div', {
                 className: 'sigmod-announcement-body',
             });
-            body.innerHTML = descriptionHtml;
+            body.append(sanitizedAnnouncementFragment(descriptionHtml));
             for (const link of body.querySelectorAll('a')) {
                 link.setAttribute('target', '_blank');
                 link.setAttribute('rel', 'noopener noreferrer');
@@ -19130,6 +20472,12 @@
             this.readiness = new DomReadiness(this.resources.child('readiness'));
             this.host = new HostResolver(this.resources.child('host'), this.logger);
             this.backend = new BackendClient(this);
+            this.keybindUsage = new KeybindUsage(this);
+            this.resources.add(() => this.keybindUsage.destroy());
+            this.settingsUsage = new SettingsUsageSync(this);
+            this.resources.add(() => this.settingsUsage.destroy());
+            this.remoteContent = new RemoteContentController(this);
+            this.resources.add(() => this.remoteContent.destroy());
             this.dependencies = new OptionalDependencyLoader(this.resources.child('dependencies'), this.logger);
             this.features = /* @__PURE__ */ new Map();
             this.i18n = new Localization(this);
@@ -19160,7 +20508,15 @@
                     'data-sigmod-ad-blocker': BUILD.release,
                 },
             });
-            style.textContent = `${SELECTORS.adContainers} { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; }`;
+            const sync = (enabled) => {
+                style.textContent = enabled
+                    ? `${SELECTORS.adContainers} { display: none !important; visibility: hidden !important; pointer-events: none !important; width: 0 !important; height: 0 !important; }`
+                    : '';
+            };
+            sync(this.settings.themes.hideAds !== false);
+            this.resources.listen(document, 'sigmod:settingchange', (event) => {
+                if (event.detail?.path === 'themes.hideAds') sync(Boolean(event.detail.value));
+            });
             (document.head || document.documentElement).append(style);
             this.resources.add(() => style.remove());
         }
@@ -19200,7 +20556,9 @@
                         }
                     }
                 }
+                this.remoteContent.start();
                 this.backend.connect();
+                this.settingsUsage.start();
                 this.starting = false;
                 this.started = true;
                 this.logConsoleInfo();
@@ -19538,265 +20896,6 @@
         };
         tick();
     };
-    class ZigAdController {
-        constructor() {
-            this.dismissed = false;
-            this.closedForSession = false;
-            this.enabled = DEFAULT_SETTINGS.themes.showZigPopup;
-            this.active = false;
-            this.menuWasVisible = false;
-            this.syncFrame = 0;
-            this.domObserver = null;
-            this.hostObserver = null;
-            this.observedHosts = [];
-            this.observedMutationRoot = null;
-            this.clickHandler = null;
-            this.escapeHandler = null;
-            this.lifecycleResources = null;
-            this.globalCheckTimer = 0;
-        }
-        hasGlobal() {
-            return typeof window !== 'undefined' && Boolean(window.__ZIG_COMBINED_USERSCRIPT__ || window.zig);
-        }
-        remove() {
-            const ad = document.querySelector('.zig-ad');
-            if (!(ad instanceof HTMLElement)) return;
-            this.setHidden(ad, true);
-            ad.remove();
-        }
-        stopMonitoring() {
-            this.domObserver?.disconnect();
-            this.hostObserver?.disconnect();
-            if (this.syncFrame) cancelAnimationFrame(this.syncFrame);
-            if (this.globalCheckTimer) clearInterval(this.globalCheckTimer);
-            if (this.clickHandler) document.removeEventListener('click', this.clickHandler, true);
-            if (this.escapeHandler) document.removeEventListener('keydown', this.escapeHandler, true);
-            this.domObserver = null;
-            this.hostObserver = null;
-            this.observedHosts = [];
-            this.observedMutationRoot = null;
-            this.clickHandler = null;
-            this.escapeHandler = null;
-            this.syncFrame = 0;
-            this.globalCheckTimer = 0;
-        }
-        getHostElements() {
-            return {
-                leftMenu: document.querySelector('#left-menu'),
-                menuWrapper: document.querySelector('#menu-wrapper'),
-            };
-        }
-        isHostVisible() {
-            const { leftMenu, menuWrapper } = this.getHostElements();
-            if (!(leftMenu instanceof HTMLElement)) return null;
-            return (
-                getComputedStyle(leftMenu).display !== 'none' &&
-                (!(menuWrapper instanceof HTMLElement) || getComputedStyle(menuWrapper).display !== 'none')
-            );
-        }
-        setHidden(ad, hidden) {
-            if (!(ad instanceof HTMLElement)) return;
-            ad.classList.toggle('hidden', hidden);
-            ad.hidden = hidden;
-            ad.style.display = hidden ? 'none' : 'flex';
-        }
-        dismiss() {
-            this.dismissed = true;
-            const ad = document.querySelector('.zig-ad');
-            if (!(ad instanceof HTMLElement)) return;
-            this.setHidden(ad, true);
-            ad.remove();
-        }
-        bindHostObservers() {
-            const hosts = Object.values(this.getHostElements()).filter((element) => element instanceof HTMLElement);
-            if (hosts.length === this.observedHosts.length && hosts.every((element, index) => element === this.observedHosts[index])) {
-                return;
-            }
-            this.hostObserver?.disconnect();
-            this.observedHosts = hosts;
-            if (!hosts.length) return;
-            this.hostObserver ?? (this.hostObserver = new MutationObserver(() => this.scheduleSync()));
-            for (const host of hosts) {
-                this.hostObserver.observe(host, {
-                    attributes: true,
-                    attributeFilter: ['class', 'hidden', 'style'],
-                });
-            }
-        }
-        sync() {
-            this.syncFrame = 0;
-            if (!this.active || !this.enabled) {
-                this.remove();
-                return;
-            }
-            if (this.hasGlobal()) {
-                this.stopMonitoring();
-                this.remove();
-                return;
-            }
-            this.bindHostObservers();
-            const hostVisible = this.isHostVisible();
-            if (hostVisible === null) return;
-            if (hostVisible && !this.menuWasVisible && !this.closedForSession) this.dismissed = false;
-            this.menuWasVisible = hostVisible;
-            const ad = document.querySelector('.zig-ad');
-            if (!hostVisible || this.dismissed) {
-                this.setHidden(ad, true);
-                return;
-            }
-            if (!ad) {
-                this.insert();
-                return;
-            }
-            this.setHidden(ad, false);
-        }
-        scheduleSync() {
-            if (this.syncFrame) return;
-            this.syncFrame = requestAnimationFrame(() => this.sync());
-        }
-        bindLifecycle(resources = null) {
-            if (this.hasGlobal()) {
-                this.stopMonitoring();
-                this.remove();
-                return;
-            }
-            if (resources && resources !== this.lifecycleResources) {
-                this.lifecycleResources = resources;
-                resources.add(() => {
-                    this.stopMonitoring();
-                    document.querySelector('.zig-ad')?.remove();
-                    this.lifecycleResources = null;
-                    this.dismissed = false;
-                    this.closedForSession = false;
-                    this.menuWasVisible = false;
-                });
-            }
-            this.bindHostObservers();
-            if (!this.domObserver) {
-                this.domObserver = new MutationObserver(() => {
-                    this.bindHostObservers();
-                    const nextRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
-                    if (nextRoot instanceof HTMLElement && nextRoot !== this.observedMutationRoot) {
-                        this.domObserver.disconnect();
-                        this.observedMutationRoot = nextRoot;
-                        this.domObserver.observe(document.body, {
-                            childList: true,
-                        });
-                        if (nextRoot !== document.body) {
-                            this.domObserver.observe(nextRoot, {
-                                childList: true,
-                                subtree: true,
-                            });
-                        }
-                    }
-                    this.scheduleSync();
-                });
-                this.observedMutationRoot = document.querySelector(SELECTORS.menuWrapper) ?? document.body;
-                if (document.body instanceof HTMLElement) {
-                    this.domObserver.observe(document.body, {
-                        childList: true,
-                    });
-                }
-                if (this.observedMutationRoot instanceof HTMLElement && this.observedMutationRoot !== document.body) {
-                    this.domObserver.observe(this.observedMutationRoot, {
-                        childList: true,
-                        subtree: true,
-                    });
-                }
-            }
-            if (!this.clickHandler) {
-                this.clickHandler = (event) => {
-                    const target = event.target;
-                    if (target instanceof Element && target.closest(SELECTORS.play)) this.dismiss();
-                };
-                document.addEventListener('click', this.clickHandler, true);
-            }
-            if (!this.escapeHandler) {
-                this.escapeHandler = (event) => {
-                    if (event.key === 'Escape') this.dismiss();
-                };
-                document.addEventListener('keydown', this.escapeHandler, true);
-            }
-            if (!this.globalCheckTimer) {
-                this.globalCheckTimer = window.setInterval(() => {
-                    if (this.hasGlobal()) {
-                        this.stopMonitoring();
-                        this.remove();
-                    }
-                }, 1e3);
-            }
-        }
-        insert(resources = null) {
-            this.bindLifecycle(resources);
-            if (!this.active || !this.enabled || this.hasGlobal() || this.dismissed || document.querySelector('.zig-ad')) {
-                if (!this.active || this.hasGlobal()) this.remove();
-                return;
-            }
-            const leftMenu = document.querySelector('#left-menu');
-            const anchor = leftMenu?.closest('.menu-wrapper.top');
-            if (!(anchor instanceof HTMLElement)) return;
-            const card = document.createElement('div');
-            card.className = 'zig-ad';
-            card.setAttribute('data-sigmod-zig-ad', 'true');
-            card.style.backgroundColor = 'rgb(21, 21, 21)';
-            card.style.border = '0';
-            card.innerHTML = `
-            <a class="zig-ad-content" href="https://zig.sigmally.xyz" target="_blank" rel="noopener noreferrer">
-                <img class="zig-ad-logo" src="https://czrsd.com/static/zig/zig.webp" alt="Zig" draggable="false">
-
-                <div class="zig-ad-text">
-                    <strong>See the whole map with Zig</strong>
-                </div>
-            </a>
-
-            <button class="zig-ad-close" type="button" aria-label="Close Zig ad">
-                ${icon('close', 18)}
-            </button>
-        `;
-            const logo = card.querySelector('.zig-ad-logo');
-            if (logo instanceof HTMLImageElement) logo.classList.add('sigmod-zig-ad-logo');
-            const closeButton = card.querySelector('.zig-ad-close');
-            if (closeButton instanceof HTMLElement) {
-                closeButton.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    this.closedForSession = true;
-                    this.dismiss();
-                });
-            }
-            anchor.appendChild(card);
-            this.sync();
-        }
-        setActive(active) {
-            this.active = Boolean(active);
-            zigActive = this.active;
-            if (!this.active) this.remove();
-            else this.sync();
-        }
-        setEnabled(enabled) {
-            this.enabled = Boolean(enabled);
-            zigAdEnabled = this.enabled;
-            if (!this.enabled) this.remove();
-            else this.sync();
-        }
-        destroy() {
-            this.stopMonitoring();
-            this.remove();
-            this.dismissed = false;
-            this.closedForSession = false;
-            this.menuWasVisible = false;
-        }
-    }
-    const zigAdController = new ZigAdController();
-    let zigActive = false;
-    let zigAdEnabled = DEFAULT_SETTINGS.themes.showZigPopup;
-    const hasZigGlobal = () => zigAdController.hasGlobal();
-    const removeZigAd = () => zigAdController.remove();
-    const insertZigAd = (resources = null) => {
-        zigAdController.enabled = zigAdEnabled;
-        zigAdController.active = zigActive;
-        zigAdController.insert(resources);
-    };
     const previousApp = window.__sigmodApp;
     if (previousApp && typeof previousApp.destroy === 'function') previousApp.destroy();
     const app = new SigModApp();
@@ -19804,12 +20903,6 @@
     app.resources.add(() => {
         if (window.__sigmodApp === app) delete window.__sigmodApp;
     });
-    app.resources.add(
-        app.backend.on('zig-active', (active) => {
-            zigAdController.setActive(active);
-        })
-    );
-    app.resources.add(() => zigAdController.destroy());
     warmUpStartPageMouse(app.resources);
     app.start();
 })();

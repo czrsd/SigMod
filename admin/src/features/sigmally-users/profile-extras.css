@@ -1,0 +1,213 @@
+.sigmally-profile-row > dd {
+    min-width: 0;
+}
+.sigmally-extra-muted,
+.sigmally-extra-error {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+.sigmally-extra-error {
+    color: var(--danger);
+}
+.sigmally-clan-field {
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+}
+.sigmally-clan-summary {
+    display: grid;
+    grid-template-columns: auto minmax(110px, 210px);
+    align-items: center;
+    gap: 6px 12px;
+    max-width: 420px;
+}
+.sigmally-clan-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--foreground);
+    text-align: left;
+}
+.sigmally-clan-toggle:hover {
+    color: var(--primary);
+}
+.sigmally-clan-toggle strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+.sigmally-clan-count {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: right;
+}
+.sigmally-member-meter {
+    grid-column: 1 / -1;
+    display: block;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--surface-muted);
+}
+.sigmally-member-meter > i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+}
+.sigmally-clan-id {
+    color: var(--text-muted);
+    font-size: 10px;
+}
+.sigmally-clan-members {
+    width: 100%;
+    min-width: 0;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+}
+.sigmally-member-table-scroll {
+    max-width: 100%;
+    overflow: auto;
+}
+.sigmally-member-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    text-align: left;
+    white-space: nowrap;
+}
+.sigmally-member-table th,
+.sigmally-member-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+}
+.sigmally-member-table th {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 500;
+}
+.sigmally-member-table td:nth-child(3),
+.sigmally-member-table td:nth-child(8) {
+    white-space: normal;
+}
+.sigmally-member-table td:nth-child(3) {
+    overflow-wrap: anywhere;
+}
+.sigmally-member-table code {
+    color: var(--text-muted);
+    font-size: 10px;
+}
+.sigmally-member-avatar {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-muted);
+}
+.sigmally-member-avatar-fallback {
+    display: grid;
+    place-items: center;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 600;
+}
+.sigmally-member-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
+.sigmally-member-extra summary {
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 11px;
+}
+.sigmally-member-extra pre {
+    max-width: 400px;
+    max-height: 220px;
+    overflow: auto;
+    margin: 7px 0 0;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--input-background);
+    color: var(--foreground);
+    font: 10px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.sigmally-skin-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.sigmally-skin-list > li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+.sigmally-skin-list img {
+    display: block;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-muted);
+}
+.sigmally-skin-image-fallback {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+}
+.sigmally-skin-source {
+    margin-top: 7px;
+}
+.sigmally-skin-source summary {
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 10px;
+}
+.sigmally-skin-source pre {
+    max-width: 400px;
+    max-height: 180px;
+    overflow: auto;
+    margin: 7px 0 0;
+    padding: 8px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font: 10px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+    .sigmally-clan-summary {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 5px;
+    }
+    .sigmally-clan-count {
+        text-align: left;
+    }
+}

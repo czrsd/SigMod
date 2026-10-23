@@ -3,7 +3,7 @@ import logger from '../utils/logger';
 
 let cachedFonts: string[] | null = null;
 let cacheExpiry: number = 0;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const FALLBACK_FONTS = ['Roboto', 'Open Sans', 'Montserrat', 'Lato', 'Poppins', 'Oswald', 'Inter', 'Raleway', 'Ubuntu', 'Nunito'];
 

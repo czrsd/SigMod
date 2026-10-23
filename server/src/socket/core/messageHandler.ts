@@ -13,6 +13,7 @@ import {
     updatePartyMember,
 } from './socketUtils';
 import { socketMessageData } from '../../types';
+import { storeKeybindUsage } from '../../services/keybindUsage';
 
 const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
     if (raw.byteLength > 100 * 1024) {
@@ -35,6 +36,7 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
         }
 
         const { type, content }: socketMessageData = data;
+        socket.lastMessageAt = new Date();
 
         switch (type) {
             case 'version':
@@ -55,6 +57,12 @@ const onMessage = async (raw: ArrayBuffer, socket: socket): Promise<void> => {
             case 'tag-ping':
                 sendPing(content, socket);
                 break;
+            case 'keybind-usage': {
+                const result = await storeKeybindUsage(content);
+                if (result.status === 'accepted') socket.send({ type: 'keybind-usage-ack', content: result.batchId });
+                else socket.send({ type: 'keybind-usage-status', content: result });
+                break;
+            }
             case 'score':
                 updateScore(content, socket);
                 break;

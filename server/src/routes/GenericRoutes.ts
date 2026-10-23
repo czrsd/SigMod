@@ -6,11 +6,13 @@ import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import logger from '../utils/logger';
+import mongoose from 'mongoose';
 
 const router = Router();
 
 router.get('/health', (_: Request, res: Response) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    const ready = mongoose.connection.readyState === 1;
+    res.status(ready ? 200 : 503).json({ status: ready ? 'ok' : 'unavailable', timestamp: new Date().toISOString() });
 });
 
 router.get('/onlineUsers', async (req: Request, res: Response) => {
@@ -51,7 +53,6 @@ router.get('/screenshot', async (_, res: Response) => {
             await loadScreenshotCount();
         }
         screenshotCount += 1;
-        // Non-blocking flush
         fs.writeFile(screenshotPath, String(screenshotCount), 'utf8').catch((err) => {
             logger.warn('Failed to flush screenshot count to disk:', err);
         });

@@ -24,7 +24,6 @@ export type google_user = {
     nextLevel: number;
     skins: string[] | undefined;
     lastSkinUsed: string[];
-    token: string;
     googleID: string;
     email: string;
     fullName: string;

@@ -1,0 +1,389 @@
+{
+    "version": 1,
+    "settingsSchemaVersion": 3,
+    "fields": {
+        "localization.language": {
+            "type": "language",
+            "default": "en"
+        },
+        "macros.feedSpeed": {
+            "type": "number",
+            "default": 40
+        },
+        "macros.keys.rapidFeed": {
+            "type": "nullableString",
+            "default": "w"
+        },
+        "macros.keys.respawn": {
+            "type": "nullableString",
+            "default": "b"
+        },
+        "macros.keys.ping": {
+            "type": "nullableString",
+            "default": "r"
+        },
+        "macros.keys.location": {
+            "type": "nullableString",
+            "default": "y"
+        },
+        "macros.keys.splits.double": {
+            "type": "nullableString",
+            "default": "d"
+        },
+        "macros.keys.splits.triple": {
+            "type": "nullableString",
+            "default": "f"
+        },
+        "macros.keys.splits.quad": {
+            "type": "nullableString",
+            "default": "g"
+        },
+        "macros.keys.splits.doubleTrick": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.keys.splits.selfTrick": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.keys.line.horizontal": {
+            "type": "nullableString",
+            "default": "s"
+        },
+        "macros.keys.line.vertical": {
+            "type": "nullableString",
+            "default": "t"
+        },
+        "macros.keys.line.fixed": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.keys.line.instantSplit": {
+            "type": "number",
+            "default": 0
+        },
+        "macros.keys.toggle.menu": {
+            "type": "nullableString",
+            "default": "v"
+        },
+        "macros.keys.toggle.chat": {
+            "type": "nullableString",
+            "default": "z"
+        },
+        "macros.keys.toggle.names": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.keys.toggle.skins": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.keys.toggle.autoRespawn": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.keys.toggle.party": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.keys.toggle.hud": {
+            "type": "nullableString",
+            "default": null
+        },
+        "macros.mouse.bindings": {
+            "type": "bindings",
+            "default": []
+        },
+        "game.font": {
+            "type": "string",
+            "default": "Ubuntu"
+        },
+        "game.borderColor": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.foodColor": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.cellColor": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.virusImage": {
+            "type": "string",
+            "default": "/assets/images/viruses/2.png"
+        },
+        "game.shortenNames": {
+            "type": "boolean",
+            "default": false
+        },
+        "game.showLeaderboard": {
+            "type": "boolean",
+            "default": true
+        },
+        "game.hideOwnName": {
+            "type": "boolean",
+            "default": false
+        },
+        "game.botSkinsOnly": {
+            "type": "boolean",
+            "default": false
+        },
+        "game.showOwnSkinWithBots": {
+            "type": "boolean",
+            "default": true
+        },
+        "game.removeOutlines": {
+            "type": "boolean",
+            "default": false
+        },
+        "game.skins.original": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.skins.replacement": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.map.color": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.map.image": {
+            "type": "string",
+            "default": ""
+        },
+        "game.name.color": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.name.gradient.enabled": {
+            "type": "boolean",
+            "default": false
+        },
+        "game.name.gradient.left": {
+            "type": "nullableString",
+            "default": null
+        },
+        "game.name.gradient.right": {
+            "type": "nullableString",
+            "default": null
+        },
+        "themes.current": {
+            "type": "string",
+            "default": "Dark"
+        },
+        "themes.inputBorderRadius": {
+            "type": "nullableString",
+            "default": null
+        },
+        "themes.menuBorderRadius": {
+            "type": "nullableString",
+            "default": null
+        },
+        "themes.inputBorder": {
+            "type": "string",
+            "default": "1px"
+        },
+        "themes.hideDiscordBtns": {
+            "type": "boolean",
+            "default": false
+        },
+        "themes.hideLangs": {
+            "type": "boolean",
+            "default": false
+        },
+        "themes.hideAds": {
+            "type": "boolean",
+            "default": true
+        },
+        "themes.showPromotions": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.tag": {
+            "type": "nullableString",
+            "default": null
+        },
+        "settings.partyPanel.x": {
+            "type": "number",
+            "default": 4
+        },
+        "settings.partyPanel.y": {
+            "type": "number",
+            "default": 300
+        },
+        "settings.showPartyPanel": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.partyScale": {
+            "type": "number",
+            "default": 1
+        },
+        "settings.partyMaxWidth": {
+            "type": "number",
+            "default": 240
+        },
+        "settings.partyBgColor": {
+            "type": "string",
+            "default": "rgba(0, 0, 0, 0.4)"
+        },
+        "settings.partyTextColor": {
+            "type": "string",
+            "default": "#fafafa"
+        },
+        "settings.partyBorderColor": {
+            "type": "string",
+            "default": "transparent"
+        },
+        "settings.partyBorderRadius": {
+            "type": "number",
+            "default": 6
+        },
+        "settings.partyBlur": {
+            "type": "number",
+            "default": 0
+        },
+        "settings.partyCompact": {
+            "type": "boolean",
+            "default": false
+        },
+        "settings.partySort": {
+            "type": "string",
+            "default": "index"
+        },
+        "settings.partyHighlightSelf": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.partyShowSkins": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.partyShowScores": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.partyShowIndexes": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.partyShowHeader": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.partyShowHeaderTotals": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.partyShowPing": {
+            "type": "boolean",
+            "default": false
+        },
+        "settings.partyMaxMembers": {
+            "type": "number",
+            "default": 10
+        },
+        "settings.pingDuration": {
+            "type": "number",
+            "default": 2000
+        },
+        "settings.autoRespawn": {
+            "type": "boolean",
+            "default": false
+        },
+        "settings.playTimer": {
+            "type": "boolean",
+            "default": false
+        },
+        "settings.mouseTracker": {
+            "type": "boolean",
+            "default": false
+        },
+        "settings.autoClaimCoins": {
+            "type": "boolean",
+            "default": false
+        },
+        "settings.showChallenges": {
+            "type": "boolean",
+            "default": false
+        },
+        "settings.deathScreenPos": {
+            "type": "string",
+            "default": "center"
+        },
+        "settings.removeShopPopup": {
+            "type": "boolean",
+            "default": true
+        },
+        "settings.quickAccess": {
+            "type": "strings",
+            "default": [
+                "host:showNames",
+                "host:showSkins",
+                "host:showMass",
+                "setting:chat.enabled",
+                "host:showMinimap",
+                "host:showLeaderboard",
+                "host:showBorder",
+                "host:showGrid",
+                "host:moreZoom",
+                "host:jellyPhysics",
+                "host:showClanmates",
+                "setting:settings.playTimer",
+                "host:autoRespawn",
+                "host:autoClaimCoins"
+            ]
+        },
+        "chat.enabled": {
+            "type": "boolean",
+            "default": true
+        },
+        "chat.bgColor": {
+            "type": "string",
+            "default": "#00000040"
+        },
+        "chat.textColor": {
+            "type": "string",
+            "default": "#ffffff"
+        },
+        "chat.compact": {
+            "type": "boolean",
+            "default": false
+        },
+        "chat.themeColor": {
+            "type": "string",
+            "default": "#8a25e5"
+        },
+        "chat.showTime": {
+            "type": "boolean",
+            "default": true
+        },
+        "chat.showNameColors": {
+            "type": "boolean",
+            "default": true
+        },
+        "chat.showClientChat": {
+            "type": "boolean",
+            "default": false
+        },
+        "chat.showChatButtons": {
+            "type": "boolean",
+            "default": true
+        },
+        "chat.blurTag": {
+            "type": "boolean",
+            "default": false
+        },
+        "chat.locationText": {
+            "type": "string",
+            "default": "{pos}"
+        },
+        "modAccount.authorized": {
+            "type": "boolean",
+            "default": false
+        }
+    }
+}

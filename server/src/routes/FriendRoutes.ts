@@ -7,34 +7,29 @@ import ProfileImageController from '../controllers/Friends/private/ProfileImageC
 
 const router = Router();
 
-// for a better overview
 const routes = {
-    // account based
-    register: '/register', // POST
-    login: '/login', // POST
-    auth: '/auth', // GET
-    logout: '/logout', // GET
-    // 'public' user request
-    allUsers: '/users', // POST
-    profile: '/profile', // GET
-    request: '/request', // POST
-    search: '/search', // GET
-    // 'private' - me - profile requests
+    register: '/register',
+    login: '/login',
+    auth: '/auth',
+    logout: '/logout',
+    allUsers: '/users',
+    profile: '/profile',
+    request: '/request',
+    search: '/search',
     edit: '/me/edit',
-    updateSettings: '/me/update-settings', // POST
-    friends: '/me/friends', // GET
-    requests: '/me/requests', // GET
-    handleRequests: '/me/handle', // POST
-    chatHistory: '/me/chat', // GET
-    uploadImage: '/me/upload', // POST
-    removeImage: '/me/remove', // GET
+    updateSettings: '/me/update-settings',
+    friends: '/me/friends',
+    requests: '/me/requests',
+    handleRequests: '/me/handle',
+    chatHistory: '/me/chat',
+    uploadImage: '/me/upload',
+    removeImage: '/me/remove',
 };
 
-// AUTH ROUTES
 import rateLimit from 'express-rate-limit';
 
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     limit: 10,
     message: { success: false, message: 'Too many authentication attempts, please try again later.' },
 });
@@ -44,20 +39,17 @@ router.post(routes.login, authLimiter, AccountController.login as RequestHandler
 router.get(routes.auth, requireUser as RequestHandler, AccountController.auth as RequestHandler);
 router.get(routes.logout, requireUser as RequestHandler, AccountController.logout as RequestHandler);
 
-// PUBLIC ROUTES
 router.post(routes.allUsers, requireUser as RequestHandler, UserController.getAllUsers as RequestHandler);
 router.get(`${routes.profile}/:userId`, requireUser as RequestHandler, UserController.profile as RequestHandler);
 router.post(routes.request, requireUser as RequestHandler, UserController.friendRequest as RequestHandler);
 router.get(routes.search, requireUser as RequestHandler, UserController.searchUser as RequestHandler);
 
-// PRIVATE ROUTES
 router.post(routes.edit, requireUser as RequestHandler, ProfileController.updateProfile as RequestHandler);
 router.post(routes.updateSettings, requireUser as RequestHandler, ProfileController.updateSettings as RequestHandler);
 router.get(routes.friends, requireUser as RequestHandler, ProfileController.getFriends as RequestHandler);
 router.get(routes.requests, requireUser as RequestHandler, ProfileController.getRequests as RequestHandler);
 router.post(routes.handleRequests, requireUser as RequestHandler, ProfileController.handleRequests as RequestHandler);
 router.get(`${routes.chatHistory}/:id`, requireUser as RequestHandler, ProfileController.getChatHistory as RequestHandler);
-// Profile image
 router.post(
     routes.uploadImage,
     requireUser as RequestHandler,

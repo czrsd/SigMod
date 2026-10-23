@@ -8,6 +8,7 @@ import AccountModel from '../../models/AccountModel';
 import logger from '../../utils/logger';
 import { google_user, modAccount, socketMessageData } from '../../types';
 import messageHandler from './messageHandler';
+import { getCachedClientContent } from '../../services/clientContent';
 
 const zigFilePath: string = path.join(process.cwd(), 'zig');
 let isZigActive: boolean = false;
@@ -33,6 +34,10 @@ class Socket {
     ws: WebSocket;
     req: Request;
     sid: string;
+    connectedAt: Date = new Date();
+    lastMessageAt: Date | null = null;
+    lastPongAt: Date | null = null;
+    clientVersion: string | null = null;
     server: string | null = null;
     tag: string | null = null;
     tagIndex: number | null = null;
@@ -88,45 +93,11 @@ class Socket {
         }
     }
 
-    private clearMinimap() {
-        if (!this.tag || !this.server) return;
-
-        wsHandler.sendToTag(
-            {
-                type: 'minimap-data',
-                content: {
-                    x: null,
-                    y: null,
-                    nick: this.nick,
-                    sid: this.sid,
-                },
-            },
-            this.tag,
-            undefined,
-            this.server
-        );
-    }
-
-    private clearTagMember() {
-        if (!this.tag || !this.server) return;
-        const sockets = wsHandler.getTagMembersOnServer(this.tag, this.server, this.sid);
-
-        for (const s of sockets) {
-            s.send({
-                type: 'leave-tag',
-                content: {
-                    id: this.sid,
-                },
-            });
-        }
-    }
-
     async onClose() {
-        await this.updateUserStatus();
-        this.clearMinimap();
-        this.clearTagMember();
-
+        // Party cleanup must not depend on database availability.
+        if (!wsHandler.sockets.has(this.sid)) return;
         wsHandler.removeSocket(this);
+        await this.updateUserStatus();
     }
 
     init(): void {
@@ -139,13 +110,17 @@ class Socket {
         this.ws.on('close', () => this.onClose());
         this.ws.on('pong', () => {
             this.isWsAlive = true;
+            this.lastPongAt = new Date();
         });
 
-        // assign socket id to client
         this.send({
             type: 'sid',
             content: this.sid,
         });
+
+        this.send({ type: 'usage-capabilities', content: { keybindUsage: 1 } });
+
+        this.send({ type: 'client-content', content: getCachedClientContent() });
 
         this.send({
             type: 'zig-active',

@@ -47,7 +47,6 @@ export function parseTimeToMilliseconds(timeString: string) {
     return (parseInt(minutes, 10) * 60 + parseInt(seconds, 10)) * 1000;
 }
 
-// get time from a time HTML element
 export function getRemainingTime(string: string) {
     const now = new Date();
 

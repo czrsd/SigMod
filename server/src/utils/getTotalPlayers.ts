@@ -3,7 +3,7 @@ import logger from './logger';
 
 let cachedTotal = 0;
 let cacheExpiry = 0;
-const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const CACHE_TTL_MS = 30 * 1000;
 
 const getPlayers = async (): Promise<number> => {
     const now = Date.now();

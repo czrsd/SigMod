@@ -6,7 +6,6 @@ import RequestModel from '../../../models/RequestModel';
 import FriendModel from '../../../models/FriendModel';
 
 class PublicUserController {
-    // POST
     async getAllUsers(req: Request, res: Response): Promise<Response | void> {
         let { amount, offset } = req.body;
 
@@ -20,7 +19,6 @@ class PublicUserController {
         offset = typeof offset === 'number' && offset >= 0 ? Math.floor(offset) : 0;
 
         try {
-            // gets all users by role priority, specific amount and given offset
             const users = await AccountModel.aggregate([
                 { $match: { visible: true } },
                 {
@@ -79,7 +77,6 @@ class PublicUserController {
         }
     }
 
-    // GET
     async profile(req: Request, res: Response): Promise<Response | void> {
         const { userId } = req.params;
 
@@ -91,7 +88,10 @@ class PublicUserController {
         }
 
         try {
-            const reqUser = await AccountModel.findOne({ _id: userId });
+            const reqUser = await AccountModel.findOne({
+                _id: userId,
+                $or: [{ visible: { $ne: false } }, { _id: req.user?.userId }],
+            }).select('_id username imageURL role bio badges online lastOnline visible create_time');
 
             if (!reqUser) {
                 return res.status(404).json({
@@ -113,7 +113,6 @@ class PublicUserController {
         }
     }
 
-    // POST
     async friendRequest(req: Request, res: Response): Promise<Response | void> {
         const { req_id } = req.body;
         const userId = req.user?.userId;
@@ -133,7 +132,6 @@ class PublicUserController {
         }
 
         try {
-            // check if the targeted user exists
             const userExists = await AccountModel.findById(req_id);
             if (!userExists) {
                 return res.status(404).json({
@@ -142,7 +140,6 @@ class PublicUserController {
                 });
             }
 
-            // check if targeted user accepts friend requests
             const targetUserSettings = await UserSettingsModel.findOne({
                 target: req_id,
             });
@@ -153,7 +150,6 @@ class PublicUserController {
                 });
             }
 
-            // check if user has already sent a request to the target
             const existingRequest = await RequestModel.findOne({
                 req_id,
                 target_id: userId,
@@ -166,7 +162,6 @@ class PublicUserController {
                 });
             }
 
-            // check if user and target are already friends
             const isFriend = await FriendModel.exists({
                 user_id: userId,
                 friend_id: req_id,
@@ -178,7 +173,6 @@ class PublicUserController {
                 });
             }
 
-            // open the request
             await RequestModel.create({ req_id, target_id: userId });
 
             res.json({
@@ -194,7 +188,6 @@ class PublicUserController {
         }
     }
 
-    // GET
     async searchUser(req: Request, res: Response): Promise<Response | void> {
         const query = req.query.q;
 

@@ -21,28 +21,35 @@ import express, { Application } from 'express';
 import './config/passport';
 import connectDB from './db/connection';
 import setupMiddleware from './app';
-import { wsServer } from './socket/setup';
+import { wsServer, wsHandler } from './socket/setup';
+import { validateJwtConfiguration } from './utils/jwtUtils';
+import { startClientContentPublisher, ClientContentSnapshot } from './services/clientContent';
+import { startServerMonitoring } from './monitoring/runtime';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3001;
 
+setupMiddleware(app);
+
 (async () => {
     try {
+        validateJwtConfiguration();
         await connectDB();
-    } catch (err) {
-        logger.error('Failed to initialize database connection. Exiting.', err);
+        startServerMonitoring();
+        const stopPublisher = await startClientContentPublisher((type, content) => {
+            if (type === 'client-content') wsHandler.alert = (content as ClientContentSnapshot).alert;
+            wsHandler.sendToAll({ type, content });
+        });
+        const server = app.listen(PORT, () => logger.info(`Server running on port ${PORT}.`));
+        server.on('close', stopPublisher);
+        setupExitHandlers(server, wsServer);
+        server.on('upgrade', (req, socket, head) => {
+            if (req.url === '/ws' || req.url === '/ws/v5') {
+                wsServer.handleUpgrade(req, socket, head, (ws) => wsServer.emit('connection', ws, req));
+            } else socket.destroy();
+        });
+    } catch {
+        logger.error('Server initialization failed. Check database and JWT configuration.');
         process.exit(1);
     }
 })();
-
-setupMiddleware(app);
-
-const server = app.listen(PORT, () => logger.info(`Server running on port ${PORT}.`));
-
-setupExitHandlers(server, wsServer);
-
-server.on('upgrade', (req, socket, head) => {
-    if (req.url === '/ws' || req.url === '/ws/v5' || req.url?.startsWith('/ws')) {
-        wsServer.handleUpgrade(req, socket, head, (ws) => wsServer.emit('connection', ws, req));
-    }
-});

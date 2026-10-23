@@ -2,6 +2,7 @@ node_modules
 logs
 dist
 profiles
+admin-assets
 screenshots
 
 process.json

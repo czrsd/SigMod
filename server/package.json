@@ -1,11 +1,13 @@
 {
     "name": "server",
     "version": "5.0.0",
-    "main": "index.js",
+    "main": "dist/server.js",
     "scripts": {
+        "test": "node --test ../tests/*.test.cjs",
         "build": "node -e \"const fs = require('fs'); if (fs.existsSync('./dist')) fs.rmSync('./dist', { recursive: true, force: true });\" && tsc",
+        "build:all": "npm --prefix ../admin run build && npm run build",
         "dev": "nodemon",
-        "start": "node ./dist",
+        "start": "node ./dist/server.js",
         "lint": "npx eslint .",
         "prettier": "npx prettier . --write",
         "deploy": "ssh sigmod-deploy \"bash /var/www/sigmod_v5/deploy.sh\""
@@ -29,6 +31,7 @@
         "@types/passport": "^1.0.17",
         "@types/passport-discord": "^0.1.14",
         "@types/passport-local": "^1.0.38",
+        "@types/sanitize-html": "^2.16.2",
         "@types/sharp": "^0.31.1",
         "@types/winston": "^2.4.4",
         "@types/ws": "^8.5.12",
@@ -56,7 +59,8 @@
         "passport": "^0.7.0",
         "passport-discord": "^0.1.4",
         "passport-local": "^1.0.0",
-        "sharp": "^0.33.5",
+        "sanitize-html": "^2.18.1",
+        "sharp": "^0.35.5",
         "uuid": "^11.0.2",
         "winston": "^3.15.0",
         "ws": "^8.18.0"

@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
-import AnnouncementModel, { AnnouncementDocument, AnnouncementPreview } from '../models/AnnouncementModel';
+import AnnouncementModel from '../models/AnnouncementModel';
 import logger from '../utils/logger';
+import { sanitizeRichText, sanitizeImageUrls } from '../admin/content/validation';
 
 class AnnouncementController {
     async getAnnouncements(req: Request, res: Response) {
         try {
-            const announcements = await AnnouncementModel.find({}, { preview: 1 });
+            const announcements = await AnnouncementModel.find(
+                { $or: [{ status: 'published' }, { status: { $exists: false } }] },
+                { preview: 1, date: 1 }
+            ).sort({ 'preview.pinned': -1, date: -1 });
 
             if (!announcements) {
                 res.status(400).json({
@@ -49,7 +53,10 @@ class AnnouncementController {
                 return;
             }
 
-            const announcement = await AnnouncementModel.findById(id);
+            const announcement = await AnnouncementModel.findOne({
+                _id: id,
+                $or: [{ status: 'published' }, { status: { $exists: false } }],
+            });
 
             if (!announcement) {
                 res.status(404).json({
@@ -61,7 +68,14 @@ class AnnouncementController {
 
             res.json({
                 success: true,
-                data: announcement,
+                data: {
+                    ...announcement.toObject(),
+                    full: {
+                        ...announcement.full,
+                        description: sanitizeRichText(announcement.full.description, 'full.description'),
+                        images: sanitizeImageUrls(announcement.full.images),
+                    },
+                },
             });
         } catch (error) {
             logger.error(error);

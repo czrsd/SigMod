@@ -14,10 +14,9 @@ class ProfileImageController {
     constructor() {
         this.profilesDir = path.resolve(process.cwd(), 'profiles');
 
-        // Use memory storage for fast processing with Sharp before writing to disk
         this.upload = multer({
             storage: multer.memoryStorage(),
-            limits: { fileSize: 4 * 1024 * 1024 }, // 4MB
+            limits: { fileSize: 4 * 1024 * 1024 },
             fileFilter: (req, file, cb) => {
                 const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
                 if (!allowedTypes.includes(file.mimetype)) {
@@ -31,7 +30,6 @@ class ProfileImageController {
         this.removeProfileImage = this.removeProfileImage.bind(this);
     }
 
-    // POST upload profile image
     async uploadImage(req: Request, res: Response): Promise<Response | void> {
         const userId = req.user?.userId;
         if (!userId) {
@@ -50,10 +48,8 @@ class ProfileImageController {
             const fileName = `${userId}-${Date.now()}.webp`;
             const filePath = path.join(this.profilesDir, fileName);
 
-            // Automatically smart-crop, resize to standard 256x256, and compress to WebP
             await sharp(req.file.buffer).resize(256, 256, { fit: 'cover', position: 'center' }).webp({ quality: 85 }).toFile(filePath);
 
-            // Remove old custom avatar file if present
             const oldUser = await AccountModel.findById(userId, { imageURL: 1 });
             if (oldUser?.imageURL && oldUser.imageURL.includes('/profiles/')) {
                 const oldFilename = path.basename(oldUser.imageURL);
@@ -83,7 +79,6 @@ class ProfileImageController {
         }
     }
 
-    // POST/DELETE remove profile image
     async removeProfileImage(req: Request, res: Response): Promise<Response | void> {
         const userId = req.user?.userId;
         if (!userId) {

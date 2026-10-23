@@ -4,6 +4,8 @@ import { WebSocketServer } from 'ws';
 import AccountModel from '../models/AccountModel';
 import logger from './logger';
 import { wsHandler } from '../socket/setup';
+import { stopServerMonitoring } from '../monitoring/runtime';
+import { stopPartyUsageCollection } from '../services/partyUsage';
 
 let isShuttingDown = false;
 
@@ -13,7 +15,6 @@ export const gracefulShutdown = async (server?: HttpServer, wss?: WebSocketServe
     logger.info('[Shutdown] Initiating graceful shutdown...');
 
     try {
-        // 1. Close active WebSocket connections
         if (wsHandler) {
             for (const socket of wsHandler.sockets.values()) {
                 try {
@@ -25,17 +26,18 @@ export const gracefulShutdown = async (server?: HttpServer, wss?: WebSocketServe
             wss.close();
         }
 
-        // 2. Stop HTTP server from receiving new requests
         if (server) {
             await new Promise((resolve) => server.close(resolve));
             logger.info('[Shutdown] HTTP server closed.');
         }
 
-        // 3. Reset online states in database
+        // Persist the final partial metrics interval before closing MongoDB.
+        await stopServerMonitoring();
+        await stopPartyUsageCollection();
+
         await AccountModel.updateMany({ online: true }, { online: false, lastOnline: new Date() });
         logger.info('[Shutdown] Online statuses cleaned up.');
 
-        // 4. Close database connection
         if (mongoose.connection.readyState !== 0) {
             await mongoose.connection.close(false);
             logger.info('[Shutdown] Database connection closed.');

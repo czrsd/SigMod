@@ -19,7 +19,6 @@ class ProfileController {
         this.updateSettings = this.updateSettings.bind(this);
     }
 
-    // GET Friends
     async getFriends(req: Request, res: Response): Promise<Response | void> {
         const userId = req.user?.userId;
         if (!userId) return res.status(401).json({ success: false, message: 'User ID is missing.' });
@@ -28,7 +27,6 @@ class ProfileController {
             const friendDocs = await FriendModel.find({ user_id: userId });
             const friendIds = friendDocs.map((doc) => doc.friend_id.toString());
 
-            // Single batch query instead of N+1 individual queries
             const friendAccounts = await AccountModel.find({
                 _id: { $in: friendIds },
             }).select('-password');
@@ -54,7 +52,6 @@ class ProfileController {
         }
     }
 
-    // GET Requests
     async getRequests(req: Request, res: Response): Promise<Response | void> {
         const userId = req.user?.userId;
         if (!userId) return res.status(401).json({ success: false, message: 'User ID is missing.' });
@@ -63,7 +60,6 @@ class ProfileController {
             const requestDocs = await RequestModel.find({ req_id: userId });
             const targetIds = requestDocs.map((request) => request.target_id);
 
-            // Single batch query instead of N+1
             const requests = await AccountModel.find({
                 _id: { $in: targetIds },
             }).select('-password');
@@ -78,7 +74,6 @@ class ProfileController {
         }
     }
 
-    // GET chat history
     async getChatHistory(req: Request, res: Response): Promise<Response | void> {
         const { id: targetId } = req.params;
         if (!targetId) return res.status(400).json({ success: false, message: 'No target provided.' });
@@ -93,7 +88,6 @@ class ProfileController {
 
             if (!myProfile || !targetProfile) return res.status(404).json({ success: false, message: 'User not found.' });
 
-            // Fix critical leak: strictly scope chat history to conversations between these two specific users only
             const chatHistory = await ChatModel.find({
                 $or: [
                     { sender_id: myProfile._id, target_id: targetProfile._id },
@@ -115,7 +109,6 @@ class ProfileController {
         }
     }
 
-    // POST update profile
     async updateProfile(req: Request, res: Response): Promise<Response | void> {
         const { changes, data } = req.body;
         if (!changes || !Array.isArray(changes) || !data) return res.status(400).json({ success: false, message: 'Invalid request body.' });
@@ -144,7 +137,6 @@ class ProfileController {
         }
     }
 
-    // POST handle friend request actions
     async handleRequests(req: Request, res: Response): Promise<Response | void> {
         const { type, userId: reqId } = req.body;
         const userId = req.user?.userId;
@@ -185,7 +177,6 @@ class ProfileController {
         }
     }
 
-    // POST update settings
     async updateSettings(req: Request, res: Response): Promise<Response | void> {
         const { type, data } = req.body;
         const userId = req.user?.userId;

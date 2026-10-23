@@ -7,8 +7,11 @@ import ChatModel from '../../models/ChatModel';
 import { db } from '../../db/connection';
 import { ObjectId } from 'mongodb';
 import useragent from 'express-useragent';
+import { recordPartyChatMessage, recordPartyNickname } from '../../services/partyUsage';
 
 const checkVersion = (version: string, socket: socket) => {
+    if (typeof version !== 'string' || version.length > 80) return;
+    socket.clientVersion = version;
     if (version === wsHandler.version || version.startsWith('4.')) return;
 
     socket.send({
@@ -25,6 +28,8 @@ const updateNick = (nick: string, socket: socket) => {
     if (socket.nick === sanitizedNick) return;
     socket.nick = sanitizedNick;
 
+    if (socket.tag && socket.server) recordPartyNickname(socket.tag, socket.server, socket.nick);
+
     if (socket.tag && socket.server) {
         const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
         for (const s of sockets) {
@@ -40,7 +45,9 @@ const updateNick = (nick: string, socket: socket) => {
 };
 
 const onServerChange = (serverName: string, socket: socket) => {
-    if (!serverName) throw new Error('No server specified');
+    if (typeof serverName !== 'string' || !serverName.trim() || serverName.length > 200) {
+        throw new Error('Invalid server specified');
+    }
 
     const sanitizedServer = noXSS(serverName);
     wsHandler.setSocketServer(socket, sanitizedServer);
@@ -49,81 +56,14 @@ const onServerChange = (serverName: string, socket: socket) => {
 const updateTag = (tag: string | null | undefined, socket: socket) => {
     const sanitizedTag = typeof tag === 'string' && tag.trim().length > 0 ? tag.trim().slice(0, 3) : null;
 
-    if (!sanitizedTag) {
-        const previousTag = socket.tag;
-        wsHandler.setSocketTag(socket, null);
-        socket.tagIndex = 0;
-        if (previousTag && socket.server) {
-            const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
-            prevSockets.forEach((s, i) => (s.tagIndex = i + 1));
-            for (const s of prevSockets) {
-                s.send({
-                    type: 'leave-tag',
-                    content: {
-                        id: socket.sid,
-                    },
-                });
-            }
-        }
+    if (socket.tag === sanitizedTag) {
+        if (sanitizedTag && socket.server) wsHandler.syncTagRoom(sanitizedTag, socket.server);
+        else socket.send({ type: 'tag-members', content: [] });
         return;
     }
-
-    if (!socket.server) return;
-
-    const previousTag = socket.tag;
-    if (previousTag === sanitizedTag) {
-        return;
-    }
-
-    if (previousTag && socket.server) {
-        wsHandler.setSocketTag(socket, null);
-        const prevSockets = wsHandler.getTagMembersOnServer(previousTag, socket.server);
-        for (const s of prevSockets) {
-            s.send({
-                type: 'leave-tag',
-                content: {
-                    id: socket.sid,
-                },
-            });
-        }
-        prevSockets.forEach((s, i) => (s.tagIndex = i + 1));
-    }
-
+    // Keep the tag even if it arrives before server-changed; joining the server
+    // will then publish the authoritative roster.
     wsHandler.setSocketTag(socket, sanitizedTag);
-
-    const tagSockets = wsHandler.getTagMembersOnServer(sanitizedTag, socket.server);
-    tagSockets.forEach((s, i) => (s.tagIndex = i + 1));
-
-    tagSockets.forEach((s) => {
-        if (s === socket) return;
-        s.send({
-            type: 'join-tag',
-            content: {
-                id: socket.sid,
-                tagIndex: socket.tagIndex,
-                nick: socket.nick,
-                score: socket.score,
-                skin: socket.skin,
-                color: socket.color,
-                isAlive: socket.isAlive,
-                ping: socket.ping,
-            },
-        });
-    });
-
-    socket.send({
-        type: 'tag-members',
-        content: tagSockets.map((m) => ({
-            id: m.sid,
-            tagIndex: m.tagIndex,
-            nick: m.nick,
-            score: m.score,
-            skin: m.skin,
-            color: m.color,
-            isAlive: m.isAlive,
-            ping: m.ping,
-        })),
-    });
 };
 
 const sendPing = (data: PingData, socket: socket) => {
@@ -159,9 +99,6 @@ const updateMinimap = (data: minimapData, socket: socket) => {
         x,
         y,
     };
-    if (x !== null && y !== null) {
-        socket.isAlive = true;
-    }
 
     const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server, socket.sid);
 
@@ -179,7 +116,9 @@ const updateMinimap = (data: minimapData, socket: socket) => {
 };
 
 const updateScore = (score: number, socket: socket) => {
-    if (!socket.tag || !socket.server || typeof score !== 'number' || score > 9_999_999_999) return;
+    if (!socket.tag || !socket.server || typeof score !== 'number' || !Number.isFinite(score) || score < 0 || score > 9_999_999_999) {
+        return;
+    }
 
     socket.score = score;
 
@@ -205,7 +144,8 @@ const updatePartyMember = (
     if (data.skin !== undefined) socket.skin = typeof data.skin === 'string' ? data.skin.slice(0, 100) : null;
     if (data.color !== undefined) socket.color = typeof data.color === 'string' ? data.color.slice(0, 30) : null;
     if (typeof data.isAlive === 'boolean') socket.isAlive = data.isAlive;
-    if (typeof data.ping === 'number' && Number.isFinite(data.ping)) socket.ping = Math.round(data.ping);
+    if (data.ping === null) socket.ping = null;
+    else if (typeof data.ping === 'number' && Number.isFinite(data.ping)) socket.ping = Math.max(0, Math.round(data.ping));
 
     const sockets = wsHandler.getTagMembersOnServer(socket.tag, socket.server);
 
@@ -226,6 +166,8 @@ const updatePartyMember = (
 const onPartyChatMessage = (data: { message: string }, socket: socket) => {
     const message = noXSS(data.message.slice(0, 250));
     if (!socket.tag || !socket.server || !message) throw new Error('Invalid chat message.');
+
+    recordPartyChatMessage();
 
     const { modUser, nick } = socket;
 
@@ -320,6 +262,8 @@ interface extended_user extends google_user {
 const onGoogleAuth = async (user: extended_user, socket: socket) => {
     if (!user || !user._id) return;
 
+    user = { ...user };
+    delete (user as unknown as Record<string, unknown>).token;
     socket.user = user as google_user;
 
     try {

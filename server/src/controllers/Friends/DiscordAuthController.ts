@@ -50,7 +50,6 @@ class DiscordAuthController {
                 ? `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`
                 : 'https://czrsd.com/static/sigmod/SigMod25-rounded.png';
 
-            // Secure lookup: match exclusively by unique Discord ID to prevent account takeover
             let user = await AccountModel.findOne({ discord_id: id });
             let userId: string | ObjectId;
 
@@ -61,7 +60,6 @@ class DiscordAuthController {
                 await user.save();
                 userId = user._id;
             } else {
-                // Ensure unique username
                 let targetUsername = username;
                 const existingWithName = await AccountModel.findOne({ username: targetUsername });
                 if (existingWithName) {
@@ -102,20 +100,19 @@ class DiscordAuthController {
             const refreshToken = generateRefreshToken(userId.toString());
 
             res.cookie('mod_accessToken', accessToken, {
-                maxAge: 300000, // 5 minutes
+                maxAge: 300000,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
             });
 
             res.cookie('mod_refreshToken', refreshToken, {
-                maxAge: 31536000000, // 1 year
+                maxAge: 31536000000,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
             });
 
-            // Target allowed origins for postMessage security
             return res.send(`
                 <!DOCTYPE html>
                 <html>

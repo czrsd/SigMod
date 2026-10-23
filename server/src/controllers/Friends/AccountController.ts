@@ -116,7 +116,8 @@ class AccountController {
                 });
             }
 
-            delete insertedUser.password;
+            const publicUser = insertedUser.toObject();
+            delete publicUser.password;
 
             const defaultSettings = new UserSettingsModel({
                 target: insertedUser._id,
@@ -132,14 +133,14 @@ class AccountController {
             const refreshToken = generateRefreshToken(insertedUser._id);
 
             res.cookie('mod_accessToken', accessToken, {
-                maxAge: 300000, // 5 minutes
+                maxAge: 300000,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
             });
 
             res.cookie('mod_refreshToken', refreshToken, {
-                maxAge: 3.154e10, // 1 year
+                maxAge: 3.154e10,
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
@@ -148,7 +149,7 @@ class AccountController {
             return res.status(201).json({
                 success: true,
                 message: 'User registered successfully.',
-                user: insertedUser,
+                user: publicUser,
                 settings: defaultSettings.toObject(),
             });
         } catch (err) {
@@ -183,14 +184,14 @@ class AccountController {
                     const refreshToken = generateRefreshToken(user.user._id?.toString() as string);
 
                     res.cookie('mod_accessToken', accessToken, {
-                        maxAge: 300000, // 5 minutes
+                        maxAge: 300000,
                         httpOnly: true,
                         secure: true,
                         sameSite: 'none',
                     });
 
                     res.cookie('mod_refreshToken', refreshToken, {
-                        maxAge: 3.154e10, // 1 year
+                        maxAge: 3.154e10,
                         httpOnly: true,
                         secure: true,
                         sameSite: 'none',
@@ -282,7 +283,6 @@ class AccountController {
     }
 
     async logout(req: Request, res: Response): Promise<Response | void> {
-        // clear token cookies
         res.cookie('mod_accessToken', '', {
             maxAge: 0,
             httpOnly: true,
@@ -298,7 +298,6 @@ class AccountController {
         });
 
         try {
-            // set offline status
             await AccountModel.updateOne(
                 {
                     _id: req.user?.userId,
@@ -308,7 +307,6 @@ class AccountController {
                 }
             );
 
-            // remove user object from req
             req.user = undefined;
 
             return res.status(200).json({

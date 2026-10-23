@@ -1,12 +1,26 @@
 import jwt from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
 import { JWTPayload_accessToken, JWTPayload_refreshToken } from '../types';
 
-const getSigningKey = (): string => {
-    return process.env.JWT_PRIVATE_KEY || 'default_sigmod_development_jwt_secret_key_32chars';
+const developmentKey = randomBytes(32).toString('hex');
+const keyOrDevelopment = (key: string | undefined): string => {
+    if (key && key !== 'default_sigmod_development_jwt_secret_key_32chars') return key;
+    if (process.env.NODE_ENV === 'production') throw new Error('Production JWT key configuration is required.');
+    return developmentKey;
 };
 
+const getSigningKey = (): string => keyOrDevelopment(process.env.JWT_PRIVATE_KEY);
+
 const getVerificationKey = (): string => {
-    return process.env.JWT_PUBLIC_KEY || process.env.JWT_PRIVATE_KEY || 'default_sigmod_development_jwt_secret_key_32chars';
+    return keyOrDevelopment(process.env.JWT_PUBLIC_KEY || process.env.JWT_PRIVATE_KEY);
+};
+
+export const validateJwtConfiguration = (): void => {
+    const key = getSigningKey();
+    getVerificationKey();
+    if (getAlgorithm() === 'HS256' && Buffer.byteLength(key) < 32) {
+        throw new Error('JWT signing keys must contain at least 32 bytes.');
+    }
 };
 
 const getAlgorithm = (): jwt.Algorithm => {
@@ -30,12 +44,12 @@ export const generateRefreshToken = (userId: string): string => {
 
 export const verifyAccessToken = (token: string): JWTPayload_accessToken => {
     return jwt.verify(token, getVerificationKey(), {
-        algorithms: ['RS256', 'HS256'],
+        algorithms: [getAlgorithm()],
     }) as JWTPayload_accessToken;
 };
 
 export const verifyRefreshToken = (token: string): JWTPayload_refreshToken => {
     return jwt.verify(token, getVerificationKey(), {
-        algorithms: ['RS256', 'HS256'],
+        algorithms: [getAlgorithm()],
     }) as JWTPayload_refreshToken;
 };

@@ -16,7 +16,6 @@ export const requireUser = async (req: Request, res: Response, next: NextFunctio
             req.user = { userId: decoded.userId };
             return next();
         } catch {
-            // An expired access token is expected; try the longer-lived refresh token below.
         }
     }
 
@@ -36,7 +35,7 @@ export const requireUser = async (req: Request, res: Response, next: NextFunctio
 
         const newAccessToken = generateAccessToken(userId);
         res.cookie('mod_accessToken', newAccessToken, {
-            maxAge: 300000, // 5 minutes
+            maxAge: 300000,
             httpOnly: true,
             secure: true,
             sameSite: 'none',

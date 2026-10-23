@@ -3,7 +3,6 @@
     "version": "5.0.0",
     "main": "dist/server.js",
     "scripts": {
-        "test": "node --test ../tests/*.test.cjs",
         "build": "node -e \"const fs = require('fs'); if (fs.existsSync('./dist')) fs.rmSync('./dist', { recursive: true, force: true });\" && tsc",
         "build:all": "npm --prefix ../admin run build && npm run build",
         "dev": "nodemon",

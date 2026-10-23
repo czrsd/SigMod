@@ -165,3 +165,77 @@ test('V5 directory includes open guests, filters all linked fields, paginates an
     assert.deepEqual(lastFind.query, { $and: [{ hourlyTime: { $gte: 10 } }] });
     assert.equal(lastFind.options.maxTimeMS, 10000);
 });
+
+
+test('numbered account pages count the full filter, clamp pages and preserve ascending order', async (t) => {
+    const { db } = require('../server/src/db/connection.ts');
+    const AccountModel = require('../server/src/models/AccountModel.ts').default;
+    const router = require('../server/src/admin/data/routes.ts').default;
+    const records = Array.from({ length: 63 }, (_, level) => ({
+        _id: new ObjectId(level.toString(16).padStart(24, '0')), level, fullName: `Name ${level}`, nick: 'Unnamed',
+    }));
+    const select = (query) => query.$and ? records.filter(row => row.level >= query.$and[0].level.$gte) : records;
+    const countQueries = [];
+    const loads = [];
+    const cursor = (query) => {
+        const state = { skip: 0, size: Infinity, descending: false };
+        const result = () => {
+            loads.push({ ...state });
+            const rows = [...select(query)];
+            if (state.descending) rows.reverse();
+            return rows.slice(state.skip, state.skip + state.size);
+        };
+        const chain = {
+            select: () => chain, lean: () => chain, maxTimeMS: () => chain,
+            sort: (sort) => { state.descending = sort._id === -1; return chain; },
+            skip: (skip) => { state.skip = skip; return chain; },
+            limit: (size) => { assert.ok(size > 0); state.size = size; return chain; },
+            toArray: async () => result(), exec: async () => result(),
+        };
+        return chain;
+    };
+    t.mock.method(db, 'collection', () => ({
+        countDocuments: async (query) => { countQueries.push(query); return select(query).length; },
+        find: (query, options) => { assert.equal(options.projection.fullName, 1); return cursor(query); },
+    }));
+    t.mock.method(AccountModel, 'countDocuments', (query) => {
+        countQueries.push(query);
+        return { maxTimeMS: () => ({ exec: async () => select(query).length }) };
+    });
+    t.mock.method(AccountModel, 'find', cursor);
+    const app = require('../server/node_modules/express')();
+    app.use(router);
+    app.use((err, _req, res, _next) => res.status(err.status ?? 500).json({ error: err.message }));
+    const server = app.listen(0, '127.0.0.1');
+    t.after(() => new Promise(resolve => server.close(resolve)));
+    if (!server.listening) await new Promise(resolve => server.once('listening', resolve));
+    const base = `http://127.0.0.1:${server.address().port}`;
+    for (const mode of ['sigmally-users', 'sigmod-users']) {
+        const rules = encodeURIComponent(JSON.stringify([filter('level', 'gte', 'number', '32')]));
+        for (const [requested, page, levels] of [[1, 1, [32, 41]], [2, 2, [42, 51]], [3, 3, [52, 61]], [4, 4, [62, 62]], [999, 4, [62, 62]]]) {
+            const response = await fetch(`${base}/${mode}?page=${requested}&limit=10&filters=${rules}`);
+            assert.equal(response.status, 200);
+            const body = await response.json();
+            assert.equal(body.total, 63);
+            assert.equal(body.matched, 31);
+            assert.equal(body.totalPages, 4);
+            assert.equal(body.page, page);
+            assert.equal(body.items[0].level, levels[0]);
+            assert.equal(body.items.at(-1).level, levels[1]);
+            if (page === 4) assert.equal(loads.at(-1).skip, 0);
+        }
+        const before = loads.length;
+        const emptyRules = encodeURIComponent(JSON.stringify([filter('level', 'gte', 'number', '100')]));
+        const empty = await (await fetch(`${base}/${mode}?page=8&filters=${emptyRules}`)).json();
+        assert.equal(empty.total, 63);
+        assert.equal(empty.matched, 0);
+        assert.equal(empty.page, 1);
+        assert.equal(empty.totalPages, 1);
+        assert.deepEqual(empty.items, []);
+        assert.equal(loads.length, before);
+        for (const page of ['0', '-1', '1.5', 'invalid']) {
+            assert.equal((await fetch(`${base}/${mode}?page=${page}`)).status, 400);
+        }
+    }
+    assert.ok(countQueries.every(query => !('_id' in query)));
+});

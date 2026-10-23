@@ -328,7 +328,17 @@ textarea {
     font-size: 12px;
     font-weight: 550;
 }
+.clan-summary-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.clan-summary-progress .clan-summary-meter {
+    flex: 1;
+    min-width: 48px;
+}
 .clan-summary-count {
+    white-space: nowrap;
     color: var(--text-muted);
     font-size: 10px;
     font-variant-numeric: tabular-nums;

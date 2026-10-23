@@ -20,7 +20,7 @@ const row = {
     score: 1200,
     isAlive: true,
 };
-function setup(path = '/active-users', mode: 'active-users' | 'sigmally-users' = 'active-users') {
+function setup(path = '/active-users', mode: 'active-users' | 'sigmally-users' | 'sigmod-users' = 'active-users') {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const router = createMemoryRouter(
         [
@@ -111,4 +111,66 @@ describe('user directories', () => {
         expect(screen.queryByLabelText('Search user data')).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'Orion' })).not.toBeInTheDocument();
     });
+});
+
+
+describe.each(['sigmally-users', 'sigmod-users'] as const)('%s numbered pages', (mode) => {
+    it('navigates first, last, adjacent pages and resets pagination on search and page size changes', async () => {
+        vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+            const url = new URL(String(input), 'http://localhost');
+            if (url.pathname.endsWith('/fields')) return Response.json({ fields: [] });
+            if (url.pathname.endsWith('/clans')) return Response.json([]);
+            const matched = url.searchParams.get('q') ? 0 : 63;
+            const limit = Number(url.searchParams.get('limit')) || 25;
+            const totalPages = Math.max(1, Math.ceil(matched / limit));
+            const page = Math.min(Number(url.searchParams.get('page')) || 1, totalPages);
+            const size = Math.min(limit, Math.max(0, matched - (page - 1) * limit));
+            return Response.json({ total: 80, matched, page, totalPages, items: Array.from({length: size}, (_, i) => ({
+                _id: String(i), fullName: mode === 'sigmally-users' ? 'Misty Fix' : undefined,
+                username: mode === 'sigmod-users' ? 'Misty' : undefined, nick: 'Unnamed', email: 'test@example.com',
+            })) });
+        }));
+        const { router } = setup('/' + mode, mode);
+        await screen.findByText(/Showing 1–25 of 63 matching accounts/);
+        expect(screen.getByText('Total accounts').nextElementSibling).toHaveTextContent('80');
+        expect(screen.getByText('Matching accounts').nextElementSibling).toHaveTextContent('63');
+        expect(screen.getByRole('button', { name: 'First' })).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Last' }));
+        await screen.findByText(/Showing 51–63.*Page 3 of 3/);
+        expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+        await screen.findByText(/Showing 26–50.*Page 2 of 3/);
+        fireEvent.click(screen.getByRole('button', { name: 'First' }));
+        await screen.findByText(/Showing 1–25.*Page 1 of 3/);
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        await screen.findByText(/Showing 26–50.*Page 2 of 3/);
+        fireEvent.change(screen.getByLabelText('Entries per page'), {target: {value: '10'}});
+        await screen.findByText(/Showing 1–10.*Page 1 of 7/);
+        expect(router.state.location.search).not.toContain('page=');
+        fireEvent.click(screen.getByRole('button', { name: 'Last' }));
+        await screen.findByText(/Showing 61–63.*Page 7 of 7/);
+        fireEvent.change(screen.getByLabelText('Search users'), {target: {value: 'none'}});
+        await screen.findByText(/Showing 0 of 0 matching accounts.*Page 1 of 1/);
+        expect(screen.getByText('Total accounts').nextElementSibling).toHaveTextContent('80');
+        expect(router.state.location.search).not.toContain('page=');
+    });
+});
+
+it('uses the full name in the list and profile and puts the nickname after the email', async () => {
+    const user = {_id: '123', fullName: 'Misty Fix', givenName: 'Misty', nick: 'Unnamed', email: 'test@example.com', clan: 'clan1'};
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/fields')) return Response.json({fields: []});
+        if (url.endsWith('/clans')) return Response.json([{_id: 'clan1', name: 'Clan', membersLength: 12}]);
+        if (url.includes('/sigmally-users/123')) return Response.json({user});
+        return Response.json({items: [user], total: 1, matched: 1, page: 1, totalPages: 1});
+    }));
+    setup('/sigmally-users', 'sigmally-users');
+    const link = await screen.findByRole('link', {name: 'View Misty Fix'});
+    expect(screen.getByText('test@example.com · Unnamed')).toBeVisible();
+    const meter = await screen.findByLabelText('12 of 50 members');
+    expect(meter.nextElementSibling).toHaveTextContent('12/50');
+    expect(meter.parentElement).toHaveClass('clan-summary-progress');
+    fireEvent.click(link);
+    await screen.findByRole('heading', {name: 'Misty Fix'});
 });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Copy, Filter, Plus, RefreshCw, Search, Star, X } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import { PageHeader, QueryState, EmptyState } from '@/components/page';
@@ -13,7 +13,16 @@ import { SigmallyClanField, SigmallyLastSkinField, SigmallySkinsField } from '@/
 type Mode = 'active-users' | 'sigmally-users' | 'sigmod-users';
 type User = Record<string, unknown>;
 type Rule = { field: string; op: string; type: string; value: string };
-type UserPage = { items: User[]; nextCursor: string | null; total?: number; matched?: number; capturedAt?: string; fields?: FieldInfo[] };
+type UserPage = {
+    items: User[];
+    nextCursor?: string | null;
+    page?: number;
+    totalPages?: number;
+    total?: number;
+    matched?: number;
+    capturedAt?: string;
+    fields?: FieldInfo[];
+};
 const operators = [
     ['contains', 'Contains'],
     ['notContains', 'Does not contain'],
@@ -70,7 +79,8 @@ const text = (value: unknown): string => (value == null || value === '' ? '—' 
 const number = (value: unknown): string => (typeof value === 'number' ? value.toLocaleString() : '—');
 function nameOf(user: User, active: boolean): string {
     return String(
-        user.username ||
+        (!active && user.fullName) ||
+            user.username ||
             user.nick ||
             user.givenName ||
             object(user.user).nick ||
@@ -117,12 +127,14 @@ function ClanSummaryCell({ clan, id, href }: { clan?: ClanSummary; id: string; h
     return (
         <Link className="clan-summary-cell" to={href} title={clan ? `${clan.name} · ${members}/50 members` : id}>
             <strong>{clan?.name ?? 'Unknown clan'}</strong>
-            <span className="clan-summary-count">{clan ? `${members}/50` : id}</span>
-            {clan ? (
-                <span className="clan-summary-meter" aria-label={`${members} of 50 members`}>
-                    <i style={{ width: `${(members / 50) * 100}%` }} />
-                </span>
-            ) : null}
+            <span className="clan-summary-progress">
+                {clan ? (
+                    <span className="clan-summary-meter" aria-label={`${members} of 50 members`}>
+                        <i style={{ width: `${(members / 50) * 100}%` }} />
+                    </span>
+                ) : null}
+                <span className="clan-summary-count">{clan ? `${members}/50` : id}</span>
+            </span>
         </Link>
     );
 }
@@ -157,6 +169,7 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
             else next.delete('filters');
             const queryChanged = ['q', 'searchField', 'filters'].some((key) => next.get(key) !== current.get(key));
             if (queryChanged) {
+                next.delete('page');
                 next.delete('cursor');
                 next.delete('cursors');
                 setParams(next, { replace: true });
@@ -168,10 +181,16 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
     const request = new URLSearchParams(params);
     request.delete('cursors');
     request.set('limit', String(limit));
+    const requestedPage = Math.max(1, Number(params.get('page')) || 1);
+    if (!active) {
+        request.delete('cursor');
+        request.set('page', String(requestedPage));
+    }
     const query = useQuery({
         queryKey: [mode, request.toString()],
         queryFn: ({ signal }) => api.get<UserPage>(`/${mode}?${request}`, signal),
         refetchInterval: active ? 10_000 : false,
+        placeholderData: active ? undefined : keepPreviousData,
     });
     const data = active && query.error ? undefined : query.data;
     const catalog = useQuery({
@@ -193,8 +212,17 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
     });
     const clansById = new Map((clans.data ?? []).map((clan) => [clan._id ?? clan.id ?? '', clan]));
     const stack = (params.get('cursors') ?? '').split(',').filter(Boolean);
-    const pageNumber = stack.length + 1;
+    const pageNumber = active ? stack.length + 1 : (data?.page ?? requestedPage);
+    const totalPages = data?.totalPages ?? 1;
+    const visiblePages = Array.from(
+        { length: Math.min(totalPages, 5) },
+        (_, index) => Math.max(1, Math.min(pageNumber - 2, totalPages - 4)) + index
+    );
     const page = (direction: 'next' | 'previous') => {
+        if (!active) {
+            goToPage(pageNumber + (direction === 'next' ? 1 : -1));
+            return;
+        }
         const next = new URLSearchParams(params);
         if (direction === 'next' && data?.nextCursor) {
             stack.push(params.get('cursor') || '-');
@@ -210,6 +238,13 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
     };
     const goToPage = (targetPage: number) => {
         const next = new URLSearchParams(params);
+        if (!active) {
+            next.set('page', String(Math.max(1, Math.min(targetPage, totalPages))));
+            next.delete('cursor');
+            next.delete('cursors');
+            setParams(next);
+            return;
+        }
         if (targetPage <= 1) {
             next.delete('cursor');
             next.delete('cursors');
@@ -226,6 +261,7 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
     const pageSizeChanged = (value: number) => {
         const next = new URLSearchParams(params);
         next.set('limit', String(value));
+        next.delete('page');
         next.delete('cursor');
         next.delete('cursors');
         setParams(next);
@@ -251,6 +287,18 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
                     </>
                 }
             />
+            {!active && data && (
+                <div className="directory-metrics">
+                    <div>
+                        <span>Total accounts</span>
+                        <strong>{number(data.total)}</strong>
+                    </div>
+                    <div>
+                        <span>Matching accounts</span>
+                        <strong>{number(data.matched)}</strong>
+                    </div>
+                </div>
+            )}
             {active && data && (
                 <div className="directory-metrics">
                     <div>
@@ -325,16 +373,21 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
                                         value={rule.type}
                                         disabled={['exists', 'missing'].includes(rule.op)}
                                         onChange={(event) =>
-                                                updateRule(index, {
-                                                    type: event.target.value,
-                                                    op:
-                                                        event.target.value === 'null' ||
-                                                        (['number', 'boolean', 'date', 'objectId'].includes(event.target.value) &&
-                                                            ['contains', 'notContains'].includes(rule.op))
-                                                            ? 'eq'
-                                                            : rule.op,
-                                                    value: event.target.value === 'boolean' ? 'true' : event.target.value === 'null' ? '' : rule.value,
-                                                })
+                                            updateRule(index, {
+                                                type: event.target.value,
+                                                op:
+                                                    event.target.value === 'null' ||
+                                                    (['number', 'boolean', 'date', 'objectId'].includes(event.target.value) &&
+                                                        ['contains', 'notContains'].includes(rule.op))
+                                                        ? 'eq'
+                                                        : rule.op,
+                                                value:
+                                                    event.target.value === 'boolean'
+                                                        ? 'true'
+                                                        : event.target.value === 'null'
+                                                          ? ''
+                                                          : rule.value,
+                                            })
                                         }
                                     >
                                         {valueTypes.map((type) => (
@@ -496,9 +549,17 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
                                                                             {user.isAlive ? 'Playing' : 'Connected'}
                                                                         </>
                                                                     ) : mod ? (
-                                                                        <>{text(user.role)}{user.email ? ` · ${String(user.email)}` : ''}</>
+                                                                        <>
+                                                                            {text(user.role)}
+                                                                            {user.email ? ` · ${String(user.email)}` : ''}
+                                                                        </>
                                                                     ) : (
-                                                                        <>{text(user.email)}{user.givenName && user.givenName !== name ? ` · ${String(user.givenName)}` : ''}</>
+                                                                        <>
+                                                                            {text(user.email)}
+                                                                            {user.nick && user.nick !== name
+                                                                                ? ` · ${String(user.nick)}`
+                                                                                : ''}
+                                                                        </>
                                                                     )}
                                                                 </small>
                                                             </span>
@@ -520,14 +581,22 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
                                                     ) : mod ? (
                                                         <>
                                                             <td>{text(user.role)}</td>
-                                                            <td>{Array.isArray(user.badges) && user.badges.length ? user.badges.map(String).join(', ') : '—'}</td>
+                                                            <td>
+                                                                {Array.isArray(user.badges) && user.badges.length
+                                                                    ? user.badges.map(String).join(', ')
+                                                                    : '—'}
+                                                            </td>
                                                             <td>{user.online == null ? '—' : user.online ? 'Online' : 'Offline'}</td>
                                                             <td>{formatStoredDate(user.lastOnline)}</td>
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <td><LevelValue value={user.level} /></td>
-                                                            <td><ClanSummaryCell clan={clansById.get(clanId)} id={clanId} href={href} /></td>
+                                                            <td>
+                                                                <LevelValue value={user.level} />
+                                                            </td>
+                                                            <td>
+                                                                <ClanSummaryCell clan={clansById.get(clanId)} id={clanId} href={href} />
+                                                            </td>
                                                             <td className="numeric">{user.gold == null ? '—' : number(user.gold)}</td>
                                                             <td>{subscription}</td>
                                                         </>
@@ -549,8 +618,11 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
                 </QueryState>
                 <div className="directory-pagination">
                     <span>
+                        {!active ? 'Showing ' : ''}
                         {data?.items.length ? `${(pageNumber - 1) * limit + 1}–${(pageNumber - 1) * limit + data.items.length}` : '0'}
-                        {` · Page ${pageNumber} · ${data?.items.length ?? 0} entries`}
+                        {!active
+                            ? ` of ${number(data?.matched)} matching accounts · Page ${pageNumber} of ${totalPages}`
+                            : ` · Page ${pageNumber} · ${data?.items.length ?? 0} entries`}
                         {active && data ? ` · ${data.matched} matching connections` : ''}
                     </span>
                     <div className="toolbar">
@@ -560,13 +632,36 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
                             value={limit}
                             onChange={(event) => pageSizeChanged(Number(event.target.value))}
                         >
-                            {[10, 25, 50, 100].map((size) => <option key={size} value={size}>{size} per page</option>)}
+                            {[10, 25, 50, 100].map((size) => (
+                                <option key={size} value={size}>
+                                    {size} per page
+                                </option>
+                            ))}
                         </select>
-                        <div className="page-number-list" aria-label="Visited pages">
-                            {pageNumber > 5 ? (
-                                <Button variant="ghost" size="sm" onClick={() => goToPage(1)} disabled={query.isFetching}>1…</Button>
+                        {!active && (
+                            <Button variant="outline" size="sm" disabled={pageNumber <= 1 || query.isFetching} onClick={() => goToPage(1)}>
+                                First
+                            </Button>
+                        )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={(active ? !stack.length : pageNumber <= 1) || query.isFetching}
+                            onClick={() => page('previous')}
+                        >
+                            <ArrowLeft size={14} />
+                            Previous
+                        </Button>
+                        <div className="page-number-list" aria-label={active ? 'Visited pages' : 'Pages'}>
+                            {(active ? pageNumber > 5 : visiblePages[0] > 1) ? (
+                                <Button variant="ghost" size="sm" onClick={() => goToPage(1)} disabled={query.isFetching}>
+                                    1…
+                                </Button>
                             ) : null}
-                            {Array.from({ length: Math.min(pageNumber, 5) }, (_, index) => Math.max(1, pageNumber - 4) + index).map((pageIndex) => (
+                            {(active
+                                ? Array.from({ length: Math.min(pageNumber, 5) }, (_, index) => Math.max(1, pageNumber - 4) + index)
+                                : visiblePages
+                            ).map((pageIndex) => (
                                 <Button
                                     key={pageIndex}
                                     variant={pageIndex === pageNumber ? 'secondary' : 'ghost'}
@@ -578,15 +673,32 @@ export function UsersDirectory({ mode }: { mode: Mode }) {
                                     {pageIndex}
                                 </Button>
                             ))}
+                            {!active && visiblePages.at(-1)! < totalPages && (
+                                <Button variant="ghost" size="sm" onClick={() => goToPage(totalPages)} disabled={query.isFetching}>
+                                    …{totalPages}
+                                </Button>
+                            )}
                         </div>
-                        <Button variant="outline" size="sm" disabled={!stack.length || query.isFetching} onClick={() => page('previous')}>
-                            <ArrowLeft size={14} />
-                            Previous
-                        </Button>
-                        <Button variant="outline" size="sm" disabled={!data?.nextCursor || query.isFetching} onClick={() => page('next')}>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={(active ? !data?.nextCursor : pageNumber >= totalPages) || query.isFetching}
+                            onClick={() => page('next')}
+                        >
                             Next
                             <ArrowRight size={14} />
                         </Button>
+                        {!active && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={pageNumber >= totalPages || query.isFetching}
+                                onClick={() => goToPage(totalPages)}
+                            >
+                                Last
+                            </Button>
+                        )}
                     </div>
                 </div>
             </section>
@@ -612,9 +724,22 @@ function isDateValue(field: string, value: unknown): boolean {
     );
 }
 function ipValues(field: string, value: unknown): string[] {
-    const leaf = field.split('.').at(-1)?.replace(/[^a-z]/gi, '').toLowerCase() ?? '';
-    if (!['ip', 'ipaddress', 'clientip', 'remoteip', 'forwardedfor', 'xforwardedfor'].includes(leaf) || typeof value !== 'string') return [];
-    return [...new Set(value.split(/[\s,;]+/).map((ip) => ip.trim()).filter((ip) => ip.length > 0 && ip.length <= 45))];
+    const leaf =
+        field
+            .split('.')
+            .at(-1)
+            ?.replace(/[^a-z]/gi, '')
+            .toLowerCase() ?? '';
+    if (!['ip', 'ipaddress', 'clientip', 'remoteip', 'forwardedfor', 'xforwardedfor'].includes(leaf) || typeof value !== 'string')
+        return [];
+    return [
+        ...new Set(
+            value
+                .split(/[\s,;]+/)
+                .map((ip) => ip.trim())
+                .filter((ip) => ip.length > 0 && ip.length <= 45)
+        ),
+    ];
 }
 
 function countryFlag(location: User): string {
@@ -629,17 +754,22 @@ function IpGeolocation({ ip }: { ip: string }) {
         queryKey: ['ip-geolocation', ip],
         staleTime: 24 * 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
-        queryFn: ({ signal }) => api.get<{ ip: string; location: User | null; reason?: string }>(`/ip-geolocation?ip=${encodeURIComponent(ip)}`, signal),
+        queryFn: ({ signal }) =>
+            api.get<{ ip: string; location: User | null; reason?: string }>(`/ip-geolocation?ip=${encodeURIComponent(ip)}`, signal),
     });
     const location = query.data?.location;
     if (query.isPending) return <span className="ip-geo-state">Looking up location…</span>;
     if (query.error) return <span className="ip-geo-state">Location lookup unavailable</span>;
     if (!location) return <span className="ip-geo-state">Private or reserved IP</span>;
-    const cityRegion = [location.city, location.region].filter((part): part is string => typeof part === 'string' && part.length > 0).join(', ');
+    const cityRegion = [location.city, location.region]
+        .filter((part): part is string => typeof part === 'string' && part.length > 0)
+        .join(', ');
     return (
         <div className="ip-geo-result">
             <div className="ip-geo-heading">
-                <span className="ip-geo-flag" role="img" aria-label={`${String(location.country ?? 'Unknown country')} flag`}>{countryFlag(location)}</span>
+                <span className="ip-geo-flag" role="img" aria-label={`${String(location.country ?? 'Unknown country')} flag`}>
+                    {countryFlag(location)}
+                </span>
                 <strong>{String(location.country ?? location.country_name ?? location.country_code ?? 'Unknown country')}</strong>
                 {cityRegion && <span>{cityRegion}</span>}
             </div>
@@ -714,15 +844,21 @@ function DataTree({
                 <>
                     <div className="data-tree-row sigmally-profile-row" key="clan">
                         <dt>clan</dt>
-                        <dd><SigmallyClanField user={value} /></dd>
+                        <dd>
+                            <SigmallyClanField user={value} />
+                        </dd>
                     </div>
                     <div className="data-tree-row sigmally-profile-row" key="skins">
                         <dt>skins</dt>
-                        <dd><SigmallySkinsField user={value} /></dd>
+                        <dd>
+                            <SigmallySkinsField user={value} />
+                        </dd>
                     </div>
                     <div className="data-tree-row sigmally-profile-row" key="lastSkinUsed">
                         <dt>lastSkinUsed</dt>
-                        <dd><SigmallyLastSkinField user={value} /></dd>
+                        <dd>
+                            <SigmallyLastSkinField user={value} />
+                        </dd>
                     </div>
                 </>
             )}
@@ -792,7 +928,9 @@ export function UserDetail({ mode }: { mode: Mode }) {
                             </div>
                             <div className="profile-meta">
                                 {active ? text(user.server) : `Level ${text(user.level)}`}
-                                <small>{active ? text(user.clientVersion) : `Last authentication · ${formatStoredDate(user.lastAuth)}`}</small>
+                                <small>
+                                    {active ? text(user.clientVersion) : `Last authentication · ${formatStoredDate(user.lastAuth)}`}
+                                </small>
                             </div>
                         </div>
                         <div className="search-input detail-search">
@@ -806,7 +944,9 @@ export function UserDetail({ mode }: { mode: Mode }) {
                         </div>
                         <section className="section">
                             <DataTree value={user} search={search} sigmallyProfile={mode === 'sigmally-users'} />
-                            {search && mode !== 'sigmally-users' && !dataSearch(user).includes(search.toLowerCase()) && <EmptyState title="No matching fields" />}
+                            {search && mode !== 'sigmally-users' && !dataSearch(user).includes(search.toLowerCase()) && (
+                                <EmptyState title="No matching fields" />
+                            )}
                         </section>
                     </>
                 )}

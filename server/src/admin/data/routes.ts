@@ -16,6 +16,7 @@ import schema from '../../config/settingsUsageSchema.json';
 import { asyncRoute, auditAdminAction, HttpError, boundedInteger } from '../common';
 import { fieldCatalog, mergeFieldCatalogs, matchesUser, mongoUserQuery, parseUserQuery, visibleData, FieldInfo } from './user-query';
 import { activeUserSnapshot } from './active-users';
+import { directoryPagePlan } from './directory-page';
 
 const router = express.Router();
 const PAGE_DEFAULT = 25;
@@ -70,6 +71,21 @@ function pageArgs(req: Request) {
 function addCursor(filter: Record<string, unknown>, cursor: string | undefined) {
     if (!cursor) return filter;
     return Object.keys(filter).length ? { $and: [filter, { _id: { $gt: new ObjectId(cursor) } }] } : { _id: { $gt: new ObjectId(cursor) } };
+}
+
+async function numberedDirectoryPage<T>(
+    req: Request,
+    limit: number,
+    filtered: boolean,
+    count: (matching: boolean) => Promise<number>,
+    load: (skip: number, size: number, descending: boolean) => Promise<T[]>
+) {
+    const requested = boundedInteger(req.query.page, 1, Number.MAX_SAFE_INTEGER, 'page');
+    const totalCount = count(false);
+    const [total, matched] = await Promise.all([totalCount, filtered ? count(true) : totalCount]);
+    const plan = directoryPagePlan(requested, limit, matched);
+    const rows = plan.size ? await load(plan.skip, plan.size, plan.descending) : [];
+    return { total, matched, page: plan.page, totalPages: plan.totalPages, items: plan.descending ? rows.reverse() : rows };
 }
 
 function validId(value: unknown) {
@@ -258,7 +274,7 @@ function isDuplicateKeyError(error: unknown): boolean {
     return typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
 }
 
-const SIGMALLY_LIST_FIELDS = '_id nick imageURL givenName email gold subscription clan level lastAuth createTime';
+const SIGMALLY_LIST_FIELDS = '_id nick imageURL fullName givenName email gold subscription clan level lastAuth createTime';
 const MOD_LIST_FIELDS = '_id username imageURL role bio badges online lastOnline visible create_time';
 const MOD_DETAIL_FIELDS = `${MOD_LIST_FIELDS} discord_id`;
 
@@ -636,6 +652,17 @@ router.get(
         if (levelFilter.$gte !== undefined && levelFilter.$lte !== undefined && levelFilter.$gte > levelFilter.$lte)
             throw new HttpError(400, 'minLevel must not exceed maxLevel');
         if (Object.keys(levelFilter).length) query.level = levelFilter;
+        if (req.query.page !== undefined) {
+            const users = db.collection('users');
+            res.json({ identitySource: 'client-submitted-unverified', ...await numberedDirectoryPage(
+                req, limit, Object.keys(query).length > 0,
+                (matching) => users.countDocuments(matching ? query : {}, { maxTimeMS: 10000 }),
+                (skip, size, descending) => users.find(query, {
+                    projection: SIGMALLY_LIST_FIELDS.split(' ').reduce((p, k) => ({ ...p, [k]: 1 }), {}), maxTimeMS: 10000,
+                }).sort({ _id: descending ? -1 : 1 }).skip(skip).limit(size).toArray()
+            ) });
+            return;
+        }
         const cursorFilter = addCursor(query, cursor);
         const docs = await db
             .collection('users')
@@ -673,7 +700,17 @@ router.get(
     '/sigmod-users',
     asyncRoute(async (req, res) => {
         const { limit, cursor } = pageArgs(req);
-        const filter = addCursor(mongoUserQuery(parseUserQuery(req.query)), cursor);
+        const query = mongoUserQuery(parseUserQuery(req.query));
+        if (req.query.page !== undefined) {
+            res.json(await numberedDirectoryPage(
+                req, limit, Object.keys(query).length > 0,
+                (matching) => AccountModel.countDocuments(matching ? query : {}).maxTimeMS(10000).exec(),
+                (skip, size, descending) => AccountModel.find(query).select(MOD_LIST_FIELDS)
+                    .sort({ _id: descending ? -1 : 1 }).skip(skip).limit(size).maxTimeMS(10000).lean().exec()
+            ));
+            return;
+        }
+        const filter = addCursor(query, cursor);
         const docs = await AccountModel.find(filter)
             .select(MOD_LIST_FIELDS)
             .sort({ _id: 1 })

@@ -28,7 +28,7 @@
 // @name:zh-CN   SigMod - Sigmally 与 Agar.io 模组
 // @name:zh-TW   SigMod - Sigmally 與 Agar.io 模組
 //
-// @version      11.0.0
+// @version      11.0.1
 //
 // @description     Advanced Sigmally mod: Rapid feed macro, split tricks, live teammate radar, freeze line-splits, mouse macros & instant respawn.
 // @description:de  Erweiterter Sigmally-Mod: Rapid-Feed-Makro, Split-Tricks, Teammate-Party-Radar, Freeze-Linesplits, Maus-Makros und Instant-Respawn.

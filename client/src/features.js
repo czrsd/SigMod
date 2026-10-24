@@ -1479,50 +1479,28 @@ class PartyController extends FeatureController {
         if (!raw && typeof window.settings?.gameSettings?.skin === 'string' && window.settings.gameSettings.skin.trim()) {
             raw = window.settings.gameSettings.skin.trim();
         }
-        if (!raw && typeof window.sigfix?.settings?.skin === 'string' && window.sigfix.settings.skin.trim()) {
-            raw = window.sigfix.settings.skin.trim();
-        }
-        if (!raw && typeof window.sigfix?.settings?.selfSkin === 'string' && window.sigfix.settings.selfSkin.trim()) {
-            raw = window.sigfix.settings.selfSkin.trim();
-        }
         if (!raw) {
             try {
                 const st = JSON.parse(localStorage.getItem('settings') || '{}');
                 if (typeof st.skin === 'string' && st.skin.trim()) raw = st.skin.trim();
             } catch {}
         }
-        if (!raw) return null;
-        if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
-            return raw;
-        }
-        return (
-            raw
-                .replace(/^1%/, '')
-                .replace(/\.png$/i, '')
-                .trim() || null
-        );
+        return normalizePartySkin(raw);
     }
     getSkinUrl(skinName) {
-        if (!skinName || typeof skinName !== 'string') return null;
-        const clean = skinName.trim();
-        if (!clean) return null;
-        if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
-            return clean;
-        }
-        let name = clean.replace(/^1%/, '').replace(/\.png$/i, '');
+        let name = normalizePartySkin(skinName);
+        if (!name) return null;
         const shopSkins = window.settings?.shop?.skins;
         if (Array.isArray(shopSkins)) {
             const found = shopSkins.find((s) => s._id === name || s.name === name);
-            if (found?.name) name = found.name.replace(/\.png$/i, '');
+            if (found?.name) name = normalizePartySkin(found.name);
         }
+        if (!name) return null;
         const encoded = encodeURIComponent(name);
-        if (typeof location !== 'undefined' && location.hostname.includes('sigmally.com')) {
-            return `${location.origin}/static/skins/${encoded}.png`;
-        }
         return `https://sigmally.com/static/skins/${encoded}.png`;
     }
     createColorAvatar(color) {
-        const hex = color || '#3b82f6';
+        const hex = typeof color === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color) ? color : '#3b82f6';
         return createElement('span', {
             className: 'party-avatar party-avatar-color',
             attributes: {
@@ -1885,7 +1863,7 @@ class PartyController extends FeatureController {
             this.localSkin = this.resolveLocalSkin() || this.localSkin;
         }
         const color = this.localColor || this.resolveLocalColor();
-        const skin = this.localSkin || this.resolveLocalSkin();
+        const skin = normalizePartySkin(this.localSkin || this.resolveLocalSkin());
         this.localSkin = skin;
         this.localColor = color;
         const ping = latency !== null ? Math.round(latency) : null;

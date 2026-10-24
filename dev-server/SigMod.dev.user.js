@@ -28,7 +28,7 @@
 // @name:zh-CN   SigMod DEV - Sigmally 与 Agar.io 模组
 // @name:zh-TW   SigMod DEV - Sigmally 與 Agar.io 模組
 //
-// @version      11.0.0-dev
+// @version      11.0.1-dev
 //
 // @description     Advanced Sigmally mod: Rapid feed macro, split tricks, live teammate radar, freeze line-splits, mouse macros & instant respawn.
 // @description:de  Erweiterter Sigmally-Mod: Rapid-Feed-Makro, Split-Tricks, Teammate-Party-Radar, Freeze-Linesplits, Maus-Makros und Instant-Respawn.
@@ -86,10 +86,37 @@
     };
     const BUILD = {
         version: 11,
-        release: '11.0.0',
+        release: '11.0.1',
         serverVersion: '5.0.0',
         settingsVersion: 3,
     };
+    function normalizePartySkin(value) {
+        if (typeof value !== 'string' || value.length > 512) return null;
+        let name = value.trim();
+        if (/^https?:\/\//i.test(name)) {
+            try {
+                const url = new URL(name);
+                if (
+                    (url.hostname !== 'sigmally.com' && !url.hostname.endsWith('.sigmally.com')) ||
+                    url.username ||
+                    url.password ||
+                    url.port ||
+                    url.search ||
+                    url.hash ||
+                    !url.pathname.startsWith('/static/skins/')
+                )
+                    return null;
+                name = decodeURIComponent(url.pathname.slice('/static/skins/'.length));
+            } catch {
+                return null;
+            }
+        }
+        name = name
+            .replace(/^1%/, '')
+            .replace(/\.png$/i, '')
+            .trim();
+        return name.length > 0 && name.length <= 100 && /^[\p{L}\p{N}_ -]+$/u.test(name) ? name : null;
+    }
     const STORAGE = {
         settings: 'sigmod',
         legacySettings: 'SigModClient-settings',
@@ -13775,50 +13802,28 @@
             if (!raw && typeof window.settings?.gameSettings?.skin === 'string' && window.settings.gameSettings.skin.trim()) {
                 raw = window.settings.gameSettings.skin.trim();
             }
-            if (!raw && typeof window.sigfix?.settings?.skin === 'string' && window.sigfix.settings.skin.trim()) {
-                raw = window.sigfix.settings.skin.trim();
-            }
-            if (!raw && typeof window.sigfix?.settings?.selfSkin === 'string' && window.sigfix.settings.selfSkin.trim()) {
-                raw = window.sigfix.settings.selfSkin.trim();
-            }
             if (!raw) {
                 try {
                     const st = JSON.parse(localStorage.getItem('settings') || '{}');
                     if (typeof st.skin === 'string' && st.skin.trim()) raw = st.skin.trim();
                 } catch {}
             }
-            if (!raw) return null;
-            if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
-                return raw;
-            }
-            return (
-                raw
-                    .replace(/^1%/, '')
-                    .replace(/\.png$/i, '')
-                    .trim() || null
-            );
+            return normalizePartySkin(raw);
         }
         getSkinUrl(skinName) {
-            if (!skinName || typeof skinName !== 'string') return null;
-            const clean = skinName.trim();
-            if (!clean) return null;
-            if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
-                return clean;
-            }
-            let name = clean.replace(/^1%/, '').replace(/\.png$/i, '');
+            let name = normalizePartySkin(skinName);
+            if (!name) return null;
             const shopSkins = window.settings?.shop?.skins;
             if (Array.isArray(shopSkins)) {
                 const found = shopSkins.find((s) => s._id === name || s.name === name);
-                if (found?.name) name = found.name.replace(/\.png$/i, '');
+                if (found?.name) name = normalizePartySkin(found.name);
             }
+            if (!name) return null;
             const encoded = encodeURIComponent(name);
-            if (typeof location !== 'undefined' && location.hostname.includes('sigmally.com')) {
-                return `${location.origin}/static/skins/${encoded}.png`;
-            }
             return `https://sigmally.com/static/skins/${encoded}.png`;
         }
         createColorAvatar(color) {
-            const hex = color || '#3b82f6';
+            const hex = typeof color === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color) ? color : '#3b82f6';
             return createElement('span', {
                 className: 'party-avatar party-avatar-color',
                 attributes: {
@@ -14164,7 +14169,7 @@
                 this.localSkin = this.resolveLocalSkin() || this.localSkin;
             }
             const color = this.localColor || this.resolveLocalColor();
-            const skin = this.localSkin || this.resolveLocalSkin();
+            const skin = normalizePartySkin(this.localSkin || this.resolveLocalSkin());
             this.localSkin = skin;
             this.localColor = color;
             const ping = latency !== null ? Math.round(latency) : null;

@@ -9,6 +9,7 @@ import { db } from '../../db/connection';
 import { ObjectId } from 'mongodb';
 import useragent from 'express-useragent';
 import { recordPartyChatMessage, recordPartyNickname } from '../../services/partyUsage';
+import { normalizePartySkin } from '../../utils/partySkin';
 
 const checkVersion = (version: string, socket: socket) => {
     if (typeof version !== 'string' || version.length > 80) return;
@@ -142,8 +143,9 @@ const updatePartyMember = (
 ) => {
     if (!socket.tag || !socket.server || !data) return;
 
-    if (data.skin !== undefined) socket.skin = typeof data.skin === 'string' ? data.skin.slice(0, 100) : null;
-    if (data.color !== undefined) socket.color = typeof data.color === 'string' ? data.color.slice(0, 30) : null;
+    if (data.skin !== undefined) socket.skin = normalizePartySkin(data.skin);
+    if (data.color !== undefined)
+        socket.color = typeof data.color === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(data.color) ? data.color : null;
     if (typeof data.isAlive === 'boolean') socket.isAlive = data.isAlive;
     if (data.ping === null) socket.ping = null;
     else if (typeof data.ping === 'number' && Number.isFinite(data.ping)) socket.ping = Math.max(0, Math.round(data.ping));
